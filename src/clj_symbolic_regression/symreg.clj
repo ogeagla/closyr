@@ -3,7 +3,8 @@
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.ops :as ops])
   (:import
-    (java.util Date)
+    (java.util
+      Date)
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
@@ -13,7 +14,8 @@
 (def ^ISymbol sym-x (F/Dummy "x"))
 (def initial-phenos (ops/initial-phenotypes sym-x))
 
-(def initial-muts   (ops/initial-mutations))
+(def initial-muts (ops/initial-mutations))
+
 
 (defn demo-math-2
   []
@@ -42,7 +44,7 @@
 
 (defn score-fn
   [v]
-  ;(println "Score: "  (.toString (ops/eval-phenotype v 0.3)))
+  ;; (println "Score: "  (.toString (ops/eval-phenotype v 0.3)))
   (try
     (* -1 (abs (- 10 (Double/parseDouble (.toString (.toNumber (ops/eval-phenotype v 0.3)))))))
     (catch Exception e
@@ -63,7 +65,7 @@
 (defn run-test
   []
   (let [start (Date.)
-        pop1 (ga/initialize initial-pop score-fn mutation-fn crossover-fn)]
+        pop1  (ga/initialize initial-pop score-fn mutation-fn crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-pop))
     (println "initial muts: " (count initial-muts))
@@ -82,10 +84,9 @@
                      (println "Perfect score!")
                      0)
                    (dec i))))))
-    (let [end (Date.)
+    (let [end  (Date.)
           diff (- (.getTime end) (.getTime start))]
-      (println "Took " (/ diff 1000.0) " seconds")
-      )))
+      (println "Took " (/ diff 1000.0) " seconds"))))
 
 
 (comment (run-test))

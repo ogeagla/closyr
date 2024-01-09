@@ -8,54 +8,86 @@
    :mutation-fn  mutation-fn
    :crossover-fn crossover-fn})
 
+
 (defn evolve
   [{:keys [pop score-fn mutation-fn crossover-fn]}]
 
-  (let [pop-shuff (->>
-                    pop
-                    (map (fn [p] (assoc p :score (score-fn p))))
-                    (shuffle))
-        score*    (atom 0.0)
-        new-pop   (loop [pop     pop-shuff
-                         new-pop []]
-                    (if (empty? pop)
-                      new-pop
-                      (recur
-                        (drop 2 pop)
-                        (let [[e1 e2] [(first pop) (second pop)]
-                              newest-pop (if (nil? e2)
-                                           (do
-                                             (swap! score* + (:score e1))
-                                             (concat new-pop [e1]))
-                                           (let [[s1 s2] [(:score e1) (:score e2)]
-                                                 better-e (if (>= s1 s2) e1 e2)
-                                                 new-e    (if (rand-nth [true false])
-                                                            (mutation-fn better-e)
-                                                            (crossover-fn better-e))]
-                                             (swap! score* + s1 s2)
-                                             (concat new-pop [better-e new-e])))]
-                          newest-pop))))]
+  (let [pop-shuff    (->>
+                       pop
+                       (pmap (fn [p] (assoc p :score (score-fn p))))
+                       (shuffle))
+
+        new-pop-data (->>
+                       (partition-all 2 pop-shuff)
+                       (pmap (fn [[e1 e2]]
+                               (if (nil? e2)
+                                 (do
+
+                                   [(:score e1) [e1]])
+                                 (let [[s1 s2] [(:score e1) (:score e2)]
+                                       better-e (if (>= s1 s2) e1 e2)
+                                       new-e    (if (rand-nth [true false])
+                                                  (mutation-fn better-e)
+                                                  (crossover-fn better-e))]
+                                   [(+ s1 s2) [better-e new-e]])))))
+        ;; _ (println (take 10 new-pop-data))
+        pop-score    (->> (pmap first new-pop-data)
+                          (reduce + 0.0))
+        new-pop      (->> (pmap second new-pop-data)
+                          (mapcat identity)
+                          (vec))
+
+        ;; [pop-score
+        ;; new-pop] (loop [pop     pop-shuff
+        ;;                 new-pop []
+        ;;                 score   0.0]
+        ;;            (if (empty? pop)
+        ;;              [score new-pop]
+        ;;              (let [[e1
+        ;;                     e2] [(first pop) (second pop)]
+        ;;                    [s-diff
+        ;;                     newest-pop] (if (nil? e2)
+        ;;                                   (do
+        ;;
+        ;;                                     [(:score e1) (concat new-pop [e1])])
+        ;;                                   (let [[s1 s2] [(:score e1) (:score e2)]
+        ;;                                         better-e (if (>= s1 s2) e1 e2)
+        ;;                                         new-e    (if (rand-nth [true false])
+        ;;                                                    (mutation-fn better-e)
+        ;;                                                    (crossover-fn better-e))]
+        ;;                                     [(+ s1 s2) (concat new-pop [better-e new-e])]))]
+        ;;
+        ;;                (recur
+        ;;                  (drop 2 pop)
+        ;;                  newest-pop
+        ;;                  (+ score s-diff)))))
+        ]
     {:pop           new-pop
      :pop-old       pop
      :score-fn      score-fn
-     :pop-old-score @score*
+     :pop-old-score pop-score
      :mutation-fn   mutation-fn
      :crossover-fn  crossover-fn}))
 
 
-(def initial-pop [0 1 2 20 -1])
+(def initial-pop
+  [{:v 0}
+   {:v 1}
+   {:v 2}
+   {:v 20}
+   {:v -1}])
 
 
 (defn score-fn
   [v]
-  (* -1 (abs (- 10 v))))
+  (* -1 (abs (- 10 (:v v)))))
 
 
 (defn mutation-fn
   [v]
-  (if (rand-nth [true false])
-    (+ 1 v)
-    (+ -1 v)))
+  {:v (if (rand-nth [true false])
+        (+ 1 (:v v))
+        (+ -1 (:v v)))})
 
 
 (defn crossover-fn
@@ -65,20 +97,23 @@
 
 (defn run-test
   []
-  (let [pop1 (initialize initial-pop score-fn mutation-fn crossover-fn)]
-    (loop [pop pop1
-           i   100]
-      (if (zero? i)
-        pop
-        (let [new-pop (evolve pop)
-              s       (:pop-old-score new-pop)]
-          (println i " pop score: " s)
-          (recur new-pop
-                 (if (zero? s)
-                   (do
-                     (println "Perfect score!")
-                     0)
-                   (dec i))))))))
+  (try
+    (let [pop1 (initialize initial-pop score-fn mutation-fn crossover-fn)]
+      (loop [pop pop1
+             i   100]
+        (if (zero? i)
+          pop
+          (let [new-pop (evolve pop)
+                s       (:pop-old-score new-pop)]
+            (println i " pop score: " s)
+            (recur new-pop
+                   (if (zero? s)
+                     (do
+                       (println "Perfect score!")
+                       0)
+                     (dec i)))))))
+    (catch Exception e
+      (println "ERR doing test GA: " e))))
 
 
 (comment (run-test))

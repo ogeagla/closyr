@@ -8,6 +8,7 @@
       IExpr
       ISymbol)))
 
+
 ;; https://github.com/axkr/symja_android_library?tab=readme-ov-file#examples
 
 
@@ -35,6 +36,11 @@
 (def ^ExprEvaluator util (ExprEvaluator. false 100))
 
 
+(defn ^ExprEvaluator new-util
+  []
+  (ExprEvaluator. false 10))
+
+
 (defn ^java.util.function.Function as-function
   [f]
   (reify java.util.function.Function
@@ -43,7 +49,8 @@
 
 (defn ->phenotype
   [^ISymbol variable ^IAST expr]
-  (let [^IAST expr (.eval util expr)]
+  (let [^ExprEvaluator util (new-util)
+        ^IAST expr          (.eval util expr)]
     {:sym  variable
      :expr expr
      :fn   (expr->fn util variable expr)}))
@@ -51,7 +58,7 @@
 
 (defn eval-phenotype
   [{^IAST pfn :fn} x]
-  (.evalFunction util pfn (->strings [(str x)])))
+  (.evalFunction (new-util) pfn (->strings [(str x)])))
 
 
 (defn ^java.util.function.Function tree-modifier
@@ -193,73 +200,6 @@
     :label        "Cos->Sin"
     :find-expr    F/Cos
     :replace-expr F/Sin}])
-
-
-(defn demo-math
-  []
-
-  (let [;; use this for testing what the IAST form should look like from a basic algebraic expression in string form:
-        ^String java-form                (.toJavaForm util "D((sin(x)*cos(x))+5x,x)")
-
-        {sym-x :sym expr-1 :expr fn-1 :fn :as pheno-1} (as->
-                                                         (F/Dummy "x") x
-                                                         (->phenotype
-                                                           x
-                                                           (F/Plus
-                                                             (->iexprs
-                                                               [(F/C1)
-                                                                (F/D (F/Times x (F/Times x x)) x)
-                                                                (F/D (F/Times (F/Sin x) (F/Cos x)) x)]))))
-
-
-        pheno-2                          (modify
-                                           {:op          :fn
-                                            :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-                                                           (.plus expr expr))}
-                                           pheno-1)
-
-
-        ^IExpr result-1-fn               (.eval util fn-1)
-        ^IExpr result-1-eval-fn-at-point (eval-phenotype pheno-1 0.3)
-        ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)]
-    (println "res1 fn: " (.toString result-1-fn))
-    (println "res1 expr: " (.fullFormString expr-1))
-    (println "res1 full fn: " (.fullFormString fn-1)
-             "\n expr size: " (.size expr-1)
-             "size2: " (.size (.getArg expr-1 2 nil))
-             "\n expr child: " (.getArg expr-1 2 nil)
-             "\n expr childchild: " (.getArg (.getArg expr-1 2 nil) 2 nil)
-             "\n expr replace1a: " (:expr
-                                     (modify {:op               :modify-leafs
-                                              :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                                                                  (.plus ie (F/C5)))}
-                                             pheno-1))
-
-             "\n expr replace1b: " (:expr
-                                     (modify {:op               :modify-leafs
-                                              :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                                                                  (if (= (.toString ie) "x")
-                                                                    (.minus ie (F/C1D5))
-                                                                    (.plus ie (F/C5))))}
-                                             pheno-1))
-
-             "\n expr replace2: " (:expr
-                                    (modify {:op           :substitute
-                                             :find-expr    F/Sin
-                                             :replace-expr F/Tan}
-                                            pheno-1))
-             "\n expr replace3: " (:expr
-                                    (modify {:op           :substitute
-                                             :find-expr    F/Power
-                                             :replace-expr F/Divide}
-                                            pheno-1))
-             "\n expr replace4: " (:expr
-                                    (modify {:op           :substitute
-                                             :find-expr    F/C1
-                                             :replace-expr F/C5}
-                                            pheno-1)))
-    (println "res1-pt: " (.toString result-1-eval-fn-at-point))
-    (println "res2-pt: " (.toString result-2-eval-fn-at-point))))
 
 
 (defn demo-math-2
