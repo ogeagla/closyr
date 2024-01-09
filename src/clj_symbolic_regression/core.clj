@@ -29,6 +29,20 @@
   (into-array String coll))
 
 
+(defn replace-fn
+  ^IExpr [^IExpr ie]
+  ie)
+
+
+(defn my-replace-fn
+  []
+  (reify
+    java.util.function.Function
+    (apply
+      [this arg]
+      (replace-fn arg))))
+
+
 (defn demo-math
   []
 
@@ -57,6 +71,11 @@
     (println "fn: " java-form)
     (println "res1: " (.toString result-1))
     (println "res1b: " (.toString result-1-b))
+    (println "res1b fn: " (.fullFormString function-b)
+             "size: " (.size function-b)
+             "size2: " (.size (.getArg function-b 2 nil))
+             "childchild: " (.getArg (.getArg function-b 2 nil) 2 nil)
+             "replace: " (.replaceAll function-b (my-replace-fn)))
     (println "res1b-pt: " (.toString result-1-at-point))
     (println "res2: " (.toString result-2))
     (println "res3: " (.toString result-3))
