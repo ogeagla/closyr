@@ -90,48 +90,62 @@
   (let [;; use this for testing what the IAST form should look like from a basic algebraic expression in string form:
         ^String java-form                (.toJavaForm util "D((sin(x)*cos(x))+5x,x)")
 
-        {expr-1 :expr function-1 :fn
-         :as    pheno-1} (as-> (F/Dummy "x") x
-                               (->phenotype
-                                 x
-                                 (F/Plus
-                                   (->iexprs
-                                     [(F/C1)
-                                      (F/D (F/Times x (F/Times x x)) x)
-                                      (F/D (F/Times (F/Sin x) (F/Cos x)) x)]))))
+        {sym-x :sym expr-1 :expr fn-1 :fn :as pheno-1} (as->
+                                                         (F/Dummy "x") x
+                                                         (->phenotype
+                                                           x
+                                                           (F/Plus
+                                                             (->iexprs
+                                                               [(F/C1)
+                                                                (F/D (F/Times x (F/Times x x)) x)
+                                                                (F/D (F/Times (F/Sin x) (F/Cos x)) x)]))))
 
 
-        pheno-2                          (modify-phenotype pheno-1
-                                                           (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-                                                             (.plus expr expr)))
+        pheno-2                          (modify-phenotype
+                                           pheno-1
+                                           (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                             (.plus expr expr)))
 
 
-        ^IExpr result-1-fn               (.eval util function-1)
+        ^IExpr result-1-fn               (.eval util fn-1)
         ^IExpr result-1-eval-fn-at-point (eval-phenotype pheno-1 0.3)
         ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)]
     (println "res1 fn: " (.toString result-1-fn))
     (println "res1 expr: " (.fullFormString expr-1))
-    (println "res1 full fn: " (.fullFormString function-1)
+    (println "res1 full fn: " (.fullFormString fn-1)
              "\n expr size: " (.size expr-1)
              "size2: " (.size (.getArg expr-1 2 nil))
              "\n expr child: " (.getArg expr-1 2 nil)
              "\n expr childchild: " (.getArg (.getArg expr-1 2 nil) 2 nil)
-             "\n expr replace1: " (:expr (modify {:op               :modify-leafs
-                                                  :leaf-modifier-fn (fn ^IExpr [^IExpr ie] (.plus ie (F/C5)))}
-                                                 pheno-1))
+             "\n expr replace1a: " (:expr
+                                     (modify {:op               :modify-leafs
+                                              :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                                                                  (.plus ie (F/C5)))}
+                                             pheno-1))
 
-             "\n expr replace2: " (:expr (modify {:op           :substitute
-                                                  :find-expr    F/Sin
-                                                  :replace-expr F/Tan}
-                                                 pheno-1))
-             "\n expr replace3: " (:expr (modify {:op           :substitute
-                                                  :find-expr    F/Power
-                                                  :replace-expr F/Divide}
-                                                 pheno-1))
-             "\n expr replace4: " (:expr (modify {:op           :substitute
-                                                  :find-expr    F/C1
-                                                  :replace-expr F/C5}
-                                                 pheno-1)))
+             "\n expr replace1b: " (:expr
+                                     (modify {:op               :modify-leafs
+                                              :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                                                                  (if (= (.toString ie) "x")
+                                                                    (.minus ie (F/C1D5))
+                                                                    (.plus ie (F/C5))))}
+                                             pheno-1))
+
+             "\n expr replace2: " (:expr
+                                    (modify {:op           :substitute
+                                             :find-expr    F/Sin
+                                             :replace-expr F/Tan}
+                                            pheno-1))
+             "\n expr replace3: " (:expr
+                                    (modify {:op           :substitute
+                                             :find-expr    F/Power
+                                             :replace-expr F/Divide}
+                                            pheno-1))
+             "\n expr replace4: " (:expr
+                                    (modify {:op           :substitute
+                                             :find-expr    F/C1
+                                             :replace-expr F/C5}
+                                            pheno-1)))
     (println "res1-pt: " (.toString result-1-eval-fn-at-point))
     (println "res2-pt: " (.toString result-2-eval-fn-at-point))))
 
