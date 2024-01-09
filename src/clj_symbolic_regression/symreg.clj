@@ -1,7 +1,8 @@
 (ns clj-symbolic-regression.symreg
   (:require
     [clj-symbolic-regression.ga :as ga]
-    [clj-symbolic-regression.ops :as ops])
+    [clj-symbolic-regression.ops :as ops]
+    [clojure.string :as str])
   (:import
     (java.util
       Date)
@@ -39,9 +40,6 @@
                (take 50)))))
 
 
-
-
-
 (defn score-fn
   [v]
   ;; (println "Score: "  (.toString (ops/eval-phenotype v 0.3)))
@@ -64,29 +62,39 @@
 
 (defn run-test
   []
-  (let [start (Date.)
-        pop1  (ga/initialize initial-phenos score-fn mutation-fn crossover-fn)]
+  (let [start          (Date.)
+        initial-phenos (ops/initial-phenotypes sym-x 100)
+        pop1           (ga/initialize initial-phenos score-fn mutation-fn crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
-    (loop [pop pop1
-           i   1000]
-      (if (zero? i)
-        pop
-        (let [new-pop (ga/evolve pop)
-              s       (:pop-old-score new-pop)]
-          (when (zero? (mod i 100))
-            (println i " pop score: " s))
-          (recur new-pop
-                 (if (zero? s)
-                   (do
-                     (println "Perfect score!")
-                     0)
-                   (dec i))))))
-    (let [end  (Date.)
-          diff (- (.getTime end) (.getTime start))]
-      (println "Took " (/ diff 1000.0) " seconds"))))
+    (let [pop (loop [pop pop1
+                     i   1000]
+                (if (zero? i)
+                  pop
+                  (let [new-pop (ga/evolve pop)
+                        s       (:pop-old-score new-pop)]
+                    (when (zero? (mod i 100))
+                      (println i " pop score: " s))
+                    (recur new-pop
+                           (if (zero? s)
+                             (do
+                               (println "Perfect score!")
+                               0)
+                             (dec i))))))]
+      (let [end   (Date.)
+            diff  (- (.getTime end) (.getTime start))
+            bests (take 5 (reverse (sort-by :score (:pop pop))))]
+        (println "Took " (/ diff 1000.0) " seconds")
+        (println "Bests: "
+                 (str/join "\n"
+                           (map (fn [v]
+                                  (println v)
+                                  (str
+                                    "score: " (-> v :score)
+                                    " fn: " (-> v :expr str)))
+                                bests)))))))
 
 
 (comment (run-test))
