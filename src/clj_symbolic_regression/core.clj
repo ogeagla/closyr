@@ -66,9 +66,7 @@
   (as-function (fn ^IExpr [^IExpr ie]
                  (if (instance? IAST ie)
                    (.map ^IAST ie (tree-modifier modifier))
-                   (do
-                     (println "Tree modify leaf: " ie)
-                     (modifier ie))))))
+                   (modifier ie)))))
 
 
 (defmulti modify (fn [{:keys [op]} pheno] op))
@@ -82,6 +80,11 @@
 (defmethod modify :modify-leafs
   [{:keys [leaf-modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
   (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn))))
+
+
+(defmethod modify :fn
+  [{:keys [modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+  (->phenotype x-sym (modifier-fn pheno)))
 
 
 (defn demo-math
@@ -101,10 +104,11 @@
                                                                 (F/D (F/Times (F/Sin x) (F/Cos x)) x)]))))
 
 
-        pheno-2                          (modify-phenotype
-                                           pheno-1
-                                           (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-                                             (.plus expr expr)))
+        pheno-2                          (modify
+                                           {:op          :fn
+                                            :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                           (.plus expr expr))}
+                                           pheno-1)
 
 
         ^IExpr result-1-fn               (.eval util fn-1)
