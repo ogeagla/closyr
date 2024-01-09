@@ -11,7 +11,10 @@
 (defn evolve
   [{:keys [pop score-fn mutation-fn crossover-fn]}]
 
-  (let [pop-shuff (shuffle pop)
+  (let [pop-shuff (->>
+                    pop
+                    (map (fn [p] (assoc p :score (score-fn p))))
+                    (shuffle))
         score*    (atom 0.0)
         new-pop   (loop [pop     pop-shuff
                          new-pop []]
@@ -22,9 +25,9 @@
                         (let [[e1 e2] [(first pop) (second pop)]
                               newest-pop (if (nil? e2)
                                            (do
-                                             (swap! score* + (score-fn e1))
+                                             (swap! score* + (:score e1))
                                              (concat new-pop [e1]))
-                                           (let [[s1 s2] [(score-fn e1) (score-fn e2)]
+                                           (let [[s1 s2] [(:score e1) (:score e2)]
                                                  better-e (if (>= s1 s2) e1 e2)
                                                  new-e    (if (rand-nth [true false])
                                                             (mutation-fn better-e)

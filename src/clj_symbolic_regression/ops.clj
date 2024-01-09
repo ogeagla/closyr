@@ -86,6 +86,8 @@
     [F/C0
      x
      (F/Times -1 (->iexprs [x]))]
+    (repeat 200)
+    (mapcat identity)
     (mapv (fn [^IExpr expr] (->phenotype x expr)))))
 
 
