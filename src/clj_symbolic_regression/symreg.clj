@@ -12,7 +12,7 @@
 
 
 (def ^ISymbol sym-x (F/Dummy "x"))
-(def initial-phenos (ops/initial-phenotypes sym-x))
+(def initial-phenos (ops/initial-phenotypes sym-x 1000))
 
 (def initial-muts (ops/initial-mutations))
 
@@ -39,7 +39,7 @@
                (take 50)))))
 
 
-(def initial-pop initial-phenos)
+
 
 
 (defn score-fn
@@ -65,9 +65,9 @@
 (defn run-test
   []
   (let [start (Date.)
-        pop1  (ga/initialize initial-pop score-fn mutation-fn crossover-fn)]
+        pop1  (ga/initialize initial-phenos score-fn mutation-fn crossover-fn)]
     (println "start " start)
-    (println "initial pop: " (count initial-pop))
+    (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
     (loop [pop pop1

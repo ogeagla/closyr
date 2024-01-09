@@ -88,12 +88,12 @@
 
 
 (defn initial-phenotypes
-  [^ISymbol x]
+  [^ISymbol x reps]
   (->>
     [F/C0
      x
      (F/Times -1 (->iexprs [x]))]
-    (repeat 200)
+    (repeat reps)
     (mapcat identity)
     (mapv (fn [^IExpr expr] (->phenotype x expr)))))
 
@@ -206,7 +206,7 @@
   []
 
   (let [^ISymbol sym-x (F/Dummy "x")
-        initial-phenos (initial-phenotypes sym-x)
+        initial-phenos (initial-phenotypes sym-x 1)
         initial-muts   (initial-mutations)]
     (println "initial muts: " (count initial-muts))
     (println "initial fn x muts: "

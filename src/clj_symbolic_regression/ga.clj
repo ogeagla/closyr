@@ -21,47 +21,18 @@
                        (partition-all 2 pop-shuff)
                        (pmap (fn [[e1 e2]]
                                (if (nil? e2)
-                                 (do
-
-                                   [(:score e1) [e1]])
+                                 [(:score e1) [e1]]
                                  (let [[s1 s2] [(:score e1) (:score e2)]
                                        better-e (if (>= s1 s2) e1 e2)
                                        new-e    (if (rand-nth [true false])
                                                   (mutation-fn better-e)
                                                   (crossover-fn better-e))]
                                    [(+ s1 s2) [better-e new-e]])))))
-        ;; _ (println (take 10 new-pop-data))
         pop-score    (->> (pmap first new-pop-data)
                           (reduce + 0.0))
         new-pop      (->> (pmap second new-pop-data)
                           (mapcat identity)
-                          (vec))
-
-        ;; [pop-score
-        ;; new-pop] (loop [pop     pop-shuff
-        ;;                 new-pop []
-        ;;                 score   0.0]
-        ;;            (if (empty? pop)
-        ;;              [score new-pop]
-        ;;              (let [[e1
-        ;;                     e2] [(first pop) (second pop)]
-        ;;                    [s-diff
-        ;;                     newest-pop] (if (nil? e2)
-        ;;                                   (do
-        ;;
-        ;;                                     [(:score e1) (concat new-pop [e1])])
-        ;;                                   (let [[s1 s2] [(:score e1) (:score e2)]
-        ;;                                         better-e (if (>= s1 s2) e1 e2)
-        ;;                                         new-e    (if (rand-nth [true false])
-        ;;                                                    (mutation-fn better-e)
-        ;;                                                    (crossover-fn better-e))]
-        ;;                                     [(+ s1 s2) (concat new-pop [better-e new-e])]))]
-        ;;
-        ;;                (recur
-        ;;                  (drop 2 pop)
-        ;;                  newest-pop
-        ;;                  (+ score s-diff)))))
-        ]
+                          (vec))]
     {:pop           new-pop
      :pop-old       pop
      :score-fn      score-fn
