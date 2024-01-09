@@ -93,7 +93,12 @@
              "size2: " (.size (.getArg expr-1 2 nil))
              "\n expr child: " (.getArg expr-1 2 nil)
              "\n expr childchild: " (.getArg (.getArg expr-1 2 nil) 2 nil)
-             "\n expr replace: " (.replaceAll expr-1 (as-function replace-fn)))
+             "\n expr replace1: " (.replaceAll expr-1 (as-function (fn ^IExpr [^IExpr ie]
+                                                                     (println "Add 5 to " ie)
+                                                                     (.plus ie (F/C5)))))
+             "\n expr replace2: " (.subs expr-1 F/Sin F/Cos)
+             "\n expr replace3: " (.subs expr-1 F/Power F/Divide)
+             )
     (println "res1-pt: " (.toString result-1-eval-fn-at-point))
     (println "res2-pt: " (.toString result-2-eval-fn-at-point))))
 
