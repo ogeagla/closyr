@@ -61,6 +61,29 @@
   (->phenotype x-sym (modifier-fn pheno)))
 
 
+(defn ^java.util.function.Function tree-modifier
+  [modifier]
+  (as-function (fn ^IExpr [^IExpr ie]
+                 (if (instance? IAST ie)
+                   (.map ^IAST ie (tree-modifier modifier))
+                   (do
+                     (println "Tree modify leaf: " ie)
+                     (modifier ie))))))
+
+
+(defmulti modify (fn [{:keys [op]} pheno] op))
+
+
+(defmethod modify :substitute
+  [{:keys [^IExpr find-expr ^IExpr replace-expr]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+  (->phenotype x-sym (.subs expr find-expr replace-expr)))
+
+
+(defmethod modify :modify-leafs
+  [{:keys [leaf-modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn))))
+
+
 (defn demo-math
   []
 
@@ -93,12 +116,22 @@
              "size2: " (.size (.getArg expr-1 2 nil))
              "\n expr child: " (.getArg expr-1 2 nil)
              "\n expr childchild: " (.getArg (.getArg expr-1 2 nil) 2 nil)
-             "\n expr replace1: " (.replaceAll expr-1 (as-function (fn ^IExpr [^IExpr ie]
-                                                                     (println "Add 5 to " ie)
-                                                                     (.plus ie (F/C5)))))
-             "\n expr replace2: " (.subs expr-1 F/Sin F/Cos)
-             "\n expr replace3: " (.subs expr-1 F/Power F/Divide)
-             )
+             "\n expr replace1: " (:expr (modify {:op               :modify-leafs
+                                                  :leaf-modifier-fn (fn ^IExpr [^IExpr ie] (.plus ie (F/C5)))}
+                                                 pheno-1))
+
+             "\n expr replace2: " (:expr (modify {:op           :substitute
+                                                  :find-expr    F/Sin
+                                                  :replace-expr F/Tan}
+                                                 pheno-1))
+             "\n expr replace3: " (:expr (modify {:op           :substitute
+                                                  :find-expr    F/Power
+                                                  :replace-expr F/Divide}
+                                                 pheno-1))
+             "\n expr replace4: " (:expr (modify {:op           :substitute
+                                                  :find-expr    F/C1
+                                                  :replace-expr F/C5}
+                                                 pheno-1)))
     (println "res1-pt: " (.toString result-1-eval-fn-at-point))
     (println "res2-pt: " (.toString result-2-eval-fn-at-point))))
 
