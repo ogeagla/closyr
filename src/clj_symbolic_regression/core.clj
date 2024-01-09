@@ -13,10 +13,9 @@
 ;; https://github.com/axkr/symja_android_library?tab=readme-ov-file#examples
 
 
-(defn expr->fn
+(defn ^IAST expr->fn
   [^ExprEvaluator util ^ISymbol variable ^IAST expr]
-  (F/Function (F/List (into-array ISymbol [variable]))
-              (.eval util expr)))
+  (F/Function (F/List (into-array ISymbol [variable])) expr))
 
 
 (defn ->iexprs
@@ -31,55 +30,72 @@
 
 (defn replace-fn
   ^IExpr [^IExpr ie]
-  ie)
+  (println "Add 5 to " ie)
+  (.plus ie (F/C5)))
 
 
-(defn my-replace-fn
-  []
-  (reify
-    java.util.function.Function
-    (apply
-      [this arg]
-      (replace-fn arg))))
+(def ^ExprEvaluator util (ExprEvaluator. false 100))
+
+
+(defn ^java.util.function.Function as-function
+  [f]
+  (reify java.util.function.Function
+    (apply [this arg] (f arg))))
+
+
+(defn ->phenotype
+  [^ISymbol variable ^IAST expr]
+  (let [^IAST expr (.eval util expr)]
+    {:sym  variable
+     :expr expr
+     :fn   (expr->fn util variable expr)}))
+
+
+(defn eval-phenotype
+  [{^IAST pfn :fn} x]
+  (.evalFunction util pfn (->strings [(str x)])))
+
+
+(defn modify-phenotype
+  [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} modifier-fn]
+  (->phenotype x-sym (modifier-fn pheno)))
 
 
 (defn demo-math
   []
 
-  (let [^ExprEvaluator util      (ExprEvaluator. false 100)
+  (let [;; use this for testing what the IAST form should look like from a basic algebraic expression in string form:
+        ^String java-form                (.toJavaForm util "D((sin(x)*cos(x))+5x,x)")
 
-        ^String java-form        (.toJavaForm util "D((sin(x)*cos(x))+5x,x)")
+        {expr-1 :expr function-1 :fn
+         :as    pheno-1} (as-> (F/Dummy "x") x
+                               (->phenotype
+                                 x
+                                 (F/Plus
+                                   (->iexprs
+                                     [(F/C1)
+                                      (F/D (F/Times x (F/Times x x)) x)
+                                      (F/D (F/Times (F/Sin x) (F/Cos x)) x)]))))
 
-        ^String x-str            "x"
-        ^ISymbol x               (F/Dummy x-str)
-        ^IAST function           (F/D (F/Times (F/Sin x) (F/Cos x)) x)
-        ^IAST function-b         (expr->fn util
-                                           x
-                                           (F/Plus
-                                             (->iexprs
-                                               [(F/C1)
-                                                (F/D (F/Times x (F/Times x x)) x)
-                                                (F/D (F/Times (F/Sin x) (F/Cos x)) x)])))
 
-        ^IExpr result-1          (.eval util function)
-        ^IExpr result-1-b        (.eval util function-b)
-        ^IExpr result-1-at-point (.evalFunction util function-b (->strings ["0.3"]))
+        pheno-2                          (modify-phenotype pheno-1
+                                                           (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                             (.plus expr expr)))
 
-        ^IExpr result-2          (.eval util java-form)
-        ^IExpr result-3          (.eval util "diff(sin(x)*cos(x),x)")
-        ^IExpr result-4          (.eval util "integrate(sin(x)^5,x)")]
-    (println "fn: " java-form)
-    (println "res1: " (.toString result-1))
-    (println "res1b: " (.toString result-1-b))
-    (println "res1b fn: " (.fullFormString function-b)
-             "size: " (.size function-b)
-             "size2: " (.size (.getArg function-b 2 nil))
-             "childchild: " (.getArg (.getArg function-b 2 nil) 2 nil)
-             "replace: " (.replaceAll function-b (my-replace-fn)))
-    (println "res1b-pt: " (.toString result-1-at-point))
-    (println "res2: " (.toString result-2))
-    (println "res3: " (.toString result-3))
-    (println "res4: " (.toString result-4))))
+
+        ^IExpr result-1-fn               (.eval util function-1)
+        ^IExpr result-1-eval-fn-at-point (eval-phenotype pheno-1 0.3)
+        ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)]
+    (println "res1 fn: " (.toString result-1-fn))
+    (println "res1 expr: " (.fullFormString expr-1))
+    (println "res1 full fn: " (.fullFormString function-1)
+             "\n expr size: " (.size expr-1)
+             "size2: " (.size (.getArg expr-1 2 nil))
+             "\n expr child: " (.getArg expr-1 2 nil)
+             "\n expr childchild: " (.getArg (.getArg expr-1 2 nil) 2 nil)
+             "\n expr replace: " (.replaceAll expr-1 (as-function replace-fn)))
+    (println "res1-pt: " (.toString result-1-eval-fn-at-point))
+    (println "res2-pt: " (.toString result-2-eval-fn-at-point))))
 
 
 (defn -main
