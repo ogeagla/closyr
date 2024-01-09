@@ -82,10 +82,11 @@
   (->phenotype x-sym (modifier-fn pheno)))
 
 
-(defn initial-phenos
+(defn initial-phenotypes
   [^ISymbol x]
   (->>
-    [x
+    [F/C0
+     x
      (F/Times -1 (->iexprs [x]))]
     (mapv (fn [^IExpr expr] (->phenotype x expr)))))
 
@@ -93,57 +94,105 @@
 (defn initial-mutations
   []
   [{:op          :fn
+    :label       "Derivative"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (F/D expr x-sym))}
+
+   {:op          :fn
+    :label       "+1/2"
     :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr F/C1D2))}
 
    {:op          :fn
+    :label       "-1/2"
     :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr F/C1D2))}
 
    {:op          :fn
+    :label       "+Sin"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (F/Sin x-sym)))}
+
+   {:op          :fn
+    :label       "-Sin"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (F/Sin x-sym)))}
+
+   {:op          :fn
+    :label       "+x"
     :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr x-sym))}
 
    {:op          :fn
+    :label       "-x"
     :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr x-sym))}
+   {:op          :fn
+    :label       "*x"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr x-sym))}
+
+   {:op          :fn
+    :label       "/x"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.divide expr x-sym))}
+   {:op          :fn
+    :label       "*-1"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr F/CN1))}
+
+   {:op          :fn
+    :label       "/2"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr F/C1D2))}
+
+   {:op          :fn
+    :label       "*2"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr F/C2))}
 
 
 
    {:op               :modify-leafs
+    :label            "x+1/5"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
                         (if (= (.toString ie) "x")
                           (.plus ie (F/C1D5))
-                          (.minus ie (F/C1))))}
+                          ie))}
 
 
    {:op               :modify-leafs
+    :label            "x-1/5"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
                         (if (= (.toString ie) "x")
                           (.minus ie (F/C1D5))
-                          (.plus ie (F/C1))))}
+                          ie))}
 
 
    {:op               :modify-leafs
+    :label            "c/2"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
                         (if (= (.toString ie) "x")
-                          (.times ie (F/C1D5))
+                          ie
                           (.times ie (F/C1D2))))}
 
 
    {:op               :modify-leafs
+    :label            "c*2"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
                         (if (= (.toString ie) "x")
-                          (.divide ie (F/C1D5))
-                          (.divide ie (F/C1D2))))}
+                          ie
+                          (.times ie (F/C2))))}
 
    {:op           :substitute
-    :find-expr    F/Plus
-    :replace-expr F/Minus}
+    :label        "Sin->Cos"
+    :find-expr    F/Sin
+    :replace-expr F/Cos}
 
    {:op           :substitute
-    :find-expr    F/Minus
-    :replace-expr F/Plus}])
+    :label        "Cos->Sin"
+    :find-expr    F/Cos
+    :replace-expr F/Sin}])
 
 
 (defn demo-math
@@ -172,9 +221,7 @@
 
         ^IExpr result-1-fn               (.eval util fn-1)
         ^IExpr result-1-eval-fn-at-point (eval-phenotype pheno-1 0.3)
-        ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)
-        initial-phenos                   (initial-phenos sym-x)
-        initial-muts                     (initial-mutations)]
+        ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)]
     (println "res1 fn: " (.toString result-1-fn))
     (println "res1 expr: " (.fullFormString expr-1))
     (println "res1 full fn: " (.fullFormString fn-1)
@@ -212,20 +259,35 @@
                                              :replace-expr F/C5}
                                             pheno-1)))
     (println "res1-pt: " (.toString result-1-eval-fn-at-point))
-    (println "res2-pt: " (.toString result-2-eval-fn-at-point))
-    (println "initial fns: " (count initial-phenos) (map (comp str :fn) initial-phenos))
+    (println "res2-pt: " (.toString result-2-eval-fn-at-point))))
+
+
+(defn demo-math-2
+  []
+
+  (let [^ISymbol sym-x (F/Dummy "x")
+        initial-phenos (initial-phenotypes sym-x)
+        initial-muts   (initial-mutations)]
     (println "initial muts: " (count initial-muts))
     (println "initial fn x muts: "
-             (for [p  initial-phenos
-                   m1 initial-muts
-                   m2 initial-muts]
-               (str (:fn (modify m2 (modify m1 p))) " ")))))
+             (->>
+               (for [p  initial-phenos
+                     m1 initial-muts
+                     m2 initial-muts
+                     m3 initial-muts]
+                 (str
+                   "\n" (:expr p) " -> " (:label m1) "." (:label m2) "." (:label m3) " :: "
+                   (:expr (modify m3 (modify m2 (modify m1 p))))
+                   " "))
+               (sort-by count)
+               (reverse)
+               (take 50)))))
 
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (demo-math))
+  (demo-math-2))
 
 
 (-main)
