@@ -90,6 +90,62 @@
     (mapv (fn [^IExpr expr] (->phenotype x expr)))))
 
 
+(defn initial-mutations
+  []
+  [{:op          :fn
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr F/C1D2))}
+
+   {:op          :fn
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr F/C1D2))}
+
+   {:op          :fn
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr x-sym))}
+
+   {:op          :fn
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr x-sym))}
+
+
+
+   {:op               :modify-leafs
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          (.plus ie (F/C1D5))
+                          (.minus ie (F/C1))))}
+
+
+   {:op               :modify-leafs
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          (.minus ie (F/C1D5))
+                          (.plus ie (F/C1))))}
+
+
+   {:op               :modify-leafs
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          (.times ie (F/C1D5))
+                          (.times ie (F/C1D2))))}
+
+
+   {:op               :modify-leafs
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          (.divide ie (F/C1D5))
+                          (.divide ie (F/C1D2))))}
+
+   {:op           :substitute
+    :find-expr    F/Plus
+    :replace-expr F/Minus}
+
+   {:op           :substitute
+    :find-expr    F/Minus
+    :replace-expr F/Plus}])
+
+
 (defn demo-math
   []
 
@@ -117,7 +173,8 @@
         ^IExpr result-1-fn               (.eval util fn-1)
         ^IExpr result-1-eval-fn-at-point (eval-phenotype pheno-1 0.3)
         ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)
-        initial-phenos                   (initial-phenos sym-x)]
+        initial-phenos                   (initial-phenos sym-x)
+        initial-muts                     (initial-mutations)]
     (println "res1 fn: " (.toString result-1-fn))
     (println "res1 expr: " (.fullFormString expr-1))
     (println "res1 full fn: " (.fullFormString fn-1)
@@ -156,7 +213,13 @@
                                             pheno-1)))
     (println "res1-pt: " (.toString result-1-eval-fn-at-point))
     (println "res2-pt: " (.toString result-2-eval-fn-at-point))
-    (println "initial fns: " (map (comp str :fn) initial-phenos))))
+    (println "initial fns: " (count initial-phenos) (map (comp str :fn) initial-phenos))
+    (println "initial muts: " (count initial-muts))
+    (println "initial fn x muts: "
+             (for [p  initial-phenos
+                   m1 initial-muts
+                   m2 initial-muts]
+               (str (:fn (modify m2 (modify m1 p))) " ")))))
 
 
 (defn -main
