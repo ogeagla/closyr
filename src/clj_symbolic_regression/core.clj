@@ -56,11 +56,6 @@
   (.evalFunction util pfn (->strings [(str x)])))
 
 
-(defn modify-phenotype
-  [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} modifier-fn]
-  (->phenotype x-sym (modifier-fn pheno)))
-
-
 (defn ^java.util.function.Function tree-modifier
   [modifier]
   (as-function (fn ^IExpr [^IExpr ie]
@@ -85,6 +80,14 @@
 (defmethod modify :fn
   [{:keys [modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
   (->phenotype x-sym (modifier-fn pheno)))
+
+
+(defn initial-phenos
+  [^ISymbol x]
+  (->>
+    [x
+     (F/Times -1 (->iexprs [x]))]
+    (mapv (fn [^IExpr expr] (->phenotype x expr)))))
 
 
 (defn demo-math
@@ -113,7 +116,8 @@
 
         ^IExpr result-1-fn               (.eval util fn-1)
         ^IExpr result-1-eval-fn-at-point (eval-phenotype pheno-1 0.3)
-        ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)]
+        ^IExpr result-2-eval-fn-at-point (eval-phenotype pheno-2 0.3)
+        initial-phenos                   (initial-phenos sym-x)]
     (println "res1 fn: " (.toString result-1-fn))
     (println "res1 expr: " (.fullFormString expr-1))
     (println "res1 full fn: " (.fullFormString fn-1)
@@ -151,7 +155,8 @@
                                              :replace-expr F/C5}
                                             pheno-1)))
     (println "res1-pt: " (.toString result-1-eval-fn-at-point))
-    (println "res2-pt: " (.toString result-2-eval-fn-at-point))))
+    (println "res2-pt: " (.toString result-2-eval-fn-at-point))
+    (println "initial fns: " (map (comp str :fn) initial-phenos))))
 
 
 (defn -main
