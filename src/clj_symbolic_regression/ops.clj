@@ -1,7 +1,8 @@
 (ns clj-symbolic-regression.ops
   (:import
+    (java.util
+      Date)
     org.matheclipse.core.eval.ExprEvaluator
-    (java.util Date)
     (org.matheclipse.core.expression
       AST
       F)
@@ -204,8 +205,7 @@
 (defn demo-math-2
   []
 
-  (let [
-        start          (Date.)
+  (let [start          (Date.)
         _              (println "start " start)
         ^ISymbol sym-x (F/Dummy "x")
         initial-phenos (initial-phenotypes sym-x 1)
@@ -250,8 +250,7 @@
                          (sort-by count)
                          (reverse))
         end            (Date.)
-        diff           (- (.getTime end) (.getTime start))
-        ]
+        diff           (- (.getTime end) (.getTime start))]
 
     (println "initial muts: " (count initial-muts))
     (println "initial fn x muts: "
