@@ -1,5 +1,13 @@
 (ns clj-symbolic-regression.ga)
+(defn sum [coll]
+  (loop [acc 0.0
+         coll coll]
+    (if (empty? coll)
+      acc
+      (recur (+ acc (first coll))
+             (rest coll)))
 
+    ))
 
 (defn initialize
   [initial-pop score-fn mutation-fn crossover-fn]
@@ -11,36 +19,37 @@
 
 (defn evolve
   [{:keys [pop score-fn mutation-fn crossover-fn]}]
+  (try
+    (let [pop-shuff    (->>
+                         pop
+                         (pmap (fn [p] (assoc p :score (score-fn p))))
+                         (shuffle))
 
-  (let [pop-shuff    (->>
-                       pop
-                       (pmap (fn [p] (assoc p :score (score-fn p))))
-                       (shuffle))
-
-        new-pop-data (->>
-                       (partition-all 2 pop-shuff)
-                       (pmap (fn [[e1 e2]]
-                               (if (nil? e2)
-                                 [(:score e1) [e1]]
-                                 (let [[s1 s2] [(:score e1) (:score e2)]
-                                       better-e (if (>= s1 s2) e1 e2)
-                                       new-e    (if (rand-nth [true false])
-                                                  (mutation-fn better-e)
-                                                  (crossover-fn better-e))]
-                                   [(+ s1 s2) [better-e new-e]])))))
-        pop-scores   (pmap first new-pop-data)
-        pop-score    (->> pop-scores
-                          (reduce + 0.0))
-        new-pop      (->> (pmap second new-pop-data)
-                          (mapcat identity)
-                          (vec))]
-    {:pop            new-pop
-     :pop-old        pop
-     :score-fn       score-fn
-     :pop-old-score  pop-score
-     :pop-old-scores pop-scores
-     :mutation-fn    mutation-fn
-     :crossover-fn   crossover-fn}))
+          new-pop-data (->>
+                         (partition-all 2 pop-shuff)
+                         (pmap (fn [[e1 e2]]
+                                 (if (nil? e2)
+                                   [(:score e1) [e1]]
+                                   (let [[s1 s2] [(:score e1) (:score e2)]
+                                         better-e (if (>= s1 s2) e1 e2)
+                                         new-e    (if (rand-nth [true false])
+                                                    (mutation-fn better-e)
+                                                    (crossover-fn better-e))]
+                                     [(+ s1 s2) [better-e new-e]])))))
+          pop-scores   (pmap first new-pop-data)
+          pop-score    (sum pop-scores)
+          new-pop      (->> (pmap second new-pop-data)
+                            (mapcat identity)
+                            (vec))]
+      {:pop            new-pop
+       :pop-old        pop
+       :score-fn       score-fn
+       :pop-old-score  pop-score
+       :pop-old-scores pop-scores
+       :mutation-fn    mutation-fn
+       :crossover-fn   crossover-fn})
+    (catch Exception e
+      (println "Err in evolve: " e))))
 
 
 (def initial-pop

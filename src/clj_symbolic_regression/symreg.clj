@@ -62,6 +62,16 @@
                                  (range (count input-exprs)))))]
     vs))
 
+(defn sum [coll]
+  (loop [acc 0.0
+         coll coll]
+    (if (empty? coll)
+      acc
+      (recur (+ acc (first coll))
+             (rest coll)))
+
+    ))
+
 
 (def sim-stats* (atom {}))
 
@@ -70,11 +80,11 @@
   [input-exprs output-exprs-vec v]
   (try
     (let [leafs            (.leafCount (:expr v))
-          resids           (pmap (fn [output expted]
-                                  (- expted output))
-                                (eval-vec-pheno v input-exprs)
-                                output-exprs-vec)
-          resid            (reduce + 0.0 (map #(min 100000 (abs %)) resids))
+          resids           (map (fn [output expted]
+                                   (- expted output))
+                                 (eval-vec-pheno v input-exprs)
+                                 output-exprs-vec)
+          resid            (sum (map #(min 100000 (abs %)) resids))
           score            (* -1 (abs resid))
           length-deduction (* 0.0001 leafs)]
       (when (zero? resid) (println "warning: zero resid " resids))
@@ -89,22 +99,25 @@
 
 (defn mutation-fn
   [initial-muts v]
-  (let [c         (rand-nth [1 1 1
-                             2 2
-                             3])
-        new-pheno (loop [c c
-                         v v]
-                    (if (zero? c)
-                      v
-                      (recur
-                        (dec c)
-                        (ops/modify (rand-nth initial-muts) v))))
-        old-leafs (.leafCount (:expr v))
-        new-leafs (.leafCount (:expr new-pheno))]
-    (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
-    (swap! sim-stats* update-in [:mutations :size-in] #(concat (or % []) [old-leafs]))
-    (swap! sim-stats* update-in [:mutations :size-out] #(concat (or % []) [new-leafs]))
-    new-pheno))
+  (try
+    (let [c         (rand-nth [1 1 1
+                               2 2
+                               3])
+          new-pheno (loop [c c
+                           v v]
+                      (if (zero? c)
+                        v
+                        (recur
+                          (dec c)
+                          (ops/modify (rand-nth initial-muts) v))))
+          old-leafs (.leafCount (:expr v))
+          new-leafs (.leafCount (:expr new-pheno))]
+      (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
+      (swap! sim-stats* update-in [:mutations :size-in] #(concat (or % []) [old-leafs]))
+      (swap! sim-stats* update-in [:mutations :size-out] #(concat (or % []) [new-leafs]))
+      new-pheno)
+    (catch Exception e
+      (println "Err in mutation: " e))))
 
 
 (defn crossover-fn
@@ -118,6 +131,7 @@
   (->>
     (:pop pops)
     (remove #(nil? (:score %)))
+    (take 10)
     (set)
     (sort-by :score)
     (reverse)))
@@ -131,6 +145,7 @@
     " fn: " (-> p :expr str)))
 
 
+
 (defn summarize-sim-stats
   []
   (let [{{cs     :counts
@@ -139,10 +154,10 @@
          {len-deductions :len-deductions} :scoring
          :as                              dat} @sim-stats*]
     (-> dat
-        (assoc :scoring {:len-deductions (/ (reduce + 0.0 len-deductions) (count len-deductions))})
+        (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
         (assoc :mutations {:counts        cs
-                           :size-in-mean  (/ (reduce + 0.0 sz-in) (count sz-in))
-                           :size-out-mean (/ (reduce + 0.0 sz-out) (count sz-out))}))))
+                           :size-in-mean  (/ (sum sz-in) (count sz-in))
+                           :size-out-mean (/ (sum sz-out) (count sz-out))}))))
 
 
 (defn run-test
@@ -162,18 +177,20 @@
                      i   200]
                 (if (zero? i)
                   pop
-                  (let [_       (swap! sim-stats* assoc :mutations {})
-                        new-pop (ga/evolve pop)
-                        s       (:pop-old-score new-pop)
-                        ss      (:pop-old-scores new-pop)]
-                    (when (zero? (mod i 10))
+                  (let [_         (swap! sim-stats* assoc :mutations {})
+                        ga-result (ga/evolve pop)
+                        s         (:pop-old-score ga-result)
+                        ss        (:pop-old-scores ga-result)]
+                    (when (zero? (mod i 5))
+                      (println i " step pop size: " (count (:pop ga-result)))
                       (println i " pop score: " s
-                               " mean: " (Math/round (float (/ s (count new-pop))))
+                               " mean: " (Math/round (float (/ s (count (:pop ga-result)))))
                                "\n top best: "
-                               (->> (take 15 (sort-population new-pop))
+                               (->> (take 10 (sort-population ga-result))
                                     (map reportable-phen-str))
-                               "\n with sim stats: " (summarize-sim-stats)))
-                    (recur new-pop
+                               "\n with sim stats: " (summarize-sim-stats)
+                               ))
+                    (recur ga-result
                            (if (or (zero? s) (some #(> % -1e-3) ss))
                              (do
                                (println "Perfect score! " i)
@@ -181,7 +198,7 @@
                              (dec i))))))]
       (let [end   (Date.)
             diff  (- (.getTime end) (.getTime start))
-            bests (take 15 (sort-population pop))]
+            bests (take 10 (sort-population pop))]
         (println "Took " (/ diff 1000.0) " seconds")
         (println "Bests: "
                  (str/join "\n"

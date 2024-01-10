@@ -48,10 +48,11 @@
 
 
 (defn ->phenotype
-  [^ISymbol variable ^IAST expr]
-  (let [^ExprEvaluator util (new-util)
+  [^ISymbol variable ^IAST expr ^ExprEvaluator util]
+  (let [^ExprEvaluator util (or util (new-util))
         ^IAST expr          (.eval util expr)]
     {:sym  variable
+     ;; :util util
      :expr expr
      :fn   (expr->fn util variable expr)}))
 
@@ -73,18 +74,18 @@
 
 
 (defmethod modify :substitute
-  [{:keys [^IExpr find-expr ^IExpr replace-expr]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (->phenotype x-sym (.subs expr find-expr replace-expr)))
+  [{:keys [^IExpr find-expr ^IExpr replace-expr]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
+  (->phenotype x-sym (.subs expr find-expr replace-expr) util))
 
 
 (defmethod modify :modify-leafs
-  [{:keys [leaf-modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn))))
+  [{:keys [leaf-modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
+  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn)) util))
 
 
 (defmethod modify :fn
-  [{:keys [modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (->phenotype x-sym (modifier-fn pheno)))
+  [{:keys [modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
+  (->phenotype x-sym (modifier-fn pheno) util))
 
 
 (defn initial-phenotypes
@@ -95,7 +96,7 @@
      (F/Times -1 (->iexprs [x]))]
     (repeat reps)
     (mapcat identity)
-    (mapv (fn [^IExpr expr] (->phenotype x expr)))))
+    (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
 
 
 (defn initial-mutations
