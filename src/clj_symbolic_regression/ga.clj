@@ -45,6 +45,8 @@
           new-pop      (->> (pmap second new-pop-data)
                             (mapcat identity)
                             (vec))]
+      (when-not (empty? (filter #(nil? (:util %)) new-pop))
+        (println "warning nonempty utils: " (count (filter #(nil? (:util %)) new-pop))))
 
       (merge config
              {:pop            new-pop

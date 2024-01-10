@@ -39,7 +39,8 @@
 
 (defn ^ExprEvaluator new-util
   []
-  (ExprEvaluator. false 1))
+  ;(println "new evaluator")
+  (ExprEvaluator. true 0))
 
 
 (defn ^java.util.function.Function as-function
@@ -52,18 +53,21 @@
   ([{v :sym e :expr u :util}]
    (->phenotype v e u))
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
-   (let [^ExprEvaluator util (or util (new-util))
+   (try
+     (let [^ExprEvaluator util (or util (new-util))
          ^IAST expr          (.eval util expr)]
      {:sym  variable
-      ;; :util util
+      :util util
       :id   (UUID/randomUUID)
       :expr expr
-      :fn   (expr->fn util variable expr)})))
+      :fn   (expr->fn util variable expr)})
+     (catch Exception e
+       (println "Err creating pheno: " expr " , " variable " , " e)))))
 
 
 (defn eval-phenotype
-  [{^IAST pfn :fn} x]
-  (.evalFunction (new-util) pfn (->strings [(str x)])))
+  [{^IAST pfn :fn ^ExprEvaluator util :util} x]
+  (.evalFunction util pfn (->strings [(str x)])))
 
 
 (defn ^java.util.function.Function tree-modifier
@@ -79,17 +83,17 @@
 
 (defmethod modify :substitute
   [{:keys [^IExpr find-expr ^IExpr replace-expr]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (.subs expr find-expr replace-expr) util))
+  (->phenotype x-sym (.subs expr find-expr replace-expr) nil))
 
 
 (defmethod modify :modify-leafs
   [{:keys [leaf-modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn)) util))
+  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn)) nil))
 
 
 (defmethod modify :fn
   [{:keys [modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (modifier-fn pheno) util))
+  (->phenotype x-sym (modifier-fn pheno) nil))
 
 
 (defn initial-phenotypes

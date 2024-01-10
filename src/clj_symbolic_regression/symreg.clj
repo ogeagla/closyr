@@ -111,6 +111,11 @@
    7
    8])
 
+(defn rand-mut
+  [initial-muts]
+  (rand-nth initial-muts)
+  )
+
 
 (defn mutation-fn
   [initial-muts v]
@@ -122,7 +127,7 @@
                         v
                         (recur
                           (dec c)
-                          (ops/modify (rand-nth initial-muts) v))))
+                          (ops/modify (rand-mut initial-muts) v))))
           old-leafs (.leafCount (:expr v))
           new-leafs (.leafCount (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
@@ -144,7 +149,6 @@
   (->>
     (:pop pops)
     (remove #(nil? (:score %)))
-    (set)
     (sort-by :score)
     (reverse)))
 
@@ -240,12 +244,12 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 1000)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 100)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
      :output-exprs-vec output-exprs-vec
-     :iters            500}))
+     :iters            100}))
 
 
 (comment (run-test))
