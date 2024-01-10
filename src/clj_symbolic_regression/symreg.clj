@@ -14,7 +14,7 @@
 
 
 (def ^ISymbol sym-x (F/Dummy "x"))
-(def initial-phenos (ops/initial-phenotypes sym-x 1000))
+(def initial-phenos (ops/initial-phenotypes sym-x 10))
 
 (def initial-muts (ops/initial-mutations))
 
@@ -29,7 +29,8 @@
   (->>
     (range 20)
     (map (fn [i]
-           (.add F/C0 (+ 2.0 (* 2.0 (Math/sin (* Math/PI (/ i 20.0))))))))
+           (let [x (* Math/PI (/ i 20.0))]
+             (.add F/C0 (+ (* x x) 2.0 (* 2.0 (Math/sin x)))))))
     vec))
 
 ;(def input-exprs [(.add F/C0 1.923456) F/C1D2 F/C1D5 F/C1D4 F/C1D3 F/CN1])
@@ -126,7 +127,7 @@
 
 
 (defn score-fn
-  [v]
+  [output-exprs-vec v]
   ;; (println "Score: "  (.toString (ops/eval-phenotype v 0.3)))
   (try
     (let [resids (map (fn [output expted]
@@ -157,14 +158,14 @@
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 50)
-        pop1           (ga/initialize initial-phenos score-fn mutation-fn crossover-fn)]
+        initial-phenos (ops/initial-phenotypes sym-x 100)
+        pop1           (ga/initialize initial-phenos (partial score-fn output-exprs-vec) mutation-fn crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
     (let [pop (loop [pop pop1
-                     i   500]
+                     i   1000]
                 (if (zero? i)
                   pop
                   (let [new-pop (ga/evolve pop)
@@ -173,11 +174,11 @@
                         ]
                     (when (zero? (mod i 20))
                       (println i " pop score: " s " top best: "
-                               (take 25 (reverse (sort-by :score (:pop new-pop))))))
+                               (take 15 (reverse (sort-by :score (:pop new-pop))))))
                     (recur new-pop
                            (if (or (zero? s) (some #(> % -1e-3) ss))
                              (do
-                               (println "Perfect score!")
+                               (println "Perfect score! " i)
                                0)
                              (dec i))))))]
       (let [end   (Date.)
