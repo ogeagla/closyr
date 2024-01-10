@@ -1,7 +1,8 @@
 (ns clj-symbolic-regression.ops
   (:import
     (java.util
-      Date UUID)
+      Date
+      UUID)
     org.matheclipse.core.eval.ExprEvaluator
     (org.matheclipse.core.expression
       AST
@@ -118,6 +119,15 @@
     :label       "-1/2"
     :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr F/C1D2))}
+   {:op          :fn
+    :label       "+1/10"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (F/Divide 1 F/C10)))}
+
+   {:op          :fn
+    :label       "-1/10"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (F/Divide 1 F/C10)))}
 
    {:op          :fn
     :label       "+Sin"
@@ -138,6 +148,28 @@
     :label       "-Cos"
     :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr (F/Cos x-sym)))}
+
+
+
+   {:op          :fn
+    :label       "*Sin"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr (F/Sin x-sym)))}
+
+   {:op          :fn
+    :label       "/Sin"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr (F/Divide 1 (F/Sin x-sym))))}
+
+   {:op          :fn
+    :label       "*Cos"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr (F/Cos x-sym)))}
+
+   {:op          :fn
+    :label       "/Cos"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr (F/Divide 1 (F/Cos x-sym))))}
 
    {:op          :fn
     :label       "+x"
@@ -173,6 +205,17 @@
                    (.times expr F/C2))}
 
 
+   {:op          :fn
+    :label       "/10"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr (F/Divide 1 F/C10)))}
+
+   {:op          :fn
+    :label       "*10"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr F/C10))}
+
+
 
    {:op               :modify-leafs
     :label            "x+1/5"
@@ -191,6 +234,22 @@
 
 
    {:op               :modify-leafs
+    :label            "x+1/10"
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          (.plus ie (F/Divide 1 F/C10))
+                          ie))}
+
+
+   {:op               :modify-leafs
+    :label            "x-1/10"
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          (.minus ie (F/Divide 1 F/C10))
+                          ie))}
+
+
+   {:op               :modify-leafs
     :label            "c/2"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
                         (if (= (.toString ie) "x")
@@ -204,6 +263,36 @@
                         (if (= (.toString ie) "x")
                           ie
                           (.times ie (F/C2))))}
+
+   {:op               :modify-leafs
+    :label            "c/10"
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          ie
+                          (.times ie (F/Divide 1 F/C10))))}
+
+
+   {:op               :modify-leafs
+    :label            "c*10"
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (= (.toString ie) "x")
+                          ie
+                          (.times ie F/C10)))}
+
+   {:op           :substitute
+    :label        "Divide->Times"
+    :find-expr    F/Divide
+    :replace-expr F/Times}
+
+   {:op           :substitute
+    :label        "Plus->Minus"
+    :find-expr    F/Plus
+    :replace-expr F/Minus}
+
+   {:op           :substitute
+    :label        "Minus->Plus"
+    :find-expr    F/Minus
+    :replace-expr F/Plus}
 
    {:op           :substitute
     :label        "Sin->Cos"
