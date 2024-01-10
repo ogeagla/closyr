@@ -147,18 +147,30 @@
 
 (defn mutation-fn
   [v]
-  (ops/modify (rand-nth initial-muts) v))
+  (let [c (rand-nth [1 1 1 2 2 3])]
+    (loop [c c
+           v v]
+      (if (zero? c)
+        v
+        (recur
+          (dec c)
+          (ops/modify (rand-nth initial-muts) v)
+          )
+        )
+      )
+    #_(ops/modify (rand-nth initial-muts) v)))
 
 
 (defn crossover-fn
   [v]
+
   v)
 
 
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 100)
+        initial-phenos (ops/initial-phenotypes sym-x 200)
         pop1           (ga/initialize initial-phenos (partial score-fn output-exprs-vec) mutation-fn crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
