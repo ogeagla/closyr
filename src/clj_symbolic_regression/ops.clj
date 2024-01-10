@@ -126,6 +126,16 @@
                    (.minus expr (F/Sin x-sym)))}
 
    {:op          :fn
+    :label       "+Cos"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (F/Cos x-sym)))}
+
+   {:op          :fn
+    :label       "-Cos"
+    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (F/Cos x-sym)))}
+
+   {:op          :fn
     :label       "+x"
     :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr x-sym))}

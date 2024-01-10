@@ -148,7 +148,7 @@
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 20)
+        initial-phenos (ops/initial-phenotypes sym-x 100)
         initial-muts   (ops/initial-mutations)
         pop1           (ga/initialize initial-phenos
                                       (partial score-fn input-exprs output-exprs-vec)
@@ -159,7 +159,7 @@
     (println "initial muts: " (count initial-muts))
 
     (let [pop (loop [pop pop1
-                     i   100]
+                     i   200]
                 (if (zero? i)
                   pop
                   (let [_       (swap! sim-stats* assoc :mutations {})
