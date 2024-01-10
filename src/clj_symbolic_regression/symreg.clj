@@ -33,12 +33,9 @@
     (range 20)
     (map (fn [i]
            (let [x (* Math/PI (/ i 20.0))]
-             (.add F/C0 (+ (* -1 x x) 2.0 (* 4.0 (Math/sin x)))))))
+             (.add F/C0 (+ (* 1.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
     vec))
 
-
-;; (def input-exprs [(.add F/C0 1.923456) F/C1D2 F/C1D5 F/C1D4 F/C1D3 F/CN1])
-;; (def output-exprs [F/CN1 F/C1D3 F/C1D5 F/C1D4 F/C1D2 (.add F/C0 1.923456)])
 (def output-exprs-vec (mapv #(.doubleValue (.toNumber %)) output-exprs))
 
 
@@ -105,10 +102,11 @@
 
 
 (def mutations-sampler
-  [1 1 1 1 1 1
+  [1 1 1 1 1 1 1 1
    2 2 2 2
-   3 3
-   4])
+   3 3 3
+   4 4
+   5])
 
 
 (defn mutation-fn
@@ -133,9 +131,9 @@
 
 
 (defn crossover-fn
-  [v]
-  ;; todo do something
-  v)
+  [initial-muts v]
+  ;; todo do something for crossover
+  (mutation-fn initial-muts v))
 
 
 (defn sort-population
@@ -179,7 +177,7 @@
 
 (defn report-iteration
   [i ga-result]
-  (when (zero? (mod i 1))
+  (when (zero? (mod i 5))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
@@ -204,10 +202,11 @@
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs input-exprs-list output-exprs-vec]}]
   (let [start (Date.)
-        pop1  (ga/initialize initial-phenos
-                             (partial score-fn input-exprs input-exprs-list output-exprs-vec)
-                             (partial mutation-fn initial-muts)
-                             crossover-fn)]
+        pop1  (ga/initialize
+                initial-phenos
+                (partial score-fn input-exprs input-exprs-list output-exprs-vec)
+                (partial mutation-fn initial-muts)
+                (partial crossover-fn initial-muts))]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
@@ -238,12 +237,12 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 100)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 500)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
      :output-exprs-vec output-exprs-vec
-     :iters            100}))
+     :iters            500}))
 
 
 (comment (run-test))
