@@ -107,112 +107,146 @@
   []
   [{:op          :fn
     :label       "Derivative"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (F/D expr x-sym))}
 
    {:op          :fn
     :label       "+1/2"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr F/C1D2))}
 
    {:op          :fn
     :label       "-1/2"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr F/C1D2))}
    {:op          :fn
     :label       "+1/10"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr (F/Divide 1 F/C10)))}
 
    {:op          :fn
     :label       "-1/10"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr (F/Divide 1 F/C10)))}
 
    {:op          :fn
     :label       "+Sin"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr  [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr (F/Sin x-sym)))}
 
    {:op          :fn
     :label       "-Sin"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr (F/Sin x-sym)))}
 
    {:op          :fn
     :label       "+Cos"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr (F/Cos x-sym)))}
 
    {:op          :fn
     :label       "-Cos"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr (F/Cos x-sym)))}
 
+
+   ;{:op          :fn
+   ; :label       "+Exp"
+   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;                (.plus expr (F/Exp x-sym)))}
+   ;
+   ;{:op          :fn
+   ; :label       "-Exp"
+   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;                (.minus expr (F/Exp x-sym)))}
+   ;
+   ;
+   ;
+   ;{:op          :fn
+   ; :label       "+ 1/Exp"
+   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;                (.plus expr (F/Divide 1 (F/Exp x-sym))))}
+   ;
+   ;{:op          :fn
+   ; :label       "- 1/Exp"
+   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;                (.minus expr (F/Divide 1 (F/Exp x-sym))))}
+   ;
+   ;
+   ;
+   ;{:op          :fn
+   ; :label       "*Exp"
+   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;                (.times expr (F/Exp x-sym)))}
+   ;
+   ;{:op          :fn
+   ; :label       "/Exp"
+   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;                (.times expr (F/Divide 1 (F/Exp x-sym))))}
 
 
    {:op          :fn
     :label       "*Sin"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr (F/Sin x-sym)))}
 
    {:op          :fn
     :label       "/Sin"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr (F/Divide 1 (F/Sin x-sym))))}
 
    {:op          :fn
     :label       "*Cos"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr (F/Cos x-sym)))}
 
    {:op          :fn
     :label       "/Cos"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr (F/Divide 1 (F/Cos x-sym))))}
 
    {:op          :fn
     :label       "+x"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr x-sym))}
 
    {:op          :fn
     :label       "-x"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr x-sym))}
    {:op          :fn
     :label       "*x"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr x-sym))}
 
    {:op          :fn
     :label       "/x"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.divide expr x-sym))}
    {:op          :fn
     :label       "*-1"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr F/CN1))}
 
    {:op          :fn
     :label       "/2"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr F/C1D2))}
 
    {:op          :fn
     :label       "*2"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr F/C2))}
 
 
    {:op          :fn
     :label       "/10"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr (F/Divide 1 F/C10)))}
 
    {:op          :fn
     :label       "*10"
-    :modifier-fn (fn [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr F/C10))}
 
 
@@ -283,11 +317,6 @@
     :label        "Divide->Times"
     :find-expr    F/Divide
     :replace-expr F/Times}
-
-   {:op           :substitute
-    :label        "Plus->Minus"
-    :find-expr    F/Plus
-    :replace-expr F/Minus}
 
    {:op           :substitute
     :label        "Minus->Plus"
