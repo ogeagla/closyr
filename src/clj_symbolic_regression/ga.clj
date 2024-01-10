@@ -10,7 +10,8 @@
 
 
 (def new-phen-modifier-sampler
-  [true false])
+  ;; 3 / 4 chance of mutation instead of crossover:
+  [true true true false])
 
 
 (defn evolve
