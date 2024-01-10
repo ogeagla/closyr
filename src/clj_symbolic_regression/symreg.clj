@@ -147,19 +147,19 @@
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 100)
+        initial-phenos (ops/initial-phenotypes sym-x 200)
         pop1           (ga/initialize initial-phenos score-fn mutation-fn crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
     (let [pop (loop [pop pop1
-                     i   10000]
+                     i   2000]
                 (if (zero? i)
                   pop
                   (let [new-pop (ga/evolve pop)
                         s       (:pop-old-score new-pop)]
-                    (when (zero? (mod i 200))
+                    (when (zero? (mod i 50))
                       (println i " pop score: " s))
                     (recur new-pop
                            (if (zero? s)
@@ -169,7 +169,7 @@
                              (dec i))))))]
       (let [end   (Date.)
             diff  (- (.getTime end) (.getTime start))
-            bests (take 5 (reverse (sort-by :score (:pop pop))))]
+            bests (take 25 (reverse (sort-by :score (:pop pop))))]
         (println "Took " (/ diff 1000.0) " seconds")
         (println "Bests: "
                  (str/join "\n"
