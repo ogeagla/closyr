@@ -38,7 +38,7 @@
 
 (defn ^ExprEvaluator new-util
   []
-  (ExprEvaluator. false 10))
+  (ExprEvaluator. false 1))
 
 
 (defn ^java.util.function.Function as-function

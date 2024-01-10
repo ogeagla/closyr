@@ -174,7 +174,7 @@
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 250)
+        initial-phenos (ops/initial-phenotypes sym-x 300)
         initial-muts   (ops/initial-mutations)
         pop1           (ga/initialize initial-phenos
                                       (partial score-fn input-exprs output-exprs-vec)
@@ -187,14 +187,14 @@
     (reset! test-timer* start)
 
     (let [pop (loop [pop pop1
-                     i   100]
+                     i   200]
                 (if (zero? i)
                   pop
                   (let [_          (reset! sim-stats* {})
                         ga-result  (ga/evolve pop)
                         old-score  (:pop-old-score ga-result)
                         old-scores (:pop-old-scores ga-result)]
-                    (when (zero? (mod i 5))
+                    (when (zero? (mod i 10))
                       (let [end  (Date.)
                             diff (- (.getTime end) (.getTime @test-timer*))]
                         (reset! test-timer* end)
