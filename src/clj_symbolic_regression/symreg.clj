@@ -24,6 +24,10 @@
     vec))
 
 
+(def input-exprs-list
+  (F/List (into-array IExpr input-exprs)))
+
+
 (def output-exprs
   (->>
     (range 20)
@@ -39,10 +43,10 @@
 
 
 (defn eval-vec-pheno
-  [p input-exprs]
+  [p input-exprs input-exprs-list]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
-        eval-p          (ops/eval-phenotype p (F/List (into-array IExpr input-exprs)))
+        eval-p          (ops/eval-phenotype p input-exprs-list)
         vs              (vec (pmap
                                (fn [i]
                                  (try
@@ -80,13 +84,13 @@
 
 
 (defn score-fn
-  [input-exprs output-exprs-vec v]
+  [input-exprs input-exprs-list output-exprs-vec v]
   (try
     (let [leafs            (.leafCount (:expr v))
           resids           (pmap (fn [output expted]
-                                  (- expted output))
-                                (eval-vec-pheno v input-exprs)
-                                output-exprs-vec)
+                                   (- expted output))
+                                 (eval-vec-pheno v input-exprs input-exprs-list)
+                                 output-exprs-vec)
           resid            (sum (map #(min 100000 (abs %)) resids))
           score            (* -1 (abs resid))
           length-deduction (* 0.0001 leafs)]
@@ -191,16 +195,17 @@
   (reset! sim-stats* {}))
 
 
-(defn near-exact-solution [i old-score old-scores]
+(defn near-exact-solution
+  [i old-score old-scores]
   (println "Perfect score! " i old-score " all scores: " old-scores)
   0)
 
 
 (defn run-experiment
-  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs-vec]}]
+  [{:keys [iters initial-phenos initial-muts input-exprs input-exprs-list output-exprs-vec]}]
   (let [start (Date.)
         pop1  (ga/initialize initial-phenos
-                             (partial score-fn input-exprs output-exprs-vec)
+                             (partial score-fn input-exprs input-exprs-list output-exprs-vec)
                              (partial mutation-fn initial-muts)
                              crossover-fn)]
     (println "start " start)
@@ -236,11 +241,12 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 800)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 500)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
+     :input-exprs-list input-exprs-list
      :output-exprs-vec output-exprs-vec
-     :iters            500}))
+     :iters            100}))
 
 
 (comment (run-test))
