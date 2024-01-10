@@ -9,7 +9,7 @@
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
-      ISymbol)))
+      IExpr ISymbol)))
 
 
 (def ^ISymbol sym-x (F/Dummy "x"))
@@ -17,34 +17,118 @@
 
 (def initial-muts (ops/initial-mutations))
 
+(def input-exprs     [(.add F/C0 1.923456) F/C1D2 F/C1D5 F/C1D4 F/C1D3 F/CN1])
+(def output-exprs     [ F/CN1   F/C1D3 F/C1D5 F/C1D4  F/C1D2  (.add F/C0 1.923456)])
+(def output-exprs-vec (mapv #(.doubleValue (.toNumber %)) output-exprs)     )
+
+
+(defn eval-vec-pheno
+  [p input-exprs]
+  (let [
+        ^IExpr new-expr (:expr p)
+        new-is-const    (.isNumber new-expr)
+
+        eval-p          (ops/eval-phenotype p (F/List (into-array IExpr input-exprs)))
+        vs              (vec (pmap
+                               (fn [i]
+                                 (let [v (try
+                                           (.doubleValue
+                                             (.toNumber (.getArg eval-p (inc i) F/Infinity)))
+                                           (catch Exception e
+                                             Double/POSITIVE_INFINITY))]
+                                   #_(println "Got output vec item: " v)
+                                   v))
+                               (range (dec (.size eval-p)))))
+        vs              (if (seq vs)
+                          vs
+                          (vec (pmap
+                                 (fn [i]
+                                   (.doubleValue
+                                     (.toNumber (if new-is-const
+                                                  new-expr
+                                                  (.getArg eval-p 0 F/Infinity)))))
+                                 (range (count input-exprs)))))
+        ]
+    vs))
 
 (defn demo-math-2
   []
 
-  (let []
+  (let [
+        start          (Date.)
+        _              (println "start " start)
+        ^ISymbol sym-x (F/Dummy "x")
+        report         (->>
+                         (for [p  (ops/initial-phenotypes sym-x 1)
+                               m1 initial-muts
+                               m2 initial-muts]
+                           (let [new-p           (ops/modify m2 (ops/modify m1 p))
+                                 ^IExpr new-expr (:expr new-p)
+                                 new-is-const    (.isNumber new-expr)
+
+                                 eval-p          (ops/eval-phenotype new-p (F/List (into-array IExpr input-exprs)))
+                                 vs              (vec (pmap
+                                                        (fn [i]
+                                                          (let [v (try
+                                                                    (.doubleValue
+                                                                      (.toNumber (.getArg eval-p (inc i) F/Infinity)))
+                                                                    (catch Exception e
+                                                                      Double/POSITIVE_INFINITY))]
+                                                            #_(println "Got output vec item: " v)
+                                                            v))
+                                                        (range (dec (.size eval-p)))))
+                                 vs              (if (seq vs)
+                                                   vs
+                                                   (vec (pmap
+                                                          (fn [i]
+                                                            (.doubleValue
+                                                              (.toNumber (if new-is-const
+                                                                           new-expr
+                                                                           (.getArg eval-p 0 F/Infinity)))))
+                                                          (range (count input-exprs)))))]
+
+
+                             (str
+                               "\n" (:expr p) " -> " (:label m1) "." (:label m2) " :: "
+                               (:expr new-p)
+                               " -->> type:" (type eval-p) " size:" (.size eval-p) " " #_eval-p
+                               " head: " (.getArg eval-p 0 nil)
+                               " output: " vs)))
+                         (sort-by count)
+                         (reverse))
+        end            (Date.)
+        diff           (- (.getTime end) (.getTime start))
+        ]
+
     (println "initial muts: " (count initial-muts))
     (println "initial fn x muts: "
-             (->>
-               (for [p  initial-phenos
-                     m1 initial-muts
-                     m2 initial-muts
-                     m3 initial-muts]
-                 (let [new-p  (ops/modify m3 (ops/modify m2 (ops/modify m1 p)))
-                       eval-p (ops/eval-phenotype new-p 0.3)]
-                   (str
-                     "\n" (:expr p) " -> " (:label m1) "." (:label m2) "." (:label m3) " :: "
-                     (:expr new-p)
-                     " -->> " eval-p)))
-               (sort-by count)
-               (reverse)
-               (take 50)))))
+             (take 20 report)
+             "\n...\n"
+
+
+             (take 20 (take-last (/ (count report) 2) report))
+             (take-last 20 (take (/ (count report) 2) report))
+             "\n...\n"
+             (take-last 20 report))
+    (println "Took " (/ diff 1000.0) " seconds")))
 
 
 (defn score-fn
   [v]
   ;; (println "Score: "  (.toString (ops/eval-phenotype v 0.3)))
   (try
-    (* -1 (abs (- 10 (Double/parseDouble (.toString (.toNumber (ops/eval-phenotype v 0.3)))))))
+    (let [resids (map (fn [output expted]
+                        ;(println output expted)
+                        (- expted output))
+                      (eval-vec-pheno v input-exprs)
+                      output-exprs-vec
+                      )
+          ;resid (- 10 (Double/parseDouble (.toString (.toNumber (ops/eval-phenotype v 0.3)))))
+          resid (reduce + 0.0 (map abs resids))]
+      (when (zero? resid)
+        (println "zero resid " resids)
+        )
+      (* -1 (abs resid)))
     (catch Exception e
       #_(println "Error " (:expr v) " -> " e)
       -1000)))
@@ -70,12 +154,12 @@
     (println "initial muts: " (count initial-muts))
 
     (let [pop (loop [pop pop1
-                     i   1000]
+                     i   10000]
                 (if (zero? i)
                   pop
                   (let [new-pop (ga/evolve pop)
                         s       (:pop-old-score new-pop)]
-                    (when (zero? (mod i 100))
+                    (when (zero? (mod i 200))
                       (println i " pop score: " s))
                     (recur new-pop
                            (if (zero? s)
