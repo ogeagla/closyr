@@ -153,6 +153,7 @@
           sz-out :size-out}               :mutations
          {len-deductions :len-deductions} :scoring
          :as                              dat} @sim-stats*]
+    (println "Stats has counts: " "mut size: " (count sz-in) " len deduction: " (count len-deductions))
     (-> dat
         (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
         (assoc :mutations {:counts        cs
@@ -163,7 +164,7 @@
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 100)
+        initial-phenos (ops/initial-phenotypes sym-x 500)
         initial-muts   (ops/initial-mutations)
         pop1           (ga/initialize initial-phenos
                                       (partial score-fn input-exprs output-exprs-vec)
@@ -174,22 +175,22 @@
     (println "initial muts: " (count initial-muts))
 
     (let [pop (loop [pop pop1
-                     i   200]
+                     i   500]
                 (if (zero? i)
                   pop
-                  (let [_         (swap! sim-stats* assoc :mutations {})
+                  (let [_         (reset! sim-stats* {})
                         ga-result (ga/evolve pop)
                         s         (:pop-old-score ga-result)
                         ss        (:pop-old-scores ga-result)]
-                    (when (zero? (mod i 5))
+                    (when (zero? (mod i 25))
                       (println i " step pop size: " (count (:pop ga-result)))
                       (println i " pop score: " s
                                " mean: " (Math/round (float (/ s (count (:pop ga-result)))))
                                "\n top best: "
                                (->> (take 10 (sort-population ga-result))
                                     (map reportable-phen-str))
-                               "\n with sim stats: " (summarize-sim-stats)
-                               ))
+                               )
+                      (println i " sim stats: " (summarize-sim-stats)))
                     (recur ga-result
                            (if (or (zero? s) (some #(> % -1e-3) ss))
                              (do
