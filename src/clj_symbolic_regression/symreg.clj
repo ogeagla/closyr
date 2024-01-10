@@ -164,15 +164,18 @@
     (println "initial muts: " (count initial-muts))
 
     (let [pop (loop [pop pop1
-                     i   1000]
+                     i   500]
                 (if (zero? i)
                   pop
                   (let [new-pop (ga/evolve pop)
-                        s       (:pop-old-score new-pop)]
-                    (when (zero? (mod i 50))
-                      (println i " pop score: " s))
+                        s       (:pop-old-score new-pop)
+                        ss       (:pop-old-scores new-pop)
+                        ]
+                    (when (zero? (mod i 20))
+                      (println i " pop score: " s " top best: "
+                               (take 25 (reverse (sort-by :score (:pop new-pop))))))
                     (recur new-pop
-                           (if (zero? s)
+                           (if (or (zero? s) (some #(> % -1e-3) ss))
                              (do
                                (println "Perfect score!")
                                0)

@@ -28,7 +28,8 @@
                                                   (mutation-fn better-e)
                                                   (crossover-fn better-e))]
                                    [(+ s1 s2) [better-e new-e]])))))
-        pop-score    (->> (pmap first new-pop-data)
+        pop-scores (pmap first new-pop-data)
+        pop-score    (->> pop-scores
                           (reduce + 0.0))
         new-pop      (->> (pmap second new-pop-data)
                           (mapcat identity)
@@ -37,6 +38,7 @@
      :pop-old       pop
      :score-fn      score-fn
      :pop-old-score pop-score
+     :pop-old-scores pop-scores
      :mutation-fn   mutation-fn
      :crossover-fn  crossover-fn}))
 
