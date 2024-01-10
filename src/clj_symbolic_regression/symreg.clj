@@ -18,17 +18,17 @@
 
 (def input-exprs
   (->>
-    (range 10)
+    (range 20)
     (map (fn [i]
-           (.add F/C0 (* Math/PI (/ i 10.0)))))
+           (.add F/C0 (* Math/PI (/ i 20.0)))))
     vec))
 
 
 (def output-exprs
   (->>
-    (range 10)
+    (range 20)
     (map (fn [i]
-           (let [x (* Math/PI (/ i 10.0))]
+           (let [x (* Math/PI (/ i 20.0))]
              (.add F/C0 (+ (* -1 x x) 2.0 (* 4.0 (Math/sin x)))))))
     vec))
 
@@ -185,13 +185,14 @@
                "\n top best: "
                (->> (take 10 (sort-population ga-result))
                     (map reportable-phen-str)))
-      (println i " sim stats: " (summarize-sim-stats)))))
+      (println i " sim stats: " (summarize-sim-stats)))
+    (reset! sim-stats* {})))
 
 
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 500)
+        initial-phenos (ops/initial-phenotypes sym-x 100)
         initial-muts   (ops/initial-mutations)
         pop1           (ga/initialize initial-phenos
                                       (partial score-fn input-exprs output-exprs-vec)
@@ -207,8 +208,7 @@
                      i   500]
                 (if (zero? i)
                   pop
-                  (let [_          (reset! sim-stats* {})
-                        ga-result  (ga/evolve pop)
+                  (let [ga-result  (ga/evolve pop)
                         old-score  (:pop-old-score ga-result)
                         old-scores (:pop-old-scores ga-result)]
                     (report-iteration i ga-result)
