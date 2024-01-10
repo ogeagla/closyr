@@ -83,7 +83,7 @@
   [input-exprs output-exprs-vec v]
   (try
     (let [leafs            (.leafCount (:expr v))
-          resids           (map (fn [output expted]
+          resids           (pmap (fn [output expted]
                                   (- expted output))
                                 (eval-vec-pheno v input-exprs)
                                 output-exprs-vec)
@@ -93,7 +93,7 @@
       (when (zero? resid) (println "warning: zero resid " resids))
       (when (neg? length-deduction) (println "warning: negative deduction increases score: " leafs length-deduction v))
 
-      (swap! sim-stats* update-in [:scoring :len-deductions] #(concat (or % []) [length-deduction]))
+      (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
       (- score length-deduction))
     (catch Exception e
@@ -121,8 +121,8 @@
           old-leafs (.leafCount (:expr v))
           new-leafs (.leafCount (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
-      (swap! sim-stats* update-in [:mutations :size-in] #(concat (or % []) [old-leafs]))
-      (swap! sim-stats* update-in [:mutations :size-out] #(concat (or % []) [new-leafs]))
+      (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [old-leafs]))
+      (swap! sim-stats* update-in [:mutations :size-out] #(into (or % []) [new-leafs]))
       new-pheno)
     (catch Exception e
       (println "Err in mutation: " e))))
@@ -160,13 +160,14 @@
           sz-out :size-out}               :mutations
          {len-deductions :len-deductions} :scoring
          :as                              dat} @sim-stats*]
-    (str " mut size: " (count sz-in) " len deduction: " (count len-deductions)
-         " "
-         (-> dat
-             (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
-             (assoc :mutations {:counts        cs
-                                :size-in-mean  (/ (sum sz-in) (count sz-in))
-                                :size-out-mean (/ (sum sz-out) (count sz-out))})))))
+    (let [data-str (-> dat
+                       (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
+                       (assoc :mutations {:counts        cs
+                                          :size-in-mean  (/ (sum sz-in) (count sz-in))
+                                          :size-out-mean (/ (sum sz-out) (count sz-out))}))]
+      (str " mut size: " (count sz-in) " len deduction: " (count len-deductions)
+           " "
+           data-str))))
 
 
 (def test-timer* (atom nil))
@@ -190,6 +191,11 @@
   (reset! sim-stats* {}))
 
 
+(defn near-exact-solution [i old-score old-scores]
+  (println "Perfect score! " i old-score " all scores: " old-scores)
+  0)
+
+
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs-vec]}]
   (let [start (Date.)
@@ -207,15 +213,13 @@
                        i   iters]
                   (if (zero? i)
                     pop
-                    (let [ga-result  (ga/evolve pop)
-                          old-score  (:pop-old-score ga-result)
-                          old-scores (:pop-old-scores ga-result)]
+                    (let [{old-scores :pop-old-scores
+                           old-score  :pop-old-score
+                           :as        ga-result} (ga/evolve pop)]
                       (report-iteration i ga-result)
                       (recur ga-result
                              (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                               (do
-                                 (println "Perfect score! " i old-score " all scores: " old-scores)
-                                 0)
+                               (near-exact-solution i old-score old-scores)
                                (dec i))))))
           end   (Date.)
           diff  (- (.getTime end) (.getTime start))
