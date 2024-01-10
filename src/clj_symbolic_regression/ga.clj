@@ -1,13 +1,5 @@
 (ns clj-symbolic-regression.ga)
-(defn sum [coll]
-  (loop [acc 0.0
-         coll coll]
-    (if (empty? coll)
-      acc
-      (recur (+ acc (first coll))
-             (rest coll)))
 
-    ))
 
 (defn initialize
   [initial-pop score-fn mutation-fn crossover-fn]
@@ -15,6 +7,10 @@
    :score-fn     score-fn
    :mutation-fn  mutation-fn
    :crossover-fn crossover-fn})
+
+
+(def new-phen-modifier-sampler
+  [true false])
 
 
 (defn evolve
@@ -32,12 +28,12 @@
                                    [(:score e1) [e1]]
                                    (let [[s1 s2] [(:score e1) (:score e2)]
                                          better-e (if (>= s1 s2) e1 e2)
-                                         new-e    (if (rand-nth [true false])
+                                         new-e    (if (rand-nth new-phen-modifier-sampler)
                                                     (mutation-fn better-e)
                                                     (crossover-fn better-e))]
                                      [(+ s1 s2) [better-e new-e]])))))
           pop-scores   (pmap first new-pop-data)
-          pop-score    (sum pop-scores)
+          pop-score    (reduce + 0.0 pop-scores)
           new-pop      (->> (pmap second new-pop-data)
                             (mapcat identity)
                             (vec))]

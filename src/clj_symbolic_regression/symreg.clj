@@ -62,15 +62,18 @@
                                  (range (count input-exprs)))))]
     vs))
 
-(defn sum [coll]
-  (loop [acc 0.0
-         coll coll]
-    (if (empty? coll)
-      acc
-      (recur (+ acc (first coll))
-             (rest coll)))
 
-    ))
+(defn sum
+  [coll]
+  (reduce + 0.0 coll)
+  #_(loop [acc  0.0
+           coll coll]
+      (if (empty? coll)
+        acc
+        (recur (+ acc (first coll))
+               (rest coll)))
+
+      ))
 
 
 (def sim-stats* (atom {}))
@@ -81,9 +84,9 @@
   (try
     (let [leafs            (.leafCount (:expr v))
           resids           (map (fn [output expted]
-                                   (- expted output))
-                                 (eval-vec-pheno v input-exprs)
-                                 output-exprs-vec)
+                                  (- expted output))
+                                (eval-vec-pheno v input-exprs)
+                                output-exprs-vec)
           resid            (sum (map #(min 100000 (abs %)) resids))
           score            (* -1 (abs resid))
           length-deduction (* 0.0001 leafs)]
@@ -97,12 +100,17 @@
       -1000000)))
 
 
+(def mutations-sampler
+  [1 1 1 1 1 1
+   2 2 2 2
+   3 3
+   4])
+
+
 (defn mutation-fn
   [initial-muts v]
   (try
-    (let [c         (rand-nth [1 1 1
-                               2 2
-                               3])
+    (let [c         (rand-nth mutations-sampler)
           new-pheno (loop [c c
                            v v]
                       (if (zero? c)
@@ -145,7 +153,6 @@
     " fn: " (-> p :expr str)))
 
 
-
 (defn summarize-sim-stats
   []
   (let [{{cs     :counts
@@ -161,6 +168,9 @@
                            :size-out-mean (/ (sum sz-out) (count sz-out))}))))
 
 
+(def test-timer* (atom nil))
+
+
 (defn run-test
   []
   (let [start          (Date.)
@@ -174,25 +184,29 @@
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
+    (reset! test-timer* start)
+
     (let [pop (loop [pop pop1
-                     i   500]
+                     i   100]
                 (if (zero? i)
                   pop
-                  (let [_         (reset! sim-stats* {})
-                        ga-result (ga/evolve pop)
-                        s         (:pop-old-score ga-result)
-                        ss        (:pop-old-scores ga-result)]
-                    (when (zero? (mod i 10))
-                      (println i " step pop size: " (count (:pop ga-result)))
-                      (println i " pop score: " s
-                               " mean: " (Math/round (float (/ s (count (:pop ga-result)))))
-                               "\n top best: "
-                               (->> (take 10 (sort-population ga-result))
-                                    (map reportable-phen-str))
-                               )
-                      (println i " sim stats: " (summarize-sim-stats)))
+                  (let [_          (reset! sim-stats* {})
+                        ga-result  (ga/evolve pop)
+                        old-score  (:pop-old-score ga-result)
+                        old-scores (:pop-old-scores ga-result)]
+                    (when (zero? (mod i 5))
+                      (let [end  (Date.)
+                            diff (- (.getTime end) (.getTime @test-timer*))]
+                        (reset! test-timer* end)
+                        (println i " step pop size: " (count (:pop ga-result)) " took secs: " (/ diff 1000.0))
+                        (println i " pop score: " old-score
+                                 " mean: " (Math/round (float (/ old-score (count (:pop ga-result)))))
+                                 "\n top best: "
+                                 (->> (take 10 (sort-population ga-result))
+                                      (map reportable-phen-str)))
+                        (println i " sim stats: " (summarize-sim-stats))))
                     (recur ga-result
-                           (if (or (zero? s) (some #(> % -1e-3) ss))
+                           (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
                              (do
                                (println "Perfect score! " i)
                                0)
