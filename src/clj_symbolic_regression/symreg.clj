@@ -246,7 +246,7 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 100)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 500)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
