@@ -102,11 +102,13 @@
 
 
 (def mutations-sampler
-  [1 1 1 1 1 1 1 1
-   2 2 2 2
-   3 3 3
-   4 4
-   5])
+  [1 1 1 1 1 1 1 1 1
+   2 2 2 2 2 2
+   3 3 3 3
+   4 4 4
+   5 5
+   6
+   7])
 
 
 (defn mutation-fn
@@ -237,7 +239,7 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 500)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 1000)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
