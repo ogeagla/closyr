@@ -237,19 +237,18 @@
           bests (take 10 (sort-population pop))]
 
       (println "Took " (/ diff 1000.0) " seconds")
-      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
-      pop)))
+      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests))))))
 
 
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 100)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 1000)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
      :output-exprs-vec output-exprs-vec
-     :iters            100}))
+     :iters            500}))
 
 
 (comment (run-test))
