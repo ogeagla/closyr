@@ -160,12 +160,13 @@
           sz-out :size-out}               :mutations
          {len-deductions :len-deductions} :scoring
          :as                              dat} @sim-stats*]
-    (println "Stats has counts: " "mut size: " (count sz-in) " len deduction: " (count len-deductions))
-    (-> dat
-        (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
-        (assoc :mutations {:counts        cs
-                           :size-in-mean  (/ (sum sz-in) (count sz-in))
-                           :size-out-mean (/ (sum sz-out) (count sz-out))}))))
+    (str " mut size: " (count sz-in) " len deduction: " (count len-deductions)
+         " "
+         (-> dat
+             (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
+             (assoc :mutations {:counts        cs
+                                :size-in-mean  (/ (sum sz-in) (count sz-in))
+                                :size-out-mean (/ (sum sz-out) (count sz-out))})))))
 
 
 (def test-timer* (atom nil))
@@ -173,7 +174,7 @@
 
 (defn report-iteration
   [i ga-result]
-  (when (zero? (mod i 20))
+  (when (zero? (mod i 1))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
@@ -182,50 +183,60 @@
       (println i " step pop size: " (count (:pop ga-result)) " took secs: " (/ diff 1000.0))
       (println i " pop score: " old-score
                " mean: " (Math/round (float (/ old-score (count (:pop ga-result)))))
-               "\n top best: "
-               (->> (take 10 (sort-population ga-result))
+               "\n  top best: "
+               (->> (take 5 (sort-population ga-result))
                     (map reportable-phen-str)))
-      (println i " sim stats: " (summarize-sim-stats)))
-    (reset! sim-stats* {})))
+      (println i " sim stats: " (summarize-sim-stats))))
+  (reset! sim-stats* {}))
 
 
-(defn run-test
-  []
-  (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 100)
-        initial-muts   (ops/initial-mutations)
-        pop1           (ga/initialize initial-phenos
-                                      (partial score-fn input-exprs output-exprs-vec)
-                                      (partial mutation-fn initial-muts)
-                                      crossover-fn)]
+(defn run-experiment
+  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs-vec]}]
+  (let [start (Date.)
+        pop1  (ga/initialize initial-phenos
+                             (partial score-fn input-exprs output-exprs-vec)
+                             (partial mutation-fn initial-muts)
+                             crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
     (reset! test-timer* start)
 
-    (let [pop (loop [pop pop1
-                     i   500]
-                (if (zero? i)
-                  pop
-                  (let [ga-result  (ga/evolve pop)
-                        old-score  (:pop-old-score ga-result)
-                        old-scores (:pop-old-scores ga-result)]
-                    (report-iteration i ga-result)
-                    (recur ga-result
-                           (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                             (do
-                               (println "Perfect score! " i old-score " all scores: " old-scores)
-                               0)
-                             (dec i))))))]
-      (let [end   (Date.)
-            diff  (- (.getTime end) (.getTime start))
-            bests (take 10 (sort-population pop))]
-        (println "Took " (/ diff 1000.0) " seconds")
-        (println "Bests: "
-                 (str/join "\n"
-                           (map reportable-phen-str bests))
-                 "\n Sim stats: " (summarize-sim-stats))))))
+    (let [pop   (loop [pop pop1
+                       i   iters]
+                  (if (zero? i)
+                    pop
+                    (let [ga-result  (ga/evolve pop)
+                          old-score  (:pop-old-score ga-result)
+                          old-scores (:pop-old-scores ga-result)]
+                      (report-iteration i ga-result)
+                      (recur ga-result
+                             (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
+                               (do
+                                 (println "Perfect score! " i old-score " all scores: " old-scores)
+                                 0)
+                               (dec i))))))
+          end   (Date.)
+          diff  (- (.getTime end) (.getTime start))
+          bests (take 10 (sort-population pop))]
+
+      (println "Took " (/ diff 1000.0) " seconds")
+      (println "Bests: "
+               (str/join "\n"
+                         (map reportable-phen-str bests))
+               "\n Sim stats: " (summarize-sim-stats))
+      pop)))
+
+
+(defn run-test
+  []
+  (run-experiment
+    {:initial-phenos   (ops/initial-phenotypes sym-x 800)
+     :initial-muts     (ops/initial-mutations)
+     :input-exprs      input-exprs
+     :output-exprs-vec output-exprs-vec
+     :iters            500}))
 
 
 (comment (run-test))
