@@ -39,7 +39,7 @@
 
 (defn ^ExprEvaluator new-util
   []
-  ;(println "new evaluator")
+  ;; (println "new evaluator")
   (ExprEvaluator. true 0))
 
 
@@ -55,12 +55,12 @@
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
    (try
      (let [^ExprEvaluator util (or util (new-util))
-         ^IAST expr          (.eval util expr)]
-     {:sym  variable
-      :util util
-      :id   (UUID/randomUUID)
-      :expr expr
-      :fn   (expr->fn util variable expr)})
+           ^IAST expr          (.eval util expr)]
+       {:sym  variable
+        :util util
+        :id   (UUID/randomUUID)
+        :expr expr
+        :fn   (expr->fn util variable expr)})
      (catch Exception e
        (println "Err creating pheno: " expr " , " variable " , " e)))))
 
@@ -82,18 +82,21 @@
 
 
 (defmethod modify :substitute
-  [{:keys [^IExpr find-expr ^IExpr replace-expr]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (.subs expr find-expr replace-expr) nil))
+  [{:keys [^IExpr find-expr ^IExpr replace-expr]}
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util first-modify :first-modify :as pheno}]
+  (->phenotype x-sym (.subs expr find-expr replace-expr) (if first-modify nil util)))
 
 
 (defmethod modify :modify-leafs
-  [{:keys [leaf-modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn)) nil))
+  [{:keys [leaf-modifier-fn]}
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util first-modify :first-modify :as pheno}]
+  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn)) (if first-modify nil util)))
 
 
 (defmethod modify :fn
-  [{:keys [modifier-fn]} {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (modifier-fn pheno) nil))
+  [{:keys [modifier-fn]}
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util first-modify :first-modify :as pheno}]
+  (->phenotype x-sym (modifier-fn pheno) (if first-modify nil util)))
 
 
 (defn initial-phenotypes
@@ -135,7 +138,7 @@
 
    {:op          :fn
     :label       "+Sin"
-    :modifier-fn (fn ^IExpr  [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr (F/Sin x-sym)))}
 
    {:op          :fn
@@ -154,39 +157,39 @@
                    (.minus expr (F/Cos x-sym)))}
 
 
-   ;{:op          :fn
-   ; :label       "+Exp"
-   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;                (.plus expr (F/Exp x-sym)))}
-   ;
-   ;{:op          :fn
-   ; :label       "-Exp"
-   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;                (.minus expr (F/Exp x-sym)))}
-   ;
-   ;
-   ;
-   ;{:op          :fn
-   ; :label       "+ 1/Exp"
-   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;                (.plus expr (F/Divide 1 (F/Exp x-sym))))}
-   ;
-   ;{:op          :fn
-   ; :label       "- 1/Exp"
-   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;                (.minus expr (F/Divide 1 (F/Exp x-sym))))}
-   ;
-   ;
-   ;
-   ;{:op          :fn
-   ; :label       "*Exp"
-   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;                (.times expr (F/Exp x-sym)))}
-   ;
-   ;{:op          :fn
-   ; :label       "/Exp"
-   ; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;                (.times expr (F/Divide 1 (F/Exp x-sym))))}
+   ;; {:op          :fn
+   ;; :label       "+Exp"
+   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;;                (.plus expr (F/Exp x-sym)))}
+   ;;
+   ;; {:op          :fn
+   ;; :label       "-Exp"
+   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;;                (.minus expr (F/Exp x-sym)))}
+   ;;
+   ;;
+   ;;
+   ;; {:op          :fn
+   ;; :label       "+ 1/Exp"
+   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;;                (.plus expr (F/Divide 1 (F/Exp x-sym))))}
+   ;;
+   ;; {:op          :fn
+   ;; :label       "- 1/Exp"
+   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;;                (.minus expr (F/Divide 1 (F/Exp x-sym))))}
+   ;;
+   ;;
+   ;;
+   ;; {:op          :fn
+   ;; :label       "*Exp"
+   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;;                (.times expr (F/Exp x-sym)))}
+   ;;
+   ;; {:op          :fn
+   ;; :label       "/Exp"
+   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+   ;;                (.times expr (F/Divide 1 (F/Exp x-sym))))}
 
 
    {:op          :fn

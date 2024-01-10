@@ -36,6 +36,7 @@
              (.add F/C0 (+ (* 1.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
     vec))
 
+
 (def output-exprs-vec (mapv #(.doubleValue (.toNumber %)) output-exprs))
 
 
@@ -111,23 +112,25 @@
    7
    8])
 
+
 (defn rand-mut
   [initial-muts]
-  (rand-nth initial-muts)
-  )
+  (rand-nth initial-muts))
 
 
 (defn mutation-fn
   [initial-muts v]
   (try
     (let [c         (rand-nth mutations-sampler)
-          new-pheno (loop [c c
-                           v v]
+          new-pheno (loop [c          c
+                           v          v
+                           first-run? true]
                       (if (zero? c)
                         v
                         (recur
                           (dec c)
-                          (ops/modify (rand-mut initial-muts) v))))
+                          (ops/modify (rand-mut initial-muts) (assoc v :first-modify first-run?))
+                          false)))
           old-leafs (.leafCount (:expr v))
           new-leafs (.leafCount (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
@@ -243,7 +246,7 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 1000)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 100)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
