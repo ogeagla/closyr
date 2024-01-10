@@ -18,17 +18,17 @@
 
 (def input-exprs
   (->>
-    (range 20)
+    (range 10)
     (map (fn [i]
-           (.add F/C0 (* Math/PI (/ i 20.0)))))
+           (.add F/C0 (* Math/PI (/ i 10.0)))))
     vec))
 
 
 (def output-exprs
   (->>
-    (range 20)
+    (range 10)
     (map (fn [i]
-           (let [x (* Math/PI (/ i 20.0))]
+           (let [x (* Math/PI (/ i 10.0))]
              (.add F/C0 (+ (* -1 x x) 2.0 (* 4.0 (Math/sin x)))))))
     vec))
 
@@ -164,7 +164,7 @@
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 500)
+        initial-phenos (ops/initial-phenotypes sym-x 250)
         initial-muts   (ops/initial-mutations)
         pop1           (ga/initialize initial-phenos
                                       (partial score-fn input-exprs output-exprs-vec)
@@ -182,7 +182,7 @@
                         ga-result (ga/evolve pop)
                         s         (:pop-old-score ga-result)
                         ss        (:pop-old-scores ga-result)]
-                    (when (zero? (mod i 25))
+                    (when (zero? (mod i 10))
                       (println i " step pop size: " (count (:pop ga-result)))
                       (println i " pop score: " s
                                " mean: " (Math/round (float (/ s (count (:pop ga-result)))))
