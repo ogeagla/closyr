@@ -18,12 +18,14 @@
 
 (def initial-muts (ops/initial-mutations))
 
+
 (def input-exprs
   (->>
     (range 20)
     (map (fn [i]
            (.add F/C0 (* Math/PI (/ i 20.0)))))
     vec))
+
 
 (def output-exprs
   (->>
@@ -33,8 +35,9 @@
              (.add F/C0 (+ (* x x) 2.0 (* 2.0 (Math/sin x)))))))
     vec))
 
-;(def input-exprs [(.add F/C0 1.923456) F/C1D2 F/C1D5 F/C1D4 F/C1D3 F/CN1])
-;(def output-exprs [F/CN1 F/C1D3 F/C1D5 F/C1D4 F/C1D2 (.add F/C0 1.923456)])
+
+;; (def input-exprs [(.add F/C0 1.923456) F/C1D2 F/C1D5 F/C1D4 F/C1D3 F/CN1])
+;; (def output-exprs [F/CN1 F/C1D3 F/C1D5 F/C1D4 F/C1D2 (.add F/C0 1.923456)])
 (def output-exprs-vec (mapv #(.doubleValue (.toNumber %)) output-exprs))
 
 
@@ -147,30 +150,40 @@
 
 (defn mutation-fn
   [v]
-  (let [c (rand-nth [1 1 1 2 2 3])]
+  (let [c (rand-nth [1 1 1 1 2 2 2 3 3 4])]
     (loop [c c
            v v]
       (if (zero? c)
         v
         (recur
           (dec c)
-          (ops/modify (rand-nth initial-muts) v)
-          )
-        )
-      )
+          (ops/modify (rand-nth initial-muts) v))))
     #_(ops/modify (rand-nth initial-muts) v)))
 
 
 (defn crossover-fn
   [v]
-
+  ;; todo do something
   v)
+
+
+(defn sort-population
+  [pops]
+  (reverse (sort-by :score (set (:pop pops)))))
+
+
+(defn reportable-phen-str
+  [p]
+
+  (str
+    "score: " (-> p :score)
+    " fn: " (-> p :expr str)))
 
 
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 200)
+        initial-phenos (ops/initial-phenotypes sym-x 100)
         pop1           (ga/initialize initial-phenos (partial score-fn output-exprs-vec) mutation-fn crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
@@ -182,11 +195,11 @@
                   pop
                   (let [new-pop (ga/evolve pop)
                         s       (:pop-old-score new-pop)
-                        ss       (:pop-old-scores new-pop)
-                        ]
-                    (when (zero? (mod i 20))
+                        ss      (:pop-old-scores new-pop)]
+                    (when (zero? (mod i 100))
                       (println i " pop score: " s " top best: "
-                               (take 15 (reverse (sort-by :score (:pop new-pop))))))
+                               (->> (take 15 (sort-population new-pop))
+                                    (map reportable-phen-str))))
                     (recur new-pop
                            (if (or (zero? s) (some #(> % -1e-3) ss))
                              (do
@@ -195,16 +208,11 @@
                              (dec i))))))]
       (let [end   (Date.)
             diff  (- (.getTime end) (.getTime start))
-            bests (take 25 (reverse (sort-by :score (:pop pop))))]
+            bests (take 15 (sort-population pop))]
         (println "Took " (/ diff 1000.0) " seconds")
         (println "Bests: "
                  (str/join "\n"
-                           (map (fn [v]
-                                  (println v)
-                                  (str
-                                    "score: " (-> v :score)
-                                    " fn: " (-> v :expr str)))
-                                bests)))))))
+                           (map reportable-phen-str bests)))))))
 
 
 (comment (run-test))
