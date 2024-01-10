@@ -143,7 +143,6 @@
   (->>
     (:pop pops)
     (remove #(nil? (:score %)))
-    (take 10)
     (set)
     (sort-by :score)
     (reverse)))
@@ -153,7 +152,8 @@
   [p]
 
   (str
-    "score: " (-> p :score)
+    " id: " (-> p :id)
+    " score: " (-> p :score)
     " fn: " (-> p :expr str)))
 
 
@@ -231,17 +231,14 @@
           bests (take 10 (sort-population pop))]
 
       (println "Took " (/ diff 1000.0) " seconds")
-      (println "Bests: "
-               (str/join "\n"
-                         (map reportable-phen-str bests))
-               "\n Sim stats: " (summarize-sim-stats))
+      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
       pop)))
 
 
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 500)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 100)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list

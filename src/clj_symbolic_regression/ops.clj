@@ -1,7 +1,7 @@
 (ns clj-symbolic-regression.ops
   (:import
     (java.util
-      Date)
+      Date UUID)
     org.matheclipse.core.eval.ExprEvaluator
     (org.matheclipse.core.expression
       AST
@@ -48,13 +48,16 @@
 
 
 (defn ->phenotype
-  [^ISymbol variable ^IAST expr ^ExprEvaluator util]
-  (let [^ExprEvaluator util (or util (new-util))
-        ^IAST expr          (.eval util expr)]
-    {:sym  variable
-     ;; :util util
-     :expr expr
-     :fn   (expr->fn util variable expr)}))
+  ([{v :sym e :expr u :util}]
+   (->phenotype v e u))
+  ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
+   (let [^ExprEvaluator util (or util (new-util))
+         ^IAST expr          (.eval util expr)]
+     {:sym  variable
+      ;; :util util
+      :id   (UUID/randomUUID)
+      :expr expr
+      :fn   (expr->fn util variable expr)})))
 
 
 (defn eval-phenotype
