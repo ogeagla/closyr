@@ -256,8 +256,6 @@
     (println "initial fn x muts: "
              (take 20 report)
              "\n...\n"
-
-
              (take 20 (take-last (/ (count report) 2) report))
              (take-last 20 (take (/ (count report) 2) report))
              "\n...\n"

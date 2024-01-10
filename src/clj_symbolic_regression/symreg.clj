@@ -14,9 +14,6 @@
 
 
 (def ^ISymbol sym-x (F/Dummy "x"))
-(def initial-phenos (ops/initial-phenotypes sym-x 10))
-
-(def initial-muts (ops/initial-mutations))
 
 
 (def input-exprs
@@ -32,7 +29,7 @@
     (range 20)
     (map (fn [i]
            (let [x (* Math/PI (/ i 20.0))]
-             (.add F/C0 (+ (* x x) 2.0 (* 2.0 (Math/sin x)))))))
+             (.add F/C0 (+ (* -1 x x) 2.0 (* 4.0 (Math/sin x)))))))
     vec))
 
 
@@ -45,17 +42,14 @@
   [p input-exprs]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
-
         eval-p          (ops/eval-phenotype p (F/List (into-array IExpr input-exprs)))
         vs              (vec (pmap
                                (fn [i]
-                                 (let [v (try
-                                           (.doubleValue
-                                             (.toNumber (.getArg eval-p (inc i) F/Infinity)))
-                                           (catch Exception e
-                                             Double/POSITIVE_INFINITY))]
-                                   #_(println "Got output vec item: " v)
-                                   v))
+                                 (try
+                                   (.doubleValue
+                                     (.toNumber (.getArg eval-p (inc i) F/Infinity)))
+                                   (catch Exception e
+                                     Double/POSITIVE_INFINITY)))
                                (range (dec (.size eval-p)))))
         vs              (if (seq vs)
                           vs
@@ -69,96 +63,48 @@
     vs))
 
 
-(defn demo-math-2
-  []
-
-  (let [start          (Date.)
-        _              (println "start " start)
-        ^ISymbol sym-x (F/Dummy "x")
-        report         (->>
-                         (for [p  (ops/initial-phenotypes sym-x 1)
-                               m1 initial-muts
-                               m2 initial-muts]
-                           (let [new-p           (ops/modify m2 (ops/modify m1 p))
-                                 ^IExpr new-expr (:expr new-p)
-                                 new-is-const    (.isNumber new-expr)
-
-                                 eval-p          (ops/eval-phenotype new-p (F/List (into-array IExpr input-exprs)))
-                                 vs              (vec (pmap
-                                                        (fn [i]
-                                                          (let [v (try
-                                                                    (.doubleValue
-                                                                      (.toNumber (.getArg eval-p (inc i) F/Infinity)))
-                                                                    (catch Exception e
-                                                                      Double/POSITIVE_INFINITY))]
-                                                            #_(println "Got output vec item: " v)
-                                                            v))
-                                                        (range (dec (.size eval-p)))))
-                                 vs              (if (seq vs)
-                                                   vs
-                                                   (vec (pmap
-                                                          (fn [i]
-                                                            (.doubleValue
-                                                              (.toNumber (if new-is-const
-                                                                           new-expr
-                                                                           (.getArg eval-p 0 F/Infinity)))))
-                                                          (range (count input-exprs)))))]
-
-
-                             (str
-                               "\n" (:expr p) " -> " (:label m1) "." (:label m2) " :: "
-                               (:expr new-p)
-                               " -->> type:" (type eval-p) " size:" (.size eval-p) " " #_eval-p
-                               " head: " (.getArg eval-p 0 nil)
-                               " output: " vs)))
-                         (sort-by count)
-                         (reverse))
-        end            (Date.)
-        diff           (- (.getTime end) (.getTime start))]
-
-    (println "initial muts: " (count initial-muts))
-    (println "initial fn x muts: "
-             (take 20 report)
-             "\n...\n"
-
-
-             (take 20 (take-last (/ (count report) 2) report))
-             (take-last 20 (take (/ (count report) 2) report))
-             "\n...\n"
-             (take-last 20 report))
-    (println "Took " (/ diff 1000.0) " seconds")))
+(def sim-stats* (atom {}))
 
 
 (defn score-fn
-  [output-exprs-vec v]
-  ;; (println "Score: "  (.toString (ops/eval-phenotype v 0.3)))
+  [input-exprs output-exprs-vec v]
   (try
-    (let [resids (map (fn [output expted]
-                        ;; (println output expted)
-                        (- expted output))
-                      (eval-vec-pheno v input-exprs)
-                      output-exprs-vec)
-          ;; resid (- 10 (Double/parseDouble (.toString (.toNumber (ops/eval-phenotype v 0.3)))))
-          resid  (reduce + 0.0 (map #(min 10000 (abs %)) resids))]
-      (when (zero? resid)
-        (println "zero resid " resids))
-      (* -1 (abs resid)))
+    (let [leafs            (.leafCount (:expr v))
+          resids           (pmap (fn [output expted]
+                                  (- expted output))
+                                (eval-vec-pheno v input-exprs)
+                                output-exprs-vec)
+          resid            (reduce + 0.0 (map #(min 100000 (abs %)) resids))
+          score            (* -1 (abs resid))
+          length-deduction (* 0.0001 leafs)]
+      (when (zero? resid) (println "warning: zero resid " resids))
+      (when (neg? length-deduction) (println "warning: negative deduction increases score: " leafs length-deduction v))
+
+      (swap! sim-stats* update-in [:scoring :len-deductions] #(concat (or % []) [length-deduction]))
+
+      (- score length-deduction))
     (catch Exception e
-      #_(println "Error " (:expr v) " -> " e)
       -1000000)))
 
 
 (defn mutation-fn
-  [v]
-  (let [c (rand-nth [1 1 1 1 2 2 2 3 3 4])]
-    (loop [c c
-           v v]
-      (if (zero? c)
-        v
-        (recur
-          (dec c)
-          (ops/modify (rand-nth initial-muts) v))))
-    #_(ops/modify (rand-nth initial-muts) v)))
+  [initial-muts v]
+  (let [c         (rand-nth [1 1 1
+                             2 2
+                             3])
+        new-pheno (loop [c c
+                         v v]
+                    (if (zero? c)
+                      v
+                      (recur
+                        (dec c)
+                        (ops/modify (rand-nth initial-muts) v))))
+        old-leafs (.leafCount (:expr v))
+        new-leafs (.leafCount (:expr new-pheno))]
+    (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
+    (swap! sim-stats* update-in [:mutations :size-in] #(concat (or % []) [old-leafs]))
+    (swap! sim-stats* update-in [:mutations :size-out] #(concat (or % []) [new-leafs]))
+    new-pheno))
 
 
 (defn crossover-fn
@@ -169,7 +115,12 @@
 
 (defn sort-population
   [pops]
-  (reverse (sort-by :score (set (:pop pops)))))
+  (->>
+    (:pop pops)
+    (remove #(nil? (:score %)))
+    (set)
+    (sort-by :score)
+    (reverse)))
 
 
 (defn reportable-phen-str
@@ -180,26 +131,48 @@
     " fn: " (-> p :expr str)))
 
 
+(defn summarize-sim-stats
+  []
+  (let [{{cs     :counts
+          sz-in  :size-in
+          sz-out :size-out}               :mutations
+         {len-deductions :len-deductions} :scoring
+         :as                              dat} @sim-stats*]
+    (-> dat
+        (assoc :scoring {:len-deductions (/ (reduce + 0.0 len-deductions) (count len-deductions))})
+        (assoc :mutations {:counts        cs
+                           :size-in-mean  (/ (reduce + 0.0 sz-in) (count sz-in))
+                           :size-out-mean (/ (reduce + 0.0 sz-out) (count sz-out))}))))
+
+
 (defn run-test
   []
   (let [start          (Date.)
-        initial-phenos (ops/initial-phenotypes sym-x 100)
-        pop1           (ga/initialize initial-phenos (partial score-fn output-exprs-vec) mutation-fn crossover-fn)]
+        initial-phenos (ops/initial-phenotypes sym-x 20)
+        initial-muts   (ops/initial-mutations)
+        pop1           (ga/initialize initial-phenos
+                                      (partial score-fn input-exprs output-exprs-vec)
+                                      (partial mutation-fn initial-muts)
+                                      crossover-fn)]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
     (let [pop (loop [pop pop1
-                     i   1000]
+                     i   100]
                 (if (zero? i)
                   pop
-                  (let [new-pop (ga/evolve pop)
+                  (let [_       (swap! sim-stats* assoc :mutations {})
+                        new-pop (ga/evolve pop)
                         s       (:pop-old-score new-pop)
                         ss      (:pop-old-scores new-pop)]
-                    (when (zero? (mod i 100))
-                      (println i " pop score: " s " top best: "
+                    (when (zero? (mod i 10))
+                      (println i " pop score: " s
+                               " mean: " (Math/round (float (/ s (count new-pop))))
+                               "\n top best: "
                                (->> (take 15 (sort-population new-pop))
-                                    (map reportable-phen-str))))
+                                    (map reportable-phen-str))
+                               "\n with sim stats: " (summarize-sim-stats)))
                     (recur new-pop
                            (if (or (zero? s) (some #(> % -1e-3) ss))
                              (do
@@ -212,8 +185,8 @@
         (println "Took " (/ diff 1000.0) " seconds")
         (println "Bests: "
                  (str/join "\n"
-                           (map reportable-phen-str bests)))))))
+                           (map reportable-phen-str bests))
+                 "\n with sim stats: " (summarize-sim-stats))))))
 
 
 (comment (run-test))
-(comment (demo-math-2))
