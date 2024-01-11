@@ -230,29 +230,9 @@
     vec))
 
 
-(defn run-experiment
-  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
-
-
-
-  (let [start                 (Date.)
-
-        input-exprs-vec       (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-        (into-array IExpr input-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-        (into-array IExpr [(F/List input-exprs-arr)])
-        input-exprs-F-strings (ops/->strings [(str input-exprs-list)])
-        output-exprs-vec      (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
-
-        pop1                  (ga/initialize
-                                initial-phenos
-                                (partial score-fn input-exprs-list input-exprs output-exprs-vec)
-                                (partial mutation-fn initial-muts)
-                                (partial crossover-fn initial-muts))
-
-        sim->gui-chan         (chan)]
-
+(defn setup-gui
+  [input-exprs-vec output-exprs-vec]
+  (let [sim->gui-chan (chan)]
     (gui/create-and-show-gui
       {:xs          (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
        :y1s         (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
@@ -278,7 +258,30 @@
                           (.repaint chart-panel)
 
                           (recur))))})
+    sim->gui-chan))
 
+
+(defn run-experiment
+  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
+
+
+
+  (let [start            (Date.)
+
+        input-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
+                         (into-array IExpr input-exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
+                         (into-array IExpr [(F/List input-exprs-arr)])
+        output-exprs-vec (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
+
+        pop1             (ga/initialize
+                           initial-phenos
+                           (partial score-fn input-exprs-list input-exprs output-exprs-vec)
+                           (partial mutation-fn initial-muts)
+                           (partial crossover-fn initial-muts))
+
+        sim->gui-chan    (setup-gui input-exprs-vec output-exprs-vec)]
 
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
@@ -300,17 +303,10 @@
                                (dec i))))))
           end   (Date.)
           diff  (- (.getTime end) (.getTime start))
-          bests (take 10 (sort-population pop))
-          ;; best-v (first bests)
-          ;; evaled (eval-vec-pheno best-v input-exprs input-exprs-list)
-          ]
+          bests (take 10 (sort-population pop))]
 
       (println "Took " (/ diff 1000.0) " seconds")
-      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
-      #_(plot/show-plot (str (:expr best-v))
-                        (double-array input-exprs-vec)
-                        (double-array evaled)
-                        (double-array output-exprs-vec)))))
+      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests))))))
 
 
 (defn in-flames
