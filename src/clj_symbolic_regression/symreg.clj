@@ -25,6 +25,7 @@
     vec))
 
 
+;; todo these besides base exprs should be computed in the experiment fn:
 (def input-exprs-vec
   (mapv #(.doubleValue (.toNumber %)) input-exprs))
 
@@ -127,7 +128,7 @@
 
 
 (defn mutation-fn
-  [initial-muts v]
+  [initial-muts v v-discard]
   (try
     (let [c         (rand-nth mutations-sampler)
           new-pheno (loop [c          c
@@ -137,7 +138,9 @@
                         v
                         (recur
                           (dec c)
-                          (ops/modify (rand-mut initial-muts) (assoc v :first-modify first-run?))
+                          (ops/modify (rand-mut initial-muts) (if first-run?
+                                                                (assoc v :util (:util v-discard))
+                                                                v))
                           false)))
           old-leafs (.leafCount (:expr v))
           new-leafs (.leafCount (:expr new-pheno))]
@@ -150,9 +153,9 @@
 
 
 (defn crossover-fn
-  [initial-muts v]
+  [initial-muts v v-discard]
   ;; todo do something for crossover
-  (mutation-fn initial-muts v))
+  (mutation-fn initial-muts v v-discard))
 
 
 (defn sort-population

@@ -34,11 +34,12 @@
                                  (if (nil? e2)
                                    [(:score e1) [e1]]
                                    (let [[s1 s2] [(:score e1) (:score e2)]
-                                         better-e (if (>= s1 s2) e1 e2)
+                                         [better-e worse-e] (if (>= s1 s2)
+                                                              [e1 e2][e2 e1])
                                          new-e-fn (if (rand-nth new-phen-modifier-sampler)
                                                     mutation-fn
                                                     crossover-fn)
-                                         new-e    (with-score score-fn (new-e-fn better-e))]
+                                         new-e    (with-score score-fn (new-e-fn better-e worse-e))]
                                      [(+ s1 s2) [better-e new-e]])))))
           pop-scores   (pmap first new-pop-data)
           pop-score    (reduce + 0.0 pop-scores)
@@ -74,14 +75,14 @@
 
 
 (defn mutation-fn
-  [v]
+  [v _]
   {:v (if (rand-nth [true false])
         (+ 1 (:v v))
         (+ -1 (:v v)))})
 
 
 (defn crossover-fn
-  [v]
+  [v _]
   v)
 
 

@@ -54,6 +54,7 @@
    (->phenotype v e u))
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
    (try
+     ;; todo : use the discarded pheno util as the new util
      (let [^ExprEvaluator util (or util (new-util))
            ^IAST expr          (.eval util expr)]
        {:sym  variable
@@ -83,20 +84,20 @@
 
 (defmethod modify :substitute
   [{:keys [^IExpr find-expr ^IExpr replace-expr]}
-   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util first-modify :first-modify :as pheno}]
-  (->phenotype x-sym (.subs expr find-expr replace-expr) (if first-modify nil util)))
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
+  (->phenotype x-sym (.subs expr find-expr replace-expr) util))
 
 
 (defmethod modify :modify-leafs
   [{:keys [leaf-modifier-fn]}
-   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util first-modify :first-modify :as pheno}]
-  (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier leaf-modifier-fn)) (if first-modify nil util)))
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
+  (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier leaf-modifier-fn)) util))
 
 
 (defmethod modify :fn
   [{:keys [modifier-fn]}
-   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util first-modify :first-modify :as pheno}]
-  (->phenotype x-sym (modifier-fn pheno) (if first-modify nil util)))
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
+  (->phenotype x-sym (modifier-fn pheno) util))
 
 
 (defn initial-phenotypes
