@@ -70,10 +70,36 @@
        (println "Err creating pheno: " expr " , " variable " , " e)))))
 
 
-(defn eval-phenotype
-  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util} x]
+(defn eval-phenotype-on-string-args
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id} string-args]
   (try
-    (.evalFunction util (expr->fn x-sym expr) x)
+    (let [^IExpr res (.evalFunction util (expr->fn x-sym expr) string-args)]
+      (println p-id
+               (.size res)
+               " f is const: " (.isNumber expr)
+               (.getArg res 0 F/Infinity)
+               (.getArg res 1 F/Infinity)
+               (.getArg res 2 F/Infinity))
+      res)
+    (catch SyntaxError se (println "Warning: syntax error in eval: " se))
+    (catch MathException me (println "Warning: math error in eval: " me))
+    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
+    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
+
+(defn eval-phenotype-on-expr-args
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id} ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
+  (try
+    (let [^IAST ast  (F/ast expr-args (expr->fn x-sym expr))
+          ^IExpr res (.eval util ast)]
+      ;(println res)
+      #_(println p-id
+                 (.size res)
+                 " f is const: " (.isNumber expr)
+                 (.getArg res 0 F/Infinity)
+                 (.getArg res 1 F/Infinity)
+                 (.getArg res 2 F/Infinity))
+      res)
+    ;(.evalFunction util (expr->fn x-sym expr) string-args)
     (catch SyntaxError se (println "Warning: syntax error in eval: " se))
     (catch MathException me (println "Warning: math error in eval: " me))
     (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
