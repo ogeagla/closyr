@@ -24,9 +24,9 @@
   [p input-exprs input-exprs-arr input-exprs-F-strings input-exprs-list]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
-        ;_               (println "new is const: " new-is-const new-expr)
+        ;; _               (println "new is const: " new-is-const new-expr)
         ^IExpr eval-p   (ops/eval-phenotype-on-expr-args p input-exprs-list)
-        ;^IExpr eval-p   (ops/eval-phenotype-on-string-args p input-exprs-F-strings)
+        ;; ^IExpr eval-p   (ops/eval-phenotype-on-string-args p input-exprs-F-strings)
         vs              (vec (map
                                (fn [i]
                                  (try
@@ -198,18 +198,22 @@
 
 (def test-timer* (atom nil))
 
+(def log-steps 10)
+
 
 (defn report-iteration
-  [i ga-result input-exprs input-exprs-list]
-  (when (zero? (mod i 10))
+  [i ga-result]
+  (when (zero? (mod i log-steps))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
           diff       (- (.getTime end) (.getTime ^Date @test-timer*))
-          bests      (sort-population ga-result)]
+          bests      (sort-population ga-result)
+          took-s     (/ diff 1000.0)
+          pop-size   (count (:pop ga-result))]
 
       (reset! test-timer* end)
-      (println i "-step pop size: " (count (:pop ga-result)) " took secs: " (/ diff 1000.0))
+      (println i "-step pop size: " pop-size " took secs: " took-s " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
       (println i " pop score: " old-score
                " mean: " (Math/round (float (/ old-score (count (:pop ga-result))))))
       (println i " top best: "
@@ -246,19 +250,21 @@
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
-  (let [start                                                        (Date.)
+  (let [start                 (Date.)
 
-        input-exprs-vec                                              (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr  (into-array IExpr input-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list (into-array IExpr [(F/List input-exprs-arr)])
-        input-exprs-F-strings                                        (ops/->strings [(str input-exprs-list)])
-        output-exprs-vec                                             (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
+        input-exprs-vec       (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
+        (into-array IExpr input-exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
+        (into-array IExpr [(F/List input-exprs-arr)])
+        input-exprs-F-strings (ops/->strings [(str input-exprs-list)])
+        output-exprs-vec      (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
-        pop1                                                         (ga/initialize
-                                                                       initial-phenos
-                                                                       (partial score-fn input-exprs-list input-exprs-arr input-exprs-F-strings input-exprs output-exprs-vec)
-                                                                       (partial mutation-fn initial-muts)
-                                                                       (partial crossover-fn initial-muts))]
+        pop1                  (ga/initialize
+                                initial-phenos
+                                (partial score-fn input-exprs-list input-exprs-arr input-exprs-F-strings input-exprs output-exprs-vec)
+                                (partial mutation-fn initial-muts)
+                                (partial crossover-fn initial-muts))]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
@@ -272,7 +278,7 @@
                      (let [{old-scores :pop-old-scores
                             old-score  :pop-old-score
                             :as        ga-result} (ga/evolve pop)]
-                       (report-iteration i ga-result input-exprs input-exprs-list)
+                       (report-iteration i ga-result)
                        (recur ga-result
                               (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
                                 (near-exact-solution i old-score old-scores)
@@ -303,7 +309,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 5000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
@@ -311,8 +317,7 @@
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:
-    (experiment-fn)
-    ))
+    (experiment-fn)))
 
 
 (comment (run-test))

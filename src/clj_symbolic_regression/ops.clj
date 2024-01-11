@@ -16,13 +16,15 @@
     (org.matheclipse.parser.client.math
       MathException)))
 
+
 (set! *warn-on-reflection* true)
+
 
 (defn ^IAST expr->fn
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -78,6 +80,7 @@
     (catch MathException me (println "Warning: math error in eval: " me))
     (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
     (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
+
 
 (defn ^IExpr eval-phenotype-on-expr-args
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id}
