@@ -14,6 +14,7 @@
       IExpr
       ISymbol)))
 
+(set! *warn-on-reflection* true)
 
 (def ^ISymbol sym-x (F/Dummy "x"))
 
@@ -22,7 +23,7 @@
   [p input-exprs input-exprs-F-strings]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
-        eval-p          (ops/eval-phenotype p input-exprs-F-strings)
+        ^IExpr eval-p   (ops/eval-phenotype p input-exprs-F-strings)
         vs              (vec (map
                                (fn [i]
                                  (try
@@ -58,14 +59,39 @@
 
 (def sim-stats* (atom {}))
 
+(def fn-eval-cache* (atom {}))
+
+
+(defn get-cached-fn-eval
+  [expr-str input-string]
+  (get-in @fn-eval-cache* [input-string expr-str]))
+
+
+(defn put-cached-fn-eval
+  [expr-str input-string evald]
+  (swap! fn-eval-cache* assoc-in [input-string expr-str] evald)
+  #_(when (zero? (mod (count (@fn-eval-cache* input-string)) 100))
+      (println "Eval cache has size for input: " (count (@fn-eval-cache* input-string)))
+      )
+  evald)
+
 
 (defn score-fn
   [input-exprs-F-strings input-exprs output-exprs-vec v]
   (try
-    (let [leafs            (.leafCount (:expr v))
+    (let [leafs            (.leafCount ^IExpr (:expr v))
+          expr-str         (str (:expr v))
+          ;f-of-xs          (or
+          ;                   (get-cached-fn-eval expr-str input-exprs-F-strings)
+          ;                   (put-cached-fn-eval
+          ;                     expr-str
+          ;                     input-exprs-F-strings
+          ;                     (eval-vec-pheno v input-exprs input-exprs-F-strings)))
+          f-of-xs (eval-vec-pheno v input-exprs input-exprs-F-strings)
+
           resids           (map (fn [output expted]
                                   (- expted output))
-                                (eval-vec-pheno v input-exprs input-exprs-F-strings)
+                                f-of-xs
                                 output-exprs-vec)
           resid            (sum (map #(min 100000 (abs %)) resids))
           score            (* -1 (abs resid))
@@ -111,8 +137,8 @@
                                                                 (assoc v :util (:util v-discard))
                                                                 v))
                           false)))
-          old-leafs (.leafCount (:expr v))
-          new-leafs (.leafCount (:expr new-pheno))]
+          old-leafs (.leafCount ^IExpr (:expr v))
+          new-leafs (.leafCount ^IExpr (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
       (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [old-leafs]))
       (swap! sim-stats* update-in [:mutations :size-out] #(into (or % []) [new-leafs]))
@@ -171,7 +197,7 @@
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
-          diff       (- (.getTime end) (.getTime @test-timer*))
+          diff       (- (.getTime end) (.getTime ^Date @test-timer*))
           bests      (sort-population ga-result)]
 
       (reset! test-timer* end)
@@ -212,10 +238,10 @@
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
   (let [start                 (Date.)
 
-        input-exprs-vec       (mapv #(.doubleValue (.toNumber %)) input-exprs)
-        input-exprs-list      (F/List (into-array IExpr input-exprs))
+        input-exprs-vec       (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+        input-exprs-list      (F/List ^"[Lorg.matheclipse.core.interfaces.IExpr;" (into-array IExpr input-exprs))
         input-exprs-F-strings (ops/->strings [(str input-exprs-list)])
-        output-exprs-vec      (mapv #(.doubleValue (.toNumber %)) output-exprs)
+        output-exprs-vec      (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
         pop1                  (ga/initialize
                                 initial-phenos
@@ -251,19 +277,29 @@
       (plot/plot (str (:expr best-v)) input-exprs-vec evaled output-exprs-vec))))
 
 
-(def flames
-  ;; http://localhost:54321/flames.svg
-  (flames/start! {:port 54321, :host "localhost"}))
+(defn in-flames
+  [f]
+  (let [flames
+        ;; http://localhost:54321/flames.svg
+        (flames/start! {:port 54321, :host "localhost"})]
+
+    (f)
+
+    (flames/stop! flames)))
 
 
 (defn run-test
   []
-  (run-experiment
-    {:initial-phenos (ops/initial-phenotypes sym-x 20)
-     :initial-muts   (ops/initial-mutations)
-     :input-exprs    input-exprs
-     :output-exprs   output-exprs
-     :iters          50}))
+  (let [experiment-fn (fn []
+                        (run-experiment
+                          {:initial-phenos (ops/initial-phenotypes sym-x 100)
+                           :initial-muts   (ops/initial-mutations)
+                           :input-exprs    input-exprs
+                           :output-exprs   output-exprs
+                           :iters          100}))]
+    (in-flames experiment-fn)
+    ;(experiment-fn)
+    ))
 
 
 (comment (run-test))

@@ -16,19 +16,24 @@
     (org.matheclipse.parser.client.math
       MathException)))
 
+(set! *warn-on-reflection* true)
 
 (defn ^IAST expr->fn
   [^ISymbol variable ^IAST expr]
-  (F/Function (F/List (into-array ISymbol [variable])) expr))
+  (F/Function
+    (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
+            (into-array ISymbol [variable])) expr))
 
 
-(defn ->iexprs
+(defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
   [coll]
+  ^"[Lorg.matheclipse.core.interfaces.IExpr;"
   (into-array IExpr coll))
 
 
 (defn ->strings
   [coll]
+  ^"[Ljava.lang.String;"
   (into-array String coll))
 
 
@@ -386,67 +391,3 @@
     :find-expr    F/Cos
     :replace-expr F/Sin}])
 
-
-(defn demo-math-2
-  []
-
-  (let [start          (Date.)
-        _              (println "start " start)
-        ^ISymbol sym-x (F/Dummy "x")
-        initial-phenos (initial-phenotypes sym-x 1)
-        initial-muts   (initial-mutations)
-        report         (->>
-                         (for [p  initial-phenos
-                               m1 initial-muts
-                               m2 initial-muts
-                               m3 initial-muts]
-                           (let [new-p           (modify m3 (modify m2 (modify m1 p)))
-                                 ^IExpr new-expr (:expr new-p)
-                                 new-is-const    (.isNumber new-expr)
-                                 input-exprs     [(.add F/C0 1.123456) F/C1D2 F/C1D5 F/C1D4 F/C1D3 F/C1]
-                                 eval-p          (eval-phenotype new-p (F/List (into-array IExpr input-exprs)))
-                                 vs              (vec (pmap
-                                                        (fn [i]
-                                                          (let [v (try
-                                                                    (.doubleValue
-                                                                      (.toNumber (.getArg eval-p (inc i) F/Infinity)))
-                                                                    (catch Exception e
-                                                                      Double/POSITIVE_INFINITY))]
-                                                            #_(println "Got output vec item: " v)
-                                                            v))
-                                                        (range (dec (.size eval-p)))))
-                                 vs              (if (seq vs)
-                                                   vs
-                                                   (vec (pmap
-                                                          (fn [i]
-                                                            (.doubleValue
-                                                              (.toNumber (if new-is-const
-                                                                           new-expr
-                                                                           (.getArg eval-p 0 F/Infinity)))))
-                                                          (range (count input-exprs)))))]
-
-
-                             (str
-                               "\n" (:expr p) " -> " (:label m1) "." (:label m2) "." (:label m3) " :: "
-                               (:expr new-p)
-                               " -->> type:" (type eval-p) " size:" (.size eval-p) " " #_eval-p
-                               " head: " (.getArg eval-p 0 nil)
-                               " output: " vs)))
-                         (sort-by count)
-                         (reverse))
-        end            (Date.)
-        diff           (- (.getTime end) (.getTime start))]
-
-    (println "initial muts: " (count initial-muts))
-    (println "initial fn x muts: "
-             (take 20 report)
-             "\n...\n"
-             (take 20 (take-last (/ (count report) 2) report))
-             (take-last 20 (take (/ (count report) 2) report))
-             "\n...\n"
-             (take-last 20 report))
-    (println "Took " (/ diff 1000.0) " seconds")))
-
-
-(comment
-  (demo-math-2))

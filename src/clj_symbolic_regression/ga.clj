@@ -1,5 +1,6 @@
 (ns clj-symbolic-regression.ga)
 
+(set! *warn-on-reflection* true)
 
 (defn initialize
   [initial-pop score-fn mutation-fn crossover-fn]
@@ -32,8 +33,8 @@
                          (partition-all 2 pop-shuff)
                          (pmap (fn [[e1 e2]]
                                  (if (nil? e2)
-                                   [(:score e1) [e1]]
-                                   (let [[s1 s2] [(:score e1) (:score e2)]
+                                   [^float (:score e1) [e1]]
+                                   (let [[^float s1 ^float s2] [(:score e1) (:score e2)]
                                          [better-e worse-e] (if (>= s1 s2)
                                                               [e1 e2][e2 e1])
                                          new-e-fn (if (rand-nth new-phen-modifier-sampler)

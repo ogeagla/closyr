@@ -2,7 +2,7 @@
   (:gen-class)
   (:require [clj-symbolic-regression.symreg :as symreg]))
 
-
+(set! *warn-on-reflection* true)
 
 
 (defn -main

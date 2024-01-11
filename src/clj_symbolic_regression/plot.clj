@@ -9,6 +9,7 @@
     (org.knowm.xchart.style.markers
       SeriesMarkers)))
 
+(set! *warn-on-reflection* true)
 
 ;; https://github.com/knowm/XChart
 ;; https://knowm.org/open-source/xchart/xchart-example-code/
