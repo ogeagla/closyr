@@ -110,6 +110,9 @@
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
 
 
+(def modify-leafs-sampler [true false])
+
+
 (defn initial-mutations
   []
   [{:op          :fn
@@ -261,7 +264,7 @@
    {:op               :modify-leafs
     :label            "x+1/5"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (.plus ie (F/C1D5))
                           ie))}
 
@@ -269,7 +272,7 @@
    {:op               :modify-leafs
     :label            "x-1/5"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (.minus ie (F/C1D5))
                           ie))}
 
@@ -277,7 +280,7 @@
    {:op               :modify-leafs
     :label            "x+1/10"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (.plus ie (F/Divide 1 F/C10))
                           ie))}
 
@@ -285,7 +288,7 @@
    {:op               :modify-leafs
     :label            "x-1/10"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (.minus ie (F/Divide 1 F/C10))
                           ie))}
 
@@ -293,7 +296,7 @@
    {:op               :modify-leafs
     :label            "c/2"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           ie
                           (.times ie (F/C1D2))))}
 
@@ -301,14 +304,14 @@
    {:op               :modify-leafs
     :label            "c*2"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           ie
                           (.times ie (F/C2))))}
 
    {:op               :modify-leafs
     :label            "c/10"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           ie
                           (.times ie (F/Divide 1 F/C10))))}
 
@@ -316,7 +319,7 @@
    {:op               :modify-leafs
     :label            "c*10"
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
-                        (if (= (.toString ie) "x")
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           ie
                           (.times ie F/C10)))}
 

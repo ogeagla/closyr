@@ -24,6 +24,7 @@
            (.add F/C0 (* Math/PI (/ i 10.0)))))
     vec))
 
+
 (def input-exprs-vec
   (mapv #(.doubleValue (.toNumber %)) input-exprs))
 
@@ -196,9 +197,7 @@
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
           diff       (- (.getTime end) (.getTime @test-timer*))
-          bests      (sort-population ga-result)
-
-          ]
+          bests      (sort-population ga-result)]
 
       (reset! test-timer* end)
       (println i " step pop size: " (count (:pop ga-result)) " took secs: " (/ diff 1000.0))
@@ -231,24 +230,23 @@
 
     (reset! test-timer* start)
 
-    (let [pop   (loop [pop pop1
-                       i   iters]
-                  (if (zero? i)
-                    pop
-                    (let [{old-scores :pop-old-scores
-                           old-score  :pop-old-score
-                           :as        ga-result} (ga/evolve pop)]
-                      (report-iteration i ga-result input-exprs input-exprs-list)
-                      (recur ga-result
-                             (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                               (near-exact-solution i old-score old-scores)
-                               (dec i))))))
-          end   (Date.)
-          diff  (- (.getTime end) (.getTime start))
-          bests (take 10 (sort-population pop))
+    (let [pop    (loop [pop pop1
+                        i   iters]
+                   (if (zero? i)
+                     pop
+                     (let [{old-scores :pop-old-scores
+                            old-score  :pop-old-score
+                            :as        ga-result} (ga/evolve pop)]
+                       (report-iteration i ga-result input-exprs input-exprs-list)
+                       (recur ga-result
+                              (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
+                                (near-exact-solution i old-score old-scores)
+                                (dec i))))))
+          end    (Date.)
+          diff   (- (.getTime end) (.getTime start))
+          bests  (take 10 (sort-population pop))
           best-v (first bests)
-          evaled (eval-vec-pheno best-v input-exprs input-exprs-list)
-          ]
+          evaled (eval-vec-pheno best-v input-exprs input-exprs-list)]
 
       (println "Took " (/ diff 1000.0) " seconds")
       (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
@@ -258,12 +256,12 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 60)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 500)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
      :output-exprs-vec output-exprs-vec
-     :iters            40}))
+     :iters            200}))
 
 
 (comment (run-test))
