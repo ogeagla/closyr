@@ -1,6 +1,7 @@
 (ns clj-symbolic-regression.symreg
   (:require
     [clj-symbolic-regression.ga :as ga]
+    [clj-symbolic-regression.gui :as gui]
     [clj-symbolic-regression.ops :as ops]
     [clj-symbolic-regression.plot :as plot]
     [clojure.string :as str]
@@ -220,13 +221,14 @@
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
+  (gui/gui-1)
   (let [start                 (Date.)
 
         input-exprs-vec       (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-        (into-array IExpr input-exprs)
+                              (into-array IExpr input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-        (into-array IExpr [(F/List input-exprs-arr)])
+                              (into-array IExpr [(F/List input-exprs-arr)])
         input-exprs-F-strings (ops/->strings [(str input-exprs-list)])
         output-exprs-vec      (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
@@ -261,7 +263,7 @@
 
       (println "Took " (/ diff 1000.0) " seconds")
       (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
-      (plot/plot (str (:expr best-v)) input-exprs-vec evaled output-exprs-vec))))
+      (plot/show-plot (str (:expr best-v)) input-exprs-vec evaled output-exprs-vec))))
 
 
 (defn in-flames
@@ -280,7 +282,7 @@
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          200}))]
+                           :iters          20}))]
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:

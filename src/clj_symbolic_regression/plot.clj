@@ -1,5 +1,6 @@
 (ns clj-symbolic-regression.plot
-  (:require [clojure.string :as str])
+  (:require
+    [clojure.string :as str])
   (:import
     (org.knowm.xchart
       QuickChart
@@ -9,7 +10,9 @@
     (org.knowm.xchart.style.markers
       SeriesMarkers)))
 
+
 (set! *warn-on-reflection* true)
+
 
 ;; https://github.com/knowm/XChart
 ;; https://knowm.org/open-source/xchart/xchart-example-code/
@@ -41,22 +44,28 @@
         _                (-> (SwingWrapper. chart)
                              .displayChart)]))
 
-(defn plot [^String best-fn-label x-data y-data-1 y-data-2]
-  (let [x-data           (double-array x-data)
+
+(defn make-plot
+  ^XYChart [^String best-fn-label x-data y-data-1 y-data-2]
+  (let [x-data             (double-array x-data)
         y-data-1           (double-array y-data-1)
         y-data-2           (double-array y-data-2)
-        ^XYChart chart   (doto (XYChart. 1200 800)
-                           (.setTitle "Sample")
-                           (.setXAxisTitle "X")
-                           (.setYAxisTitle "Y"))
+        ^XYChart chart     (doto (XYChart. 1200 800)
+                             (.setTitle "Sample")
+                             (.setXAxisTitle "X")
+                             (.setYAxisTitle "Y"))
         ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 best-fn-label)) x-data y-data-1)
-                           (.setMarker SeriesMarkers/CIRCLE))
+                             (.setMarker SeriesMarkers/CIRCLE))
 
         ^XYSeries series-2 (doto (.addSeries chart "objective(x)" x-data y-data-2)
-                           (.setMarker SeriesMarkers/CROSS))
+                             (.setMarker SeriesMarkers/CROSS))]
+    chart))
 
 
-        _                (-> (SwingWrapper. chart)
-                             .displayChart)]))
+(defn show-plot
+  [^String best-fn-label x-data y-data-1 y-data-2]
+  (-> (SwingWrapper. (make-plot best-fn-label x-data y-data-1 y-data-2))
+      .displayChart))
+
 
 (comment (test-plots-2))
