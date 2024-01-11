@@ -199,7 +199,8 @@
                " mean: " (Math/round (float (/ old-score (count (:pop ga-result))))))
       (println i " top best: "
                (->> (take 5 bests)
-                    (map reportable-phen-str)))
+                    (map reportable-phen-str)
+                    (str/join "\n")))
       (println i " sim stats: " (summarize-sim-stats))
       ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
 
@@ -270,9 +271,9 @@
 
         input-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-                         (into-array IExpr input-exprs)
+        (into-array IExpr input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-                         (into-array IExpr [(F/List input-exprs-arr)])
+        (into-array IExpr [(F/List input-exprs-arr)])
         output-exprs-vec (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
         pop1             (ga/initialize
@@ -289,24 +290,23 @@
 
     (reset! test-timer* start)
 
-    (let [pop   (loop [pop pop1
-                       i   iters]
-                  (if (zero? i)
-                    pop
-                    (let [{old-scores :pop-old-scores
-                           old-score  :pop-old-score
-                           :as        ga-result} (ga/evolve pop)]
-                      (report-iteration i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec)
-                      (recur ga-result
-                             (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                               (near-exact-solution i old-score old-scores)
-                               (dec i))))))
-          end   (Date.)
-          diff  (- (.getTime end) (.getTime start))
-          bests (take 10 (sort-population pop))]
+    (loop [pop pop1
+           i   iters]
+      (if (zero? i)
+        pop
+        (let [{old-scores :pop-old-scores
+               old-score  :pop-old-score
+               :as        ga-result} (ga/evolve pop)]
+          (report-iteration i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec)
+          (recur ga-result
+                 (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
+                   (near-exact-solution i old-score old-scores)
+                   (dec i))))))
 
-      (println "Took " (/ diff 1000.0) " seconds")
-      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests))))))
+    (let [end  (Date.)
+          diff (- (.getTime end) (.getTime start))]
+
+      (println "Took " (/ diff 1000.0) " seconds"))))
 
 
 (defn in-flames
@@ -321,11 +321,11 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 500)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          200}))]
+                           :iters          100}))]
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:
