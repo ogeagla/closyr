@@ -61,11 +61,16 @@
 (def sim-stats* (atom {}))
 
 (def fn-eval-cache* (atom {}))
+(def fn-eval-cache-stats* (atom {}))
 
 
 (defn get-cached-fn-eval
   [expr-str input-string]
-  (get-in @fn-eval-cache* [input-string expr-str]))
+  (let [res (get-in @fn-eval-cache* [input-string expr-str])]
+    (if res
+      (swap! fn-eval-cache-stats* update :hit #(inc (or % 0)))
+      (swap! fn-eval-cache-stats* update :miss #(inc (or % 0))))
+    res))
 
 
 (defn put-cached-fn-eval
@@ -81,14 +86,14 @@
   [input-exprs-F-strings input-exprs output-exprs-vec v]
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
-          expr-str         (str (:expr v))
-          f-of-xs          (or
-                             (get-cached-fn-eval expr-str input-exprs-F-strings)
-                             (put-cached-fn-eval
-                               expr-str
-                               input-exprs-F-strings
-                               (eval-vec-pheno v input-exprs input-exprs-F-strings)))
-          ;; f-of-xs (eval-vec-pheno v input-exprs input-exprs-F-strings)
+          ;; expr-str         (str (:expr v))
+          ;; f-of-xs          (or
+          ;;                   (get-cached-fn-eval expr-str input-exprs-F-strings)
+          ;;                   (put-cached-fn-eval
+          ;;                     expr-str
+          ;;                     input-exprs-F-strings
+          ;;                     (eval-vec-pheno v input-exprs input-exprs-F-strings)))
+          f-of-xs          (eval-vec-pheno v input-exprs input-exprs-F-strings)
 
           resids           (map (fn [output expted]
                                   (- expted output))
@@ -194,7 +199,7 @@
 
 (defn report-iteration
   [i ga-result input-exprs input-exprs-list]
-  (when (zero? (mod i 1))
+  (when (zero? (mod i 5))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
@@ -202,13 +207,15 @@
           bests      (sort-population ga-result)]
 
       (reset! test-timer* end)
-      (println i " step pop size: " (count (:pop ga-result)) " took secs: " (/ diff 1000.0))
+      (println i "-step pop size: " (count (:pop ga-result)) " took secs: " (/ diff 1000.0))
       (println i " pop score: " old-score
-               " mean: " (Math/round (float (/ old-score (count (:pop ga-result)))))
-               "\n  top best: "
+               " mean: " (Math/round (float (/ old-score (count (:pop ga-result))))))
+      (println i " top best: "
                (->> (take 5 bests)
                     (map reportable-phen-str)))
-      (println i " sim stats: " (summarize-sim-stats))))
+      (println i "-sim stats: " (summarize-sim-stats))
+      ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
+      ))
   (reset! sim-stats* {}))
 
 
@@ -293,15 +300,15 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 100)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          10}))]
+                           :iters          50}))]
     ;; with flame graph analysis:
-    (in-flames experiment-fn)
+    ;; (in-flames experiment-fn)
     ;; plain experiment:
-    ;; (experiment-fn)
+    (experiment-fn)
     ))
 
 

@@ -65,16 +65,15 @@
        {:sym  variable
         :util util
         :id   (UUID/randomUUID)
-        :expr expr
-        :fn   (expr->fn variable expr)})
+        :expr expr})
      (catch Exception e
        (println "Err creating pheno: " expr " , " variable " , " e)))))
 
 
 (defn eval-phenotype
-  [{^IAST pfn :fn ^ExprEvaluator util :util} x]
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util} x]
   (try
-    (.evalFunction util pfn x)
+    (.evalFunction util (expr->fn x-sym expr) x)
     (catch SyntaxError se (println "Warning: syntax error in eval: " se))
     (catch MathException me (println "Warning: math error in eval: " me))
     (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
