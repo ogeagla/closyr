@@ -2,6 +2,7 @@
   (:require
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.ops :as ops]
+    [clj-symbolic-regression.plot :as plot]
     [clojure.string :as str])
   (:import
     (java.util
@@ -20,8 +21,11 @@
   (->>
     (range 20)
     (map (fn [i]
-           (.add F/C0 (* Math/PI (/ i 20.0)))))
+           (.add F/C0 (* Math/PI (/ i 10.0)))))
     vec))
+
+(def input-exprs-vec
+  (mapv #(.doubleValue (.toNumber %)) input-exprs))
 
 
 (def input-exprs-list
@@ -32,8 +36,8 @@
   (->>
     (range 20)
     (map (fn [i]
-           (let [x (* Math/PI (/ i 20.0))]
-             (.add F/C0 (+ (* 1.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
+           (let [x (* Math/PI (/ i 10.0))]
+             (.add F/C0 (+ (* 0.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
     vec))
 
 
@@ -186,18 +190,22 @@
 
 
 (defn report-iteration
-  [i ga-result]
+  [i ga-result input-exprs input-exprs-list]
   (when (zero? (mod i 5))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
-          diff       (- (.getTime end) (.getTime @test-timer*))]
+          diff       (- (.getTime end) (.getTime @test-timer*))
+          bests      (sort-population ga-result)
+
+          ]
+
       (reset! test-timer* end)
       (println i " step pop size: " (count (:pop ga-result)) " took secs: " (/ diff 1000.0))
       (println i " pop score: " old-score
                " mean: " (Math/round (float (/ old-score (count (:pop ga-result)))))
                "\n  top best: "
-               (->> (take 5 (sort-population ga-result))
+               (->> (take 5 bests)
                     (map reportable-phen-str)))
       (println i " sim stats: " (summarize-sim-stats))))
   (reset! sim-stats* {}))
@@ -230,28 +238,32 @@
                     (let [{old-scores :pop-old-scores
                            old-score  :pop-old-score
                            :as        ga-result} (ga/evolve pop)]
-                      (report-iteration i ga-result)
+                      (report-iteration i ga-result input-exprs input-exprs-list)
                       (recur ga-result
                              (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
                                (near-exact-solution i old-score old-scores)
                                (dec i))))))
           end   (Date.)
           diff  (- (.getTime end) (.getTime start))
-          bests (take 10 (sort-population pop))]
+          bests (take 10 (sort-population pop))
+          best-v (first bests)
+          evaled (eval-vec-pheno best-v input-exprs input-exprs-list)
+          ]
 
       (println "Took " (/ diff 1000.0) " seconds")
-      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests))))))
+      (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
+      (plot/plot (str (:expr best-v)) input-exprs-vec evaled output-exprs-vec))))
 
 
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 500)
+    {:initial-phenos   (ops/initial-phenotypes sym-x 60)
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
      :output-exprs-vec output-exprs-vec
-     :iters            500}))
+     :iters            40}))
 
 
 (comment (run-test))

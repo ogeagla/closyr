@@ -39,5 +39,22 @@
         _                (-> (SwingWrapper. chart)
                              .displayChart)]))
 
+(defn plot [^String best-fn-label x-data y-data-1 y-data-2]
+  (let [x-data           (double-array x-data)
+        y-data-1           (double-array y-data-1)
+        y-data-2           (double-array y-data-2)
+        ^XYChart chart   (doto (XYChart. 600 400)
+                           (.setTitle "Sample")
+                           (.setXAxisTitle "X")
+                           (.setYAxisTitle "Y"))
+        ^XYSeries series-1 (doto (.addSeries chart best-fn-label x-data y-data-1)
+                           (.setMarker SeriesMarkers/CIRCLE))
+
+        ^XYSeries series-2 (doto (.addSeries chart "objective(x)" x-data y-data-2)
+                           (.setMarker SeriesMarkers/CROSS))
+
+
+        _                (-> (SwingWrapper. chart)
+                             .displayChart)]))
 
 (comment (test-plots-2))
