@@ -1,5 +1,6 @@
 (ns clj-symbolic-regression.symreg
   (:require
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan]]
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.gui :as gui]
     [clj-symbolic-regression.ops :as ops]
@@ -8,7 +9,9 @@
     [flames.core :as flames])
   (:import
     (java.util
-      Date)
+      Date List)
+    (java.util.concurrent CopyOnWriteArrayList)
+    (org.knowm.xchart XChartPanel XYChart)
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
@@ -221,7 +224,36 @@
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
-  (gui/gui-1)
+
+  (gui/create-and-show-gui
+    {
+     :xs          (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+     :y1s         (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
+     :y2s         (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
+     :s1l         "series 1"
+     :s2l         "series 2"
+     :update-loop (fn [^XYChart chart
+                       ^XChartPanel chart-panel
+                       {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l]
+                        :as   conf}]
+                    #_(go-loop []
+                      (<! (timeout 1000))
+
+                      (println "Draw new points " (.size xs))
+                      (.add xs (.size xs))
+                      (.add y1s (.size xs))
+                      ;; (.remove y2s 0)
+                      (.add y2s (* 10.0 (Math/random)))
+
+                      (.updateXYSeries chart s1l xs y1s nil)
+                      (.updateXYSeries chart s2l xs y2s nil)
+
+                      (.revalidate chart-panel)
+                      (.repaint chart-panel)
+
+                      (recur)))
+     })
+
   (let [start                 (Date.)
 
         input-exprs-vec       (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
