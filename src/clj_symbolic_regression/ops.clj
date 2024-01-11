@@ -10,10 +10,11 @@
     (org.matheclipse.core.interfaces
       IAST
       IExpr
-      ISymbol)))
-
-
-;; https://github.com/axkr/symja_android_library?tab=readme-ov-file#examples
+      ISymbol)
+    (org.matheclipse.parser.client
+      SyntaxError)
+    (org.matheclipse.parser.client.math
+      MathException)))
 
 
 (defn ^IAST expr->fn
@@ -54,7 +55,6 @@
    (->phenotype v e u))
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
    (try
-     ;; todo : use the discarded pheno util as the new util
      (let [^ExprEvaluator util (or util (new-util))
            ^IAST expr          (.eval util expr)]
        {:sym  variable
@@ -68,7 +68,12 @@
 
 (defn eval-phenotype
   [{^IAST pfn :fn ^ExprEvaluator util :util} x]
-  (.evalFunction util pfn x))
+  (try
+    (.evalFunction util pfn x)
+    (catch SyntaxError se (println "Warning: syntax error in eval: " se))
+    (catch MathException me (println "Warning: math error in eval: " me))
+    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
+    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
 
 
 (defn ^java.util.function.Function tree-leaf-modifier

@@ -17,40 +17,8 @@
 (def ^ISymbol sym-x (F/Dummy "x"))
 
 
-(def input-exprs
-  (->>
-    (range 20)
-    (map (fn [i]
-           (.add F/C0 (* Math/PI (/ i 10.0)))))
-    vec))
-
-
-;; todo these besides base exprs should be computed in the experiment fn:
-(def input-exprs-vec
-  (mapv #(.doubleValue (.toNumber %)) input-exprs))
-
-
-(def input-exprs-list
-  (F/List (into-array IExpr input-exprs)))
-
-(def input-exprs-F-strings
-  (ops/->strings [(str input-exprs-list)]))
-
-
-(def output-exprs
-  (->>
-    (range 20)
-    (map (fn [i]
-           (let [x (* Math/PI (/ i 10.0))]
-             (.add F/C0 (+ (* 0.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
-    vec))
-
-
-(def output-exprs-vec (mapv #(.doubleValue (.toNumber %)) output-exprs))
-
-
 (defn eval-vec-pheno
-  [p input-exprs  input-exprs-F-strings]
+  [p input-exprs input-exprs-F-strings]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
         eval-p          (ops/eval-phenotype p input-exprs-F-strings)
@@ -91,13 +59,13 @@
 
 
 (defn score-fn
-  [input-exprs-F-strings input-exprs input-exprs-list output-exprs-vec v]
+  [input-exprs-F-strings input-exprs output-exprs-vec v]
   (try
     (let [leafs            (.leafCount (:expr v))
           resids           (map (fn [output expted]
-                                   (- expted output))
-                                 (eval-vec-pheno v input-exprs  input-exprs-F-strings)
-                                 output-exprs-vec)
+                                  (- expted output))
+                                (eval-vec-pheno v input-exprs input-exprs-F-strings)
+                                output-exprs-vec)
           resid            (sum (map #(min 100000 (abs %)) resids))
           score            (* -1 (abs resid))
           length-deduction (* 0.0001 leafs)]
@@ -198,7 +166,7 @@
 
 (defn report-iteration
   [i ga-result input-exprs input-exprs-list]
-  (when (zero? (mod i 5))
+  (when (zero? (mod i 1))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
@@ -222,14 +190,37 @@
   0)
 
 
+(def input-exprs
+  (->>
+    (range 20)
+    (map (fn [i]
+           (.add F/C0 (* Math/PI (/ i 10.0)))))
+    vec))
+
+
+(def output-exprs
+  (->>
+    (range 20)
+    (map (fn [i]
+           (let [x (* Math/PI (/ i 10.0))]
+             (.add F/C0 (+ (* 0.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
+    vec))
+
+
 (defn run-experiment
-  [{:keys [iters initial-phenos initial-muts input-expr input-exprs-F-strings input-exprs-list output-exprs-vec]}]
-  (let [start (Date.)
-        pop1  (ga/initialize
-                initial-phenos
-                (partial score-fn input-exprs-F-strings input-exprs input-exprs-list output-exprs-vec)
-                (partial mutation-fn initial-muts)
-                (partial crossover-fn initial-muts))]
+  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
+  (let [start                 (Date.)
+
+        input-exprs-vec       (mapv #(.doubleValue (.toNumber %)) input-exprs)
+        input-exprs-list      (F/List (into-array IExpr input-exprs))
+        input-exprs-F-strings (ops/->strings [(str input-exprs-list)])
+        output-exprs-vec      (mapv #(.doubleValue (.toNumber %)) output-exprs)
+
+        pop1                  (ga/initialize
+                                initial-phenos
+                                (partial score-fn input-exprs-F-strings input-exprs output-exprs-vec)
+                                (partial mutation-fn initial-muts)
+                                (partial crossover-fn initial-muts))]
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
@@ -262,13 +253,11 @@
 (defn run-test
   []
   (run-experiment
-    {:initial-phenos   (ops/initial-phenotypes sym-x 100)
-     :initial-muts     (ops/initial-mutations)
-     :input-exprs      input-exprs
-     :input-exprs-list input-exprs-list
-     :input-exprs-F-strings input-exprs-F-strings
-     :output-exprs-vec output-exprs-vec
-     :iters            100}))
+    {:initial-phenos (ops/initial-phenotypes sym-x 20)
+     :initial-muts   (ops/initial-mutations)
+     :input-exprs    input-exprs
+     :output-exprs   output-exprs
+     :iters          50}))
 
 
 (comment (run-test))
