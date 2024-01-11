@@ -17,7 +17,7 @@
 
 
 (defn ^IAST expr->fn
-  [^ExprEvaluator util ^ISymbol variable ^IAST expr]
+  [^ISymbol variable ^IAST expr]
   (F/Function (F/List (into-array ISymbol [variable])) expr))
 
 
@@ -60,7 +60,7 @@
         :util util
         :id   (UUID/randomUUID)
         :expr expr
-        :fn   (expr->fn util variable expr)})
+        :fn   (expr->fn variable expr)})
      (catch Exception e
        (println "Err creating pheno: " expr " , " variable " , " e)))))
 
