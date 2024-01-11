@@ -49,9 +49,9 @@
   ^XYChart [^String series-1-label
             ^String series-2-label
             x-data y-data-1 y-data-2]
-  (let [x-data             (double-array x-data)
-        y-data-1           (double-array y-data-1)
-        y-data-2           (double-array y-data-2)
+  (let [;; x-data             (double-array x-data)
+        ;; y-data-1           (double-array y-data-1)
+        ;; y-data-2           (double-array y-data-2)
         ^XYChart chart     (doto (XYChart. 1200 800)
                              (.setTitle "Sample")
                              (.setXAxisTitle "X")

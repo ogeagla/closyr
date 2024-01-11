@@ -1,17 +1,21 @@
 (ns clj-symbolic-regression.symreg
   (:require
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan]]
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.gui :as gui]
     [clj-symbolic-regression.ops :as ops]
     [clj-symbolic-regression.plot :as plot]
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put!]]
     [clojure.string :as str]
     [flames.core :as flames])
   (:import
     (java.util
-      Date List)
-    (java.util.concurrent CopyOnWriteArrayList)
-    (org.knowm.xchart XChartPanel XYChart)
+      Date
+      List)
+    (java.util.concurrent
+      CopyOnWriteArrayList)
+    (org.knowm.xchart
+      XChartPanel
+      XYChart)
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
@@ -59,7 +63,7 @@
 
 
 (defn score-fn
-  [input-exprs-list input-exprs-arr input-exprs-F-strings input-exprs output-exprs-vec v]
+  [input-exprs-list input-exprs output-exprs-vec v]
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
           ;; expr-str         (str (:expr v))
@@ -176,15 +180,18 @@
 
 
 (defn report-iteration
-  [i ga-result]
-  (when (zero? (mod i log-steps))
+  [i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec]
+  (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
           diff       (- (.getTime end) (.getTime ^Date @test-timer*))
           bests      (sort-population ga-result)
           took-s     (/ diff 1000.0)
-          pop-size   (count (:pop ga-result))]
+          pop-size   (count (:pop ga-result))
+
+          best-v     (first bests)
+          evaled     (eval-vec-pheno best-v input-exprs input-exprs-list)]
 
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size " took secs: " took-s " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
@@ -195,7 +202,8 @@
                     (map reportable-phen-str)))
       (println i " sim stats: " (summarize-sim-stats))
       ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
-      ))
+
+      (put! sim->gui-chan {:best-eval evaled :best-f-str (str (:expr best-v))})))
   (reset! sim-stats* {}))
 
 
@@ -225,77 +233,84 @@
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
 
-  (gui/create-and-show-gui
-    {
-     :xs          (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
-     :y1s         (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
-     :y2s         (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
-     :s1l         "series 1"
-     :s2l         "series 2"
-     :update-loop (fn [^XYChart chart
-                       ^XChartPanel chart-panel
-                       {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l]
-                        :as   conf}]
-                    #_(go-loop []
-                      (<! (timeout 1000))
 
-                      (println "Draw new points " (.size xs))
-                      (.add xs (.size xs))
-                      (.add y1s (.size xs))
-                      ;; (.remove y2s 0)
-                      (.add y2s (* 10.0 (Math/random)))
-
-                      (.updateXYSeries chart s1l xs y1s nil)
-                      (.updateXYSeries chart s2l xs y2s nil)
-
-                      (.revalidate chart-panel)
-                      (.repaint chart-panel)
-
-                      (recur)))
-     })
 
   (let [start                 (Date.)
 
         input-exprs-vec       (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-                              (into-array IExpr input-exprs)
+        (into-array IExpr input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-                              (into-array IExpr [(F/List input-exprs-arr)])
+        (into-array IExpr [(F/List input-exprs-arr)])
         input-exprs-F-strings (ops/->strings [(str input-exprs-list)])
         output-exprs-vec      (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
         pop1                  (ga/initialize
                                 initial-phenos
-                                (partial score-fn input-exprs-list input-exprs-arr input-exprs-F-strings input-exprs output-exprs-vec)
+                                (partial score-fn input-exprs-list input-exprs output-exprs-vec)
                                 (partial mutation-fn initial-muts)
-                                (partial crossover-fn initial-muts))]
+                                (partial crossover-fn initial-muts))
+
+        sim->gui-chan         (chan)]
+
+    (gui/create-and-show-gui
+      {:xs          (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
+       :y1s         (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
+       :y2s         (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
+       :s1l         "best fn"
+       :s2l         "objective fn"
+       :update-loop (fn [^XYChart chart
+                         ^XChartPanel chart-panel
+                         {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l]
+                          :as   conf}]
+                      (go-loop []
+                        (<! (timeout 1000))
+                        (when-let [{:keys [best-eval best-f-str]
+                                    :as   sim-msg} (<! sim->gui-chan)]
+
+                          (.clear y1s)
+                          (.addAll y1s best-eval)
+
+                          (.setTitle chart best-f-str)
+                          (.updateXYSeries chart s1l xs y1s nil)
+
+                          (.revalidate chart-panel)
+                          (.repaint chart-panel)
+
+                          (recur))))})
+
+
     (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
     (reset! test-timer* start)
 
-    (let [pop    (loop [pop pop1
-                        i   iters]
-                   (if (zero? i)
-                     pop
-                     (let [{old-scores :pop-old-scores
-                            old-score  :pop-old-score
-                            :as        ga-result} (ga/evolve pop)]
-                       (report-iteration i ga-result)
-                       (recur ga-result
-                              (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                                (near-exact-solution i old-score old-scores)
-                                (dec i))))))
-          end    (Date.)
-          diff   (- (.getTime end) (.getTime start))
-          bests  (take 10 (sort-population pop))
-          best-v (first bests)
-          evaled (eval-vec-pheno best-v input-exprs input-exprs-list)]
+    (let [pop   (loop [pop pop1
+                       i   iters]
+                  (if (zero? i)
+                    pop
+                    (let [{old-scores :pop-old-scores
+                           old-score  :pop-old-score
+                           :as        ga-result} (ga/evolve pop)]
+                      (report-iteration i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec)
+                      (recur ga-result
+                             (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
+                               (near-exact-solution i old-score old-scores)
+                               (dec i))))))
+          end   (Date.)
+          diff  (- (.getTime end) (.getTime start))
+          bests (take 10 (sort-population pop))
+          ;; best-v (first bests)
+          ;; evaled (eval-vec-pheno best-v input-exprs input-exprs-list)
+          ]
 
       (println "Took " (/ diff 1000.0) " seconds")
       (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
-      (plot/show-plot (str (:expr best-v)) input-exprs-vec evaled output-exprs-vec))))
+      #_(plot/show-plot (str (:expr best-v))
+                        (double-array input-exprs-vec)
+                        (double-array evaled)
+                        (double-array output-exprs-vec)))))
 
 
 (defn in-flames
@@ -310,11 +325,11 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 100)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          20}))]
+                           :iters          200}))]
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:

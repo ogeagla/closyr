@@ -13,17 +13,16 @@
       JLabel
       SwingUtilities)
     (org.knowm.xchart
-      XChartPanel XYChart)))
+      XChartPanel
+      XYChart)))
 
 
 (set! *warn-on-reflection* true)
 
 
 (defn create-and-show-gui
-  [
-   {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
-    :as   conf}
-   ]
+  [{:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
+    :as   conf}]
   (SwingUtilities/invokeLater
     (fn []
       (let [my-frame     (doto (JFrame. "My Frame")
@@ -31,11 +30,11 @@
                            (.setSize 1600 1400))
             my-label     (JLabel. "Hello UI")
             content-pane (.getContentPane my-frame)
-            ;xs           (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
-            ;y1s          (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
-            ;y2s          (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
-            ;s1l     "wip1"
-            ;s2l     "wip2"
+            ;; xs           (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+            ;; y1s          (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
+            ;; y2s          (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
+            ;; s1l     "wip1"
+            ;; s2l     "wip2"
             chart        (plot/make-plot s1l s2l xs y1s y2s)
             chart-panel  (XChartPanel. chart)]
 
@@ -52,8 +51,7 @@
 (defn gui-1
   []
   (create-and-show-gui
-    {
-     :xs          (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+    {:xs          (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
      :y1s         (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
      :y2s         (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
      :s1l         "series 1"
@@ -77,9 +75,7 @@
                       (.revalidate chart-panel)
                       (.repaint chart-panel)
 
-                      (recur)))
-     }
-    ))
+                      (recur)))}))
 
 
 (defn gui-2
