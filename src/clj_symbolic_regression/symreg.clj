@@ -50,7 +50,7 @@
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
         eval-p          (ops/eval-phenotype p input-exprs-list)
-        vs              (vec (pmap
+        vs              (vec (map
                                (fn [i]
                                  (try
                                    (.doubleValue
@@ -60,7 +60,7 @@
                                (range (dec (.size eval-p)))))
         vs              (if (seq vs)
                           vs
-                          (vec (pmap
+                          (vec (map
                                  (fn [i]
                                    (.doubleValue
                                      (.toNumber (if new-is-const
@@ -90,7 +90,7 @@
   [input-exprs input-exprs-list output-exprs-vec v]
   (try
     (let [leafs            (.leafCount (:expr v))
-          resids           (pmap (fn [output expted]
+          resids           (map (fn [output expted]
                                    (- expted output))
                                  (eval-vec-pheno v input-exprs input-exprs-list)
                                  output-exprs-vec)
