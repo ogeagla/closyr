@@ -201,7 +201,7 @@
 
 (defn report-iteration
   [i ga-result input-exprs input-exprs-list]
-  (when (zero? (mod i 5))
+  (when (zero? (mod i 10))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
           end        (Date.)
@@ -303,7 +303,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 5000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
