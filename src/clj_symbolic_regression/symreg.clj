@@ -14,6 +14,7 @@
       IExpr
       ISymbol)))
 
+
 (set! *warn-on-reflection* true)
 
 (def ^ISymbol sym-x (F/Dummy "x"))
@@ -81,13 +82,13 @@
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
           expr-str         (str (:expr v))
-          ;f-of-xs          (or
-          ;                   (get-cached-fn-eval expr-str input-exprs-F-strings)
-          ;                   (put-cached-fn-eval
-          ;                     expr-str
-          ;                     input-exprs-F-strings
-          ;                     (eval-vec-pheno v input-exprs input-exprs-F-strings)))
-          f-of-xs (eval-vec-pheno v input-exprs input-exprs-F-strings)
+          f-of-xs          (or
+                             (get-cached-fn-eval expr-str input-exprs-F-strings)
+                             (put-cached-fn-eval
+                               expr-str
+                               input-exprs-F-strings
+                               (eval-vec-pheno v input-exprs input-exprs-F-strings)))
+          ;; f-of-xs (eval-vec-pheno v input-exprs input-exprs-F-strings)
 
           resids           (map (fn [output expted]
                                   (- expted output))
@@ -296,9 +297,11 @@
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          100}))]
+                           :iters          10}))]
+    ;; with flame graph analysis:
     (in-flames experiment-fn)
-    ;(experiment-fn)
+    ;; plain experiment:
+    ;; (experiment-fn)
     ))
 
 
