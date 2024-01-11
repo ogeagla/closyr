@@ -21,10 +21,9 @@
 
 
 (defn eval-vec-pheno
-  [p input-exprs input-exprs-arr input-exprs-F-strings input-exprs-list]
+  [p input-exprs input-exprs-list]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
-        ;; _               (println "new is const: " new-is-const new-expr)
         ^IExpr eval-p   (ops/eval-phenotype-on-expr-args p input-exprs-list)
         ;; ^IExpr eval-p   (ops/eval-phenotype-on-string-args p input-exprs-F-strings)
         vs              (vec (map
@@ -49,39 +48,10 @@
 
 (defn sum
   [coll]
-  (reduce + 0.0 coll)
-  #_(loop [acc  0.0
-           coll coll]
-      (if (empty? coll)
-        acc
-        (recur (+ acc (first coll))
-               (rest coll)))
-
-      ))
+  (reduce + 0.0 coll))
 
 
 (def sim-stats* (atom {}))
-
-(def fn-eval-cache* (atom {}))
-(def fn-eval-cache-stats* (atom {}))
-
-
-(defn get-cached-fn-eval
-  [expr-str input-string]
-  (let [res (get-in @fn-eval-cache* [input-string expr-str])]
-    (if res
-      (swap! fn-eval-cache-stats* update :hit #(inc (or % 0)))
-      (swap! fn-eval-cache-stats* update :miss #(inc (or % 0))))
-    res))
-
-
-(defn put-cached-fn-eval
-  [expr-str input-string evald]
-  (swap! fn-eval-cache* assoc-in [input-string expr-str] evald)
-  #_(when (zero? (mod (count (@fn-eval-cache* input-string)) 100))
-      (println "Eval cache has size for input: " (count (@fn-eval-cache* input-string)))
-      )
-  evald)
 
 
 (defn score-fn
@@ -95,7 +65,7 @@
           ;;                     expr-str
           ;;                     input-exprs-F-strings
           ;;                     (eval-vec-pheno v input-exprs input-exprs-F-strings)))
-          f-of-xs          (eval-vec-pheno v input-exprs input-exprs-arr input-exprs-F-strings input-exprs-list)
+          f-of-xs          (eval-vec-pheno v input-exprs input-exprs-list)
 
           resids           (map (fn [output expted]
                                   (- expted output))
@@ -287,7 +257,7 @@
           diff   (- (.getTime end) (.getTime start))
           bests  (take 10 (sort-population pop))
           best-v (first bests)
-          evaled (eval-vec-pheno best-v input-exprs input-exprs-arr input-exprs-F-strings input-exprs-list)]
+          evaled (eval-vec-pheno best-v input-exprs input-exprs-list)]
 
       (println "Took " (/ diff 1000.0) " seconds")
       (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
@@ -296,12 +266,9 @@
 
 (defn in-flames
   [f]
-  (let [flames
-        ;; http://localhost:54321/flames.svg
-        (flames/start! {:port 54321, :host "localhost"})]
-
+  ;; http://localhost:54321/flames.svg
+  (let [flames (flames/start! {:port 54321, :host "localhost"})]
     (f)
-
     (flames/stop! flames)))
 
 
@@ -309,7 +276,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 100)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
