@@ -1,11 +1,13 @@
 (ns clj-symbolic-regression.gui
   (:require
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan]]
     [clj-symbolic-regression.plot :as plot]
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan]]
     [seesaw.core :as ss])
   (:import
-    (java.util List)
-    (java.util.concurrent CopyOnWriteArrayList)
+    (java.util
+      List)
+    (java.util.concurrent
+      CopyOnWriteArrayList)
     (javax.swing
       JFrame
       JLabel
@@ -25,10 +27,10 @@
                        (.setSize 1600 1400))
         my-label     (JLabel. "Hello UI")
         content-pane (.getContentPane my-frame)
-        xs (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
-        y1s (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0) )
-        y2s (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9) )
-chart (plot/make-plot "wip1" "wip2" xs y1s y2s)
+        xs           (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+        y1s          (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
+        y2s          (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
+        chart        (plot/make-plot "wip1" "wip2" xs y1s y2s)
         chart-panel  (XChartPanel. chart)]
 
 
@@ -44,7 +46,7 @@ chart (plot/make-plot "wip1" "wip2" xs y1s y2s)
       (println "Draw new points " (.size xs))
       (.add xs (.size xs))
       (.add y1s (.size xs))
-      ;(.remove y2s 0)
+      ;; (.remove y2s 0)
       (.add y2s (* 10.0 (Math/random)))
 
       (.updateXYSeries chart "wip1" xs y1s nil)
@@ -53,10 +55,7 @@ chart (plot/make-plot "wip1" "wip2" xs y1s y2s)
       (.revalidate chart-panel)
       (.repaint chart-panel)
 
-      (recur)
-      )
-
-    ))
+      (recur))))
 
 
 (defn gui-1

@@ -46,8 +46,7 @@
 
 
 (defn make-plot
-  ^XYChart [
-            ^String series-1-label
+  ^XYChart [^String series-1-label
             ^String series-2-label
             x-data y-data-1 y-data-2]
   (let [x-data             (double-array x-data)
