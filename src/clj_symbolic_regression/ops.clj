@@ -225,6 +225,27 @@
     :label       "-x"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr x-sym))}
+
+   {:op          :fn
+    :label       "+x^2"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (.pow x-sym 2)))}
+
+   {:op          :fn
+    :label       "-x^2"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (.pow x-sym 2)))}
+
+   {:op          :fn
+    :label       "+x^1/2"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (.pow x-sym 0.5)))}
+
+   {:op          :fn
+    :label       "-x^1/2"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (.pow x-sym 0.5)))}
+
    {:op          :fn
     :label       "*x"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
@@ -234,6 +255,7 @@
     :label       "/x"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.divide expr x-sym))}
+
    {:op          :fn
     :label       "*-1"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
@@ -248,7 +270,6 @@
     :label       "*2"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr F/C2))}
-
 
    {:op          :fn
     :label       "/10"
@@ -275,6 +296,22 @@
     :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
                         (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (.minus ie (F/C1D5))
+                          ie))}
+
+
+   {:op               :modify-leafs
+    :label            "x^1/2"
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.pow ie (F/C1D2))
+                          ie))}
+
+
+   {:op               :modify-leafs
+    :label            "x^2"
+    :leaf-modifier-fn (fn ^IExpr [^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.pow ie (F/C2))
                           ie))}
 
 
