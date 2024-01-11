@@ -70,11 +70,11 @@
   (.evalFunction util pfn (->strings [(str x)])))
 
 
-(defn ^java.util.function.Function tree-modifier
+(defn ^java.util.function.Function tree-leaf-modifier
   [modifier]
   (as-function (fn ^IExpr [^IExpr ie]
                  (if (instance? IAST ie)
-                   (.map ^IAST ie (tree-modifier modifier))
+                   (.map ^IAST ie (tree-leaf-modifier modifier))
                    (modifier ie)))))
 
 
@@ -90,7 +90,7 @@
 (defmethod modify :modify-leafs
   [{:keys [leaf-modifier-fn]}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util first-modify :first-modify :as pheno}]
-  (->phenotype x-sym (.replaceAll expr (tree-modifier leaf-modifier-fn)) (if first-modify nil util)))
+  (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier leaf-modifier-fn)) (if first-modify nil util)))
 
 
 (defmethod modify :fn
