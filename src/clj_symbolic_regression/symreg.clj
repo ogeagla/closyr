@@ -3,7 +3,8 @@
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.ops :as ops]
     [clj-symbolic-regression.plot :as plot]
-    [clojure.string :as str])
+    [clojure.string :as str]
+    [flames.core :as flames])
   (:import
     (java.util
       Date)
@@ -248,6 +249,11 @@
       (println "Took " (/ diff 1000.0) " seconds")
       (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
       (plot/plot (str (:expr best-v)) input-exprs-vec evaled output-exprs-vec))))
+
+
+(def flames
+  ;; http://localhost:54321/flames.svg
+  (flames/start! {:port 54321, :host "localhost"}))
 
 
 (defn run-test
