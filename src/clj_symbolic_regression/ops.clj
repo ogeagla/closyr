@@ -67,7 +67,7 @@
 
 (defn eval-phenotype
   [{^IAST pfn :fn ^ExprEvaluator util :util} x]
-  (.evalFunction util pfn (->strings [(str x)])))
+  (.evalFunction util pfn x))
 
 
 (defn ^java.util.function.Function tree-leaf-modifier

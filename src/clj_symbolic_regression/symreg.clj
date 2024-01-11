@@ -32,6 +32,9 @@
 (def input-exprs-list
   (F/List (into-array IExpr input-exprs)))
 
+(def input-exprs-F-strings
+  (ops/->strings [(str input-exprs-list)]))
+
 
 (def output-exprs
   (->>
@@ -46,10 +49,10 @@
 
 
 (defn eval-vec-pheno
-  [p input-exprs input-exprs-list]
+  [p input-exprs  input-exprs-F-strings]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
-        eval-p          (ops/eval-phenotype p input-exprs-list)
+        eval-p          (ops/eval-phenotype p input-exprs-F-strings)
         vs              (vec (map
                                (fn [i]
                                  (try
@@ -87,12 +90,12 @@
 
 
 (defn score-fn
-  [input-exprs input-exprs-list output-exprs-vec v]
+  [input-exprs-F-strings input-exprs input-exprs-list output-exprs-vec v]
   (try
     (let [leafs            (.leafCount (:expr v))
           resids           (map (fn [output expted]
                                    (- expted output))
-                                 (eval-vec-pheno v input-exprs input-exprs-list)
+                                 (eval-vec-pheno v input-exprs  input-exprs-F-strings)
                                  output-exprs-vec)
           resid            (sum (map #(min 100000 (abs %)) resids))
           score            (* -1 (abs resid))
@@ -217,11 +220,11 @@
 
 
 (defn run-experiment
-  [{:keys [iters initial-phenos initial-muts input-exprs input-exprs-list output-exprs-vec]}]
+  [{:keys [iters initial-phenos initial-muts input-expr input-exprs-F-strings input-exprs-list output-exprs-vec]}]
   (let [start (Date.)
         pop1  (ga/initialize
                 initial-phenos
-                (partial score-fn input-exprs input-exprs-list output-exprs-vec)
+                (partial score-fn input-exprs-F-strings input-exprs input-exprs-list output-exprs-vec)
                 (partial mutation-fn initial-muts)
                 (partial crossover-fn initial-muts))]
     (println "start " start)
@@ -246,7 +249,7 @@
           diff   (- (.getTime end) (.getTime start))
           bests  (take 10 (sort-population pop))
           best-v (first bests)
-          evaled (eval-vec-pheno best-v input-exprs input-exprs-list)]
+          evaled (eval-vec-pheno best-v input-exprs input-exprs-F-strings)]
 
       (println "Took " (/ diff 1000.0) " seconds")
       (println "Bests: \n" (str/join "\n" (map reportable-phen-str bests)))
@@ -260,6 +263,7 @@
      :initial-muts     (ops/initial-mutations)
      :input-exprs      input-exprs
      :input-exprs-list input-exprs-list
+     :input-exprs-F-strings input-exprs-F-strings
      :output-exprs-vec output-exprs-vec
      :iters            100}))
 
