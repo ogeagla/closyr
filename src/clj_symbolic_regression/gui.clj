@@ -93,7 +93,7 @@
 
 
 (defn input-data-items-widget
-  [sim-stop-start-chan]
+  []
   (let [^JPanel bp          (doto (ss/border-panel
                                     :border (sbr/line-border :top 15 :color "#AAFFFF")
                                     :north (ss/label "I'm a draggable label with a text box!")
@@ -108,8 +108,8 @@
                               (movable))
 
 
-        x-count             40
-        x-scale             20
+        x-count             80
+        x-scale             10
         pts                 (map
                               (fn [i]
                                 [(* i x-scale) (+ 100 (* 50 (Math/sin (/ i 4.0))))])
@@ -176,43 +176,32 @@
             content-pane      (doto (.getContentPane my-frame)
                                 (.setLayout (GridLayout. 2 1)))
 
-
-
-            my-label          (JLabel. "Hello UI")
+            my-label          (JLabel. "Press Start To Begin Function Search")
 
             chart             (plot/make-plot s1l s2l xs y1s y2s)
             chart-panel       (XChartPanel. chart)
-            [^JPanel xyz-p items-point-getters] (input-data-items-widget sim-stop-start-chan)
+            [^JPanel xyz-p items-point-getters] (input-data-items-widget)
 
-            ^JButton ctl-btn  (ss/button :text "Start"
-                                         :listen [:mouse-clicked
-                                                  (fn [^MouseEvent e]
-                                                    (when sim-stop-start-chan
-
-                                                      (let [is-start   (= "Start" (ss/get-text* e))
-                                                            input-data (mapv
-                                                                         (fn [getter]
-                                                                           (let [^Point pt (getter)]
-                                                                             [(/ (.getX pt) 40.0) (/ (- 300 (.getY pt)) 40.0)]
-                                                                             ))
-                                                                         items-point-getters)
-                                                            input-x (mapv first input-data)
-                                                            input-y (mapv second input-data)
-                                                            ]
-                                                        (println "clicked Start/Stop: " is-start)
-
-                                                        (when is-start
-                                                          (println "xs: " input-x
-                                                                   "ys: " input-y)
-                                                          )
-
-                                                        (put! sim-stop-start-chan {:new-state is-start
-                                                                                   :input-data-x input-x
-                                                                                   :input-data-y input-y
-                                                                                   })
-                                                        (ss/set-text* e (if is-start
-                                                                          "Stop"
-                                                                          "Start")))))])]
+            ^JButton ctl-btn  (ss/button
+                                :text "Start"
+                                :listen [:mouse-clicked
+                                         (fn [^MouseEvent e]
+                                           (when sim-stop-start-chan
+                                             (let [is-start   (= "Start" (ss/get-text* e))
+                                                   input-data (mapv (fn [getter]
+                                                                      (let [^Point pt (getter)]
+                                                                        [(/ (.getX pt) 20.0)
+                                                                         (- 15.0 (/ (.getY pt) 20.0))]))
+                                                                    items-point-getters)
+                                                   input-x    (mapv first input-data)
+                                                   input-y    (mapv second input-data)]
+                                               (println "clicked Start/Stop: " is-start)
+                                               (put! sim-stop-start-chan {:new-state    is-start
+                                                                          :input-data-x input-x
+                                                                          :input-data-y input-y})
+                                               (ss/set-text* e (if is-start
+                                                                 "Stop"
+                                                                 "Start")))))])]
 
         (.add info-container my-label)
         (.add info-container ctl-btn)

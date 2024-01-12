@@ -296,9 +296,9 @@
   (let [input-exprs-count (count input-exprs)
         input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-                          (into-array IExpr input-exprs)
+        (into-array IExpr input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-                          (into-array IExpr [(F/List input-exprs-arr)])
+        (into-array IExpr [(F/List input-exprs-arr)])
         output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
         input-exprs-vec*  (atom input-exprs-vec)
@@ -310,36 +310,28 @@
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
-
-
     (let [{new-state    :new-state
            input-data-x :input-data-x
-           input-data-y :input-data-y
-           } (<!! sim-stop-start-chan)
+           input-data-y :input-data-y} (<!! sim-stop-start-chan)
 
           input-exprs       (if input-data-x
                               (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
-                              input-exprs
-                              )
+                              input-exprs)
           output-exprs      (if input-data-y
                               (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
                               output-exprs)
           output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
           ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-                            (into-array IExpr input-exprs)
+          (into-array IExpr input-exprs)
           ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-                            (into-array IExpr [(F/List input-exprs-arr)])
+          (into-array IExpr [(F/List input-exprs-arr)])
           input-exprs-count (count input-exprs)
           input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
 
-          _ (do
-              (reset! input-exprs-vec* input-exprs-vec)
-              (reset! output-exprs-vec* output-exprs-vec)
-              )
+          _                 (do
+                              (reset! input-exprs-vec* input-exprs-vec)
+                              (reset! output-exprs-vec* output-exprs-vec))
           _                 (println "Got state req: " (if new-state "Start" "Stop"))
-
-
-
 
           start             (Date.)
           pop1              (ga/initialize
@@ -355,9 +347,7 @@
         (if (zero? i)
           pop
           (do
-
             (check-start-stop-state sim-stop-start-chan)
-
             (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
               (report-iteration i ga-result sim->gui-chan input-exprs-count input-exprs-list)
               (recur ga-result
