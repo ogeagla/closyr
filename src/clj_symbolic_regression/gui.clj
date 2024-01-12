@@ -110,9 +110,8 @@
         x-scale       20
         items         (map
                         (fn [i]
-                          (make-label #(do [(* i x-scale) (+ 200 (- (rand-int 300)
-                                                                    150))])
-                                      (str "p" i)))
+                          (make-label #(do [(* i x-scale) (+ 200 (* 100 (Math/sin (/ i 4.0))))])
+                                      (str "x")))
                         (range x-count))
 
 
