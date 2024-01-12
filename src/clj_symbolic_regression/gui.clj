@@ -108,11 +108,11 @@
                               (movable))
 
 
-        x-count             80
-        x-scale             10
+        x-count             50
+        x-scale             15
         pts                 (map
                               (fn [i]
-                                [(* i x-scale) (+ 100 (* 50 (Math/sin (/ i 4.0))))])
+                                [(+ 50.0 (* i x-scale)) (+ 150 (* 50 (Math/sin (/ i 4.0))))])
                               (range x-count))
         items               (map
                               (fn [pt]
@@ -142,7 +142,7 @@
                                                                   (.getX (.getPoint e))))
                                                              500.0)]
                                                  (.setLocation widget
-                                                               (* i x-scale)
+                                                               (+ 50.0 (* i x-scale))
                                                                (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation widget)))
                                                                   (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
                                              items))
@@ -190,8 +190,8 @@
                                              (let [is-start   (= "Start" (ss/get-text* e))
                                                    input-data (mapv (fn [getter]
                                                                       (let [^Point pt (getter)]
-                                                                        [(/ (.getX pt) 20.0)
-                                                                         (- 15.0 (/ (.getY pt) 20.0))]))
+                                                                        [(/ (- (.getX pt) 50.0) 15.0)
+                                                                         (- 10.0 (/ (.getY pt) 15.0))]))
                                                                     items-point-getters)
                                                    input-x    (mapv first input-data)
                                                    input-y    (mapv second input-data)]

@@ -373,11 +373,11 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 500)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          100}))]
+                           :iters          200}))]
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:
