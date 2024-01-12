@@ -2,7 +2,11 @@
   (:require
     [clj-symbolic-regression.plot :as plot]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan]]
-    [seesaw.core :as ss])
+    [seesaw.behave :as sb]
+    [seesaw.border :as sbr]
+    [seesaw.core :as ss]
+    [seesaw.graphics :as sg]
+    )
   (:import
     (java.awt
       BorderLayout
@@ -12,7 +16,8 @@
       Graphics2D
       GridBagConstraints
       GridBagLayout
-      GridLayout)
+      GridLayout
+      Point)
     (java.util
       List)
     (java.util.concurrent
@@ -32,6 +37,54 @@
 
 (set! *warn-on-reflection* true)
 
+
+(defn movable
+  [w]
+  (let [^Point start-point (Point.)]
+    (sb/when-mouse-dragged
+      w
+      ;; When the mouse is pressed, move the widget to the front of the z order
+      :start (fn [e]
+               (ss/move! e :to-front)
+               (.setLocation start-point ^Point (.getPoint e)))
+      ;; When the mouse is dragged move the widget
+      ;; Unfortunately, the delta passed to this function doesn't work correctly
+      ;; if the widget is moved during the drag. So, the move is calculated
+      ;; manually.
+      :drag (fn [e _]
+              (let [^Point p (.getPoint e)]
+                (ss/move! e :by [(- (.x p) (.x start-point))
+                                 (- (.y p) (.y start-point))])))))
+  w)
+
+
+(defn make-label
+  [text]
+  (doto
+    ; Instead of a boring label, make the label rounded with
+    ; some custom drawing. Use the before paint hook to draw
+    ; under the label's text.
+    (ss/label
+      :border 5
+      :text text
+      :location [(rand-int 300) (rand-int 300)]
+      :paint {
+              :before (fn [c g]
+                        (sg/draw g (sg/rounded-rect 3 3 (- (ss/width c) 6) (- (ss/height c) 6) 9)
+                                 (sg/style :foreground "#FFFFaa"
+                                           :background "#aaFFFF"
+                                           :stroke 2)))})
+    ; Set the bounds to its preferred size. Note that this has to be
+    ; done after the label is fully constructed.
+    (ss/config! :bounds :preferred)))
+
+
+(defn draw-grid [c g]
+  (let [w (ss/width c) h (ss/height c)]
+    (doseq [x (range 0 w 10)]
+      (.drawLine g x 0 x h))
+    (doseq [y (range 0 h 10)]
+      (.drawLine g 0 y w y))))
 
 (defn create-and-show-gui
   [{:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
@@ -58,18 +111,33 @@
 
             chart                           (plot/make-plot s1l s2l xs y1s y2s)
             chart-panel                     (XChartPanel. chart)
-            ^JPanel drawing-canvas          (ss/canvas
-                                              :background Color/YELLOW
-                                              :paint (fn [^JPanel c ^Graphics2D g]
-                                                       (.drawString g "I'm a canvas" 10 10))
-                                              :listen [:mouse-clicked
-                                                       (fn [e]
-                                                         (println "CLicked " e))])]
+            ^JPanel bp                      (doto (ss/border-panel
+                                                    :border (sbr/line-border :top 15 :color "#AAFFFF")
+                                                    :north (ss/label "I'm a draggable label with a text box!")
+                                                    :center (ss/text :text "Hey type some stuff here"))
+                                              (ss/config! :bounds :preferred)
+                                              (movable))
+
+            ^JPanel xyz-p                   (ss/xyz-panel
+                                              :paint draw-grid
+                                              :id :xyz
+                                              :background "#222222"
+                                              :items (conj
+                                                       (map (comp movable make-label) ["Agent Cooper" "Big Ed" "Leland Palmer"])
+                                                       bp))
+            ;^JPanel drawing-canvas          (ss/canvas
+            ;                                  :background Color/YELLOW
+            ;                                  :paint (fn [^JPanel c ^Graphics2D g]
+            ;                                           (.drawString g "I'm a canvas" 10 10))
+            ;                                  :listen [:mouse-clicked
+            ;                                           (fn [e]
+            ;                                             (println "CLicked " e))])
+            ]
 
 
 
         (.add drawing-content-pane my-label)
-        (.add drawing-content-pane drawing-canvas)
+        (.add drawing-content-pane xyz-p)
         (.add content-pane drawing-container)
         (.add content-pane chart-panel)
         (.pack my-frame)
@@ -90,8 +158,7 @@
      :s2l         "series 2"
      :update-loop (fn [{:keys [^XYChart chart
                                ^XChartPanel chart-panel
-                               ^JLabel info-label
-                               ]}
+                               ^JLabel info-label]}
                        {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
                         :as   conf}]
 
