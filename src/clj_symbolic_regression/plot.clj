@@ -52,7 +52,7 @@
   (let [;; x-data             (double-array x-data)
         ;; y-data-1           (double-array y-data-1)
         ;; y-data-2           (double-array y-data-2)
-        ^XYChart chart     (doto (XYChart. 1200 800)
+        ^XYChart chart     (doto (XYChart. 900 600)
                              (.setTitle "Sample")
                              (.setXAxisTitle "X")
                              (.setYAxisTitle "Y"))

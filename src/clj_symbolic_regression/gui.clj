@@ -4,14 +4,26 @@
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan]]
     [seesaw.core :as ss])
   (:import
+    (java.awt
+      BorderLayout
+      Color
+      Container
+      FlowLayout
+      GridBagConstraints
+      GridBagLayout
+      GridLayout)
     (java.util
       List)
     (java.util.concurrent
       CopyOnWriteArrayList)
     (javax.swing
+      BoxLayout
       JFrame
       JLabel
+      JPanel
       SwingUtilities)
+    (javax.swing.border
+      Border)
     (org.knowm.xchart
       XChartPanel
       XYChart)))
@@ -25,22 +37,28 @@
     :as   conf}]
   (SwingUtilities/invokeLater
     (fn []
-      (let [my-frame     (doto (JFrame. "My Frame")
-                           (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                           (.setSize 1600 1400))
-            my-label     (JLabel. "Hello UI")
-            content-pane (.getContentPane my-frame)
-            ;; xs           (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
-            ;; y1s          (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
-            ;; y2s          (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
-            ;; s1l     "wip1"
-            ;; s2l     "wip2"
-            chart        (plot/make-plot s1l s2l xs y1s y2s)
-            chart-panel  (XChartPanel. chart)]
+      (let [my-frame                (doto (JFrame. "My Frame")
+                                      (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+                                      (.setSize 1600 1400))
+
+            drawing-canvas          (doto (JPanel. (BorderLayout.))
+                                      (.setSize 1200 100)
+                                      (.setBackground Color/RED))
+
+
+            ^Container content-pane (doto (.getContentPane my-frame)
+                                      (.setLayout (GridLayout. 2 1)))
+
+            my-label                (JLabel. "Hello UI")
+
+
+            chart                   (plot/make-plot s1l s2l xs y1s y2s)
+            chart-panel             (XChartPanel. chart)]
 
 
 
-        (.add content-pane my-label)
+        (.add drawing-canvas my-label)
+        (.add content-pane drawing-canvas)
         (.add content-pane chart-panel)
         (.pack my-frame)
         (.setVisible my-frame true)
