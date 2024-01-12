@@ -9,6 +9,7 @@
       Color
       Container
       FlowLayout
+      Graphics2D
       GridBagConstraints
       GridBagLayout
       GridLayout)
@@ -37,28 +38,36 @@
     :as   conf}]
   (SwingUtilities/invokeLater
     (fn []
-      (let [my-frame                (doto (JFrame. "My Frame")
-                                      (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                                      (.setSize 1600 1400))
+      (let [my-frame                        (doto (JFrame. "My Frame")
+                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+                                              (.setSize 1600 1400))
 
-            drawing-canvas          (doto (JPanel. (BorderLayout.))
-                                      (.setSize 1200 100)
-                                      (.setBackground Color/RED))
-
-
-            ^Container content-pane (doto (.getContentPane my-frame)
-                                      (.setLayout (GridLayout. 2 1)))
-
-            my-label                (JLabel. "Hello UI")
+            drawing-container               (doto (JPanel. (BorderLayout.))
+                                              (.setSize 1200 100)
+                                              (.setBackground Color/RED))
 
 
-            chart                   (plot/make-plot s1l s2l xs y1s y2s)
-            chart-panel             (XChartPanel. chart)]
+            ^Container content-pane         (doto (.getContentPane my-frame)
+                                              (.setLayout (GridLayout. 2 1)))
+
+            ^Container drawing-content-pane (doto drawing-container
+                                              (.setLayout (GridLayout. 1 2)))
+
+            my-label                        (JLabel. "Hello UI")
+
+
+            chart                           (plot/make-plot s1l s2l xs y1s y2s)
+            chart-panel                     (XChartPanel. chart)
+            ^JPanel drawing-canvas          (ss/canvas
+                                              :background Color/YELLOW
+                                              :paint (fn [^JPanel c ^Graphics2D g]
+                                                       (.drawString g "I'm a canvas" 10 10)))]
 
 
 
-        (.add drawing-canvas my-label)
-        (.add content-pane drawing-canvas)
+        (.add drawing-content-pane my-label)
+        (.add drawing-content-pane drawing-canvas)
+        (.add content-pane drawing-container)
         (.add content-pane chart-panel)
         (.pack my-frame)
         (.setVisible my-frame true)
@@ -78,8 +87,11 @@
                        ^XChartPanel chart-panel
                        {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
                         :as   conf}]
+
+
+
                     (go-loop []
-                      (<! (timeout 1000))
+                      (<! (timeout 2000))
 
                       (println "Draw new points " (.size xs))
                       (.add xs (.size xs))
