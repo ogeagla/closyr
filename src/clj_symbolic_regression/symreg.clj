@@ -306,12 +306,7 @@
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
-  (let [input-exprs-count (count input-exprs)
-        input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-        (into-array IExpr input-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-        (into-array IExpr [(F/List input-exprs-arr)])
+  (let [input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
         input-exprs-vec*  (atom input-exprs-vec)
