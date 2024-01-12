@@ -92,59 +92,63 @@
       (.drawLine g 0 y w y))))
 
 
-(defn ^JPanel input-data-items-widget
+(defn input-data-items-widget
   [sim-stop-start-chan]
-  (let [^JPanel bp    (doto (ss/border-panel
-                              :border (sbr/line-border :top 15 :color "#AAFFFF")
-                              :north (ss/label "I'm a draggable label with a text box!")
-                              :center (ss/text
-                                        :text "Hey type some stuff here"
-                                        :listen [:document
-                                                 (fn [^AbstractDocument$DefaultDocumentEvent e]
-                                                   (let [doc     (.getDocument e)
-                                                         doc-txt (.getText doc 0 (.getLength doc))]
-                                                     (println "New text: " doc-txt)))]))
-                        (ss/config! :bounds :preferred)
-                        (movable))
+  (let [^JPanel bp          (doto (ss/border-panel
+                                    :border (sbr/line-border :top 15 :color "#AAFFFF")
+                                    :north (ss/label "I'm a draggable label with a text box!")
+                                    :center (ss/text
+                                              :text "Hey type some stuff here"
+                                              :listen [:document
+                                                       (fn [^AbstractDocument$DefaultDocumentEvent e]
+                                                         (let [doc     (.getDocument e)
+                                                               doc-txt (.getText doc 0 (.getLength doc))]
+                                                           (println "New text: " doc-txt)))]))
+                              (ss/config! :bounds :preferred)
+                              (movable))
 
 
-        x-count       40
-        x-scale       20
-        pts           (map
-                        (fn [i]
-                          [(* i x-scale) (+ 100 (* 50 (Math/sin (/ i 4.0))))])
-                        (range x-count))
-        items         (map
-                        (fn [pt]
-                          (movable
-                            (make-label #(do pt)
-                                        (str "x"))
-                            {:disable-x? true}))
-                        pts)
+        x-count             40
+        x-scale             20
+        pts                 (map
+                              (fn [i]
+                                [(* i x-scale) (+ 100 (* 50 (Math/sin (/ i 4.0))))])
+                              (range x-count))
+        items               (map
+                              (fn [pt]
+                                (movable
+                                  (make-label #(do pt)
+                                              (str "x"))
+                                  {:disable-x? true}))
+                              pts)
 
+        items-point-getters (map
+                              (fn [^JLabel widget]
+                                (fn [] (.getLocation widget)))
+                              items)
 
-        ^JPanel xyz-p (ss/xyz-panel
-                        :paint draw-grid
-                        :id :xyz
-                        :background "#222222"
-                        :items (conj items bp)
-                        :listen [:mouse-clicked
-                                 (fn [^MouseEvent e]
-                                   (doall
-                                     (map-indexed
-                                       (fn [i ^JLabel widget]
-                                         (let [diff (/ (abs
-                                                         (- (.getX (.getLocation widget))
-                                                            (.getX (.getPoint e))))
-                                                       500.0)]
-                                           (.setLocation widget
-                                                         (* i x-scale)
-                                                         (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation widget)))
-                                                            (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
-                                       items))
+        ^JPanel xyz-p       (ss/xyz-panel
+                              :paint draw-grid
+                              :id :xyz
+                              :background "#222222"
+                              :items (conj items bp)
+                              :listen [:mouse-clicked
+                                       (fn [^MouseEvent e]
+                                         (doall
+                                           (map-indexed
+                                             (fn [i ^JLabel widget]
+                                               (let [diff (/ (abs
+                                                               (- (.getX (.getLocation widget))
+                                                                  (.getX (.getPoint e))))
+                                                             500.0)]
+                                                 (.setLocation widget
+                                                               (* i x-scale)
+                                                               (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation widget)))
+                                                                  (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
+                                             items))
 
-                                   (ss/repaint! e))])]
-    xyz-p))
+                                         (ss/repaint! e))])]
+    [xyz-p items-point-getters]))
 
 
 ;; todo: draw on widget: https://stackoverflow.com/questions/10101673/drawing-lines-with-mouse-on-canvas-java-awt
@@ -172,23 +176,43 @@
             content-pane      (doto (.getContentPane my-frame)
                                 (.setLayout (GridLayout. 2 1)))
 
-            ^JButton ctl-btn  (ss/button :text "Start"
-                                         :listen [:mouse-clicked
-                                                  (fn [^MouseEvent e]
-                                                    (when sim-stop-start-chan
 
-                                                      (let [is-start (= "Start" (ss/get-text* e))]
-                                                        (println "clicked Start/Stop: " is-start)
-                                                        (put! sim-stop-start-chan {:new-state is-start})
-                                                        (ss/set-text* e (if is-start
-                                                                          "Stop"
-                                                                          "Start")))))])
 
             my-label          (JLabel. "Hello UI")
 
             chart             (plot/make-plot s1l s2l xs y1s y2s)
             chart-panel       (XChartPanel. chart)
-            xyz-p             (input-data-items-widget sim-stop-start-chan)]
+            [^JPanel xyz-p items-point-getters] (input-data-items-widget sim-stop-start-chan)
+
+            ^JButton ctl-btn  (ss/button :text "Start"
+                                         :listen [:mouse-clicked
+                                                  (fn [^MouseEvent e]
+                                                    (when sim-stop-start-chan
+
+                                                      (let [is-start   (= "Start" (ss/get-text* e))
+                                                            input-data (mapv
+                                                                         (fn [getter]
+                                                                           (let [^Point pt (getter)]
+                                                                             [(/ (.getX pt) 40.0) (/ (- 300 (.getY pt)) 40.0)]
+                                                                             ))
+                                                                         items-point-getters)
+                                                            input-x (mapv first input-data)
+                                                            input-y (mapv second input-data)
+                                                            ]
+                                                        (println "clicked Start/Stop: " is-start)
+
+                                                        (when is-start
+                                                          (println "xs: " input-x
+                                                                   "ys: " input-y)
+                                                          )
+
+                                                        (put! sim-stop-start-chan {:new-state is-start
+                                                                                   :input-data-x input-x
+                                                                                   :input-data-y input-y
+                                                                                   })
+                                                        (ss/set-text* e (if is-start
+                                                                          "Stop"
+                                                                          "Start")))))])]
 
         (.add info-container my-label)
         (.add info-container ctl-btn)

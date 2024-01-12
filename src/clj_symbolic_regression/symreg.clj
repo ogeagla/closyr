@@ -31,7 +31,7 @@
 
 
 (defn eval-vec-pheno
-  [p input-exprs input-exprs-list]
+  [p input-exprs-count input-exprs-list]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
         ^IExpr eval-p   (ops/eval-phenotype-on-expr-args p input-exprs-list)
@@ -52,7 +52,7 @@
                                      (.toNumber (if new-is-const
                                                   new-expr
                                                   (.getArg eval-p 0 F/Infinity)))))
-                                 (range (count input-exprs)))))]
+                                 (range input-exprs-count))))]
     vs))
 
 
@@ -65,7 +65,7 @@
 
 
 (defn score-fn
-  [input-exprs-list input-exprs output-exprs-vec v]
+  [input-exprs-list input-exprs-count output-exprs-vec v]
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
           ;; expr-str         (str (:expr v))
@@ -75,7 +75,7 @@
           ;;                     expr-str
           ;;                     input-exprs-F-strings
           ;;                     (eval-vec-pheno v input-exprs input-exprs-F-strings)))
-          f-of-xs          (eval-vec-pheno v input-exprs input-exprs-list)
+          f-of-xs          (eval-vec-pheno v input-exprs-count input-exprs-list)
 
           resids           (map (fn [output expted]
                                   (- expted output))
@@ -182,7 +182,7 @@
 
 
 (defn report-iteration
-  [i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec]
+  [i ga-result sim->gui-chan input-exprs-count input-exprs-list]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
@@ -193,7 +193,7 @@
           pop-size   (count (:pop ga-result))
 
           best-v     (first bests)
-          evaled     (eval-vec-pheno best-v input-exprs input-exprs-list)]
+          evaled     (eval-vec-pheno best-v input-exprs-count input-exprs-list)]
 
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size " took secs: " took-s " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
@@ -234,14 +234,14 @@
 
 
 (defn setup-gui
-  [input-exprs-vec output-exprs-vec]
+  [input-exprs-vec* output-exprs-vec*]
   (let [sim->gui-chan       (chan)
         sim-stop-start-chan (chan)]
     (gui/create-and-show-gui
       {:sim-stop-start-chan sim-stop-start-chan
-       :xs                  (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
-       :y1s                 (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
-       :y2s                 (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
+       :xs                  (doto (CopyOnWriteArrayList.) (.addAll @input-exprs-vec*))
+       :y1s                 (doto (CopyOnWriteArrayList.) (.addAll (repeat (count @input-exprs-vec*) 0.0)))
+       :y2s                 (doto (CopyOnWriteArrayList.) (.addAll @output-exprs-vec*))
        :s1l                 "best fn"
        :s2l                 "objective fn"
        :update-loop         (fn [{:keys [^XYChart chart
@@ -257,8 +257,15 @@
                                   (.clear y1s)
                                   (.addAll y1s best-eval)
 
+                                  (.clear y2s)
+                                  (.addAll y2s @output-exprs-vec*)
+
+                                  (.clear xs)
+                                  (.addAll xs @input-exprs-vec*)
+
                                   (.setTitle chart best-f-str)
                                   (.updateXYSeries chart s1l xs y1s nil)
+                                  (.updateXYSeries chart s2l xs y2s nil)
 
                                   (.setText info-label (str "Best Function: " best-f-str))
                                   (.revalidate info-label)
@@ -286,29 +293,60 @@
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
-  (let [input-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+  (let [input-exprs-count (count input-exprs)
+        input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-        (into-array IExpr input-exprs)
+                          (into-array IExpr input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-        (into-array IExpr [(F/List input-exprs-arr)])
-        output-exprs-vec (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
+                          (into-array IExpr [(F/List input-exprs-arr)])
+        output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
-        pop1             (ga/initialize
-                           initial-phenos
-                           (partial score-fn input-exprs-list input-exprs output-exprs-vec)
-                           (partial mutation-fn initial-muts)
-                           (partial crossover-fn initial-muts))
+        input-exprs-vec*  (atom input-exprs-vec)
+        output-exprs-vec* (atom output-exprs-vec)
 
         {sim->gui-chan       :sim->gui-chan
-         sim-stop-start-chan :sim-stop-start-chan} (setup-gui input-exprs-vec output-exprs-vec)]
+         sim-stop-start-chan :sim-stop-start-chan} (setup-gui input-exprs-vec* output-exprs-vec*)]
 
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
-    (let [{new-state :new-state} (<!! sim-stop-start-chan)]
-      (println "Got state req: " (if new-state "Start" "Stop")))
 
-    (let [start (Date.)]
+
+    (let [{new-state    :new-state
+           input-data-x :input-data-x
+           input-data-y :input-data-y
+           } (<!! sim-stop-start-chan)
+
+          input-exprs       (if input-data-x
+                              (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
+                              input-exprs
+                              )
+          output-exprs      (if input-data-y
+                              (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
+                              output-exprs)
+          output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
+          ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
+                            (into-array IExpr input-exprs)
+          ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
+                            (into-array IExpr [(F/List input-exprs-arr)])
+          input-exprs-count (count input-exprs)
+          input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+
+          _ (do
+              (reset! input-exprs-vec* input-exprs-vec)
+              (reset! output-exprs-vec* output-exprs-vec)
+              )
+          _                 (println "Got state req: " (if new-state "Start" "Stop"))
+
+
+
+
+          start             (Date.)
+          pop1              (ga/initialize
+                              initial-phenos
+                              (partial score-fn input-exprs-list input-exprs-count output-exprs-vec)
+                              (partial mutation-fn initial-muts)
+                              (partial crossover-fn initial-muts))]
       (println "start " start)
       (reset! test-timer* start)
 
@@ -321,7 +359,7 @@
             (check-start-stop-state sim-stop-start-chan)
 
             (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
-              (report-iteration i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec)
+              (report-iteration i ga-result sim->gui-chan input-exprs-count input-exprs-list)
               (recur ga-result
                      (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
                        (near-exact-solution i old-score old-scores)
