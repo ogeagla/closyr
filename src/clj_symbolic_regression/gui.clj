@@ -110,8 +110,9 @@
         x-scale       20
         items         (map
                         (fn [i]
-                          (make-label #(do [(* i x-scale) (+ 200 (* 100 (Math/sin (/ i 4.0))))])
-                                      (str "x")))
+                          (movable
+                            (make-label #(do [(* i x-scale) (+ 200 (* 100 (Math/sin (/ i 4.0))))])
+                                        (str "x"))))
                         (range x-count))
 
 
@@ -119,7 +120,7 @@
                         :paint draw-grid
                         :id :xyz
                         :background "#222222"
-                        :items (map movable (conj items bp))
+                        :items (conj items bp)
                         :listen [:mouse-clicked
                                  (fn [^MouseEvent e]
                                    (doseq [^JLabel i items]
@@ -143,28 +144,27 @@
     :as   conf}]
   (SwingUtilities/invokeLater
     (fn []
-      (let [my-frame             (doto (JFrame. "My Frame")
-                                   (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                                   (.setSize 1600 1400))
+      (let [my-frame          (doto (JFrame. "My Frame")
+                                (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+                                (.setSize 1600 1400))
 
-            drawing-container    (doto (JPanel. (BorderLayout.))
-                                   (.setSize 1200 100)
-                                   (.setBackground Color/LIGHT_GRAY))
+            drawing-container (doto (JPanel. (BorderLayout.))
+                                (.setSize 1200 100)
+                                (.setBackground Color/LIGHT_GRAY)
+                                (.setLayout (GridLayout. 1 2)))
 
-            content-pane         (doto (.getContentPane my-frame)
-                                   (.setLayout (GridLayout. 2 1)))
+            content-pane      (doto (.getContentPane my-frame)
+                                (.setLayout (GridLayout. 2 1)))
 
-            drawing-content-pane (doto drawing-container
-                                   (.setLayout (GridLayout. 1 2)))
 
-            my-label             (JLabel. "Hello UI")
+            my-label          (JLabel. "Hello UI")
 
-            chart                (plot/make-plot s1l s2l xs y1s y2s)
-            chart-panel          (XChartPanel. chart)
-            xyz-p                (input-data-items-widget)]
+            chart             (plot/make-plot s1l s2l xs y1s y2s)
+            chart-panel       (XChartPanel. chart)
+            xyz-p             (input-data-items-widget)]
 
-        (.add drawing-content-pane my-label)
-        (.add drawing-content-pane xyz-p)
+        (.add drawing-container my-label)
+        (.add drawing-container xyz-p)
         (.add content-pane drawing-container)
         (.add content-pane chart-panel)
         (.pack my-frame)
