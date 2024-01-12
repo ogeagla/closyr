@@ -4,7 +4,7 @@
     [clj-symbolic-regression.gui :as gui]
     [clj-symbolic-regression.ops :as ops]
     [clj-symbolic-regression.plot :as plot]
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put!]]
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
     [flames.core :as flames])
   (:import
@@ -13,7 +13,8 @@
       List)
     (java.util.concurrent
       CopyOnWriteArrayList)
-    (javax.swing JLabel)
+    (javax.swing
+      JLabel)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -234,53 +235,62 @@
 
 (defn setup-gui
   [input-exprs-vec output-exprs-vec]
-  (let [sim->gui-chan (chan)]
+  (let [sim->gui-chan       (chan)
+        sim-stop-start-chan (chan)]
     (gui/create-and-show-gui
-      {:xs          (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
-       :y1s         (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
-       :y2s         (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
-       :s1l         "best fn"
-       :s2l         "objective fn"
-       :update-loop (fn [{:keys [^XYChart chart
-                                 ^XChartPanel chart-panel
-                                 ^JLabel info-label]}
-                         {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l]
-                          :as   conf}]
-                      (go-loop []
-                        (<! (timeout 1000))
-                        (when-let [{:keys [best-eval best-f-str]
-                                    :as   sim-msg} (<! sim->gui-chan)]
+      {:sim-stop-start-chan sim-stop-start-chan
+       :xs                  (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
+       :y1s                 (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
+       :y2s                 (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
+       :s1l                 "best fn"
+       :s2l                 "objective fn"
+       :update-loop         (fn [{:keys [^XYChart chart
+                                         ^XChartPanel chart-panel
+                                         ^JLabel info-label]}
+                                 {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l]
+                                  :as   conf}]
+                              (go-loop []
+                                (<! (timeout 1000))
+                                (when-let [{:keys [best-eval best-f-str]
+                                            :as   sim-msg} (<! sim->gui-chan)]
 
-                          (.clear y1s)
-                          (.addAll y1s best-eval)
+                                  (.clear y1s)
+                                  (.addAll y1s best-eval)
 
-                          (.setTitle chart best-f-str)
-                          (.updateXYSeries chart s1l xs y1s nil)
+                                  (.setTitle chart best-f-str)
+                                  (.updateXYSeries chart s1l xs y1s nil)
 
-                          (.setText info-label (str "Best Function: " best-f-str))
-                          (.revalidate info-label)
-                          (.repaint info-label)
+                                  (.setText info-label (str "Best Function: " best-f-str))
+                                  (.revalidate info-label)
+                                  (.repaint info-label)
 
 
-                          (.revalidate chart-panel)
-                          (.repaint chart-panel)
+                                  (.revalidate chart-panel)
+                                  (.repaint chart-panel)
 
-                          (recur))))})
-    sim->gui-chan))
+                                  (recur))))})
+    {:sim->gui-chan       sim->gui-chan
+     :sim-stop-start-chan sim-stop-start-chan}))
+
+
+(defn check-start-stop-state
+  [sim-stop-start-chan]
+  (let [[n ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
+    (if (= n :continue)
+      :ok
+      (do
+        (println "Parking updates due to Stop command")
+        (<!! sim-stop-start-chan)
+        (println "Resuming updates")))))
 
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
-
-
-
-  (let [start            (Date.)
-
-        input-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+  (let [input-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-                         (into-array IExpr input-exprs)
+        (into-array IExpr input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-                         (into-array IExpr [(F/List input-exprs-arr)])
+        (into-array IExpr [(F/List input-exprs-arr)])
         output-exprs-vec (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
         pop1             (ga/initialize
@@ -289,31 +299,38 @@
                            (partial mutation-fn initial-muts)
                            (partial crossover-fn initial-muts))
 
-        sim->gui-chan    (setup-gui input-exprs-vec output-exprs-vec)]
+        {sim->gui-chan       :sim->gui-chan
+         sim-stop-start-chan :sim-stop-start-chan} (setup-gui input-exprs-vec output-exprs-vec)]
 
-    (println "start " start)
     (println "initial pop: " (count initial-phenos))
     (println "initial muts: " (count initial-muts))
 
-    (reset! test-timer* start)
+    (let [{new-state :new-state} (<!! sim-stop-start-chan)]
+      (println "Got state req: " (if new-state "Start" "Stop")))
 
-    (loop [pop pop1
-           i   iters]
-      (if (zero? i)
-        pop
-        (let [{old-scores :pop-old-scores
-               old-score  :pop-old-score
-               :as        ga-result} (ga/evolve pop)]
-          (report-iteration i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec)
-          (recur ga-result
-                 (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                   (near-exact-solution i old-score old-scores)
-                   (dec i))))))
+    (let [start (Date.)]
+      (println "start " start)
+      (reset! test-timer* start)
 
-    (let [end  (Date.)
-          diff (- (.getTime end) (.getTime start))]
+      (loop [pop pop1
+             i   iters]
+        (if (zero? i)
+          pop
+          (do
 
-      (println "Took " (/ diff 1000.0) " seconds"))))
+            (check-start-stop-state sim-stop-start-chan)
+
+            (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
+              (report-iteration i ga-result sim->gui-chan input-exprs input-exprs-list output-exprs-vec)
+              (recur ga-result
+                     (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
+                       (near-exact-solution i old-score old-scores)
+                       (dec i)))))))
+
+      (let [end  (Date.)
+            diff (- (.getTime end) (.getTime start))]
+
+        (println "Took " (/ diff 1000.0) " seconds")))))
 
 
 (defn in-flames

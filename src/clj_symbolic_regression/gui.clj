@@ -1,7 +1,7 @@
 (ns clj-symbolic-regression.gui
   (:require
     [clj-symbolic-regression.plot :as plot]
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan]]
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
     [seesaw.core :as ss]
@@ -92,10 +92,22 @@
 
 
 (defn ^JPanel input-data-items-widget
-  []
+  [sim-stop-start-chan]
   (let [^JPanel bp    (doto (ss/border-panel
                               :border (sbr/line-border :top 15 :color "#AAFFFF")
                               :north (ss/label "I'm a draggable label with a text box!")
+                              :south (ss/button :text "Start"
+                                                :listen [:mouse-clicked
+                                                         (fn [^MouseEvent e]
+                                                           (when sim-stop-start-chan
+
+                                                             (let [is-start (= "Start" (ss/get-text* e))]
+                                                               (println "clicked Start/Stop: " is-start)
+                                                               (put! sim-stop-start-chan {:new-state is-start})
+                                                               (ss/set-text* e (if is-start
+                                                                                "Stop"
+                                                                                "Start")))
+                                                             ))])
                               :center (ss/text
                                         :text "Hey type some stuff here"
                                         :listen [:document
@@ -107,15 +119,19 @@
                         (movable))
 
 
-        x-count       20
+        x-count       40
         x-scale       20
-        items         (map
+        pts           (map
                         (fn [i]
+                          [(* i x-scale) (+ 100 (* 50 (Math/sin (/ i 4.0))))])
+                        (range x-count))
+        items         (map
+                        (fn [pt]
                           (movable
-                            (make-label #(do [(* i x-scale) (+ 200 (* 100 (Math/sin (/ i 4.0))))])
+                            (make-label #(do pt)
                                         (str "x"))
                             {:disable-x? true}))
-                        (range x-count))
+                        pts)
 
 
         ^JPanel xyz-p (ss/xyz-panel
@@ -145,18 +161,19 @@
 ;; todo: draw on widget: https://stackoverflow.com/questions/10101673/drawing-lines-with-mouse-on-canvas-java-awt
 
 (defn create-and-show-gui
-  [{:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
-    :as   conf}]
+  [{:keys [sim-stop-start-chan :sim-stop-start-chan
+           ^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
+    :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
-      (let [my-frame          (doto (JFrame. "My Frame")
+      (let [my-frame          (doto (JFrame. "CLJ Symbolic Regression")
                                 (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
                                 (.setSize 1600 1400))
 
             drawing-container (doto (JPanel. (BorderLayout.))
                                 (.setSize 1200 100)
                                 (.setBackground Color/LIGHT_GRAY)
-                                (.setLayout (GridLayout. 1 2)))
+                                (.setLayout (GridLayout. 2 1)))
 
             content-pane      (doto (.getContentPane my-frame)
                                 (.setLayout (GridLayout. 2 1)))
@@ -166,7 +183,7 @@
 
             chart             (plot/make-plot s1l s2l xs y1s y2s)
             chart-panel       (XChartPanel. chart)
-            xyz-p             (input-data-items-widget)]
+            xyz-p             (input-data-items-widget sim-stop-start-chan)]
 
         (.add drawing-container my-label)
         (.add drawing-container xyz-p)
@@ -177,43 +194,59 @@
 
         (update-loop
           {:chart chart :chart-panel chart-panel :info-label my-label}
-          conf)))))
+          gui-data)))))
 
 
 (defn gui-1
   []
-  (create-and-show-gui
-    {:xs          (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
-     :y1s         (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
-     :y2s         (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
-     :s1l         "series 1"
-     :s2l         "series 2"
-     :update-loop (fn [{:keys [^XYChart chart
-                               ^XChartPanel chart-panel
-                               ^JLabel info-label]}
-                       {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
-                        :as   conf}]
+  (let [sim-stop-start-chan (chan)]
+    (create-and-show-gui
+      {:xs                  (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+       :y1s                 (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
+       :y2s                 (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
+       :s1l                 "series 1"
+       :s2l                 "series 2"
+       :sim-stop-start-chan sim-stop-start-chan
+       :update-loop         (fn [{:keys [^XYChart chart
+                                         ^XChartPanel chart-panel
+                                         ^JLabel info-label]
+                                  :as   gui-widgets}
+                                 {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
+                                  :as   gui-data}]
 
-                    (go-loop []
-                      (<! (timeout 4000))
+                              (go
+                                (<! sim-stop-start-chan)
 
-                      (println "Draw new points " (.size xs))
-                      (.add xs (.size xs))
-                      (.add y1s (.size xs))
-                      ;; (.remove y2s 0)
-                      (.add y2s (* 10.0 (Math/random)))
+                                (go-loop []
 
-                      (.updateXYSeries chart s1l xs y1s nil)
-                      (.updateXYSeries chart s2l xs y2s nil)
+                                  (<! (timeout 4000))
 
-                      (.revalidate chart-panel)
-                      (.repaint chart-panel)
+                                  (let [[n ch] (alts! [sim-stop-start-chan] :default :continue :priority true)]
+                                    (if (= n :continue)
+                                      :ok
+                                      (do
+                                        (println "Parking updates to chart due to Stop command")
+                                        (<! sim-stop-start-chan)))
+                                    )
 
-                      (.setText info-label (str "size: " (.size xs)))
-                      (.revalidate info-label)
-                      (.repaint info-label)
 
-                      (recur)))}))
+                                  (println "Draw new points " (.size xs))
+                                  (.add xs (.size xs))
+                                  (.add y1s (.size xs))
+                                  ;; (.remove y2s 0)
+                                  (.add y2s (* 10.0 (Math/random)))
+
+                                  (.updateXYSeries chart s1l xs y1s nil)
+                                  (.updateXYSeries chart s2l xs y2s nil)
+
+                                  (.revalidate chart-panel)
+                                  (.repaint chart-panel)
+
+                                  (.setText info-label (str "size: " (.size xs)))
+                                  (.revalidate info-label)
+                                  (.repaint info-label)
+
+                                  (recur))))})))
 
 
 (defn gui-2
