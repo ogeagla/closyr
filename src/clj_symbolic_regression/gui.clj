@@ -61,7 +61,10 @@
             ^JPanel drawing-canvas          (ss/canvas
                                               :background Color/YELLOW
                                               :paint (fn [^JPanel c ^Graphics2D g]
-                                                       (.drawString g "I'm a canvas" 10 10)))]
+                                                       (.drawString g "I'm a canvas" 10 10))
+                                              :listen [:mouse-clicked
+                                                       (fn [e]
+                                                         (println "CLicked " e))])]
 
 
 
@@ -72,7 +75,9 @@
         (.pack my-frame)
         (.setVisible my-frame true)
 
-        (update-loop chart chart-panel conf)))))
+        (update-loop
+          {:chart chart :chart-panel chart-panel :info-label my-label}
+          conf)))))
 
 
 (defn gui-1
@@ -83,8 +88,10 @@
      :y2s         (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
      :s1l         "series 1"
      :s2l         "series 2"
-     :update-loop (fn [^XYChart chart
-                       ^XChartPanel chart-panel
+     :update-loop (fn [{:keys [^XYChart chart
+                               ^XChartPanel chart-panel
+                               ^JLabel info-label
+                               ]}
                        {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
                         :as   conf}]
 
@@ -104,6 +111,10 @@
 
                       (.revalidate chart-panel)
                       (.repaint chart-panel)
+
+                      (.setText info-label (str "size: " (.size xs)))
+                      (.revalidate info-label)
+                      (.repaint info-label)
 
                       (recur)))}))
 

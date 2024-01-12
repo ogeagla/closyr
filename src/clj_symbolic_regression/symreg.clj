@@ -13,6 +13,7 @@
       List)
     (java.util.concurrent
       CopyOnWriteArrayList)
+    (javax.swing JLabel)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -240,8 +241,9 @@
        :y2s         (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
        :s1l         "best fn"
        :s2l         "objective fn"
-       :update-loop (fn [^XYChart chart
-                         ^XChartPanel chart-panel
+       :update-loop (fn [{:keys [^XYChart chart
+                                 ^XChartPanel chart-panel
+                                 ^JLabel info-label]}
                          {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l]
                           :as   conf}]
                       (go-loop []
@@ -254,6 +256,11 @@
 
                           (.setTitle chart best-f-str)
                           (.updateXYSeries chart s1l xs y1s nil)
+
+                          (.setText info-label (str "Best Function: " best-f-str))
+                          (.revalidate info-label)
+                          (.repaint info-label)
+
 
                           (.revalidate chart-panel)
                           (.repaint chart-panel)
@@ -271,9 +278,9 @@
 
         input-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-        (into-array IExpr input-exprs)
+                         (into-array IExpr input-exprs)
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-        (into-array IExpr [(F/List input-exprs-arr)])
+                         (into-array IExpr [(F/List input-exprs-arr)])
         output-exprs-vec (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
         pop1             (ga/initialize
