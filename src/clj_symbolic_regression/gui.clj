@@ -103,7 +103,7 @@
 
             drawing-container               (doto (JPanel. (BorderLayout.))
                                               (.setSize 1200 100)
-                                              (.setBackground Color/RED))
+                                              (.setBackground Color/LIGHT_GRAY))
 
             ^Container content-pane         (doto (.getContentPane my-frame)
                                               (.setLayout (GridLayout. 2 1)))
@@ -118,29 +118,43 @@
             ^JPanel bp                      (doto (ss/border-panel
                                                     :border (sbr/line-border :top 15 :color "#AAFFFF")
                                                     :north (ss/label "I'm a draggable label with a text box!")
-                                                    :center (ss/text :text "Hey type some stuff here"
-                                                                     :listen [:document
-                                                                              (fn [^AbstractDocument$DefaultDocumentEvent e]
-                                                                                (let [doc     (.getDocument e)
-                                                                                      doc-txt (.getText doc 0 (.getLength doc))]
-                                                                                  (println "New text: " doc-txt)))]))
+                                                    :center (ss/text
+                                                              :text "Hey type some stuff here"
+                                                              :listen [:document
+                                                                       (fn [^AbstractDocument$DefaultDocumentEvent e]
+                                                                         (let [doc     (.getDocument e)
+                                                                               doc-txt (.getText doc 0 (.getLength doc))]
+                                                                           (println "New text: " doc-txt)))]))
                                               (ss/config! :bounds :preferred)
                                               (movable))
 
-            items                           (conj
-                                              (map (comp movable (partial make-label #(do [(rand-int 300) (rand-int 300)])))
-                                                   ["Agent Cooper" "Big Ed" "Leland Palmer" "Foo" "Bar" "Baz"])
-                                              bp)
+
+            items                           (map
+                                              (fn [i]
+                                                (make-label #(do [(* i 20) (+ 200 (- (rand-int 300)
+                                                                                     150))])
+                                                            (str "p" i)))
+                                              (range 20))
+
 
             ^JPanel xyz-p                   (ss/xyz-panel
                                               :paint draw-grid
                                               :id :xyz
                                               :background "#222222"
-                                              :items items
+                                              :items (map movable (conj items bp))
                                               :listen [:mouse-clicked
                                                        (fn [^MouseEvent e]
-                                                         ;; (println "click " e)
-                                                         )])]
+                                                         (doseq [^JLabel i items]
+                                                           (let [diff (/ (abs
+                                                                           (- (.getX (.getLocation i))
+                                                                              (.getX (.getPoint e))))
+                                                                         500.0)]
+                                                             (.setLocation i
+                                                                           (* (.indexOf items i) 20)
+                                                                           (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation i)))
+                                                                              (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
+
+                                                         (ss/repaint! e))])]
 
         (.add drawing-content-pane my-label)
         (.add drawing-content-pane xyz-p)

@@ -2,6 +2,8 @@
   (:require
     [clojure.string :as str])
   (:import
+    (java.util
+      List)
     (org.knowm.xchart
       QuickChart
       SwingWrapper
@@ -48,11 +50,10 @@
 (defn make-plot
   ^XYChart [^String series-1-label
             ^String series-2-label
-            x-data y-data-1 y-data-2]
-  (let [;; x-data             (double-array x-data)
-        ;; y-data-1           (double-array y-data-1)
-        ;; y-data-2           (double-array y-data-2)
-        ^XYChart chart     (doto (XYChart. 900 600)
+            ^List x-data
+            ^List y-data-1
+            ^List y-data-2]
+  (let [^XYChart chart     (doto (XYChart. 900 600)
                              (.setTitle "Sample")
                              (.setXAxisTitle "X")
                              (.setYAxisTitle "Y"))
