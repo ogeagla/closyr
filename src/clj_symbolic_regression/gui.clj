@@ -171,7 +171,7 @@
             info-container    (doto (JPanel. (BorderLayout.))
                                 (.setSize 600 100)
                                 (.setBackground Color/LIGHT_GRAY)
-                                (.setLayout (GridLayout. 1 2)))
+                                (.setLayout (GridLayout. 2 1)))
 
             content-pane      (doto (.getContentPane my-frame)
                                 (.setLayout (GridLayout. 2 1)))

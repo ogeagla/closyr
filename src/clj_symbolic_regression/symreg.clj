@@ -15,6 +15,7 @@
       CopyOnWriteArrayList)
     (javax.swing
       JLabel)
+    (org.apache.log4j Level LogManager Logger)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -178,7 +179,7 @@
 
 (def test-timer* (atom nil))
 
-(def log-steps 10)
+(def log-steps 5)
 
 
 (defn report-iteration
@@ -218,7 +219,7 @@
 
 (def input-exprs
   (->>
-    (range 30)
+    (range 50)
     (map (fn [i]
            (.add F/C0 (* Math/PI (/ i 15.0)))))
     vec))
@@ -226,10 +227,10 @@
 
 (def output-exprs
   (->>
-    (range 30)
+    (range 50)
     (map (fn [i]
            (let [x (* Math/PI (/ i 15.0))]
-             (.add F/C0 (+ (* 0.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
+             (.add F/C0 0.0 #_(+ (* 0.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
     vec))
 
 
@@ -368,16 +369,18 @@
     (f)
     (flames/stop! flames)))
 
+;(def ^Logger logger (LogManager/getRootLogger))
+;(println "Root logger name: " (.getName logger) (.setLevel logger Level/ERROR))
 
 (defn run-test
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 800)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          200}))]
+                           :iters          300}))]
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:
