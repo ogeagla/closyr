@@ -90,6 +90,53 @@
       (.drawLine g 0 y w y))))
 
 
+(defn ^JPanel input-data-items-widget
+  []
+  (let [^JPanel bp    (doto (ss/border-panel
+                              :border (sbr/line-border :top 15 :color "#AAFFFF")
+                              :north (ss/label "I'm a draggable label with a text box!")
+                              :center (ss/text
+                                        :text "Hey type some stuff here"
+                                        :listen [:document
+                                                 (fn [^AbstractDocument$DefaultDocumentEvent e]
+                                                   (let [doc     (.getDocument e)
+                                                         doc-txt (.getText doc 0 (.getLength doc))]
+                                                     (println "New text: " doc-txt)))]))
+                        (ss/config! :bounds :preferred)
+                        (movable))
+
+
+        x-count       20
+        x-scale       20
+        items         (map
+                        (fn [i]
+                          (make-label #(do [(* i x-scale) (+ 200 (- (rand-int 300)
+                                                                    150))])
+                                      (str "p" i)))
+                        (range x-count))
+
+
+        ^JPanel xyz-p (ss/xyz-panel
+                        :paint draw-grid
+                        :id :xyz
+                        :background "#222222"
+                        :items (map movable (conj items bp))
+                        :listen [:mouse-clicked
+                                 (fn [^MouseEvent e]
+                                   (doseq [^JLabel i items]
+                                     (let [diff (/ (abs
+                                                     (- (.getX (.getLocation i))
+                                                        (.getX (.getPoint e))))
+                                                   500.0)]
+                                       (.setLocation i
+                                                     (* (.indexOf items i) x-scale)
+                                                     (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation i)))
+                                                        (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
+
+                                   (ss/repaint! e))])]
+    xyz-p))
+
+
 ;; todo: draw on widget: https://stackoverflow.com/questions/10101673/drawing-lines-with-mouse-on-canvas-java-awt
 
 (defn create-and-show-gui
@@ -97,64 +144,25 @@
     :as   conf}]
   (SwingUtilities/invokeLater
     (fn []
-      (let [my-frame                        (doto (JFrame. "My Frame")
-                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                                              (.setSize 1600 1400))
+      (let [my-frame             (doto (JFrame. "My Frame")
+                                   (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+                                   (.setSize 1600 1400))
 
-            drawing-container               (doto (JPanel. (BorderLayout.))
-                                              (.setSize 1200 100)
-                                              (.setBackground Color/LIGHT_GRAY))
+            drawing-container    (doto (JPanel. (BorderLayout.))
+                                   (.setSize 1200 100)
+                                   (.setBackground Color/LIGHT_GRAY))
 
-            ^Container content-pane         (doto (.getContentPane my-frame)
-                                              (.setLayout (GridLayout. 2 1)))
+            content-pane         (doto (.getContentPane my-frame)
+                                   (.setLayout (GridLayout. 2 1)))
 
-            ^Container drawing-content-pane (doto drawing-container
-                                              (.setLayout (GridLayout. 1 2)))
+            drawing-content-pane (doto drawing-container
+                                   (.setLayout (GridLayout. 1 2)))
 
-            my-label                        (JLabel. "Hello UI")
+            my-label             (JLabel. "Hello UI")
 
-            chart                           (plot/make-plot s1l s2l xs y1s y2s)
-            chart-panel                     (XChartPanel. chart)
-            ^JPanel bp                      (doto (ss/border-panel
-                                                    :border (sbr/line-border :top 15 :color "#AAFFFF")
-                                                    :north (ss/label "I'm a draggable label with a text box!")
-                                                    :center (ss/text
-                                                              :text "Hey type some stuff here"
-                                                              :listen [:document
-                                                                       (fn [^AbstractDocument$DefaultDocumentEvent e]
-                                                                         (let [doc     (.getDocument e)
-                                                                               doc-txt (.getText doc 0 (.getLength doc))]
-                                                                           (println "New text: " doc-txt)))]))
-                                              (ss/config! :bounds :preferred)
-                                              (movable))
-
-
-            items                           (map
-                                              (fn [i]
-                                                (make-label #(do [(* i 20) (+ 200 (- (rand-int 300)
-                                                                                     150))])
-                                                            (str "p" i)))
-                                              (range 20))
-
-
-            ^JPanel xyz-p                   (ss/xyz-panel
-                                              :paint draw-grid
-                                              :id :xyz
-                                              :background "#222222"
-                                              :items (map movable (conj items bp))
-                                              :listen [:mouse-clicked
-                                                       (fn [^MouseEvent e]
-                                                         (doseq [^JLabel i items]
-                                                           (let [diff (/ (abs
-                                                                           (- (.getX (.getLocation i))
-                                                                              (.getX (.getPoint e))))
-                                                                         500.0)]
-                                                             (.setLocation i
-                                                                           (* (.indexOf items i) 20)
-                                                                           (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation i)))
-                                                                              (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
-
-                                                         (ss/repaint! e))])]
+            chart                (plot/make-plot s1l s2l xs y1s y2s)
+            chart-panel          (XChartPanel. chart)
+            xyz-p                (input-data-items-widget)]
 
         (.add drawing-content-pane my-label)
         (.add drawing-content-pane xyz-p)
