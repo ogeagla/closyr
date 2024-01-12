@@ -5,8 +5,7 @@
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
     [seesaw.core :as ss]
-    [seesaw.graphics :as sg]
-    )
+    [seesaw.graphics :as sg])
   (:import
     (java.awt
       BorderLayout
@@ -18,6 +17,8 @@
       GridBagLayout
       GridLayout
       Point)
+    (java.awt.event
+      MouseEvent)
     (java.util
       List)
     (java.util.concurrent
@@ -30,6 +31,8 @@
       SwingUtilities)
     (javax.swing.border
       Border)
+    (javax.swing.text
+      AbstractDocument$DefaultDocumentEvent)
     (org.knowm.xchart
       XChartPanel
       XYChart)))
@@ -59,32 +62,35 @@
 
 
 (defn make-label
-  [text]
+  [location-fn text]
   (doto
-    ; Instead of a boring label, make the label rounded with
-    ; some custom drawing. Use the before paint hook to draw
-    ; under the label's text.
+    ;; Instead of a boring label, make the label rounded with
+    ;; some custom drawing. Use the before paint hook to draw
+    ;; under the label's text.
     (ss/label
       :border 5
       :text text
-      :location [(rand-int 300) (rand-int 300)]
-      :paint {
-              :before (fn [c g]
+      :location (location-fn)
+      :paint {:before (fn [c g]
                         (sg/draw g (sg/rounded-rect 3 3 (- (ss/width c) 6) (- (ss/height c) 6) 9)
                                  (sg/style :foreground "#FFFFaa"
                                            :background "#aaFFFF"
                                            :stroke 2)))})
-    ; Set the bounds to its preferred size. Note that this has to be
-    ; done after the label is fully constructed.
+    ;; Set the bounds to its preferred size. Note that this has to be
+    ;; done after the label is fully constructed.
     (ss/config! :bounds :preferred)))
 
 
-(defn draw-grid [c g]
+(defn draw-grid
+  [c g]
   (let [w (ss/width c) h (ss/height c)]
     (doseq [x (range 0 w 10)]
       (.drawLine g x 0 x h))
     (doseq [y (range 0 h 10)]
       (.drawLine g 0 y w y))))
+
+
+;; todo: draw on widget: https://stackoverflow.com/questions/10101673/drawing-lines-with-mouse-on-canvas-java-awt
 
 (defn create-and-show-gui
   [{:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
@@ -99,7 +105,6 @@
                                               (.setSize 1200 100)
                                               (.setBackground Color/RED))
 
-
             ^Container content-pane         (doto (.getContentPane my-frame)
                                               (.setLayout (GridLayout. 2 1)))
 
@@ -108,33 +113,34 @@
 
             my-label                        (JLabel. "Hello UI")
 
-
             chart                           (plot/make-plot s1l s2l xs y1s y2s)
             chart-panel                     (XChartPanel. chart)
             ^JPanel bp                      (doto (ss/border-panel
                                                     :border (sbr/line-border :top 15 :color "#AAFFFF")
                                                     :north (ss/label "I'm a draggable label with a text box!")
-                                                    :center (ss/text :text "Hey type some stuff here"))
+                                                    :center (ss/text :text "Hey type some stuff here"
+                                                                     :listen [:document
+                                                                              (fn [^AbstractDocument$DefaultDocumentEvent e]
+                                                                                (let [doc     (.getDocument e)
+                                                                                      doc-txt (.getText doc 0 (.getLength doc))]
+                                                                                  (println "New text: " doc-txt)))]))
                                               (ss/config! :bounds :preferred)
                                               (movable))
+
+            items                           (conj
+                                              (map (comp movable (partial make-label #(do [(rand-int 300) (rand-int 300)])))
+                                                   ["Agent Cooper" "Big Ed" "Leland Palmer" "Foo" "Bar" "Baz"])
+                                              bp)
 
             ^JPanel xyz-p                   (ss/xyz-panel
                                               :paint draw-grid
                                               :id :xyz
                                               :background "#222222"
-                                              :items (conj
-                                                       (map (comp movable make-label) ["Agent Cooper" "Big Ed" "Leland Palmer"])
-                                                       bp))
-            ;^JPanel drawing-canvas          (ss/canvas
-            ;                                  :background Color/YELLOW
-            ;                                  :paint (fn [^JPanel c ^Graphics2D g]
-            ;                                           (.drawString g "I'm a canvas" 10 10))
-            ;                                  :listen [:mouse-clicked
-            ;                                           (fn [e]
-            ;                                             (println "CLicked " e))])
-            ]
-
-
+                                              :items items
+                                              :listen [:mouse-clicked
+                                                       (fn [^MouseEvent e]
+                                                         ;; (println "click " e)
+                                                         )])]
 
         (.add drawing-content-pane my-label)
         (.add drawing-content-pane xyz-p)
@@ -162,10 +168,8 @@
                        {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
                         :as   conf}]
 
-
-
                     (go-loop []
-                      (<! (timeout 2000))
+                      (<! (timeout 4000))
 
                       (println "Draw new points " (.size xs))
                       (.add xs (.size xs))
@@ -198,5 +202,5 @@
         ss/show!)))
 
 
-(comment (gui-1))
 (comment (gui-2))
+(comment (gui-1))
