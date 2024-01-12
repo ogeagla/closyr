@@ -42,23 +42,24 @@
 
 
 (defn movable
-  [w]
-  (let [^Point start-point (Point.)]
-    (sb/when-mouse-dragged
-      w
-      ;; When the mouse is pressed, move the widget to the front of the z order
-      :start (fn [e]
-               (ss/move! e :to-front)
-               (.setLocation start-point ^Point (.getPoint e)))
-      ;; When the mouse is dragged move the widget
-      ;; Unfortunately, the delta passed to this function doesn't work correctly
-      ;; if the widget is moved during the drag. So, the move is calculated
-      ;; manually.
-      :drag (fn [e _]
-              (let [^Point p (.getPoint e)]
-                (ss/move! e :by [(- (.x p) (.x start-point))
-                                 (- (.y p) (.y start-point))])))))
-  w)
+  ([w] (movable w {:disable-x? false}))
+  ([w {disable-x? :disable-x?}]
+   (let [^Point start-point (Point.)]
+     (sb/when-mouse-dragged
+       w
+       ;; When the mouse is pressed, move the widget to the front of the z order
+       :start (fn [e]
+                (ss/move! e :to-front)
+                (.setLocation start-point ^Point (.getPoint e)))
+       ;; When the mouse is dragged move the widget
+       ;; Unfortunately, the delta passed to this function doesn't work correctly
+       ;; if the widget is moved during the drag. So, the move is calculated
+       ;; manually.
+       :drag (fn [e _]
+               (let [^Point p (.getPoint e)]
+                 (ss/move! e :by [(if disable-x? 0 (- (.x p) (.x start-point)))
+                                  (- (.y p) (.y start-point))]))))
+     w)))
 
 
 (defn make-label
@@ -112,7 +113,8 @@
                         (fn [i]
                           (movable
                             (make-label #(do [(* i x-scale) (+ 200 (* 100 (Math/sin (/ i 4.0))))])
-                                        (str "x"))))
+                                        (str "x"))
+                            {:disable-x? true}))
                         (range x-count))
 
 
