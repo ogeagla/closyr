@@ -48,14 +48,14 @@
      (sb/when-mouse-dragged
        w
        ;; When the mouse is pressed, move the widget to the front of the z order
-       :start (fn [e]
+       :start (fn [^MouseEvent e]
                 (ss/move! e :to-front)
                 (.setLocation start-point ^Point (.getPoint e)))
        ;; When the mouse is dragged move the widget
        ;; Unfortunately, the delta passed to this function doesn't work correctly
        ;; if the widget is moved during the drag. So, the move is calculated
        ;; manually.
-       :drag (fn [e _]
+       :drag (fn [^MouseEvent e _]
                (let [^Point p (.getPoint e)]
                  (ss/move! e :by [(if disable-x? 0 (- (.x p) (.x start-point)))
                                   (- (.y p) (.y start-point))]))))
@@ -83,7 +83,7 @@
 
 
 (defn draw-grid
-  [c g]
+  [c ^Graphics2D g]
   (let [w (ss/width c) h (ss/height c)]
     (doseq [x (range 0 w 10)]
       (.drawLine g x 0 x h))
@@ -125,15 +125,18 @@
                         :items (conj items bp)
                         :listen [:mouse-clicked
                                  (fn [^MouseEvent e]
-                                   (doseq [^JLabel i items]
-                                     (let [diff (/ (abs
-                                                     (- (.getX (.getLocation i))
-                                                        (.getX (.getPoint e))))
-                                                   500.0)]
-                                       (.setLocation i
-                                                     (* (.indexOf items i) x-scale)
-                                                     (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation i)))
-                                                        (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
+                                   (doall
+                                     (map-indexed
+                                       (fn [i ^JLabel widget]
+                                         (let [diff (/ (abs
+                                                         (- (.getX (.getLocation widget))
+                                                            (.getX (.getPoint e))))
+                                                       500.0)]
+                                           (.setLocation widget
+                                                         (* i x-scale)
+                                                         (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation widget)))
+                                                            (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
+                                       items))
 
                                    (ss/repaint! e))])]
     xyz-p))
