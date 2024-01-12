@@ -25,6 +25,7 @@
       CopyOnWriteArrayList)
     (javax.swing
       BoxLayout
+      JButton
       JFrame
       JLabel
       JPanel
@@ -96,18 +97,6 @@
   (let [^JPanel bp    (doto (ss/border-panel
                               :border (sbr/line-border :top 15 :color "#AAFFFF")
                               :north (ss/label "I'm a draggable label with a text box!")
-                              :south (ss/button :text "Start"
-                                                :listen [:mouse-clicked
-                                                         (fn [^MouseEvent e]
-                                                           (when sim-stop-start-chan
-
-                                                             (let [is-start (= "Start" (ss/get-text* e))]
-                                                               (println "clicked Start/Stop: " is-start)
-                                                               (put! sim-stop-start-chan {:new-state is-start})
-                                                               (ss/set-text* e (if is-start
-                                                                                "Stop"
-                                                                                "Start")))
-                                                             ))])
                               :center (ss/text
                                         :text "Hey type some stuff here"
                                         :listen [:document
@@ -175,9 +164,25 @@
                                 (.setBackground Color/LIGHT_GRAY)
                                 (.setLayout (GridLayout. 2 1)))
 
+            info-container    (doto (JPanel. (BorderLayout.))
+                                (.setSize 600 100)
+                                (.setBackground Color/LIGHT_GRAY)
+                                (.setLayout (GridLayout. 1 2)))
+
             content-pane      (doto (.getContentPane my-frame)
                                 (.setLayout (GridLayout. 2 1)))
 
+            ^JButton ctl-btn  (ss/button :text "Start"
+                                         :listen [:mouse-clicked
+                                                  (fn [^MouseEvent e]
+                                                    (when sim-stop-start-chan
+
+                                                      (let [is-start (= "Start" (ss/get-text* e))]
+                                                        (println "clicked Start/Stop: " is-start)
+                                                        (put! sim-stop-start-chan {:new-state is-start})
+                                                        (ss/set-text* e (if is-start
+                                                                          "Stop"
+                                                                          "Start")))))])
 
             my-label          (JLabel. "Hello UI")
 
@@ -185,7 +190,9 @@
             chart-panel       (XChartPanel. chart)
             xyz-p             (input-data-items-widget sim-stop-start-chan)]
 
-        (.add drawing-container my-label)
+        (.add info-container my-label)
+        (.add info-container ctl-btn)
+        (.add drawing-container info-container)
         (.add drawing-container xyz-p)
         (.add content-pane drawing-container)
         (.add content-pane chart-panel)
@@ -226,8 +233,7 @@
                                       :ok
                                       (do
                                         (println "Parking updates to chart due to Stop command")
-                                        (<! sim-stop-start-chan)))
-                                    )
+                                        (<! sim-stop-start-chan))))
 
 
                                   (println "Draw new points " (.size xs))
