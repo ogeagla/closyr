@@ -132,12 +132,16 @@
                            first-run? true]
                       (if (zero? c)
                         v
-                        (recur
-                          (dec c)
-                          (ops/modify (rand-mut initial-muts) (if first-run?
-                                                                (assoc v :util (:util v-discard))
-                                                                v))
-                          false)))
+                        (let [new-v (ops/modify (rand-mut initial-muts) (if first-run?
+                                                                          (assoc v :util (:util v-discard))
+                                                                          v))]
+                          (recur
+                            (if (and (< 200 (count (str (:expr v))))
+                                     (< (count (str (:expr v))) (count (str (:expr new-v)))))
+                              0
+                              (dec c))
+                            new-v
+                            false))))
           old-leafs (.leafCount ^IExpr (:expr v))
           new-leafs (.leafCount ^IExpr (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
