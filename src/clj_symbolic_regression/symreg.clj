@@ -232,7 +232,11 @@
       (println i " sim stats: " (summarize-sim-stats))
       ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
 
-      (put! sim->gui-chan {:i (- iters i) :best-eval evaled :best-f-str (str (:expr best-v))})))
+      (put! sim->gui-chan {:iters      iters
+                           :i          (- iters i)
+                           :best-eval  evaled
+                           :best-f-str (str (:expr best-v))
+                           :best-score (:score best-v)})))
   (reset! sim-stats* {}))
 
 
@@ -277,7 +281,7 @@
                                   :as   conf}]
                               (go-loop []
                                 (<! (timeout 1000))
-                                (when-let [{:keys [best-eval best-f-str i]
+                                (when-let [{:keys [best-eval best-score best-f-str i iters]
                                             :as   sim-msg} (<! sim->gui-chan)]
 
                                   (.clear y1s)
@@ -293,7 +297,8 @@
                                   (.updateXYSeries chart s1l xs y1s nil)
                                   (.updateXYSeries chart s2l xs y2s nil)
 
-                                  (.setText info-label (str "Iter: " i " , Best Function: " best-f-str))
+                                  (.setText info-label (str "Iter: " i "/" iters " , Best Function: " best-f-str " "
+                                                            "Score: " best-score))
                                   (.revalidate info-label)
                                   (.repaint info-label)
 
