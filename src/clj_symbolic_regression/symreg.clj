@@ -204,6 +204,7 @@
 
 (defn report-iteration
   [i
+   iters
    ga-result
    {:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
@@ -231,7 +232,7 @@
       (println i " sim stats: " (summarize-sim-stats))
       ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
 
-      (put! sim->gui-chan {:i i :best-eval evaled :best-f-str (str (:expr best-v))})))
+      (put! sim->gui-chan {:i (- iters i) :best-eval evaled :best-f-str (str (:expr best-v))})))
   (reset! sim-stats* {}))
 
 
@@ -292,7 +293,7 @@
                                   (.updateXYSeries chart s1l xs y1s nil)
                                   (.updateXYSeries chart s2l xs y2s nil)
 
-                                  (.setText info-label (str "Iter: " i "Best Function: " best-f-str))
+                                  (.setText info-label (str "Iter: " i " , Best Function: " best-f-str))
                                   (.revalidate info-label)
                                   (.repaint info-label)
 
@@ -384,7 +385,7 @@
         (do
           (check-start-stop-state run-args)
           (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
-            (report-iteration i ga-result run-args)
+            (report-iteration i iters ga-result run-args)
             (recur ga-result
                    (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
                      (near-exact-solution i old-score old-scores)
