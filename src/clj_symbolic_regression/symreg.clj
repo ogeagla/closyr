@@ -308,8 +308,9 @@
         (println "Resuming updates")))))
 
 
-(defn run-experiment
-  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs]}]
+(defn get-input-data
+  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
+  ;; to not use the GUI, pass the initial values through
   (let [input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
         output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
 
@@ -317,60 +318,77 @@
         output-exprs-vec* (atom output-exprs-vec)
 
         {sim->gui-chan       :sim->gui-chan
-         sim-stop-start-chan :sim-stop-start-chan} (setup-gui input-exprs-vec* output-exprs-vec*)]
+         sim-stop-start-chan :sim-stop-start-chan
+         :as gui-comms} (setup-gui input-exprs-vec* output-exprs-vec*)
 
-    (println "initial pop: " (count initial-phenos))
-    (println "initial muts: " (count initial-muts))
+        {new-state    :new-state
+         input-data-x :input-data-x
+         input-data-y :input-data-y} (<!! sim-stop-start-chan)
 
-    (let [{new-state    :new-state
-           input-data-x :input-data-x
-           input-data-y :input-data-y} (<!! sim-stop-start-chan)
+        input-exprs       (if input-data-x
+                            (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
+                            input-exprs)
+        output-exprs      (if input-data-y
+                            (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
+                            output-exprs)
+        output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
+        (into-array IExpr input-exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
+        (into-array IExpr [(F/List input-exprs-arr)])
+        input-exprs-count (count input-exprs)
+        input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
 
-          input-exprs       (if input-data-x
-                              (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
-                              input-exprs)
-          output-exprs      (if input-data-y
-                              (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
-                              output-exprs)
-          output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
-          ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-          (into-array IExpr input-exprs)
-          ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-          (into-array IExpr [(F/List input-exprs-arr)])
-          input-exprs-count (count input-exprs)
-          input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+        _                 (do
+                            (reset! input-exprs-vec* input-exprs-vec)
+                            (reset! output-exprs-vec* output-exprs-vec))
+        _                 (println "Got state req: " (if new-state "Start" "Stop"))
+        ]
+    (merge gui-comms
+           {
+            :input-exprs-list input-exprs-list
+            :input-exprs-count input-exprs-count
+            :output-exprs-vec output-exprs-vec
 
-          _                 (do
-                              (reset! input-exprs-vec* input-exprs-vec)
-                              (reset! output-exprs-vec* output-exprs-vec))
-          _                 (println "Got state req: " (if new-state "Start" "Stop"))
+            })
 
-          start             (Date.)
-          pop1              (ga/initialize
-                              initial-phenos
-                              (partial score-fn input-exprs-list input-exprs-count output-exprs-vec)
-                              (partial mutation-fn initial-muts)
-                              (partial crossover-fn initial-muts))]
-      (println "start " start)
-      (reset! test-timer* start)
+    )
+  )
 
-      (loop [pop pop1
-             i   iters]
-        (if (zero? i)
-          pop
-          (do
-            (check-start-stop-state sim-stop-start-chan)
-            (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
-              (report-iteration i ga-result sim->gui-chan input-exprs-count input-exprs-list)
-              (recur ga-result
-                     (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                       (near-exact-solution i old-score old-scores)
-                       (dec i)))))))
+(defn run-experiment
+  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
+  (println-str "run for iters: " iters)
+  (println "initial pop: " (count initial-phenos))
+  (println "initial muts: " (count initial-muts))
 
-      (let [end  (Date.)
-            diff (- (.getTime end) (.getTime start))]
+  (let [{:keys [input-exprs-list input-exprs-count output-exprs-vec
+                sim-stop-start-chan sim->gui-chan]} (get-input-data run-config)
+        start             (Date.)
+        pop1              (ga/initialize
+                            initial-phenos
+                            (partial score-fn input-exprs-list input-exprs-count output-exprs-vec)
+                            (partial mutation-fn initial-muts)
+                            (partial crossover-fn initial-muts))]
+    (println "start " start)
+    (reset! test-timer* start)
 
-        (println "Took " (/ diff 1000.0) " seconds")))))
+    (loop [pop pop1
+           i   iters]
+      (if (zero? i)
+        pop
+        (do
+          (check-start-stop-state sim-stop-start-chan)
+          (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
+            (report-iteration i ga-result sim->gui-chan input-exprs-count input-exprs-list)
+            (recur ga-result
+                   (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
+                     (near-exact-solution i old-score old-scores)
+                     (dec i)))))))
+
+    (let [end  (Date.)
+          diff (- (.getTime end) (.getTime start))]
+
+      (println "Took " (/ diff 1000.0) " seconds"))))
 
 
 (defn in-flames
