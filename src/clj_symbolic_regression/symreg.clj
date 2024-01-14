@@ -15,7 +15,10 @@
       CopyOnWriteArrayList)
     (javax.swing
       JLabel)
-    (org.apache.log4j Level LogManager Logger)
+    (org.apache.log4j
+      Level
+      LogManager
+      Logger)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -68,7 +71,7 @@
 (defn score-fn
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
-    :as run-args}
+    :as   run-args}
    v]
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
@@ -99,8 +102,7 @@
 
 
 (def mutations-sampler
-  [
-   1 1 1 1 1 1 1 1 1
+  [1 1 1 1 1 1 1 1 1
    1 1 1 1 1 1 1 1 1
    2 2 2 2 2 2
    2 2 2 2 2 2
@@ -117,8 +119,7 @@
    8
    8
    9
-   10
-   ])
+   10])
 
 
 (defn rand-mut
@@ -206,7 +207,7 @@
    ga-result
    {:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
-    :as run-args}]
+    :as   run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
@@ -306,7 +307,7 @@
 (defn check-start-stop-state
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
-    :as run-args}]
+    :as   run-args}]
   (let [[n ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
     (if (= n :continue)
       :ok
@@ -327,13 +328,13 @@
 
         {sim->gui-chan       :sim->gui-chan
          sim-stop-start-chan :sim-stop-start-chan
-         :as gui-comms} (setup-gui input-exprs-vec* output-exprs-vec*)
+         :as                 gui-comms} (setup-gui input-exprs-vec* output-exprs-vec*)
 
         {new-state    :new-state
          input-data-x :input-data-x
          input-data-y :input-data-y} (<!! sim-stop-start-chan)
 
-        _ (println "Got state req: " (if new-state "Start" "Stop"))
+        _                 (println "Got state req: " (if new-state "Start" "Stop"))
 
         input-exprs       (if input-data-x
                             (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
@@ -353,9 +354,9 @@
     (reset! output-exprs-vec* output-exprs-vec)
 
     (merge gui-comms
-           {:input-exprs-list input-exprs-list
+           {:input-exprs-list  input-exprs-list
             :input-exprs-count input-exprs-count
-            :output-exprs-vec output-exprs-vec})))
+            :output-exprs-vec  output-exprs-vec})))
 
 
 (defn run-experiment
@@ -366,13 +367,13 @@
 
   (let [{:keys [input-exprs-list input-exprs-count output-exprs-vec
                 sim-stop-start-chan sim->gui-chan]
-         :as run-args} (get-input-data run-config)
-        start             (Date.)
-        pop1              (ga/initialize
-                            initial-phenos
-                            (partial score-fn run-args)
-                            (partial mutation-fn initial-muts)
-                            (partial crossover-fn initial-muts))]
+         :as   run-args} (get-input-data run-config)
+        start (Date.)
+        pop1  (ga/initialize
+                initial-phenos
+                (partial score-fn run-args)
+                (partial mutation-fn initial-muts)
+                (partial crossover-fn initial-muts))]
     (println "start " start)
     (reset! test-timer* start)
 
@@ -402,8 +403,9 @@
     (f)
     (flames/stop! flames)))
 
-;(def ^Logger logger (LogManager/getRootLogger))
-;(println "Root logger name: " (.getName logger) (.setLevel logger Level/ERROR))
+
+;; (def ^Logger logger (LogManager/getRootLogger))
+;; (println "Root logger name: " (.getName logger) (.setLevel logger Level/ERROR))
 
 (defn run-test
   []

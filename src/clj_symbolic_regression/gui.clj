@@ -154,7 +154,7 @@
 ;; todo: draw on widget: https://stackoverflow.com/questions/10101673/drawing-lines-with-mouse-on-canvas-java-awt
 
 (defn create-and-show-gui
-  [{:keys [sim-stop-start-chan :sim-stop-start-chan
+  [{:keys [sim-stop-start-chan
            ^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
     :as   gui-data}]
   (SwingUtilities/invokeLater
@@ -186,7 +186,8 @@
                                 :text "Start"
                                 :listen [:mouse-clicked
                                          (fn [^MouseEvent e]
-                                           (when sim-stop-start-chan
+                                           (if-not sim-stop-start-chan
+                                             (println "warning: no sim-stop-start-chan provided")
                                              (let [is-start   (= "Start" (ss/get-text* e))
                                                    input-data (mapv (fn [getter]
                                                                       (let [^Point pt (getter)]
