@@ -297,8 +297,10 @@
                                   (.updateXYSeries chart s1l xs y1s nil)
                                   (.updateXYSeries chart s2l xs y2s nil)
 
-                                  (.setText info-label (str "Iter: " i "/" iters " , Best Function: " best-f-str " "
-                                                            "Score: " best-score))
+                                  (.setText info-label (str "<html>Iteration: " i "/" iters
+                                                            "<br>Best Function: "
+                                                            "<br> y = " best-f-str
+                                                            "<br>Score: " best-score))
                                   (.revalidate info-label)
                                   (.repaint info-label)
 
