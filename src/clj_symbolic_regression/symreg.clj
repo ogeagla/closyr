@@ -430,5 +430,6 @@
     ;; plain experiment:
     (experiment-fn)))
 
+;; todo: pick iters / phenos count / datasets in gui
 
 (comment (run-test))
