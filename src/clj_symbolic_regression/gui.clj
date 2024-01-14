@@ -112,7 +112,10 @@
         x-scale             15
         pts                 (map
                               (fn [i]
-                                [(+ 50.0 (* i x-scale)) (+ 150 (* 50 (Math/sin (/ i 4.0))))])
+                                [(+ 50.0 (* i x-scale)) (+ 150
+                                                           (* 50 (Math/sin (/ i 4.0)))
+                                                           (* 20 (Math/cos (/ i 8.0)))
+                                                           )])
                               (range x-count))
         items               (map
                               (fn [pt]

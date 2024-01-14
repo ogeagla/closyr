@@ -299,8 +299,9 @@
 
                                   (.setText info-label (str "<html>Iteration: " i "/" iters
                                                             "<br>Best Function: "
-                                                            "<br> y = " best-f-str
-                                                            "<br>Score: " best-score))
+                                                            "<br><small> y = " best-f-str "</small>"
+                                                            "<br>Score: " best-score
+                                                            "</html>"))
                                   (.revalidate info-label)
                                   (.repaint info-label)
 
