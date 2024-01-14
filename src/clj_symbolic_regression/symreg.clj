@@ -66,7 +66,10 @@
 
 
 (defn score-fn
-  [input-exprs-list input-exprs-count output-exprs-vec v]
+  [{:keys [input-exprs-list input-exprs-count output-exprs-vec
+           sim-stop-start-chan sim->gui-chan]
+    :as run-args}
+   v]
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
           ;; expr-str         (str (:expr v))
@@ -199,7 +202,11 @@
 
 
 (defn report-iteration
-  [i ga-result sim->gui-chan input-exprs-count input-exprs-list]
+  [i
+   ga-result
+   {:keys [input-exprs-list input-exprs-count output-exprs-vec
+           sim-stop-start-chan sim->gui-chan]
+    :as run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [old-score  (:pop-old-score ga-result)
           old-scores (:pop-old-scores ga-result)
@@ -223,7 +230,7 @@
       (println i " sim stats: " (summarize-sim-stats))
       ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
 
-      (put! sim->gui-chan {:best-eval evaled :best-f-str (str (:expr best-v))})))
+      (put! sim->gui-chan {:i i :best-eval evaled :best-f-str (str (:expr best-v))})))
   (reset! sim-stats* {}))
 
 
@@ -268,7 +275,7 @@
                                   :as   conf}]
                               (go-loop []
                                 (<! (timeout 1000))
-                                (when-let [{:keys [best-eval best-f-str]
+                                (when-let [{:keys [best-eval best-f-str i]
                                             :as   sim-msg} (<! sim->gui-chan)]
 
                                   (.clear y1s)
@@ -284,10 +291,9 @@
                                   (.updateXYSeries chart s1l xs y1s nil)
                                   (.updateXYSeries chart s2l xs y2s nil)
 
-                                  (.setText info-label (str "Best Function: " best-f-str))
+                                  (.setText info-label (str "Iter: " i "Best Function: " best-f-str))
                                   (.revalidate info-label)
                                   (.repaint info-label)
-
 
                                   (.revalidate chart-panel)
                                   (.repaint chart-panel)
@@ -298,7 +304,9 @@
 
 
 (defn check-start-stop-state
-  [sim-stop-start-chan]
+  [{:keys [input-exprs-list input-exprs-count output-exprs-vec
+           sim-stop-start-chan sim->gui-chan]
+    :as run-args}]
   (let [[n ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
     (if (= n :continue)
       :ok
@@ -325,6 +333,8 @@
          input-data-x :input-data-x
          input-data-y :input-data-y} (<!! sim-stop-start-chan)
 
+        _ (println "Got state req: " (if new-state "Start" "Stop"))
+
         input-exprs       (if input-data-x
                             (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
                             input-exprs)
@@ -337,23 +347,16 @@
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
         (into-array IExpr [(F/List input-exprs-arr)])
         input-exprs-count (count input-exprs)
-        input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
+        input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)]
 
-        _                 (do
-                            (reset! input-exprs-vec* input-exprs-vec)
-                            (reset! output-exprs-vec* output-exprs-vec))
-        _                 (println "Got state req: " (if new-state "Start" "Stop"))
-        ]
+    (reset! input-exprs-vec* input-exprs-vec)
+    (reset! output-exprs-vec* output-exprs-vec)
+
     (merge gui-comms
-           {
-            :input-exprs-list input-exprs-list
+           {:input-exprs-list input-exprs-list
             :input-exprs-count input-exprs-count
-            :output-exprs-vec output-exprs-vec
+            :output-exprs-vec output-exprs-vec})))
 
-            })
-
-    )
-  )
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
@@ -362,11 +365,12 @@
   (println "initial muts: " (count initial-muts))
 
   (let [{:keys [input-exprs-list input-exprs-count output-exprs-vec
-                sim-stop-start-chan sim->gui-chan]} (get-input-data run-config)
+                sim-stop-start-chan sim->gui-chan]
+         :as run-args} (get-input-data run-config)
         start             (Date.)
         pop1              (ga/initialize
                             initial-phenos
-                            (partial score-fn input-exprs-list input-exprs-count output-exprs-vec)
+                            (partial score-fn run-args)
                             (partial mutation-fn initial-muts)
                             (partial crossover-fn initial-muts))]
     (println "start " start)
@@ -377,9 +381,9 @@
       (if (zero? i)
         pop
         (do
-          (check-start-stop-state sim-stop-start-chan)
+          (check-start-stop-state run-args)
           (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
-            (report-iteration i ga-result sim->gui-chan input-exprs-count input-exprs-list)
+            (report-iteration i ga-result run-args)
             (recur ga-result
                    (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
                      (near-exact-solution i old-score old-scores)
