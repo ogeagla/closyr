@@ -60,6 +60,20 @@
     vs))
 
 
+(defn eval-vec-pheno-oversample
+  "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
+  [p input-exprs-count input-exprs-list]
+  (let [
+        vs (concat
+             ;; todo head
+             (eval-vec-pheno p input-exprs-count input-exprs-list)
+             ;; todo tail
+             )]
+
+    ;; todo return xs and ys, not just ys
+    vs))
+
+
 (defn sum
   [coll]
   (reduce + 0.0 coll))
