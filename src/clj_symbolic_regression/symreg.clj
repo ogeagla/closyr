@@ -34,8 +34,31 @@
 (def ^ISymbol sym-x (F/Dummy "x"))
 
 
+(defn doubles->exprs
+  [numbers]
+  (mapv
+    (fn [^double n] (.add F/C0 n))
+    numbers))
+
+
+(defn exprs->doubles
+  [exprs]
+  (mapv #(.doubleValue (.toNumber ^IExpr %)) exprs))
+
+
+(defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
+  [exprs]
+  (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
+        (into-array IExpr exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-list
+        (into-array IExpr [(F/List exprs-arr)])]
+    exprs-list))
+
+
 (defn eval-vec-pheno
-  [p input-exprs-count input-exprs-list]
+  [p
+   {:keys [input-exprs-list input-exprs-count output-exprs-vec]
+    :as   run-args}]
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
         ^IExpr eval-p   (ops/eval-phenotype-on-expr-args p input-exprs-list)
@@ -62,15 +85,44 @@
 
 (defn eval-vec-pheno-oversample
   "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
-  [p input-exprs-count input-exprs-list]
-  (let [vs (concat
-             ;; todo head
-             (eval-vec-pheno p input-exprs-count input-exprs-list)
-             ;; todo tail
-             )]
+  [p
+   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
+    :as   run-args}]
+  (let [x-min                (first input-exprs-vec)
+        x-max                (last input-exprs-vec)
+        x-range-sz           (- x-max x-min)
+        extra-pts            10
+        x-range-pct-extend   0.2
+        x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
 
-    ;; todo return xs and ys, not just ys
-    vs))
+        x-head               (reverse
+                               (mapv
+                                 (fn [i]
+                                   (- x-min (* (inc i) x-range-extend-pt-sz)))
+                                 (range extra-pts)))
+
+        x-tail               (mapv
+                               (fn [i]
+                                 (+ x-max (* (inc i) x-range-extend-pt-sz)))
+                               (range extra-pts))
+
+        x-tail-list          (exprs->input-exprs-list (doubles->exprs x-tail))
+        x-head-list          (exprs->input-exprs-list (doubles->exprs x-head))
+
+        _                    (println "Got range extensions: head: \n" x-head "\ntail: " x-tail)
+
+        xs                   (concat x-head (:input-exprs-vec run-args) x-tail)
+
+        evaluated-ys         (concat
+
+                               (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
+                               ;; todo head
+                               (eval-vec-pheno p run-args)
+                               ;; todo tail
+                               (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
+
+    {:xs xs
+     :ys evaluated-ys}))
 
 
 (defn sum
@@ -88,7 +140,7 @@
    v]
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
-          f-of-xs          (eval-vec-pheno v input-exprs-count input-exprs-list)
+          f-of-xs          (eval-vec-pheno v run-args)
           resids           (map - output-exprs-vec f-of-xs)
           resid            (->>
                              resids
@@ -224,13 +276,16 @@
           took-s     (/ diff 1000.0)
           pop-size   (count (:pop ga-result))
           best-v     (first bests)
-          evaled     (eval-vec-pheno best-v input-exprs-count input-exprs-list)]
+          evaled     (eval-vec-pheno best-v run-args)
+          {evaled-extended :ys xs-extended :xs} (eval-vec-pheno-oversample best-v run-args)]
+
+      (println "eval extended pts count: xs: " (count xs-extended) "ys: " (count evaled-extended))
 
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size " took secs: " took-s " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
       (println i " pop score: " old-score
                " mean: " (Math/round (float (/ old-score (count (:pop ga-result))))))
-      (println i " top best: "
+      (println i " top best:\n"
                (->> (take 5 bests)
                     (map reportable-phen-str)
                     (str/join "\n")))
@@ -298,7 +353,7 @@
                                   (.clear xs)
                                   (.addAll xs @input-exprs-vec*)
 
-                                  (.setTitle chart best-f-str)
+                                  (.setTitle chart "Best vs Objective Functions")
                                   (.updateXYSeries chart s1l xs y1s nil)
                                   (.updateXYSeries chart s2l xs y2s nil)
 
@@ -334,11 +389,11 @@
 (defn get-input-data
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
   ;; to not use the GUI, pass the initial values through
-  (let [input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)
-        output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
+  (let [input-exprs-vec                                              (exprs->doubles input-exprs)
+        output-exprs-vec                                             (exprs->doubles output-exprs)
 
-        input-exprs-vec*  (atom input-exprs-vec)
-        output-exprs-vec* (atom output-exprs-vec)
+        input-exprs-vec*                                             (atom input-exprs-vec)
+        output-exprs-vec*                                            (atom output-exprs-vec)
 
         {sim->gui-chan       :sim->gui-chan
          sim-stop-start-chan :sim-stop-start-chan
@@ -348,21 +403,21 @@
          input-data-x :input-data-x
          input-data-y :input-data-y} (<!! sim-stop-start-chan)
 
-        _                 (println "Got state req: " (if new-state "Start" "Stop"))
+        _                                                            (println "Got state req: " (if new-state "Start" "Stop"))
 
-        input-exprs       (if input-data-x
-                            (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
-                            input-exprs)
-        output-exprs      (if input-data-y
-                            (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
-                            output-exprs)
-        output-exprs-vec  (mapv #(.doubleValue (.toNumber ^IExpr %)) output-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-arr
-        (into-array IExpr input-exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list
-        (into-array IExpr [(F/List input-exprs-arr)])
-        input-exprs-count (count input-exprs)
-        input-exprs-vec   (mapv #(.doubleValue (.toNumber ^IExpr %)) input-exprs)]
+        input-exprs                                                  (if input-data-x
+                                                                       (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
+                                                                       input-exprs)
+        output-exprs                                                 (if input-data-y
+                                                                       (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
+                                                                       output-exprs)
+
+        output-exprs-vec                                             (exprs->doubles output-exprs)
+
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list (exprs->input-exprs-list input-exprs)
+
+        input-exprs-count                                            (count input-exprs)
+        input-exprs-vec                                              (exprs->doubles input-exprs)]
 
     (reset! input-exprs-vec* input-exprs-vec)
     (reset! output-exprs-vec* output-exprs-vec)
@@ -370,6 +425,7 @@
     (merge gui-comms
            {:input-exprs-list  input-exprs-list
             :input-exprs-count input-exprs-count
+            :input-exprs-vec   input-exprs-vec
             :output-exprs-vec  output-exprs-vec})))
 
 
