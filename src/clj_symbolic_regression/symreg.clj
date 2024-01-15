@@ -324,15 +324,16 @@
 
 
 (defn setup-gui
-  [input-exprs-vec* output-exprs-vec*]
+  [plot-args*]
   (let [sim->gui-chan       (chan)
-        sim-stop-start-chan (chan)]
+        sim-stop-start-chan (chan)
+        {:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
     (gui/create-and-show-gui
       {:sim-stop-start-chan sim-stop-start-chan
-       :x1s                 (doto (CopyOnWriteArrayList.) (.addAll @input-exprs-vec*))
-       :x2s                 (doto (CopyOnWriteArrayList.) (.addAll @input-exprs-vec*))
-       :y1s                 (doto (CopyOnWriteArrayList.) (.addAll (repeat (count @input-exprs-vec*) 0.0)))
-       :y2s                 (doto (CopyOnWriteArrayList.) (.addAll @output-exprs-vec*))
+       :x1s                 (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
+       :x2s                 (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
+       :y1s                 (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
+       :y2s                 (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
        :s1l                 "best fn"
        :s2l                 "objective fn"
        :update-loop         (fn [{:keys [^XYChart chart
@@ -345,34 +346,35 @@
                                 (when-let [{:keys [best-eval best-score best-f-str i iters]
                                             :as   sim-msg} (<! sim->gui-chan)]
 
-                                  (.clear y1s)
-                                  (.addAll y1s best-eval)
+                                  (let [{:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
+                                    (.clear y1s)
+                                    (.addAll y1s best-eval)
 
-                                  (.clear y2s)
-                                  (.addAll y2s @output-exprs-vec*)
+                                    (.clear y2s)
+                                    (.addAll y2s output-exprs-vec)
 
-                                  (.clear x1s)
-                                  (.addAll x1s @input-exprs-vec*)
+                                    (.clear x1s)
+                                    (.addAll x1s input-exprs-vec)
 
-                                  (.clear x2s)
-                                  (.addAll x2s @input-exprs-vec*)
+                                    (.clear x2s)
+                                    (.addAll x2s input-exprs-vec)
 
-                                  (.setTitle chart "Best vs Objective Functions")
-                                  (.updateXYSeries chart s1l x1s y1s nil)
-                                  (.updateXYSeries chart s2l x2s y2s nil)
+                                    (.setTitle chart "Best vs Objective Functions")
+                                    (.updateXYSeries chart s1l x1s y1s nil)
+                                    (.updateXYSeries chart s2l x2s y2s nil)
 
-                                  (.setText info-label (str "<html>Iteration: " i "/" iters
-                                                            "<br>Best Function: "
-                                                            "<br><small> y = " best-f-str "</small>"
-                                                            "<br>Score: " best-score
-                                                            "</html>"))
-                                  (.revalidate info-label)
-                                  (.repaint info-label)
+                                    (.setText info-label (str "<html>Iteration: " i "/" iters
+                                                              "<br>Best Function: "
+                                                              "<br><small> y = " best-f-str "</small>"
+                                                              "<br>Score: " best-score
+                                                              "</html>"))
+                                    (.revalidate info-label)
+                                    (.repaint info-label)
 
-                                  (.revalidate chart-panel)
-                                  (.repaint chart-panel)
+                                    (.revalidate chart-panel)
+                                    (.repaint chart-panel)
 
-                                  (recur))))})
+                                    (recur)))))})
     {:sim->gui-chan       sim->gui-chan
      :sim-stop-start-chan sim-stop-start-chan}))
 
@@ -396,12 +398,13 @@
   (let [input-exprs-vec                                              (exprs->doubles input-exprs)
         output-exprs-vec                                             (exprs->doubles output-exprs)
 
-        input-exprs-vec*                                             (atom input-exprs-vec)
-        output-exprs-vec*                                            (atom output-exprs-vec)
+        plot-args*                                                   (atom {:input-exprs-vec  input-exprs-vec
+                                                                            :output-exprs-vec output-exprs-vec})
+
 
         {sim->gui-chan       :sim->gui-chan
          sim-stop-start-chan :sim-stop-start-chan
-         :as                 gui-comms} (setup-gui input-exprs-vec* output-exprs-vec*)
+         :as                 gui-comms} (setup-gui plot-args*)
 
         {new-state    :new-state
          input-data-x :input-data-x
@@ -423,8 +426,8 @@
         input-exprs-count                                            (count input-exprs)
         input-exprs-vec                                              (exprs->doubles input-exprs)]
 
-    (reset! input-exprs-vec* input-exprs-vec)
-    (reset! output-exprs-vec* output-exprs-vec)
+    (reset! plot-args* {:input-exprs-vec  input-exprs-vec
+                        :output-exprs-vec output-exprs-vec})
 
     (merge gui-comms
            {:input-exprs-list  input-exprs-list
