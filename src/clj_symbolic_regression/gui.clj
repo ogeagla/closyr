@@ -154,8 +154,6 @@
     [xyz-p items-point-getters]))
 
 
-;; todo: draw on widget: https://stackoverflow.com/questions/10101673/drawing-lines-with-mouse-on-canvas-java-awt
-
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]

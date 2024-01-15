@@ -89,28 +89,21 @@
    v]
   (try
     (let [leafs            (.leafCount ^IExpr (:expr v))
-          ;; expr-str         (str (:expr v))
-          ;; f-of-xs          (or
-          ;;                   (get-cached-fn-eval expr-str input-exprs-F-strings)
-          ;;                   (put-cached-fn-eval
-          ;;                     expr-str
-          ;;                     input-exprs-F-strings
-          ;;                     (eval-vec-pheno v input-exprs input-exprs-F-strings)))
           f-of-xs          (eval-vec-pheno v input-exprs-count input-exprs-list)
-
-          resids           (map (fn [output expted]
-                                  (- expted output))
-                                f-of-xs
-                                output-exprs-vec)
-          resid            (sum (map #(min 100000 (abs %)) resids))
+          resids           (map - output-exprs-vec f-of-xs)
+          resid            (->>
+                             resids
+                             (map #(min 100000 (abs %)))
+                             (sum ))
           score            (* -1 (abs resid))
-          length-deduction (* 0.0001 leafs)]
+          length-deduction (* 0.0001 leafs)
+          overall-score    (- score length-deduction)]
+
       (when (zero? resid) (println "warning: zero resid " resids))
       (when (neg? length-deduction) (println "warning: negative deduction increases score: " leafs length-deduction v))
-
       (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
-      (- score length-deduction))
+      overall-score)
     (catch Exception e
       -1000000)))
 
@@ -231,7 +224,6 @@
           bests      (sort-population ga-result)
           took-s     (/ diff 1000.0)
           pop-size   (count (:pop ga-result))
-
           best-v     (first bests)
           evaled     (eval-vec-pheno best-v input-exprs-count input-exprs-list)]
 
