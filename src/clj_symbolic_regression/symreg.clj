@@ -91,8 +91,8 @@
   (let [x-min                (first input-exprs-vec)
         x-max                (last input-exprs-vec)
         x-range-sz           (- x-max x-min)
-        extra-pts            10
-        x-range-pct-extend   0.2
+        extra-pts            25
+        x-range-pct-extend   0.5
         x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
 
         x-head               (reverse
@@ -109,16 +109,13 @@
         x-tail-list          (exprs->input-exprs-list (doubles->exprs x-tail))
         x-head-list          (exprs->input-exprs-list (doubles->exprs x-head))
 
-        _                    (println "Got range extensions: head: \n" x-head "\ntail: " x-tail)
+        _                    (println "Got range extensions: head: " (count x-head) "tail: " (count x-tail))
 
         xs                   (concat x-head (:input-exprs-vec run-args) x-tail)
 
         evaluated-ys         (concat
-
                                (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
-                               ;; todo head
                                (eval-vec-pheno p run-args)
-                               ;; todo tail
                                (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
 
     {:xs xs
@@ -292,11 +289,13 @@
       (println i " sim stats: " (summarize-sim-stats))
       ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
 
-      (put! sim->gui-chan {:iters      iters
-                           :i          (- iters i)
-                           :best-eval  evaled
-                           :best-f-str (str (:expr best-v))
-                           :best-score (:score best-v)})))
+      (put! sim->gui-chan {:iters                    iters
+                           :i                        (- iters i)
+                           :best-eval                evaled
+                           :input-exprs-vec-extended xs-extended
+                           :best-eval-extended       evaled-extended
+                           :best-f-str               (str (:expr best-v))
+                           :best-score               (:score best-v)})))
   (reset! sim-stats* {}))
 
 
@@ -343,18 +342,20 @@
                                   :as   conf}]
                               (go-loop []
                                 (<! (timeout 1000))
-                                (when-let [{:keys [best-eval best-score best-f-str i iters]
+                                (when-let [{:keys [input-exprs-vec-extended
+                                                   best-eval-extended
+                                                   best-eval best-score best-f-str i iters]
                                             :as   sim-msg} (<! sim->gui-chan)]
 
                                   (let [{:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
                                     (.clear y1s)
-                                    (.addAll y1s best-eval)
+                                    (.addAll y1s (or best-eval-extended best-eval))
 
                                     (.clear y2s)
                                     (.addAll y2s output-exprs-vec)
 
                                     (.clear x1s)
-                                    (.addAll x1s input-exprs-vec)
+                                    (.addAll x1s (or input-exprs-vec-extended input-exprs-vec))
 
                                     (.clear x2s)
                                     (.addAll x2s input-exprs-vec)
