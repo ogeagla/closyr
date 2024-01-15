@@ -83,11 +83,8 @@
     vs))
 
 
-(defn eval-vec-pheno-oversample
-  "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
-  [p
-   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
-    :as   run-args}]
+(defn extend-xs
+  [input-exprs-vec]
   (let [x-min                (first input-exprs-vec)
         x-max                (last input-exprs-vec)
         x-range-sz           (- x-max x-min)
@@ -107,16 +104,53 @@
                                (range extra-pts))
 
         x-tail-list          (exprs->input-exprs-list (doubles->exprs x-tail))
-        x-head-list          (exprs->input-exprs-list (doubles->exprs x-head))
+        x-head-list          (exprs->input-exprs-list (doubles->exprs x-head))]
+    {:x-head      x-head
+     :x-head-list x-head-list
+     :x-tail      x-tail
+     :x-tail-list x-tail-list}))
 
-        _                    (println "Got range extensions: head: " (count x-head) "tail: " (count x-tail))
 
-        xs                   (concat x-head (:input-exprs-vec run-args) x-tail)
+(defn eval-vec-pheno-oversample-from-orig-xs
+  "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
+  [p
+   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
+    :as   run-args}]
+  (let [{x-head      :x-head
+         x-head-list :x-head-list
+         x-tail      :x-tail
+         x-tail-list :x-tail-list} (extend-xs input-exprs-vec)
 
-        evaluated-ys         (concat
-                               (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
-                               (eval-vec-pheno p run-args)
-                               (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
+        _            (println "Got range extensions: head: " (count x-head) "tail: " (count x-tail))
+
+        xs           (concat x-head (:input-exprs-vec run-args) x-tail)
+
+        evaluated-ys (concat
+                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
+                       (eval-vec-pheno p run-args)
+                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
+
+    {:xs xs
+     :ys evaluated-ys}))
+
+
+(defn eval-vec-pheno-oversample
+  "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
+  [p
+   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
+    :as   run-args}
+   {x-head      :x-head
+    x-head-list :x-head-list
+    x-tail      :x-tail
+    x-tail-list :x-tail-list}]
+  (let [_            (println "Got range extensions: head: " (count x-head) "tail: " (count x-tail))
+
+        xs           (concat x-head (:input-exprs-vec run-args) x-tail)
+
+        evaluated-ys (concat
+                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
+                       (eval-vec-pheno p run-args)
+                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
 
     {:xs xs
      :ys evaluated-ys}))
@@ -254,7 +288,7 @@
 
 (def test-timer* (atom nil))
 
-(def log-steps 5)
+(def log-steps 2)
 
 
 (defn report-iteration
@@ -262,7 +296,7 @@
    iters
    ga-result
    {:keys [input-exprs-list input-exprs-count output-exprs-vec
-           sim-stop-start-chan sim->gui-chan]
+           sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [old-score  (:pop-old-score ga-result)
@@ -274,7 +308,7 @@
           pop-size   (count (:pop ga-result))
           best-v     (first bests)
           evaled     (eval-vec-pheno best-v run-args)
-          {evaled-extended :ys xs-extended :xs} (eval-vec-pheno-oversample best-v run-args)]
+          {evaled-extended :ys xs-extended :xs} (eval-vec-pheno-oversample best-v run-args extended-domain-args)]
 
       (println "eval extended pts count: xs: " (count xs-extended) "ys: " (count evaled-extended))
 
@@ -407,6 +441,7 @@
          sim-stop-start-chan :sim-stop-start-chan
          :as                 gui-comms} (setup-gui plot-args*)
 
+        ;; wait for GUI to press Start, which submits the new xs/ys data:
         {new-state    :new-state
          input-data-x :input-data-x
          input-data-y :input-data-y} (<!! sim-stop-start-chan)
@@ -425,16 +460,18 @@
         ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list (exprs->input-exprs-list input-exprs)
 
         input-exprs-count                                            (count input-exprs)
-        input-exprs-vec                                              (exprs->doubles input-exprs)]
+        input-exprs-vec                                              (exprs->doubles input-exprs)
+        extended-domain-args                                         (extend-xs input-exprs-vec)]
 
     (reset! plot-args* {:input-exprs-vec  input-exprs-vec
                         :output-exprs-vec output-exprs-vec})
 
     (merge gui-comms
-           {:input-exprs-list  input-exprs-list
-            :input-exprs-count input-exprs-count
-            :input-exprs-vec   input-exprs-vec
-            :output-exprs-vec  output-exprs-vec})))
+           {:extended-domain-args extended-domain-args
+            :input-exprs-list     input-exprs-list
+            :input-exprs-count    input-exprs-count
+            :input-exprs-vec      input-exprs-vec
+            :output-exprs-vec     output-exprs-vec})))
 
 
 (defn run-experiment
@@ -489,11 +526,11 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 800)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          300}))]
+                           :iters          500}))]
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:
