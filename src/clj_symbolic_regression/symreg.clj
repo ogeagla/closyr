@@ -329,7 +329,8 @@
         sim-stop-start-chan (chan)]
     (gui/create-and-show-gui
       {:sim-stop-start-chan sim-stop-start-chan
-       :xs                  (doto (CopyOnWriteArrayList.) (.addAll @input-exprs-vec*))
+       :x1s                 (doto (CopyOnWriteArrayList.) (.addAll @input-exprs-vec*))
+       :x2s                 (doto (CopyOnWriteArrayList.) (.addAll @input-exprs-vec*))
        :y1s                 (doto (CopyOnWriteArrayList.) (.addAll (repeat (count @input-exprs-vec*) 0.0)))
        :y2s                 (doto (CopyOnWriteArrayList.) (.addAll @output-exprs-vec*))
        :s1l                 "best fn"
@@ -337,7 +338,7 @@
        :update-loop         (fn [{:keys [^XYChart chart
                                          ^XChartPanel chart-panel
                                          ^JLabel info-label]}
-                                 {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l]
+                                 {:keys [^List x1s ^List x2s ^List y1s ^List y2s ^String s1l ^String s2l]
                                   :as   conf}]
                               (go-loop []
                                 (<! (timeout 1000))
@@ -350,12 +351,15 @@
                                   (.clear y2s)
                                   (.addAll y2s @output-exprs-vec*)
 
-                                  (.clear xs)
-                                  (.addAll xs @input-exprs-vec*)
+                                  (.clear x1s)
+                                  (.addAll x1s @input-exprs-vec*)
+
+                                  (.clear x2s)
+                                  (.addAll x2s @input-exprs-vec*)
 
                                   (.setTitle chart "Best vs Objective Functions")
-                                  (.updateXYSeries chart s1l xs y1s nil)
-                                  (.updateXYSeries chart s2l xs y2s nil)
+                                  (.updateXYSeries chart s1l x1s y1s nil)
+                                  (.updateXYSeries chart s2l x2s y2s nil)
 
                                   (.setText info-label (str "<html>Iteration: " i "/" iters
                                                             "<br>Best Function: "

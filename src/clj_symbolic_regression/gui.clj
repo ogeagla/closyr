@@ -179,7 +179,7 @@
 
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
-           ^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
+           ^List x1s ^List x2s ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
@@ -202,7 +202,7 @@
 
             my-label          (JLabel. "Press Start To Begin Function Search")
 
-            chart             (plot/make-plot s1l s2l xs y1s y2s)
+            chart             (plot/make-plot s1l s2l x1s x2s y1s y2s)
             chart-panel       (XChartPanel. chart)
             [^JPanel xyz-p items-point-getters] (input-data-items-widget)
 
@@ -229,7 +229,8 @@
   []
   (let [sim-stop-start-chan (chan)]
     (create-and-show-gui
-      {:xs                  (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+      {:x1s                 (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+       :x2s                 (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
        :y1s                 (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
        :y2s                 (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
        :s1l                 "series 1"
@@ -239,7 +240,7 @@
                                          ^XChartPanel chart-panel
                                          ^JLabel info-label]
                                   :as   gui-widgets}
-                                 {:keys [^List xs ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
+                                 {:keys [^List x1s ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
                                   :as   gui-data}]
 
                               (go
@@ -257,19 +258,19 @@
                                         (<! sim-stop-start-chan))))
 
 
-                                  (println "Draw new points " (.size xs))
-                                  (.add xs (.size xs))
-                                  (.add y1s (.size xs))
+                                  (println "Draw new points " (.size x1s))
+                                  (.add x1s (.size x1s))
+                                  (.add y1s (.size x1s))
                                   ;; (.remove y2s 0)
                                   (.add y2s (* 10.0 (Math/random)))
 
-                                  (.updateXYSeries chart s1l xs y1s nil)
-                                  (.updateXYSeries chart s2l xs y2s nil)
+                                  (.updateXYSeries chart s1l x1s y1s nil)
+                                  (.updateXYSeries chart s2l x1s y2s nil)
 
                                   (.revalidate chart-panel)
                                   (.repaint chart-panel)
 
-                                  (.setText info-label (str "size: " (.size xs)))
+                                  (.setText info-label (str "size: " (.size x1s)))
                                   (.revalidate info-label)
                                   (.repaint info-label)
 

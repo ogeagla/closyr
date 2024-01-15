@@ -50,24 +50,25 @@
 (defn make-plot
   ^XYChart [^String series-1-label
             ^String series-2-label
-            ^List x-data
+            ^List x-data-1
+            ^List x-data-2
             ^List y-data-1
             ^List y-data-2]
   (let [^XYChart chart     (doto (XYChart. 900 600)
                              (.setTitle "Sample")
                              (.setXAxisTitle "X")
                              (.setYAxisTitle "Y"))
-        ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data y-data-1)
+        ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
                              (.setMarker SeriesMarkers/CIRCLE))
 
-        ^XYSeries series-2 (doto (.addSeries chart (str/join (take 30 series-2-label)) x-data y-data-2)
+        ^XYSeries series-2 (doto (.addSeries chart (str/join (take 30 series-2-label)) x-data-2 y-data-2)
                              (.setMarker SeriesMarkers/CROSS))]
     chart))
 
 
 (defn show-plot
   [^String best-fn-label x-data y-data-1 y-data-2]
-  (-> (SwingWrapper. (make-plot best-fn-label "objective(x)" x-data y-data-1 y-data-2))
+  (-> (SwingWrapper. (make-plot best-fn-label "objective(x)" x-data x-data y-data-1 y-data-2))
       .displayChart))
 
 
