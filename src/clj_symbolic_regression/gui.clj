@@ -92,6 +92,24 @@
       (.drawLine g 0 y w y))))
 
 
+(defn sketchpad-on-click
+  [items x-scale ^MouseEvent e]
+  (doall
+    (map-indexed
+      (fn [i ^JLabel widget]
+        (let [diff (/ (abs
+                        (- (.getX (.getLocation widget))
+                           (.getX (.getPoint e))))
+                      500.0)]
+          (.setLocation widget
+                        (+ 50.0 (* i x-scale))
+                        (+ (* (min 1 (+ 0.85 diff)) (.getY (.getLocation widget)))
+                           (* (max 0 (- 0.15 diff)) (.getY (.getPoint e)))))))
+      items))
+
+  (ss/repaint! e))
+
+
 (defn input-data-items-widget
   []
   (let [^JPanel bp          (doto (ss/border-panel
@@ -114,8 +132,7 @@
                               (fn [i]
                                 [(+ 50.0 (* i x-scale)) (+ 150
                                                            (* 50 (Math/sin (/ i 4.0)))
-                                                           (* 20 (Math/cos (/ i 8.0)))
-                                                           )])
+                                                           (* 20 (Math/cos (/ i 8.0))))])
                               (range x-count))
         items               (map
                               (fn [pt]
@@ -135,23 +152,29 @@
                               :id :xyz
                               :background "#222222"
                               :items (conj items bp)
-                              :listen [:mouse-clicked
-                                       (fn [^MouseEvent e]
-                                         (doall
-                                           (map-indexed
-                                             (fn [i ^JLabel widget]
-                                               (let [diff (/ (abs
-                                                               (- (.getX (.getLocation widget))
-                                                                  (.getX (.getPoint e))))
-                                                             500.0)]
-                                                 (.setLocation widget
-                                                               (+ 50.0 (* i x-scale))
-                                                               (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation widget)))
-                                                                  (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
-                                             items))
-
-                                         (ss/repaint! e))])]
+                              :listen [:mouse-clicked (partial sketchpad-on-click items x-scale)])]
     [xyz-p items-point-getters]))
+
+
+(defn start-stop-on-click
+  [sim-stop-start-chan items-point-getters ^MouseEvent e]
+  (if-not sim-stop-start-chan
+    (println "warning: no sim-stop-start-chan provided")
+    (let [is-start   (= "Start" (ss/get-text* e))
+          input-data (mapv (fn [getter]
+                             (let [^Point pt (getter)]
+                               [(/ (- (.getX pt) 50.0) 15.0)
+                                (- 10.0 (/ (.getY pt) 15.0))]))
+                           items-point-getters)
+          input-x    (mapv first input-data)
+          input-y    (mapv second input-data)]
+      (println "clicked Start/Stop: " is-start)
+      (put! sim-stop-start-chan {:new-state    is-start
+                                 :input-data-x input-x
+                                 :input-data-y input-y})
+      (ss/set-text* e (if is-start
+                        "Stop"
+                        "Start")))))
 
 
 (defn create-and-show-gui
@@ -186,24 +209,7 @@
             ^JButton ctl-btn  (ss/button
                                 :text "Start"
                                 :listen [:mouse-clicked
-                                         (fn [^MouseEvent e]
-                                           (if-not sim-stop-start-chan
-                                             (println "warning: no sim-stop-start-chan provided")
-                                             (let [is-start   (= "Start" (ss/get-text* e))
-                                                   input-data (mapv (fn [getter]
-                                                                      (let [^Point pt (getter)]
-                                                                        [(/ (- (.getX pt) 50.0) 15.0)
-                                                                         (- 10.0 (/ (.getY pt) 15.0))]))
-                                                                    items-point-getters)
-                                                   input-x    (mapv first input-data)
-                                                   input-y    (mapv second input-data)]
-                                               (println "clicked Start/Stop: " is-start)
-                                               (put! sim-stop-start-chan {:new-state    is-start
-                                                                          :input-data-x input-x
-                                                                          :input-data-y input-y})
-                                               (ss/set-text* e (if is-start
-                                                                 "Stop"
-                                                                 "Start")))))])]
+                                         (partial start-stop-on-click sim-stop-start-chan items-point-getters)])]
 
         (.add info-container my-label)
         (.add info-container ctl-btn)

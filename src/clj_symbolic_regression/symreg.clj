@@ -63,8 +63,7 @@
 (defn eval-vec-pheno-oversample
   "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
   [p input-exprs-count input-exprs-list]
-  (let [
-        vs (concat
+  (let [vs (concat
              ;; todo head
              (eval-vec-pheno p input-exprs-count input-exprs-list)
              ;; todo tail
@@ -94,7 +93,7 @@
           resid            (->>
                              resids
                              (map #(min 100000 (abs %)))
-                             (sum ))
+                             (sum))
           score            (* -1 (abs resid))
           length-deduction (* 0.0001 leafs)
           overall-score    (- score length-deduction)]
@@ -435,6 +434,7 @@
     ;; (in-flames experiment-fn)
     ;; plain experiment:
     (experiment-fn)))
+
 
 ;; todo: pick iters / phenos count / datasets in gui
 
