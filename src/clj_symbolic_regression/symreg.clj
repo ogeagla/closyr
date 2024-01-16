@@ -312,8 +312,9 @@
           best-v     (first bests)
           evaled     (eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (eval-vec-pheno-oversample best-v run-args extended-domain-args)]
-
-      (println "eval extended pts count: xs: " (count xs-extended) "ys: " (count evaled-extended))
+      ;(println "Biggest: vals x: " (take-last 5 (sort xs-extended)))
+      ;(println "Biggest: vals y: " (take-last 5 (sort evaled-extended)))
+      ;(println "eval extended pts count: xs: " (count xs-extended) "ys: " (count evaled-extended))
 
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size " took secs: " took-s " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
@@ -386,7 +387,14 @@
 
                                   (let [{:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
                                     (.clear y1s)
-                                    (.addAll y1s (or best-eval-extended best-eval))
+                                    (.addAll y1s (if best-eval-extended
+                                                   (mapv (fn [v]
+                                                           (cond
+                                                             (infinite? v) 0.0
+                                                             (> (abs v) 10e9) 0.0
+                                                             :else v))
+                                                         best-eval-extended)
+                                                   best-eval))
 
                                     (.clear y2s)
                                     (.addAll y2s output-exprs-vec)
