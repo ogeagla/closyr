@@ -616,15 +616,15 @@
            i   iters]
       (if (zero? i)
         pop
-        (let [restart? (reset! reset?* (check-start-stop-state run-args))
-              {old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
-          (report-iteration i iters ga-result run-args)
+        (let [restart? (reset! reset?* (check-start-stop-state run-args))]
           (if restart?
             pop
-            (recur ga-result
-                   (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                     (near-exact-solution i old-score old-scores)
-                     (dec i)))))))
+            (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
+              (report-iteration i iters ga-result run-args)
+              (recur ga-result
+                     (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
+                       (near-exact-solution i old-score old-scores)
+                       (dec i))))))))
 
     (let [end  (Date.)
           diff (- (.getTime end) (.getTime start))]
