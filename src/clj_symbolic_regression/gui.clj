@@ -198,7 +198,7 @@
                                 (.setLayout (GridLayout. 2 1)))
 
             content-pane      (doto (.getContentPane my-frame)
-                                (.setLayout (GridLayout. 2 1)))
+                                (.setLayout (GridLayout. 1 2)))
 
             my-label          (JLabel. "Press Start To Begin Function Search")
 
