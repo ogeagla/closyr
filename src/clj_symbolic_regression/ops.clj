@@ -520,5 +520,12 @@
    {:op           :substitute
     :label        "Exp->Plus"
     :find-expr    F/Exp
-    :replace-expr F/Plus}])
+    :replace-expr F/Plus}
+
+   {:op           :substitute
+    :label        "Power->Plus"
+    :find-expr    F/Power
+    :replace-expr F/Plus}
+
+   ])
 

@@ -75,7 +75,7 @@
                               (catch Exception e
                                 Double/POSITIVE_INFINITY)))
                           (range (dec (.size eval-p))))
-        vs              (if (seq vs)
+        vs              (if (= input-exprs-count (count vs))
                           vs
                           (mapv
                             (fn [i]
@@ -177,6 +177,11 @@
                              (map #(min 100000 (abs %)))
                              (sum))
           score            (* -1 (abs resid))
+          ;_                (when (> score -4)
+          ;                   (println "very low score: " (str (:expr v))
+          ;                            "\n input-exprs-count: " input-exprs-count
+          ;                            "\n f(xs): " f-of-xs
+          ;                            "\n resids: " resids))
           length-deduction (* 0.000001 leafs)
           overall-score    (- score length-deduction)]
 
@@ -192,22 +197,36 @@
 (def mutations-sampler
   [1 1 1 1 1 1 1 1 1
    1 1 1 1 1 1 1 1 1
+   1 1 1 1 1 1 1 1 1
+   2 2 2 2 2 2
    2 2 2 2 2 2
    2 2 2 2 2 2
    3 3 3 3
    3 3 3 3
+   3 3 3 3
    4 4 4
    4 4 4
+   4 4 4
+   5 5 5
    5 5 5
    5 5
    6 6
    6 6
+   6 6
+   7 7
    7 7
    7
-   8
-   8
+   8 8
+   8 8
+   9 9
    9
-   10])
+   10 10
+   11 11
+   12
+   13
+   14
+   15
+   16])
 
 
 (defn rand-mut
@@ -287,10 +306,12 @@
          :as                              dat} @sim-stats*]
     (let [data-str (-> dat
                        (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
-                       (assoc :mutations {:counts        cs
-                                          :size-in-mean  (/ (sum sz-in) (count sz-in))
-                                          :size-out-mean (/ (sum sz-out) (count sz-out))}))]
-      (str " mut size: " (count sz-in) " len deduction: " (count len-deductions)
+                       (assoc :mutations {:counts        (reverse (sort-by second cs))
+                                          :size-in-mean  (Math/round
+                                                           ^double (/ (sum sz-in) (count sz-in)))
+                                          :size-out-mean (Math/round
+                                                           ^double (/ (sum sz-out) (count sz-out)))}))]
+      (str " mut size:" (count sz-in) " len deducts:" (count len-deductions)
            " "
            data-str))))
 
@@ -329,8 +350,7 @@
                (->> (take 5 bests)
                     (map reportable-phen-str)
                     (str/join "\n")))
-      (println i " sim stats: " (summarize-sim-stats))
-      ;; (println i " fn eval cache: " @fn-eval-cache-stats*)
+      (println i " " (summarize-sim-stats))
 
       (put! sim->gui-chan {:iters                    iters
                            :i                        (- iters i)
@@ -621,7 +641,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 3000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
