@@ -260,10 +260,10 @@
                                       v)]
 
                           #_(when (and (= (:label m) "Power->Plus")
-                                     (not= (str (:expr v)) (str (:expr new-v))))
-                            (println "Power->Plus mutation res: "
-                                     "\n in: " (:expr v)
-                                     "\n out: " (:expr new-v)))
+                                       (not= (str (:expr v)) (str (:expr new-v))))
+                              (println "Power->Plus mutation res: "
+                                       "\n in: " (:expr v)
+                                       "\n out: " (:expr new-v)))
 
                           (recur
                             (if (fn-size-growing-too-fast? v new-v)
@@ -495,11 +495,12 @@
     input-data-x :input-data-x
     input-data-y :input-data-y}]
 
-  (let [_                (println "Got state req: " (if reset?
-                                                      "Reset"
-                                                      (if new-state "Start" "Stop")))
+  (println "Got state req: "
+           (if reset?
+             "Reset"
+             (if new-state "Start" "Stop")))
 
-        input-exprs      (if input-data-x
+  (let [input-exprs      (if input-data-x
                            (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
                            input-exprs)
         output-exprs     (if input-data-y
@@ -520,7 +521,7 @@
   [msg]
   (println "Restarting experiment! ")
   (update-plot-input-data msg)
-  (<!! (timeout 1400))
+  (<!! (timeout 1000))
   true)
 
 
@@ -618,7 +619,7 @@
     (when @reset?*
       (reset! reset?* false)
       (println "Restarting...")
-      (<!! (timeout 1400))
+      (<!! (timeout 1000))
       (run-from-inputs run-config run-args))))
 
 
@@ -649,7 +650,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 500)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 2000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
