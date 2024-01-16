@@ -91,8 +91,8 @@
   (let [x-min                (first input-exprs-vec)
         x-max                (last input-exprs-vec)
         x-range-sz           (- x-max x-min)
-        extra-pts            25
         x-range-pct-extend   0.5
+        extra-pts            (* x-range-pct-extend (count input-exprs-vec))
         x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
 
         x-head               (reverse
@@ -296,7 +296,7 @@
 
 (def test-timer* (atom nil))
 
-(def log-steps 2)
+(def log-steps 1)
 
 
 (defn report-iteration
@@ -539,7 +539,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 2000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs

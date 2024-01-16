@@ -466,18 +466,19 @@
     :find-expr    F/Sin
     :replace-expr F/Cos}
 
-   {:op           :substitute
-    :label        "Sin->Ident"
-    :find-expr    F/Sin
-    :replace-expr F/Identity}
+   ;{:op           :substitute
+   ; :label        "Sin->Ident"
+   ; :find-expr    F/Sin
+   ; :replace-expr F/Identity}
 
    {:op           :substitute
     :label        "Cos->Sin"
     :find-expr    F/Cos
     :replace-expr F/Sin}
 
-   {:op           :substitute
-    :label        "Cos->Ident"
-    :find-expr    F/Cos
-    :replace-expr F/Identity}])
+   ;{:op           :substitute
+   ; :label        "Cos->Ident"
+   ; :find-expr    F/Cos
+   ; :replace-expr F/Identity}
+   ])
 
