@@ -41,9 +41,13 @@
     numbers))
 
 
+(defn expr->double
+  [^IExpr expr]
+  (.doubleValue (.toNumber expr)))
+
 (defn exprs->doubles
   [exprs]
-  (mapv #(.doubleValue (.toNumber ^IExpr %)) exprs))
+  (mapv expr->double exprs))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
@@ -62,24 +66,23 @@
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
         ^IExpr eval-p   (ops/eval-phenotype-on-expr-args p input-exprs-list)
-        ;; ^IExpr eval-p   (ops/eval-phenotype-on-string-args p input-exprs-F-strings)
-        vs              (vec (map
-                               (fn [i]
-                                 (try
-                                   (.doubleValue
-                                     (.toNumber (.getArg eval-p (inc i) F/Infinity)))
-                                   (catch Exception e
-                                     Double/POSITIVE_INFINITY)))
-                               (range (dec (.size eval-p)))))
+        vs              (mapv
+                          (fn [i]
+                            (try
+                              (expr->double
+                                (.getArg eval-p (inc i) F/Infinity))
+                              (catch Exception e
+                                Double/POSITIVE_INFINITY)))
+                          (range (dec (.size eval-p))))
         vs              (if (seq vs)
                           vs
-                          (vec (map
-                                 (fn [i]
-                                   (.doubleValue
-                                     (.toNumber (if new-is-const
-                                                  new-expr
-                                                  (.getArg eval-p 0 F/Infinity)))))
-                                 (range input-exprs-count))))]
+                          (mapv
+                            (fn [i]
+                              (expr->double
+                                (if new-is-const
+                                  new-expr
+                                  (.getArg eval-p 0 F/Infinity))))
+                            (range input-exprs-count)))]
     vs))
 
 
@@ -114,7 +117,6 @@
 
 
 (defn eval-vec-pheno-oversample-from-orig-xs
-  "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
   [p
    {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
     :as   run-args}]
@@ -122,8 +124,6 @@
          x-head-list :x-head-list
          x-tail      :x-tail
          x-tail-list :x-tail-list} (extend-xs input-exprs-vec)
-
-        _            (println "Got range extensions: head: " (count x-head) "tail: " (count x-tail))
 
         xs           (concat x-head (:input-exprs-vec run-args) x-tail)
 
@@ -137,7 +137,6 @@
 
 
 (defn eval-vec-pheno-oversample
-  "Eval xs but oversample in range and add a head and tail for plotting more points on curve"
   [p
    {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
     :as   run-args}
@@ -146,11 +145,7 @@
     x-head-list :x-head-list
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
-  (let [_            (println "Got range extensions: head: " (count x-head) "tail: " (count x-tail))
-
-        ;; xs           (concat x-head (:input-exprs-vec run-args) x-tail)
-
-        evaluated-ys (concat
+  (let [evaluated-ys (concat
                        (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
                        (eval-vec-pheno p run-args)
                        (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
@@ -346,18 +341,15 @@
 (def input-exprs
   (->>
     (range 50)
-    (map (fn [i]
-           (.add F/C0 (* Math/PI (/ i 15.0)))))
-    vec))
+    (map (fn [i] (* Math/PI (/ i 15.0))))
+    doubles->exprs))
 
 
 (def output-exprs
   (->>
     (range 50)
-    (map (fn [i]
-           (let [x (* Math/PI (/ i 15.0))]
-             (.add F/C0 0.0 #_(+ (* 0.5 x x) 2.0 (* 4.0 (Math/sin x)))))))
-    vec))
+    (map (fn [i] 0.0))
+    doubles->exprs))
 
 
 (defn setup-gui
