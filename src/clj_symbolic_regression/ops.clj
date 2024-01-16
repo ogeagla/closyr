@@ -323,6 +323,45 @@
                           ie))}
 
 
+
+   {:op               :modify-leafs
+    :label            "sin(x)"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (F/Sin x-sym)
+                          ie))}
+
+
+
+
+   ;{:op               :modify-leafs
+   ; :label            "arcsin(x)"
+   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;                     (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+   ;                       (F/ArcSin x-sym)
+   ;                       ie))}
+
+
+
+   {:op               :modify-leafs
+    :label            "cos(x)"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (F/Cos x-sym)
+                          ie))}
+   ;
+   ;
+   ;
+   ;
+   ;{:op               :modify-leafs
+   ; :label            "arccos(x)"
+   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;                     (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+   ;                       (F/ArcCos x-sym)
+   ;                       ie))}
+
+
+
    {:op               :modify-leafs
     :label            "x^1/2"
     :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
