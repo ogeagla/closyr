@@ -24,7 +24,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -127,15 +127,22 @@
 (defn initial-phenotypes
   [^ISymbol x reps]
   (->>
-    [F/C0
-     x
-     (F/Times -1 (->iexprs [x]))]
-    (repeat reps)
+    (fn []
+      [F/C0
+       F/C1
+       x
+       (F/Times -1 (->iexprs [x]))
+       (F/Sin x)
+       (F/Cos x)
+       (F/Sqr x)
+       (F/Times -1 (->iexprs [(F/Sqr x)]))
+       ])
+    (repeatedly reps)
     (mapcat identity)
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
 
 
-(def modify-leafs-sampler [true false false false])
+(def modify-leafs-sampler [true false false false false])
 
 
 (defn initial-mutations
@@ -175,6 +182,26 @@
                    (.minus expr (F/Sin x-sym)))}
 
    {:op          :fn
+    :label       "+Log"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (F/Log x-sym)))}
+
+   {:op          :fn
+    :label       "-Log"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (F/Log x-sym)))}
+
+   {:op          :fn
+    :label       "+Exp"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (F/Exp x-sym)))}
+
+   {:op          :fn
+    :label       "-Exp"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (F/Exp x-sym)))}
+
+   {:op          :fn
     :label       "+Cos"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr (F/Cos x-sym)))}
@@ -183,42 +210,6 @@
     :label       "-Cos"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.minus expr (F/Cos x-sym)))}
-
-
-   ;; {:op          :fn
-   ;; :label       "+Exp"
-   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;;                (.plus expr (F/Exp x-sym)))}
-   ;;
-   ;; {:op          :fn
-   ;; :label       "-Exp"
-   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;;                (.minus expr (F/Exp x-sym)))}
-   ;;
-   ;;
-   ;;
-   ;; {:op          :fn
-   ;; :label       "+ 1/Exp"
-   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;;                (.plus expr (F/Divide 1 (F/Exp x-sym))))}
-   ;;
-   ;; {:op          :fn
-   ;; :label       "- 1/Exp"
-   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;;                (.minus expr (F/Divide 1 (F/Exp x-sym))))}
-   ;;
-   ;;
-   ;;
-   ;; {:op          :fn
-   ;; :label       "*Exp"
-   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;;                (.times expr (F/Exp x-sym)))}
-   ;;
-   ;; {:op          :fn
-   ;; :label       "/Exp"
-   ;; :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-   ;;                (.times expr (F/Divide 1 (F/Exp x-sym))))}
-
 
    {:op          :fn
     :label       "*Sin"
@@ -338,6 +329,13 @@
                           (.times ie (F/C10))
                           ie))}
 
+   {:op               :modify-leafs
+    :label            "-1*x"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.times ie (F/C10))
+                          ie))}
+
 
 
    {:op               :modify-leafs
@@ -352,6 +350,23 @@
     :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (F/Cos x-sym)
+                          ie))}
+
+
+
+
+   {:op               :modify-leafs
+    :label            "log(x)"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (F/Log x-sym)
+                          ie))}
+
+   {:op               :modify-leafs
+    :label            "exp(x)"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (F/Exp x-sym)
                           ie))}
 
 
@@ -399,8 +414,15 @@
    {:op               :modify-leafs
     :label            "c*2"
     :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (.isNumericArgument ie)  (rand-nth modify-leafs-sampler))
+                        (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
                           (.times ie (F/C2))
+                          ie))}
+
+   {:op               :modify-leafs
+    :label            "c*-1"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+                          (.times ie (F/CN1))
                           ie))}
 
    {:op               :modify-leafs
