@@ -323,6 +323,22 @@
                           ie))}
 
 
+   {:op               :modify-leafs
+    :label            "x/10"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.divide ie (F/C10))
+                          ie))}
+
+
+   {:op               :modify-leafs
+    :label            "10*x"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.times ie (F/C10))
+                          ie))}
+
+
 
    {:op               :modify-leafs
     :label            "sin(x)"
