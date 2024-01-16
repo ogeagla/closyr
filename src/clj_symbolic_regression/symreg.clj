@@ -214,6 +214,14 @@
   (rand-nth initial-muts))
 
 
+(defn fn-size-growing-too-fast?
+  [v new-v]
+  (let [old-count (count (str (:expr v)))
+        new-count (count (str (:expr new-v)))]
+    (and (< 250 old-count)
+         (< old-count new-count))))
+
+
 (defn mutation-fn
   [initial-muts v v-discard]
   (try
@@ -223,12 +231,14 @@
                            first-run? true]
                       (if (zero? c)
                         v
-                        (let [new-v (ops/modify (rand-mut initial-muts) (if first-run?
-                                                                          (assoc v :util (:util v-discard))
-                                                                          v))]
+                        (let [v     (if first-run?
+                                      (assoc v :util (:util v-discard))
+                                      v)
+                              new-v (ops/modify
+                                      (rand-mut initial-muts)
+                                      v)]
                           (recur
-                            (if (and (< 200 (count (str (:expr v))))
-                                     (< (count (str (:expr v))) (count (str (:expr new-v)))))
+                            (if (fn-size-growing-too-fast? v new-v)
                               0
                               (dec c))
                             new-v
