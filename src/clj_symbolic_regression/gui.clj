@@ -220,6 +220,11 @@
      (+ 150
         (* 50 (Math/sin (/ i 4.0)))))})
 
+
+(def dataset-fns
+  ["sin+cos" "sin" "cos"])
+
+
 (defn input-dataset-change
   [^JPanel drawing-widget items-point-setters ^ActionEvent e]
   (let [^JComboBox jcb (.getSource e)
@@ -232,6 +237,7 @@
       (range x-count))
     (ss/repaint! drawing-widget)
     (println "Selected: " selection)))
+
 
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
@@ -303,7 +309,7 @@
 
         (.add info-container my-label)
         (.add info-container ^JComboBox (ss/combobox
-                                          :model ["sin+cos" "sin" "cos"]
+                                          :model dataset-fns
                                           :listen [:action
                                                    (partial input-dataset-change
                                                             drawing-widget
