@@ -185,7 +185,7 @@
           length-deduction (* 0.000001 leafs)
           overall-score    (- score length-deduction)]
 
-      (when (zero? resid) (println "warning: zero resid " resids))
+      #_(when (zero? resid) (println "warning: zero resid " resids))
       (when (neg? length-deduction) (println "warning: negative deduction increases score: " leafs length-deduction v))
       (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
@@ -198,35 +198,50 @@
   [1 1 1 1 1 1 1 1 1
    1 1 1 1 1 1 1 1 1
    1 1 1 1 1 1 1 1 1
+   1 1 1 1 1 1 1 1 1
+   2 2 2 2 2 2
    2 2 2 2 2 2
    2 2 2 2 2 2
    2 2 2 2 2 2
    3 3 3 3
    3 3 3 3
    3 3 3 3
+   3 3 3 3
    4 4 4
    4 4 4
    4 4 4
+   4 4 4
+   5 5 5
    5 5 5
    5 5 5
    5 5
    6 6
    6 6
    6 6
+   6 6
+   7 7
    7 7
    7 7
    7
    8 8
    8 8
+   8 8
+   9 9
    9 9
    9
    10 10
+   10
    11 11
-   12
-   13
+   11
+   12 12
+   13 13
    14
    15
-   16])
+   16
+   17
+   18
+   19
+   20])
 
 
 (defn rand-mut
@@ -319,7 +334,7 @@
                                                            ^double (/ (sum sz-in) (count sz-in)))
                                           :size-out-mean (Math/round
                                                            ^double (/ (sum sz-out) (count sz-out)))}))]
-      (str " mut size:" (count sz-in) " len deducts:" (count len-deductions)
+      (str "muts:" (count sz-in)
            " "
            data-str))))
 
@@ -453,7 +468,7 @@
 
         (.setText info-label (str "<html>Iteration: " i "/" iters
                                   "<br>Best Function: "
-                                  "<br><small> y = " best-f-str "</small>"
+                                  "<br><code> y = " best-f-str "</code>"
                                   "<br>Score: " best-score
                                   "</html>"))
         (.revalidate info-label)
@@ -650,7 +665,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes sym-x 2000)
+                          {:initial-phenos (ops/initial-phenotypes sym-x 1000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs

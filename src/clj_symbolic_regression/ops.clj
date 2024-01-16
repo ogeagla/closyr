@@ -128,19 +128,25 @@
   [^ISymbol x reps]
   (->>
     (fn []
-      [F/C1
+      [F/C0
+       F/C1
+       F/CN1
        x
        x
        x
        x
+       x
+       x
+       (F/Times -1 (->iexprs [x]))
+       (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        ;(F/Log x)
        ;(F/Exp x)
-       (F/Sin x)
-       (F/Cos x)
+       ;(F/Sin x)
+       ;(F/Cos x)
        ;(F/Sqr x)
        ;(F/Times -1 (->iexprs [(F/Sqr x)]))
        ])
@@ -149,7 +155,7 @@
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
 
 
-(def modify-leafs-sampler [true false false false false])
+(def modify-leafs-sampler [true false false false])
 
 
 (defn initial-mutations
