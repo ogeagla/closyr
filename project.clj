@@ -8,9 +8,9 @@
                  [seesaw/seesaw "1.5.0"]
                  [flames "0.5.0"]
                  [org.knowm.xchart/xchart "3.8.7"]
-                 [org.slf4j/slf4j-api "2.0.7"]
-                 [org.apache.logging.log4j/log4j-api "2.17.1"]
-                 [org.apache.logging.log4j/log4j-core "2.17.1"]
+                 [org.slf4j/slf4j-api "2.0.11"]
+                 [org.apache.logging.log4j/log4j-api "2.22.1"]
+                 [org.apache.logging.log4j/log4j-core "2.22.1"]
                  [org.matheclipse/matheclipse-core "3.0.0"
                   :exclusions [org.slf4j/slf4j-api
                                org.apache.logging.log4j/log4j-api

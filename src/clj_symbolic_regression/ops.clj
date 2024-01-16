@@ -155,7 +155,7 @@
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
 
 
-(def modify-leafs-sampler [true false false false])
+(def modify-leafs-sampler [true false])
 
 
 (defn initial-mutations
@@ -501,7 +501,7 @@
     :find-expr    F/Sin
     :replace-expr F/Cos}
 
-   {:op           :substitute
+   #_{:op           :substitute
     :label        "Sin->Plus"
     :find-expr    F/Sin
     :replace-expr F/Plus}
@@ -511,35 +511,38 @@
     :find-expr    F/Cos
     :replace-expr F/Sin}
 
-   {:op           :substitute
+   #_{:op           :substitute
     :label        "Cos->Plus"
     :find-expr    F/Cos
     :replace-expr F/Plus}
 
 
 
-   {:op           :substitute
+   #_{:op           :substitute
     :label        "Sqrt->Plus"
     :find-expr    F/Sqrt
     :replace-expr F/Plus}
 
-   {:op           :substitute
+   #_{:op           :substitute
     :label        "Log->Plus"
     :find-expr    F/Log
     :replace-expr F/Plus}
 
-   {:op           :substitute
+   #_{:op           :substitute
     :label        "Exp->Plus"
     :find-expr    F/Exp
     :replace-expr F/Plus}
 
-   {:op           :substitute
+   #_{:op           :substitute
     :label        "Power->Plus"
     :find-expr    F/Power
     :replace-expr F/Plus}
 
-   {:op           :substitute
+   #_{:op           :substitute
     :label        "Power->Times"
     :find-expr    F/Power
-    :replace-expr F/Times}])
+    :replace-expr F/Times}
+
+
+   ])
 
