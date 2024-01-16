@@ -377,8 +377,8 @@
 
 (defn chart-update-loop
   [sim->gui-chan
-   {:keys [^XYChart chart
-           ^XChartPanel chart-panel
+   {:keys [^XYChart best-fn-chart
+           ^XChartPanel best-fn-chart-panel
            ^JLabel info-label]}
    {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
            ^String series-best-fn-label ^String series-objective-fn-label]
@@ -405,9 +405,9 @@
         (.clear xs-objective-fn)
         (.addAll xs-objective-fn input-exprs-vec)
 
-        (.setTitle chart "Best vs Objective Functions")
-        (.updateXYSeries chart series-best-fn-label xs-best-fn ys-best-fn nil)
-        (.updateXYSeries chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
+        (.setTitle best-fn-chart "Best vs Objective Functions")
+        (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
+        (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
 
         (.setText info-label (str "<html>Iteration: " i "/" iters
                                   "<br>Best Function: "
@@ -417,8 +417,8 @@
         (.revalidate info-label)
         (.repaint info-label)
 
-        (.revalidate chart-panel)
-        (.repaint chart-panel)
+        (.revalidate best-fn-chart-panel)
+        (.repaint best-fn-chart-panel)
 
         (recur)))))
 

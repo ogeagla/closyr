@@ -280,13 +280,13 @@
 
             my-label                    (JLabel. "Press Start To Begin Function Search")
 
-            ^XYChart chart              (plot/make-plot series-best-fn-label
+            ^XYChart best-fn-chart              (plot/make-plot series-best-fn-label
                                                         series-objective-fn-label
                                                         xs-best-fn
                                                         xs-objective-fn
                                                         ys-best-fn
                                                         ys-objective-fn)
-            chart-panel                 (XChartPanel. chart)
+            best-fn-chart-panel                 (XChartPanel. best-fn-chart)
 
 
             [^JPanel drawing-widget items-point-getters items-point-setters] (input-data-items-widget
@@ -324,7 +324,7 @@
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
         (.add top-container ctls-container)
-        (.add top-container chart-panel)
+        (.add top-container best-fn-chart-panel)
 
         (.add content-pane top-container)
         (.add content-pane bottom-container)
@@ -334,7 +334,7 @@
         (.setVisible my-frame true)
 
         (update-loop
-          {:chart chart :chart-panel chart-panel :info-label my-label}
+          {:best-fn-chart best-fn-chart :best-fn-chart-panel best-fn-chart-panel :info-label my-label}
           gui-data)))))
 
 
@@ -349,8 +349,8 @@
        :series-best-fn-label      "series 1"
        :series-objective-fn-label "series 2"
        :sim-stop-start-chan       sim-stop-start-chan
-       :update-loop               (fn [{:keys [^XYChart chart
-                                               ^XChartPanel chart-panel
+       :update-loop               (fn [{:keys [^XYChart best-fn-chart
+                                               ^XChartPanel best-fn-chart-panel
                                                ^JLabel info-label]
                                         :as   gui-widgets}
                                        {:keys [^List xs-best-fn ^List ys-best-fn ^List ys-objective-fn ^String series-best-fn-label ^String series-objective-fn-label update-loop]
@@ -377,11 +377,11 @@
                                         ;; (.remove ys-objective-fn 0)
                                         (.add ys-objective-fn (* 10.0 (Math/random)))
 
-                                        (.updateXYSeries chart series-best-fn-label xs-best-fn ys-best-fn nil)
-                                        (.updateXYSeries chart series-objective-fn-label xs-best-fn ys-objective-fn nil)
+                                        (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
+                                        (.updateXYSeries best-fn-chart series-objective-fn-label xs-best-fn ys-objective-fn nil)
 
-                                        (.revalidate chart-panel)
-                                        (.repaint chart-panel)
+                                        (.revalidate best-fn-chart-panel)
+                                        (.repaint best-fn-chart-panel)
 
                                         (.setText info-label (str "size: " (.size xs-best-fn)))
                                         (.revalidate info-label)
