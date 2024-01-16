@@ -168,7 +168,7 @@
   [items-point-getters]
   (mapv (fn [getter]
           (let [^Point pt (getter)]
-            [(/ (- (.getX pt) 50.0) 15.0)
+            [(/ (- (.getX pt) 50.0) 35.0)
              (- 10.0 (/ (.getY pt) 15.0))]))
         items-point-getters))
 
@@ -206,7 +206,12 @@
 
 
 (def input-y-fns-data
-  {"sin+cos"
+  {"hline"
+   {:idx -1
+    :fn  (fn [i]
+           (+ 150))}
+
+   "sin+cos"
    {:idx 0
     :fn  (fn [i]
            (+ 150

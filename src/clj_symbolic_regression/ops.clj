@@ -147,7 +147,7 @@
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
 
 
-(def modify-leafs-sampler [true false])
+(def modify-leafs-sampler [true false false])
 
 
 (defn initial-mutations
