@@ -156,16 +156,21 @@
     [xyz-p items-point-getters]))
 
 
+(defn getters->input-data
+  [items-point-getters]
+  (mapv (fn [getter]
+          (let [^Point pt (getter)]
+            [(/ (- (.getX pt) 50.0) 15.0)
+             (- 10.0 (/ (.getY pt) 15.0))]))
+        items-point-getters))
+
+
 (defn start-stop-on-click
   [sim-stop-start-chan items-point-getters ^MouseEvent e]
   (if-not sim-stop-start-chan
     (println "warning: no sim-stop-start-chan provided")
     (let [is-start   (= "Start" (ss/get-text* e))
-          input-data (mapv (fn [getter]
-                             (let [^Point pt (getter)]
-                               [(/ (- (.getX pt) 50.0) 15.0)
-                                (- 10.0 (/ (.getY pt) 15.0))]))
-                           items-point-getters)
+          input-data (getters->input-data items-point-getters)
           input-x    (mapv first input-data)
           input-y    (mapv second input-data)]
       (println "clicked Start/Stop: " is-start)
@@ -175,6 +180,21 @@
       (ss/set-text* e (if is-start
                         "Stop"
                         "Start")))))
+
+
+(defn reset-on-click
+  [^JButton start-top-label sim-stop-start-chan items-point-getters ^MouseEvent e]
+  (if-not sim-stop-start-chan
+    (println "warning: no sim-stop-start-chan provided")
+    (let [input-data (getters->input-data items-point-getters)
+          input-x    (mapv first input-data)
+          input-y    (mapv second input-data)]
+      (println "clicked Reset: ")
+      (put! sim-stop-start-chan {:new-state    true
+                                 :reset        true
+                                 :input-data-x input-x
+                                 :input-data-y input-y})
+      (ss/set-text* start-top-label "Stop"))))
 
 
 (defn create-and-show-gui
@@ -232,6 +252,13 @@
                                           :listen [:mouse-clicked
                                                    (partial start-stop-on-click
                                                             sim-stop-start-chan
+                                                            items-point-getters)])
+            ^JButton ctl-reset-btn      (ss/button
+                                          :text "Restart"
+                                          :listen [:mouse-clicked
+                                                   (partial reset-on-click
+                                                            ctl-start-stop-btn
+                                                            sim-stop-start-chan
                                                             items-point-getters)])]
 
 
@@ -244,6 +271,7 @@
 
 
         (.add ctls-container ctl-start-stop-btn)
+        (.add ctls-container ctl-reset-btn)
         (.add top-container ctls-container)
         (.add top-container chart-panel)
 
