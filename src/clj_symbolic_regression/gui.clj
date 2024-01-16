@@ -151,7 +151,7 @@
                               :paint draw-grid
                               :id :xyz
                               :background "#222222"
-                              :items (conj items bp)
+                              :items items #_(conj items bp)
                               :listen [:mouse-clicked (partial sketchpad-on-click items x-scale)])]
     [xyz-p items-point-getters]))
 
@@ -179,44 +179,78 @@
 
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
-           ^List x1s ^List x2s ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
+           ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
+           ^String series-best-fn-label ^String series-objective-fn-label update-loop]
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
-      (let [my-frame          (doto (JFrame. "CLJ Symbolic Regression")
-                                (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                                (.setSize 1600 1400))
+      (let [my-frame                    (doto (JFrame. "CLJ Symbolic Regression")
+                                          (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+                                          (.setSize 1600 1400))
 
-            drawing-container (doto (JPanel. (BorderLayout.))
-                                (.setSize 1200 100)
-                                (.setBackground Color/LIGHT_GRAY)
-                                (.setLayout (GridLayout. 2 1)))
+            bottom-container            (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 1200 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 2 1)))
 
-            info-container    (doto (JPanel. (BorderLayout.))
-                                (.setSize 600 100)
-                                (.setBackground Color/LIGHT_GRAY)
-                                (.setLayout (GridLayout. 2 1)))
+            info-container              (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 1 1)))
 
-            content-pane      (doto (.getContentPane my-frame)
-                                (.setLayout (GridLayout. 1 2)))
+            ctls-container              (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 3 1)))
 
-            my-label          (JLabel. "Press Start To Begin Function Search")
+            draw-container              (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 1 2)))
 
-            chart             (plot/make-plot s1l s2l x1s x2s y1s y2s)
-            chart-panel       (XChartPanel. chart)
-            [^JPanel xyz-p items-point-getters] (input-data-items-widget)
+            top-container               (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 1 2)))
 
-            ^JButton ctl-btn  (ss/button
-                                :text "Start"
-                                :listen [:mouse-clicked
-                                         (partial start-stop-on-click sim-stop-start-chan items-point-getters)])]
+            content-pane                (doto (.getContentPane my-frame)
+                                          (.setLayout (GridLayout. 2 1)))
+
+            my-label                    (JLabel. "Press Start To Begin Function Search")
+
+            ^XYChart chart              (plot/make-plot series-best-fn-label
+                                                        series-objective-fn-label
+                                                        xs-best-fn
+                                                        xs-objective-fn
+                                                        ys-best-fn
+                                                        ys-objective-fn)
+            chart-panel                 (XChartPanel. chart)
+            [^JPanel drawing-widget items-point-getters] (input-data-items-widget)
+
+            ^JButton ctl-start-stop-btn (ss/button
+                                          :text "Start"
+                                          :listen [:mouse-clicked
+                                                   (partial start-stop-on-click
+                                                            sim-stop-start-chan
+                                                            items-point-getters)])]
+
 
         (.add info-container my-label)
-        (.add info-container ctl-btn)
-        (.add drawing-container info-container)
-        (.add drawing-container xyz-p)
-        (.add content-pane drawing-container)
-        (.add content-pane chart-panel)
+
+        (.add draw-container drawing-widget)
+        (.add draw-container (JLabel. "Placeholder"))
+        (.add bottom-container info-container)
+        (.add bottom-container draw-container)
+
+
+        (.add ctls-container ctl-start-stop-btn)
+        (.add top-container ctls-container)
+        (.add top-container chart-panel)
+
+        (.add content-pane top-container)
+        (.add content-pane bottom-container)
+
+
         (.pack my-frame)
         (.setVisible my-frame true)
 
@@ -229,52 +263,52 @@
   []
   (let [sim-stop-start-chan (chan)]
     (create-and-show-gui
-      {:x1s                 (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
-       :x2s                 (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
-       :y1s                 (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
-       :y2s                 (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
-       :s1l                 "series 1"
-       :s2l                 "series 2"
-       :sim-stop-start-chan sim-stop-start-chan
-       :update-loop         (fn [{:keys [^XYChart chart
-                                         ^XChartPanel chart-panel
-                                         ^JLabel info-label]
-                                  :as   gui-widgets}
-                                 {:keys [^List x1s ^List y1s ^List y2s ^String s1l ^String s2l update-loop]
-                                  :as   gui-data}]
+      {:xs-best-fn                (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+       :xs-objective-fn           (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
+       :ys-best-fn                (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
+       :ys-objective-fn           (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
+       :series-best-fn-label      "series 1"
+       :series-objective-fn-label "series 2"
+       :sim-stop-start-chan       sim-stop-start-chan
+       :update-loop               (fn [{:keys [^XYChart chart
+                                               ^XChartPanel chart-panel
+                                               ^JLabel info-label]
+                                        :as   gui-widgets}
+                                       {:keys [^List xs-best-fn ^List ys-best-fn ^List ys-objective-fn ^String series-best-fn-label ^String series-objective-fn-label update-loop]
+                                        :as   gui-data}]
 
-                              (go
-                                (<! sim-stop-start-chan)
+                                    (go
+                                      (<! sim-stop-start-chan)
 
-                                (go-loop []
+                                      (go-loop []
 
-                                  (<! (timeout 4000))
+                                        (<! (timeout 4000))
 
-                                  (let [[n ch] (alts! [sim-stop-start-chan] :default :continue :priority true)]
-                                    (if (= n :continue)
-                                      :ok
-                                      (do
-                                        (println "Parking updates to chart due to Stop command")
-                                        (<! sim-stop-start-chan))))
+                                        (let [[n ch] (alts! [sim-stop-start-chan] :default :continue :priority true)]
+                                          (if (= n :continue)
+                                            :ok
+                                            (do
+                                              (println "Parking updates to chart due to Stop command")
+                                              (<! sim-stop-start-chan))))
 
 
-                                  (println "Draw new points " (.size x1s))
-                                  (.add x1s (.size x1s))
-                                  (.add y1s (.size x1s))
-                                  ;; (.remove y2s 0)
-                                  (.add y2s (* 10.0 (Math/random)))
+                                        (println "Draw new points " (.size xs-best-fn))
+                                        (.add xs-best-fn (.size xs-best-fn))
+                                        (.add ys-best-fn (.size xs-best-fn))
+                                        ;; (.remove ys-objective-fn 0)
+                                        (.add ys-objective-fn (* 10.0 (Math/random)))
 
-                                  (.updateXYSeries chart s1l x1s y1s nil)
-                                  (.updateXYSeries chart s2l x1s y2s nil)
+                                        (.updateXYSeries chart series-best-fn-label xs-best-fn ys-best-fn nil)
+                                        (.updateXYSeries chart series-objective-fn-label xs-best-fn ys-objective-fn nil)
 
-                                  (.revalidate chart-panel)
-                                  (.repaint chart-panel)
+                                        (.revalidate chart-panel)
+                                        (.repaint chart-panel)
 
-                                  (.setText info-label (str "size: " (.size x1s)))
-                                  (.revalidate info-label)
-                                  (.repaint info-label)
+                                        (.setText info-label (str "size: " (.size xs-best-fn)))
+                                        (.revalidate info-label)
+                                        (.repaint info-label)
 
-                                  (recur))))})))
+                                        (recur))))})))
 
 
 (defn gui-2

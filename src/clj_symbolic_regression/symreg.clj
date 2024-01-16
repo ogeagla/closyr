@@ -45,6 +45,7 @@
   [^IExpr expr]
   (.doubleValue (.toNumber expr)))
 
+
 (defn exprs->doubles
   [exprs]
   (mapv expr->double exprs))
@@ -317,9 +318,9 @@
           best-v     (first bests)
           evaled     (eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (eval-vec-pheno-oversample best-v run-args extended-domain-args)]
-      ;(println "Biggest: vals x: " (take-last 5 (sort xs-extended)))
-      ;(println "Biggest: vals y: " (take-last 5 (sort evaled-extended)))
-      ;(println "eval extended pts count: xs: " (count xs-extended) "ys: " (count evaled-extended))
+      ;; (println "Biggest: vals x: " (take-last 5 (sort xs-extended)))
+      ;; (println "Biggest: vals y: " (take-last 5 (sort evaled-extended)))
+      ;; (println "eval extended pts count: xs: " (count xs-extended) "ys: " (count evaled-extended))
 
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size " took secs: " took-s " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
@@ -362,6 +363,16 @@
     doubles->exprs))
 
 
+(defn clamp-infinites
+  [doubles]
+  (mapv (fn [v]
+          (cond
+            (infinite? v) 0.0
+            (> (abs v) 10e9) 0.0
+            :else v))
+        doubles))
+
+
 (defn setup-gui
   [plot-args*]
   (let [sim->gui-chan       (chan)
@@ -369,16 +380,17 @@
         {:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
     (gui/create-and-show-gui
       {:sim-stop-start-chan sim-stop-start-chan
-       :x1s                 (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
-       :x2s                 (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
-       :y1s                 (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
-       :y2s                 (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
-       :s1l                 "best fn"
-       :s2l                 "objective fn"
+       :xs-best-fn          (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
+       :xs-objective-fn     (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
+       :ys-best-fn          (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
+       :ys-objective-fn     (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
+       :series-best-fn-label      "best fn"
+       :series-objective-fn-label "objective fn"
        :update-loop         (fn [{:keys [^XYChart chart
                                          ^XChartPanel chart-panel
                                          ^JLabel info-label]}
-                                 {:keys [^List x1s ^List x2s ^List y1s ^List y2s ^String s1l ^String s2l]
+                                 {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
+                                         ^String series-best-fn-label ^String series-objective-fn-label]
                                   :as   conf}]
                               (go-loop []
                                 (<! (timeout 1000))
@@ -388,28 +400,23 @@
                                             :as   sim-msg} (<! sim->gui-chan)]
 
                                   (let [{:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
-                                    (.clear y1s)
-                                    (.addAll y1s (if best-eval-extended
-                                                   (mapv (fn [v]
-                                                           (cond
-                                                             (infinite? v) 0.0
-                                                             (> (abs v) 10e9) 0.0
-                                                             :else v))
-                                                         best-eval-extended)
-                                                   best-eval))
+                                    (.clear ys-best-fn)
+                                    (.addAll ys-best-fn (if best-eval-extended
+                                                          (clamp-infinites best-eval-extended)
+                                                          best-eval))
 
-                                    (.clear y2s)
-                                    (.addAll y2s output-exprs-vec)
+                                    (.clear ys-objective-fn)
+                                    (.addAll ys-objective-fn output-exprs-vec)
 
-                                    (.clear x1s)
-                                    (.addAll x1s (or input-exprs-vec-extended input-exprs-vec))
+                                    (.clear xs-best-fn)
+                                    (.addAll xs-best-fn (or input-exprs-vec-extended input-exprs-vec))
 
-                                    (.clear x2s)
-                                    (.addAll x2s input-exprs-vec)
+                                    (.clear xs-objective-fn)
+                                    (.addAll xs-objective-fn input-exprs-vec)
 
                                     (.setTitle chart "Best vs Objective Functions")
-                                    (.updateXYSeries chart s1l x1s y1s nil)
-                                    (.updateXYSeries chart s2l x2s y2s nil)
+                                    (.updateXYSeries chart series-best-fn-label xs-best-fn ys-best-fn nil)
+                                    (.updateXYSeries chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
 
                                     (.setText info-label (str "<html>Iteration: " i "/" iters
                                                               "<br>Best Function: "
@@ -443,11 +450,11 @@
 (defn get-input-data
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
   ;; to not use the GUI, pass the initial values through
-  (let [input-exprs-vec                                              (exprs->doubles input-exprs)
-        output-exprs-vec                                             (exprs->doubles output-exprs)
+  (let [input-exprs-vec  (exprs->doubles input-exprs)
+        output-exprs-vec (exprs->doubles output-exprs)
 
-        plot-args*                                                   (atom {:input-exprs-vec  input-exprs-vec
-                                                                            :output-exprs-vec output-exprs-vec})
+        plot-args*       (atom {:input-exprs-vec  input-exprs-vec
+                                :output-exprs-vec output-exprs-vec})
 
 
         {sim->gui-chan       :sim->gui-chan
@@ -459,30 +466,25 @@
          input-data-x :input-data-x
          input-data-y :input-data-y} (<!! sim-stop-start-chan)
 
-        _                                                            (println "Got state req: " (if new-state "Start" "Stop"))
+        _                (println "Got state req: " (if new-state "Start" "Stop"))
 
-        input-exprs                                                  (if input-data-x
-                                                                       (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
-                                                                       input-exprs)
-        output-exprs                                                 (if input-data-y
-                                                                       (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
-                                                                       output-exprs)
+        input-exprs      (if input-data-x
+                           (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
+                           input-exprs)
+        output-exprs     (if input-data-y
+                           (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
+                           output-exprs)
 
-        output-exprs-vec                                             (exprs->doubles output-exprs)
-
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" input-exprs-list (exprs->input-exprs-list input-exprs)
-
-        input-exprs-count                                            (count input-exprs)
-        input-exprs-vec                                              (exprs->doubles input-exprs)
-        extended-domain-args                                         (extend-xs input-exprs-vec)]
+        output-exprs-vec (exprs->doubles output-exprs)
+        input-exprs-vec  (exprs->doubles input-exprs)]
 
     (reset! plot-args* {:input-exprs-vec  input-exprs-vec
                         :output-exprs-vec output-exprs-vec})
 
     (merge gui-comms
-           {:extended-domain-args extended-domain-args
-            :input-exprs-list     input-exprs-list
-            :input-exprs-count    input-exprs-count
+           {:extended-domain-args (extend-xs input-exprs-vec)
+            :input-exprs-list     (exprs->input-exprs-list input-exprs)
+            :input-exprs-count    (count input-exprs)
             :input-exprs-vec      input-exprs-vec
             :output-exprs-vec     output-exprs-vec})))
 
