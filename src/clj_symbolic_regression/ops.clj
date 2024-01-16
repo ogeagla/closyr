@@ -24,7 +24,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -135,8 +135,7 @@
        (F/Sin x)
        (F/Cos x)
        (F/Sqr x)
-       (F/Times -1 (->iexprs [(F/Sqr x)]))
-       ])
+       (F/Times -1 (->iexprs [(F/Sqr x)]))])
     (repeatedly reps)
     (mapcat identity)
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
@@ -446,7 +445,7 @@
     :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
                           (do
-                            ;(println "1/10 + " (str ie))
+                            ;; (println "1/10 + " (str ie))
                             (.plus ie (F/Divide 1 F/C10)))
                           ie))}
 
@@ -521,6 +520,5 @@
    {:op           :substitute
     :label        "Exp->Plus"
     :find-expr    F/Exp
-    :replace-expr F/Plus}
-   ])
+    :replace-expr F/Plus}])
 
