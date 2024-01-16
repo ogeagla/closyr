@@ -15,10 +15,10 @@
   [true true true false])
 
 
-(defn with-score [score-fn p]
+(defn with-score [the-score-fn p]
   (if (:score p)
     p
-    (assoc p :score (score-fn p))))
+    (assoc p :score (the-score-fn p))))
 
 (defn evolve
   [{:keys [pop score-fn mutation-fn crossover-fn]
@@ -36,7 +36,7 @@
                                    [^float (:score e1) [e1]]
                                    (let [[^float s1 ^float s2] [(:score e1) (:score e2)]
                                          [better-e worse-e] (if (>= s1 s2)
-                                                              [e1 e2][e2 e1])
+                                                              [e1 e2] [e2 e1])
                                          new-e-fn (if (rand-nth new-phen-modifier-sampler)
                                                     mutation-fn
                                                     crossover-fn)
@@ -47,7 +47,7 @@
           new-pop      (->> (pmap second new-pop-data)
                             (mapcat identity)
                             (vec))]
-      (when-not (empty? (filter #(nil? (:util %)) new-pop))
+      (when (seq (filter #(nil? (:util %)) new-pop))
         (println "warning nonempty utils: " (count (filter #(nil? (:util %)) new-pop))))
 
       (merge config

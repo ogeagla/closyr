@@ -25,10 +25,9 @@
   []
   (let [x-data         (double-array [0.0 1.0 2.0])
         y-data         (double-array [2.0 1.0 0.0])
-        ^XYChart chart (QuickChart/getChart "Sample" "X" "Y" "y(x)" x-data y-data)
-
-        _              (-> (SwingWrapper. chart)
-                           .displayChart)]))
+        ^XYChart chart (QuickChart/getChart "Sample" "X" "Y" "y(x)" x-data y-data)]
+    (-> (SwingWrapper. chart)
+        .displayChart)))
 
 
 (defn test-plots-2
@@ -40,11 +39,9 @@
                            (.setXAxisTitle "X")
                            (.setYAxisTitle "Y"))
         ^XYSeries series (doto (.addSeries chart "y(x)" x-data y-data)
-                           (.setMarker SeriesMarkers/CIRCLE))
-
-
-        _                (-> (SwingWrapper. chart)
-                             .displayChart)]))
+                           (.setMarker SeriesMarkers/CIRCLE))]
+    (-> (SwingWrapper. chart)
+        .displayChart)))
 
 
 (defn make-plot
