@@ -612,6 +612,6 @@
     (experiment-fn)))
 
 
-;; todo: pick iters / phenos count / datasets in gui
+;; todo: pick iters / phenos count in gui
 
 (comment (run-test))

@@ -18,6 +18,7 @@
       GridLayout
       Point)
     (java.awt.event
+      ActionEvent
       MouseEvent)
     (java.util
       List)
@@ -25,7 +26,9 @@
       CopyOnWriteArrayList)
     (javax.swing
       BoxLayout
+      ComboBoxModel
       JButton
+      JComboBox
       JFrame
       JLabel
       JPanel
@@ -110,8 +113,12 @@
   (ss/repaint! e))
 
 
+(def x-count 50)
+(def x-scale 15)
+
+
 (defn input-data-items-widget
-  []
+  [points-fn]
   (let [^JPanel bp          (doto (ss/border-panel
                                     :border (sbr/line-border :top 15 :color "#AAFFFF")
                                     :north (ss/label "I'm a draggable label with a text box!")
@@ -126,13 +133,9 @@
                               (movable))
 
 
-        x-count             50
-        x-scale             15
         pts                 (map
                               (fn [i]
-                                [(+ 50.0 (* i x-scale)) (+ 150
-                                                           (* 50 (Math/sin (/ i 4.0)))
-                                                           (* 20 (Math/cos (/ i 8.0))))])
+                                [(+ 50.0 (* i x-scale)) (points-fn i)])
                               (range x-count))
         items               (map
                               (fn [pt]
@@ -147,13 +150,18 @@
                                 (fn [] (.getLocation widget)))
                               items)
 
+        items-point-setters (map
+                              (fn [^JLabel widget]
+                                (fn [^double y] (.setLocation widget (.getX (.getLocation widget)) y)))
+                              items)
+
         ^JPanel xyz-p       (ss/xyz-panel
                               :paint draw-grid
                               :id :xyz
                               :background "#222222"
                               :items items #_(conj items bp)
                               :listen [:mouse-clicked (partial sketchpad-on-click items x-scale)])]
-    [xyz-p items-point-getters]))
+    [xyz-p items-point-getters items-point-setters]))
 
 
 (defn getters->input-data
@@ -197,6 +205,22 @@
       (ss/set-text* start-top-label "Stop"))))
 
 
+(def input-y-fns
+  {"sin+cos"
+   (fn [i]
+     (+ 150
+        (* 50 (Math/sin (/ i 4.0)))
+        (* 20 (Math/cos (/ i 8.0)))))
+   "cos"
+   (fn [i]
+     (+ 150
+        (* 20 (Math/cos (/ i 8.0)))))
+   "sin"
+   (fn [i]
+     (+ 150
+        (* 50 (Math/sin (/ i 4.0)))))})
+
+
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
@@ -216,7 +240,7 @@
             info-container              (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
                                           (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 1 1)))
+                                          (.setLayout (GridLayout. 2 1)))
 
             ctls-container              (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
@@ -245,7 +269,10 @@
                                                         ys-best-fn
                                                         ys-objective-fn)
             chart-panel                 (XChartPanel. chart)
-            [^JPanel drawing-widget items-point-getters] (input-data-items-widget)
+
+
+            [^JPanel drawing-widget items-point-getters items-point-setters] (input-data-items-widget
+                                                                               (input-y-fns "sin+cos"))
 
             ^JButton ctl-start-stop-btn (ss/button
                                           :text "Start"
@@ -263,6 +290,21 @@
 
 
         (.add info-container my-label)
+        (.add info-container ^JComboBox (ss/combobox
+
+                                          :model ["sin+cos" "sin" "cos"]
+                                          :listen [:action
+                                                   (fn [^ActionEvent e]
+                                                     (let [^JComboBox jcb (.getSource e)
+                                                           selection      (-> jcb .getSelectedItem str)
+                                                           new-fn         (input-y-fns selection)]
+                                                       (mapv
+                                                         (fn [i]
+                                                           ((nth items-point-setters i)
+                                                            (new-fn i)))
+                                                         (range x-count))
+                                                       (ss/repaint! drawing-widget)
+                                                       (println "Selected: " selection)))]))
 
         (.add draw-container drawing-widget)
         (.add draw-container (JLabel. "Placeholder"))
