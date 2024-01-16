@@ -488,19 +488,39 @@
     :find-expr    F/Sin
     :replace-expr F/Cos}
 
-   ;{:op           :substitute
-   ; :label        "Sin->Ident"
-   ; :find-expr    F/Sin
-   ; :replace-expr F/Identity}
+   {:op           :substitute
+    :label        "Sin->Plus"
+    :find-expr    F/Sin
+    :replace-expr F/Plus}
 
    {:op           :substitute
     :label        "Cos->Sin"
     :find-expr    F/Cos
     :replace-expr F/Sin}
 
-   ;{:op           :substitute
-   ; :label        "Cos->Ident"
-   ; :find-expr    F/Cos
-   ; :replace-expr F/Identity}
+   {:op           :substitute
+    :label        "Cos->Plus"
+    :find-expr    F/Cos
+    :replace-expr F/Plus}
+   {:op           :substitute
+    :label        "Cos->Plus"
+    :find-expr    F/Cos
+    :replace-expr F/Plus}
+
+
+   {:op           :substitute
+    :label        "Sqrt->Plus"
+    :find-expr    F/Sqrt
+    :replace-expr F/Plus}
+
+   {:op           :substitute
+    :label        "Log->Plus"
+    :find-expr    F/Log
+    :replace-expr F/Plus}
+
+   {:op           :substitute
+    :label        "Exp->Plus"
+    :find-expr    F/Exp
+    :replace-expr F/Plus}
    ])
 

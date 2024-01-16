@@ -307,22 +307,23 @@
                                                             items-point-getters)])]
 
 
-        (.add info-container my-label)
         (.add info-container ^JComboBox (ss/combobox
                                           :model dataset-fns
                                           :listen [:action
                                                    (partial input-dataset-change
                                                             drawing-widget
                                                             items-point-setters)]))
+        (.add info-container my-label)
 
         (.add draw-container drawing-widget)
         (.add draw-container (JLabel. "Placeholder"))
-        (.add bottom-container info-container)
-        (.add bottom-container draw-container)
 
+        (.add bottom-container draw-container)
+        (.add bottom-container info-container)
 
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
+
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
 
