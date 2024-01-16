@@ -65,12 +65,14 @@
 
 (defn make-plot:1-series
   ^XYChart [^String series-1-label
+            ^String x-axis-title
+            ^String y-axis-title
             ^List x-data-1
             ^List y-data-1]
   (let [^XYChart chart     (doto (XYChart. 900 300)
                              (.setTitle "")
-                             (.setXAxisTitle "X")
-                             (.setYAxisTitle "Y"))
+                             (.setXAxisTitle x-axis-title)
+                             (.setYAxisTitle y-axis-title))
         ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
                              (.setMarker SeriesMarkers/CIRCLE))]
     chart))

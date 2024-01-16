@@ -317,6 +317,8 @@
             best-fn-chart-panel         (XChartPanel. best-fn-chart)
 
             ^XYChart scores-chart       (plot/make-plot:1-series series-scores-label
+                                                                 "Iteration"
+                                                                 "Score"
                                                                  xs-scores
                                                                  ys-scores)
             scores-chart-panel          (XChartPanel. scores-chart)
