@@ -347,34 +347,12 @@
                           (F/Sin x-sym)
                           ie))}
 
-
-
-
-   ;{:op               :modify-leafs
-   ; :label            "arcsin(x)"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
-   ;                       (F/ArcSin x-sym)
-   ;                       ie))}
-
-
-
    {:op               :modify-leafs
     :label            "cos(x)"
     :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (F/Cos x-sym)
                           ie))}
-   ;
-   ;
-   ;
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "arccos(x)"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
-   ;                       (F/ArcCos x-sym)
-   ;                       ie))}
 
 
 
@@ -489,7 +467,17 @@
     :replace-expr F/Cos}
 
    {:op           :substitute
+    :label        "Sin->Ident"
+    :find-expr    F/Sin
+    :replace-expr F/Identity}
+
+   {:op           :substitute
     :label        "Cos->Sin"
     :find-expr    F/Cos
-    :replace-expr F/Sin}])
+    :replace-expr F/Sin}
+
+   {:op           :substitute
+    :label        "Cos->Ident"
+    :find-expr    F/Cos
+    :replace-expr F/Identity}])
 
