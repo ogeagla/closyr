@@ -463,35 +463,33 @@
 
 
 (defn restart-with-new-inputs
-  [n]
-  (do
-    (println "TODO Reset action here")
-    ;; (<!! sim-stop-start-chan)
-    (update-plot-input-data n)
-    (<!! (timeout 1400))
-    true))
+  [msg]
+  (println "TODO Reset action here")
+  (update-plot-input-data msg)
+  (<!! (timeout 1400))
+  true)
 
 
 (defn check-start-stop-state
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
-  (let [[n ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
-    (if (= n :continue)
+  (let [[msg ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
+    (if (= msg :continue)
       nil
-      (if (:reset n)
-        (restart-with-new-inputs n)
+      (if (:reset msg)
+        (restart-with-new-inputs msg)
         (do
           (println "Parking updates due to Stop command")
-          (let [n (<!! sim-stop-start-chan)]
-            (if (:reset n)
-              (restart-with-new-inputs n)
+          (let [msg (<!! sim-stop-start-chan)]
+            (if (:reset msg)
+              (restart-with-new-inputs msg)
               (do
                 (println "Resuming updates")
                 nil))))))))
 
 
-(defn get-input-data
+(defn start-gui-and-get-input-data
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
   ;; to not use the GUI, pass the initial values through
   (let [input-exprs-vec  (exprs->doubles input-exprs)
@@ -580,7 +578,7 @@
 
   (let [{:keys [input-exprs-list input-exprs-count output-exprs-vec
                 sim-stop-start-chan sim->gui-chan]
-         :as   run-args} (get-input-data run-config)]
+         :as   run-args} (start-gui-and-get-input-data run-config)]
     (run-from-inputs run-config run-args)))
 
 
