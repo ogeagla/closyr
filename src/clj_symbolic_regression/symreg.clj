@@ -176,7 +176,7 @@
                              (map #(min 100000 (abs %)))
                              (sum))
           score            (* -1 (abs resid))
-          length-deduction (* 0.0001 leafs)
+          length-deduction (* 0.000001 leafs)
           overall-score    (- score length-deduction)]
 
       (when (zero? resid) (println "warning: zero resid " resids))
