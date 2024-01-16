@@ -242,7 +242,11 @@
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
-           ^String series-best-fn-label ^String series-objective-fn-label update-loop]
+           ^String series-best-fn-label ^String series-objective-fn-label update-loop
+           ^String series-scores-label
+           ^List xs-scores
+           ^List ys-scores
+           ]
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
@@ -280,13 +284,18 @@
 
             my-label                    (JLabel. "Press Start To Begin Function Search")
 
-            ^XYChart best-fn-chart              (plot/make-plot series-best-fn-label
-                                                        series-objective-fn-label
-                                                        xs-best-fn
-                                                        xs-objective-fn
-                                                        ys-best-fn
-                                                        ys-objective-fn)
-            best-fn-chart-panel                 (XChartPanel. best-fn-chart)
+            ^XYChart best-fn-chart      (plot/make-plot:2-series series-best-fn-label
+                                                                 series-objective-fn-label
+                                                                 xs-best-fn
+                                                                 xs-objective-fn
+                                                                 ys-best-fn
+                                                                 ys-objective-fn)
+            best-fn-chart-panel         (XChartPanel. best-fn-chart)
+
+            ^XYChart scores-chart       (plot/make-plot:1-series series-scores-label
+                                                                 xs-scores
+                                                                 ys-scores)
+            scores-chart-panel          (XChartPanel. scores-chart)
 
 
             [^JPanel drawing-widget items-point-getters items-point-setters] (input-data-items-widget
@@ -316,7 +325,7 @@
         (.add info-container my-label)
 
         (.add draw-container drawing-widget)
-        (.add draw-container (JLabel. "Placeholder"))
+        (.add draw-container scores-chart-panel)
 
         (.add bottom-container draw-container)
         (.add bottom-container info-container)
@@ -335,7 +344,9 @@
         (.setVisible my-frame true)
 
         (update-loop
-          {:best-fn-chart best-fn-chart :best-fn-chart-panel best-fn-chart-panel :info-label my-label}
+          {:best-fn-chart best-fn-chart :best-fn-chart-panel best-fn-chart-panel :info-label my-label
+           :scores-chart-panel scores-chart-panel :scores-chart scores-chart
+           }
           gui-data)))))
 
 
@@ -347,11 +358,16 @@
        :xs-objective-fn           (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
        :ys-best-fn                (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
        :ys-objective-fn           (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
+       :xs-scores                 (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
+       :ys-scores                 (doto (CopyOnWriteArrayList.) (.add 1.0) (.add 2.0))
+       :series-scores-label       "series scores"
        :series-best-fn-label      "series 1"
        :series-objective-fn-label "series 2"
        :sim-stop-start-chan       sim-stop-start-chan
        :update-loop               (fn [{:keys [^XYChart best-fn-chart
+                                               ^XYChart scores-chart
                                                ^XChartPanel best-fn-chart-panel
+                                               ^XChartPanel scores-chart-panel
                                                ^JLabel info-label]
                                         :as   gui-widgets}
                                        {:keys [^List xs-best-fn ^List ys-best-fn ^List ys-objective-fn ^String series-best-fn-label ^String series-objective-fn-label update-loop]

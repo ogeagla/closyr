@@ -44,7 +44,7 @@
         .displayChart)))
 
 
-(defn make-plot
+(defn make-plot:2-series
   ^XYChart [^String series-1-label
             ^String series-2-label
             ^List x-data-1
@@ -52,7 +52,7 @@
             ^List y-data-1
             ^List y-data-2]
   (let [^XYChart chart     (doto (XYChart. 900 600)
-                             (.setTitle "Sample")
+                             (.setTitle "")
                              (.setXAxisTitle "X")
                              (.setYAxisTitle "Y"))
         ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
@@ -63,9 +63,22 @@
     chart))
 
 
+(defn make-plot:1-series
+  ^XYChart [^String series-1-label
+            ^List x-data-1
+            ^List y-data-1]
+  (let [^XYChart chart     (doto (XYChart. 900 300)
+                             (.setTitle "")
+                             (.setXAxisTitle "X")
+                             (.setYAxisTitle "Y"))
+        ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
+                             (.setMarker SeriesMarkers/CIRCLE))]
+    chart))
+
+
 (defn show-plot
   [^String best-fn-label x-data y-data-1 y-data-2]
-  (-> (SwingWrapper. (make-plot best-fn-label "objective(x)" x-data x-data y-data-1 y-data-2))
+  (-> (SwingWrapper. (make-plot:2-series best-fn-label "objective(x)" x-data x-data y-data-1 y-data-2))
       .displayChart))
 
 

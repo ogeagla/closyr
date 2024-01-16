@@ -378,10 +378,15 @@
 (defn chart-update-loop
   [sim->gui-chan
    {:keys [^XYChart best-fn-chart
+           ^XYChart scores-chart
            ^XChartPanel best-fn-chart-panel
+           ^XChartPanel scores-chart-panel
            ^JLabel info-label]}
    {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
-           ^String series-best-fn-label ^String series-objective-fn-label]
+           ^String series-best-fn-label ^String series-objective-fn-label
+           ^List xs-scores
+           ^List ys-scores
+           ^String series-scores-label]
     :as   conf}]
   (go-loop []
     (<! (timeout 100))
@@ -409,6 +414,15 @@
         (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
         (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
 
+        (when (zero? i)
+          (.clear xs-scores)
+          (.clear ys-scores))
+
+        (.add xs-scores i)
+        (.add ys-scores best-score)
+        (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
+        (.setTitle scores-chart "Best Score")
+
         (.setText info-label (str "<html>Iteration: " i "/" iters
                                   "<br>Best Function: "
                                   "<br><small> y = " best-f-str "</small>"
@@ -419,6 +433,9 @@
 
         (.revalidate best-fn-chart-panel)
         (.repaint best-fn-chart-panel)
+
+        (.revalidate scores-chart-panel)
+        (.repaint scores-chart-panel)
 
         (recur)))))
 
@@ -434,6 +451,9 @@
        :xs-objective-fn           (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
        :ys-best-fn                (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-exprs-vec) 0.0)))
        :ys-objective-fn           (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
+       :xs-scores                 (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :ys-scores                 (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :series-scores-label       "best score"
        :series-best-fn-label      "best fn"
        :series-objective-fn-label "objective fn"
        :update-loop               (partial chart-update-loop sim->gui-chan)})
