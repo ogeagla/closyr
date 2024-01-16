@@ -220,6 +220,18 @@
      (+ 150
         (* 50 (Math/sin (/ i 4.0)))))})
 
+(defn input-dataset-change
+  [^JPanel drawing-widget items-point-setters ^ActionEvent e]
+  (let [^JComboBox jcb (.getSource e)
+        selection      (-> jcb .getSelectedItem str)
+        new-fn         (input-y-fns selection)]
+    (mapv
+      (fn [i]
+        ((nth items-point-setters i)
+         (new-fn i)))
+      (range x-count))
+    (ss/repaint! drawing-widget)
+    (println "Selected: " selection)))
 
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
@@ -291,20 +303,11 @@
 
         (.add info-container my-label)
         (.add info-container ^JComboBox (ss/combobox
-
                                           :model ["sin+cos" "sin" "cos"]
                                           :listen [:action
-                                                   (fn [^ActionEvent e]
-                                                     (let [^JComboBox jcb (.getSource e)
-                                                           selection      (-> jcb .getSelectedItem str)
-                                                           new-fn         (input-y-fns selection)]
-                                                       (mapv
-                                                         (fn [i]
-                                                           ((nth items-point-setters i)
-                                                            (new-fn i)))
-                                                         (range x-count))
-                                                       (ss/repaint! drawing-widget)
-                                                       (println "Selected: " selection)))]))
+                                                   (partial input-dataset-change
+                                                            drawing-widget
+                                                            items-point-setters)]))
 
         (.add draw-container drawing-widget)
         (.add draw-container (JLabel. "Placeholder"))
