@@ -318,13 +318,12 @@
           best-v     (first bests)
           evaled     (eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (eval-vec-pheno-oversample best-v run-args extended-domain-args)]
-      ;; (println "Biggest: vals x: " (take-last 5 (sort xs-extended)))
-      ;; (println "Biggest: vals y: " (take-last 5 (sort evaled-extended)))
-      ;; (println "eval extended pts count: xs: " (count xs-extended) "ys: " (count evaled-extended))
 
       (reset! test-timer* end)
-      (println i "-step pop size: " pop-size " took secs: " took-s " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
-      (println i " pop score: " old-score
+      (println i "-step pop size: " pop-size
+               " took secs: " took-s
+               " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
+               " pop score: " old-score
                " mean: " (Math/round (float (/ old-score (count (:pop ga-result))))))
       (println i " top best:\n"
                (->> (take 5 bests)
@@ -373,8 +372,59 @@
         doubles))
 
 
+(def plot-args* (atom nil))
+
+
+(defn chart-update-loop
+  [sim->gui-chan
+   {:keys [^XYChart chart
+           ^XChartPanel chart-panel
+           ^JLabel info-label]}
+   {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
+           ^String series-best-fn-label ^String series-objective-fn-label]
+    :as   conf}]
+  (go-loop []
+    (<! (timeout 100))
+    (when-let [{:keys [input-exprs-vec-extended
+                       best-eval-extended
+                       best-eval best-score best-f-str i iters]
+                :as   sim-msg} (<! sim->gui-chan)]
+
+      (let [{:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
+        (.clear ys-best-fn)
+        (.addAll ys-best-fn (if best-eval-extended
+                              (clamp-infinites best-eval-extended)
+                              best-eval))
+
+        (.clear ys-objective-fn)
+        (.addAll ys-objective-fn output-exprs-vec)
+
+        (.clear xs-best-fn)
+        (.addAll xs-best-fn (or input-exprs-vec-extended input-exprs-vec))
+
+        (.clear xs-objective-fn)
+        (.addAll xs-objective-fn input-exprs-vec)
+
+        (.setTitle chart "Best vs Objective Functions")
+        (.updateXYSeries chart series-best-fn-label xs-best-fn ys-best-fn nil)
+        (.updateXYSeries chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
+
+        (.setText info-label (str "<html>Iteration: " i "/" iters
+                                  "<br>Best Function: "
+                                  "<br><small> y = " best-f-str "</small>"
+                                  "<br>Score: " best-score
+                                  "</html>"))
+        (.revalidate info-label)
+        (.repaint info-label)
+
+        (.revalidate chart-panel)
+        (.repaint chart-panel)
+
+        (recur)))))
+
+
 (defn setup-gui
-  [plot-args*]
+  []
   (let [sim->gui-chan       (chan)
         sim-stop-start-chan (chan)
         {:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
@@ -386,64 +436,20 @@
        :ys-objective-fn           (doto (CopyOnWriteArrayList.) (.addAll output-exprs-vec))
        :series-best-fn-label      "best fn"
        :series-objective-fn-label "objective fn"
-       :update-loop
-       (fn [{:keys [^XYChart chart
-                    ^XChartPanel chart-panel
-                    ^JLabel info-label]}
-            {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
-                    ^String series-best-fn-label ^String series-objective-fn-label]
-             :as   conf}]
-         (go-loop []
-           (<! (timeout 100))
-           (when-let [{:keys [input-exprs-vec-extended
-                              best-eval-extended
-                              best-eval best-score best-f-str i iters]
-                       :as   sim-msg} (<! sim->gui-chan)]
-
-             (let [{:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
-               (.clear ys-best-fn)
-               (.addAll ys-best-fn (if best-eval-extended
-                                     (clamp-infinites best-eval-extended)
-                                     best-eval))
-
-               (.clear ys-objective-fn)
-               (.addAll ys-objective-fn output-exprs-vec)
-
-               (.clear xs-best-fn)
-               (.addAll xs-best-fn (or input-exprs-vec-extended input-exprs-vec))
-
-               (.clear xs-objective-fn)
-               (.addAll xs-objective-fn input-exprs-vec)
-
-               (.setTitle chart "Best vs Objective Functions")
-               (.updateXYSeries chart series-best-fn-label xs-best-fn ys-best-fn nil)
-               (.updateXYSeries chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
-
-               (.setText info-label (str "<html>Iteration: " i "/" iters
-                                         "<br>Best Function: "
-                                         "<br><small> y = " best-f-str "</small>"
-                                         "<br>Score: " best-score
-                                         "</html>"))
-               (.revalidate info-label)
-               (.repaint info-label)
-
-               (.revalidate chart-panel)
-               (.repaint chart-panel)
-
-               (recur)))))})
+       :update-loop               (partial chart-update-loop sim->gui-chan)})
     {:sim->gui-chan       sim->gui-chan
      :sim-stop-start-chan sim-stop-start-chan}))
 
 
-(def plot-args* (atom nil))
-
-
 (defn update-plot-input-data
   [{new-state    :new-state
+    reset?       :reset
     input-data-x :input-data-x
     input-data-y :input-data-y}]
 
-  (let [_                (println "Got state req: " (if new-state "Start" "Stop"))
+  (let [_                (println "Got state req: " (if reset?
+                                                      "Reset"
+                                                      (if new-state "Start" "Stop")))
 
         input-exprs      (if input-data-x
                            (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
@@ -464,7 +470,7 @@
 
 (defn restart-with-new-inputs
   [msg]
-  (println "TODO Reset action here")
+  (println "Restarting experiment! ")
   (update-plot-input-data msg)
   (<!! (timeout 1400))
   true)
@@ -501,15 +507,13 @@
 
         {sim->gui-chan       :sim->gui-chan
          sim-stop-start-chan :sim-stop-start-chan
-         :as                 gui-comms} (setup-gui plot-args*)
+         :as                 gui-comms} (setup-gui)
 
         ;; wait for GUI to press Start, which submits the new xs/ys data:
         {new-state    :new-state
          input-data-x :input-data-x
          input-data-y :input-data-y
          :as          msg} (<!! sim-stop-start-chan)
-
-        _                (println "Got state req: " (if new-state "Start" "Stop"))
 
         {input-exprs      :input-exprs
          output-exprs     :output-exprs
