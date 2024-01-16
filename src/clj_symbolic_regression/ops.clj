@@ -501,10 +501,7 @@
     :label        "Cos->Plus"
     :find-expr    F/Cos
     :replace-expr F/Plus}
-   {:op           :substitute
-    :label        "Cos->Plus"
-    :find-expr    F/Cos
-    :replace-expr F/Plus}
+
 
 
    {:op           :substitute
@@ -527,5 +524,8 @@
     :find-expr    F/Power
     :replace-expr F/Plus}
 
-   ])
+   {:op           :substitute
+    :label        "Power->Times"
+    :find-expr    F/Power
+    :replace-expr F/Times}])
 
