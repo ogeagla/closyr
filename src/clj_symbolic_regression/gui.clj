@@ -206,33 +206,34 @@
 
 
 (def input-y-fns-data
-  {"hline"
-   {:idx -1
-    :fn  (fn [i]
-           (+ 150))}
-
-   "sin+cos"
+  {"sin+cos"
    {:idx 0
     :fn  (fn [i]
            (+ 150
               (* -50 (Math/sin (/ i 4.0)))
               (* -30 (Math/cos (/ i 3.0)))))}
    "cos"
-   {:idx 1
+   {:idx 10
     :fn  (fn [i]
            (+ 150
               (* -30 (Math/cos (/ i 3.0)))))}
    "sin"
-   {:idx 2
+   {:idx 20
     :fn  (fn [i]
            (+ 150
               (* -50 (Math/sin (/ i 4.0)))))}
 
    "log"
-   {:idx 3
+   {:idx 30
     :fn  (fn [i]
            (+ 150
-              (* -50 (Math/log (+ 0.01 (/ i 4.0))))))}})
+              (* -50 (Math/log (+ 0.01 (/ i 4.0))))))}
+
+   "hline"
+   {:idx 40
+    :fn  (fn [i]
+           (+ 150))}
+   })
 
 
 (def input-y-fns
