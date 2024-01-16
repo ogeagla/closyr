@@ -128,14 +128,20 @@
   [^ISymbol x reps]
   (->>
     (fn []
-      [F/C0
-       F/C1
+      [F/C1
+       x
+       x
        x
        (F/Times -1 (->iexprs [x]))
+       (F/Times -1 (->iexprs [x]))
+       (F/Times -1 (->iexprs [x]))
+       ;(F/Log x)
+       ;(F/Exp x)
        (F/Sin x)
        (F/Cos x)
-       (F/Sqr x)
-       (F/Times -1 (->iexprs [(F/Sqr x)]))])
+       ;(F/Sqr x)
+       ;(F/Times -1 (->iexprs [(F/Sqr x)]))
+       ])
     (repeatedly reps)
     (mapcat identity)
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))

@@ -205,24 +205,43 @@
       (ss/set-text* start-top-label "Stop"))))
 
 
-(def input-y-fns
+(def input-y-fns-data
   {"sin+cos"
-   (fn [i]
-     (+ 150
-        (* 50 (Math/sin (/ i 4.0)))
-        (* 20 (Math/cos (/ i 8.0)))))
+   {:idx 0
+    :fn  (fn [i]
+           (+ 150
+              (* -50 (Math/sin (/ i 4.0)))
+              (* -30 (Math/cos (/ i 3.0)))))}
    "cos"
-   (fn [i]
-     (+ 150
-        (* 20 (Math/cos (/ i 8.0)))))
+   {:idx 1
+    :fn  (fn [i]
+           (+ 150
+              (* -30 (Math/cos (/ i 3.0)))))}
    "sin"
-   (fn [i]
-     (+ 150
-        (* 50 (Math/sin (/ i 4.0)))))})
+   {:idx 2
+    :fn  (fn [i]
+           (+ 150
+              (* -50 (Math/sin (/ i 4.0)))))}
+
+   "log"
+   {:idx 3
+    :fn  (fn [i]
+           (+ 150
+              (* -50 (Math/log (+ 0.01 (/ i 4.0))))))}})
+
+
+(def input-y-fns
+  (into {}
+        (map
+          (fn [[k v]] [k (:fn v)])
+          input-y-fns-data)))
 
 
 (def dataset-fns
-  ["sin+cos" "sin" "cos"])
+  (->>
+    input-y-fns-data
+    (sort-by #(:idx (second %)))
+    (mapv #(first %))))
 
 
 (defn input-dataset-change
@@ -245,8 +264,7 @@
            ^String series-best-fn-label ^String series-objective-fn-label update-loop
            ^String series-scores-label
            ^List xs-scores
-           ^List ys-scores
-           ]
+           ^List ys-scores]
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
@@ -344,9 +362,8 @@
         (.setVisible my-frame true)
 
         (update-loop
-          {:best-fn-chart best-fn-chart :best-fn-chart-panel best-fn-chart-panel :info-label my-label
-           :scores-chart-panel scores-chart-panel :scores-chart scores-chart
-           }
+          {:best-fn-chart      best-fn-chart :best-fn-chart-panel best-fn-chart-panel :info-label my-label
+           :scores-chart-panel scores-chart-panel :scores-chart scores-chart}
           gui-data)))))
 
 
