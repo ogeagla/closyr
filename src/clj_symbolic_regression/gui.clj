@@ -168,8 +168,8 @@
   [items-point-getters]
   (mapv (fn [getter]
           (let [^Point pt (getter)]
-            [(/ (- (.getX pt) 50.0) 35.0)
-             (- 10.0 (/ (.getY pt) 15.0))]))
+            [(/ (- (.getX pt) 50.0) 50.0)
+             (- 6.0 (/ (.getY pt) 25.0))]))
         items-point-getters))
 
 

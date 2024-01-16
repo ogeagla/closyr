@@ -132,6 +132,8 @@
        x
        x
        x
+       x
+       (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
@@ -147,7 +149,7 @@
     (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
 
 
-(def modify-leafs-sampler [true false false])
+(def modify-leafs-sampler [true false false false false])
 
 
 (defn initial-mutations
