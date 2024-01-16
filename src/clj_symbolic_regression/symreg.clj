@@ -104,8 +104,10 @@
                                (range extra-pts))
 
         x-tail-list          (exprs->input-exprs-list (doubles->exprs x-tail))
-        x-head-list          (exprs->input-exprs-list (doubles->exprs x-head))]
-    {:x-head      x-head
+        x-head-list          (exprs->input-exprs-list (doubles->exprs x-head))
+        xs                   (concat x-head input-exprs-vec x-tail)]
+    {:xs          xs
+     :x-head      x-head
      :x-head-list x-head-list
      :x-tail      x-tail
      :x-tail-list x-tail-list}))
@@ -139,13 +141,14 @@
   [p
    {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
     :as   run-args}
-   {x-head      :x-head
+   {xs          :xs
+    x-head      :x-head
     x-head-list :x-head-list
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
   (let [_            (println "Got range extensions: head: " (count x-head) "tail: " (count x-tail))
 
-        xs           (concat x-head (:input-exprs-vec run-args) x-tail)
+        ;; xs           (concat x-head (:input-exprs-vec run-args) x-tail)
 
         evaluated-ys (concat
                        (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
