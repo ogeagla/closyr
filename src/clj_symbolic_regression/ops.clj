@@ -4,6 +4,7 @@
       Date
       UUID)
     org.matheclipse.core.eval.ExprEvaluator
+    (org.matheclipse.core.eval EvalEngine)
     (org.matheclipse.core.expression
       AST
       F)
@@ -24,7 +25,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -47,8 +48,11 @@
 
 (defn ^ExprEvaluator new-util
   []
-  ;; (println "new evaluator")
-  (ExprEvaluator. true 0))
+  (ExprEvaluator.
+    (doto (EvalEngine.)
+      (.setQuietMode true))
+    true
+    0))
 
 
 (defn ^java.util.function.Function as-function
@@ -502,9 +506,9 @@
     :replace-expr F/Cos}
 
    #_{:op           :substitute
-    :label        "Sin->Plus"
-    :find-expr    F/Sin
-    :replace-expr F/Plus}
+      :label        "Sin->Plus"
+      :find-expr    F/Sin
+      :replace-expr F/Plus}
 
    {:op           :substitute
     :label        "Cos->Sin"
@@ -512,37 +516,36 @@
     :replace-expr F/Sin}
 
    #_{:op           :substitute
-    :label        "Cos->Plus"
-    :find-expr    F/Cos
-    :replace-expr F/Plus}
+      :label        "Cos->Plus"
+      :find-expr    F/Cos
+      :replace-expr F/Plus}
 
 
 
    #_{:op           :substitute
-    :label        "Sqrt->Plus"
-    :find-expr    F/Sqrt
-    :replace-expr F/Plus}
+      :label        "Sqrt->Plus"
+      :find-expr    F/Sqrt
+      :replace-expr F/Plus}
 
    #_{:op           :substitute
-    :label        "Log->Plus"
-    :find-expr    F/Log
-    :replace-expr F/Plus}
+      :label        "Log->Plus"
+      :find-expr    F/Log
+      :replace-expr F/Plus}
 
    #_{:op           :substitute
-    :label        "Exp->Plus"
-    :find-expr    F/Exp
-    :replace-expr F/Plus}
+      :label        "Exp->Plus"
+      :find-expr    F/Exp
+      :replace-expr F/Plus}
 
    #_{:op           :substitute
-    :label        "Power->Plus"
-    :find-expr    F/Power
-    :replace-expr F/Plus}
+      :label        "Power->Plus"
+      :find-expr    F/Power
+      :replace-expr F/Plus}
 
    #_{:op           :substitute
-    :label        "Power->Times"
-    :find-expr    F/Power
-    :replace-expr F/Times}
-
+      :label        "Power->Times"
+      :find-expr    F/Power
+      :replace-expr F/Times}
 
    ])
 
