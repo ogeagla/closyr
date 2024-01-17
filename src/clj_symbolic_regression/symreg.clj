@@ -112,6 +112,19 @@
      :x-tail-list x-tail-list}))
 
 
+(defn eval-extended
+  [p
+   run-args
+   {x-head      :x-head
+    x-head-list :x-head-list
+    x-tail      :x-tail
+    x-tail-list :x-tail-list}]
+  (concat
+    (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
+    (eval-vec-pheno p run-args)
+    (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))))
+
+
 (defn eval-vec-pheno-oversample-from-orig-xs
   [p
    {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
@@ -119,14 +132,10 @@
   (let [{x-head      :x-head
          x-head-list :x-head-list
          x-tail      :x-tail
-         x-tail-list :x-tail-list} (extend-xs input-exprs-vec)
-
+         x-tail-list :x-tail-list
+         :as         ext-info} (extend-xs input-exprs-vec)
         xs           (concat x-head (:input-exprs-vec run-args) x-tail)
-
-        evaluated-ys (concat
-                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
-                       (eval-vec-pheno p run-args)
-                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
+        evaluated-ys (eval-extended p run-args ext-info)]
 
     {:xs xs
      :ys evaluated-ys}))
@@ -140,11 +149,9 @@
     x-head      :x-head
     x-head-list :x-head-list
     x-tail      :x-tail
-    x-tail-list :x-tail-list}]
-  (let [evaluated-ys (concat
-                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
-                       (eval-vec-pheno p run-args)
-                       (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))]
+    x-tail-list :x-tail-list
+    :as         ext-info}]
+  (let [evaluated-ys (eval-extended p run-args ext-info)]
 
     {:xs xs
      :ys evaluated-ys}))
@@ -347,13 +354,13 @@
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
-    (let [end        (Date.)
-          diff       (- (.getTime end) (.getTime ^Date @test-timer*))
-          bests      (sort-population ga-result)
-          took-s     (/ diff 1000.0)
-          pop-size   (count (:pop ga-result))
-          best-v     (first bests)
-          evaled     (eval-vec-pheno best-v run-args)
+    (let [end      (Date.)
+          diff     (- (.getTime end) (.getTime ^Date @test-timer*))
+          bests    (sort-population ga-result)
+          took-s   (/ diff 1000.0)
+          pop-size (count (:pop ga-result))
+          best-v   (first bests)
+          evaled   (eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (eval-vec-pheno-oversample best-v run-args extended-domain-args)]
 
       (reset! test-timer* end)
@@ -644,7 +651,6 @@
   (let [flames (flames/start! {:port 54321, :host "localhost"})]
     (f)
     (flames/stop! flames)))
-
 
 
 (defn run-test
