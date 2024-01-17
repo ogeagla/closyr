@@ -123,7 +123,7 @@
 
 
 (defn mutation-fn
-  [initial-muts v v-discard]
+  [initial-muts v v-discard pop]
   (try
     (let [c         (rand-nth mutations-sampler)
           new-pheno (loop [c          c
@@ -151,9 +151,9 @@
 
 
 (defn crossover-fn
-  [initial-muts v v-discard]
+  [initial-muts v v-discard pop]
   ;; todo do something for crossover
-  (mutation-fn initial-muts v v-discard))
+  (mutation-fn initial-muts v v-discard pop))
 
 
 (defn sort-population
@@ -218,12 +218,15 @@
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size
                " took secs: " took-s
-               " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
-      (println i " top best:\n"
+               " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
+               "\n top best:\n"
                (->> (take 5 bests)
                     (map reportable-phen-str)
-                    (str/join "\n")))
-      (println i " " (summarize-sim-stats))
+                    (str/join "\n"))
+               "\n"
+               (summarize-sim-stats))
+
+
 
       (put! sim->gui-chan {:iters                    iters
                            :i                        (- iters i)
@@ -459,7 +462,7 @@
                 (partial score-fn run-args)
                 (partial mutation-fn initial-muts)
                 (partial crossover-fn initial-muts))]
-    (println "start " start)
+    (println "Start " start)
     (reset! test-timer* start)
 
     (loop [pop pop1

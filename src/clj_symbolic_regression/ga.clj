@@ -22,31 +22,23 @@
     p
     (assoc p :score (the-score-fn p))))
 
+
 (defn compete
   [{:keys [pop score-fn mutation-fn crossover-fn]
-                :as   config}
-               [e1 e2]]
+    :as   config}
+   [{^double e1-score :score :as e1} {^double e2-score :score :as e2}]]
+
   (if (nil? e2)
-    [^double (:score e1) [e1]]
+    [e1-score [e1]]
 
     (let [new-e-fn (if (rand-nth new-phen-modifier-sampler)
                      mutation-fn
                      crossover-fn)
-
-          [^float s1 ^float s2] [(:score e1) (:score e2)]
-          next-e   (if (>= s1 s2)
-                     (with-score score-fn (new-e-fn e1 e2))
+          next-e   (if (>= e1-score e2-score)
+                     (with-score score-fn (new-e-fn e1 e2 pop))
                      e2)]
-      [(+ s1 s2) [e1 next-e]])
+      [(+ e1-score e2-score) [e1 next-e]])))
 
-    #_(let [[^float s1 ^float s2] [(:score e1) (:score e2)]
-            [better-e worse-e] (if (>= s1 s2)
-                                 [e1 e2] [e2 e1])
-            new-e-fn (if (rand-nth new-phen-modifier-sampler)
-                       mutation-fn
-                       crossover-fn)
-            new-e    (with-score score-fn (new-e-fn better-e worse-e))]
-        [(+ s1 s2) [better-e new-e]])))
 
 (defn evolve
   [{:keys [pop score-fn mutation-fn crossover-fn]
@@ -64,19 +56,11 @@
                                        (partition-all 2 pop-chunk))))
                          (mapcat identity))
 
-
-          ;new-pop-data (->>
-          ;               (partition-all 2 pop-shuff)
-          ;               (pmap (partial compete config)))
-
-
           pop-scores   (pmap first new-pop-data)
           pop-score    (reduce + 0.0 pop-scores)
           new-pop      (->> (pmap second new-pop-data)
                             (mapcat identity)
                             (vec))]
-      (when (seq (filter #(nil? (:util %)) new-pop))
-        (println "warning nonempty utils: " (count (filter #(nil? (:util %)) new-pop))))
 
       (merge config
              {:pop            new-pop
@@ -104,14 +88,14 @@
 
 
 (defn mutation-fn
-  [v _]
+  [v _ _]
   {:v (if (rand-nth [true false])
         (+ 1 (:v v))
         (+ -1 (:v v)))})
 
 
 (defn crossover-fn
-  [v _]
+  [v _ _]
   v)
 
 
