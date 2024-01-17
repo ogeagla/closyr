@@ -34,7 +34,7 @@
 
 (def sim-stats* (atom {}))
 
-(def min-score -1000000)
+(def min-score -100000000)
 (def max-leafs 500)
 
 (defn score-fn
