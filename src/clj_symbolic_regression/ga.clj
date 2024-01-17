@@ -2,6 +2,7 @@
 
 (set! *warn-on-reflection* true)
 
+
 (defn initialize
   [initial-pop score-fn mutation-fn crossover-fn]
   {:pop          initial-pop
@@ -15,10 +16,12 @@
   [true true true false])
 
 
-(defn with-score [the-score-fn p]
+(defn with-score
+  [the-score-fn p]
   (if (:score p)
     p
     (assoc p :score (the-score-fn p))))
+
 
 (defn evolve
   [{:keys [pop score-fn mutation-fn crossover-fn]
@@ -31,17 +34,29 @@
 
           new-pop-data (->>
                          (partition-all 2 pop-shuff)
-                         (pmap (fn [[e1 e2]]
-                                 (if (nil? e2)
-                                   [^float (:score e1) [e1]]
-                                   (let [[^float s1 ^float s2] [(:score e1) (:score e2)]
-                                         [better-e worse-e] (if (>= s1 s2)
-                                                              [e1 e2] [e2 e1])
-                                         new-e-fn (if (rand-nth new-phen-modifier-sampler)
-                                                    mutation-fn
-                                                    crossover-fn)
-                                         new-e    (with-score score-fn (new-e-fn better-e worse-e))]
-                                     [(+ s1 s2) [better-e new-e]])))))
+                         (pmap
+                           (fn [[e1 e2]]
+                             (if (nil? e2)
+                               [^float (:score e1) [e1]]
+
+                               (let [new-e-fn (if (rand-nth new-phen-modifier-sampler)
+                                                mutation-fn
+                                                crossover-fn)
+
+                                     [^float s1 ^float s2] [(:score e1) (:score e2)]
+                                     next-e   (if (>= s1 s2)
+                                                (with-score score-fn (new-e-fn e1 e2))
+                                                e2)]
+                                 [(+ s1 s2) [e1 next-e]])
+
+                               #_(let [[^float s1 ^float s2] [(:score e1) (:score e2)]
+                                       [better-e worse-e] (if (>= s1 s2)
+                                                            [e1 e2] [e2 e1])
+                                       new-e-fn (if (rand-nth new-phen-modifier-sampler)
+                                                  mutation-fn
+                                                  crossover-fn)
+                                       new-e    (with-score score-fn (new-e-fn better-e worse-e))]
+                                   [(+ s1 s2) [better-e new-e]])))))
           pop-scores   (pmap first new-pop-data)
           pop-score    (reduce + 0.0 pop-scores)
           new-pop      (->> (pmap second new-pop-data)

@@ -352,9 +352,7 @@
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
-    (let [old-score  (:pop-old-score ga-result)
-          old-scores (:pop-old-scores ga-result)
-          end        (Date.)
+    (let [end        (Date.)
           diff       (- (.getTime end) (.getTime ^Date @test-timer*))
           bests      (sort-population ga-result)
           took-s     (/ diff 1000.0)
@@ -366,9 +364,7 @@
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size
                " took secs: " took-s
-               " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
-               " pop score: " old-score
-               " mean: " (Math/round (float (/ old-score (count (:pop ga-result))))))
+               " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s)))
       (println i " top best:\n"
                (->> (take 5 bests)
                     (map reportable-phen-str)
