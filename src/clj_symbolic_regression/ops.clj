@@ -3,8 +3,9 @@
     (java.util
       Date
       UUID)
-    org.matheclipse.core.eval.ExprEvaluator
-    (org.matheclipse.core.eval EvalEngine)
+    (org.matheclipse.core.eval
+      EvalEngine
+      ExprEvaluator)
     (org.matheclipse.core.expression
       AST
       F)
@@ -25,7 +26,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -34,22 +35,15 @@
   (into-array IExpr coll))
 
 
-(defn ->strings
+(defn ^"[Ljava.lang.String;" ->strings
   [coll]
-  ^"[Ljava.lang.String;"
   (into-array String coll))
-
-
-(defn replace-fn
-  ^IExpr [^IExpr ie]
-  (println "Add 5 to " ie)
-  (.plus ie (F/C5)))
 
 
 (defn ^ExprEvaluator new-util
   []
   (ExprEvaluator.
-    (doto (EvalEngine.)
+    (doto (EvalEngine. true)
       (.setQuietMode true))
     true
     0))
@@ -147,12 +141,12 @@
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
-       ;(F/Log x)
-       ;(F/Exp x)
-       ;(F/Sin x)
-       ;(F/Cos x)
-       ;(F/Sqr x)
-       ;(F/Times -1 (->iexprs [(F/Sqr x)]))
+       ;; (F/Log x)
+       ;; (F/Exp x)
+       ;; (F/Sin x)
+       ;; (F/Cos x)
+       ;; (F/Sqr x)
+       ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
        ])
     (repeatedly reps)
     (mapcat identity)
@@ -545,7 +539,5 @@
    #_{:op           :substitute
       :label        "Power->Times"
       :find-expr    F/Power
-      :replace-expr F/Times}
-
-   ])
+      :replace-expr F/Times}])
 
