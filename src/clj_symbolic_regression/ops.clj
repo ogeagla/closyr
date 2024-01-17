@@ -541,3 +541,134 @@
       :find-expr    F/Power
       :replace-expr F/Times}])
 
+
+(def ^ISymbol sym-x (F/Dummy "x"))
+
+
+(defn doubles->exprs
+  [numbers]
+  (mapv
+    (fn [^double n] (F/num n))
+    numbers))
+
+
+(defn expr->double
+  [^IExpr expr]
+  (.doubleValue (.toNumber expr)))
+
+
+(defn exprs->doubles
+  [exprs]
+  (mapv expr->double exprs))
+
+
+(defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
+  [exprs]
+  (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
+        (into-array IExpr exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-list
+        (into-array IExpr [(F/List exprs-arr)])]
+    exprs-list))
+
+
+(defn eval-vec-pheno
+  [p
+   {:keys [input-exprs-list input-exprs-count output-exprs-vec]
+    :as   run-args}]
+  (let [^IExpr new-expr (:expr p)
+        new-is-const    (.isNumber new-expr)
+        ^IExpr eval-p   (eval-phenotype-on-expr-args p input-exprs-list)
+        vs              (mapv
+                          (fn [i]
+                            (try
+                              (expr->double
+                                (.getArg eval-p (inc i) F/Infinity))
+                              (catch Exception e
+                                Double/POSITIVE_INFINITY)))
+                          (range (dec (.size eval-p))))
+        vs              (if (= input-exprs-count (count vs))
+                          vs
+                          (mapv
+                            (fn [i]
+                              (expr->double
+                                (if new-is-const
+                                  new-expr
+                                  (.getArg eval-p 0 F/Infinity))))
+                            (range input-exprs-count)))]
+    vs))
+
+
+(defn extend-xs
+  [input-exprs-vec]
+  (let [x-min                (first input-exprs-vec)
+        x-max                (last input-exprs-vec)
+        x-range-sz           (- x-max x-min)
+        x-range-pct-extend   0.35
+        extra-pts            (* x-range-pct-extend (count input-exprs-vec))
+        x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
+
+        x-head               (reverse
+                               (mapv
+                                 (fn [i]
+                                   (- x-min (* (inc i) x-range-extend-pt-sz)))
+                                 (range extra-pts)))
+
+        x-tail               (mapv
+                               (fn [i]
+                                 (+ x-max (* (inc i) x-range-extend-pt-sz)))
+                               (range extra-pts))
+
+        x-tail-list          (exprs->input-exprs-list (doubles->exprs x-tail))
+        x-head-list          (exprs->input-exprs-list (doubles->exprs x-head))
+        xs                   (concat x-head input-exprs-vec x-tail)]
+    {:xs          xs
+     :x-head      x-head
+     :x-head-list x-head-list
+     :x-tail      x-tail
+     :x-tail-list x-tail-list}))
+
+
+(defn eval-extended
+  [p
+   run-args
+   {x-head      :x-head
+    x-head-list :x-head-list
+    x-tail      :x-tail
+    x-tail-list :x-tail-list}]
+  (concat
+    (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
+    (eval-vec-pheno p run-args)
+    (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))))
+
+
+(defn eval-vec-pheno-oversample-from-orig-xs
+  [p
+   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
+    :as   run-args}]
+  (let [{x-head      :x-head
+         x-head-list :x-head-list
+         x-tail      :x-tail
+         x-tail-list :x-tail-list
+         :as         ext-info} (extend-xs input-exprs-vec)
+        xs           (concat x-head (:input-exprs-vec run-args) x-tail)
+        evaluated-ys (eval-extended p run-args ext-info)]
+
+    {:xs xs
+     :ys evaluated-ys}))
+
+
+(defn eval-vec-pheno-oversample
+  [p
+   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
+    :as   run-args}
+   {xs          :xs
+    x-head      :x-head
+    x-head-list :x-head-list
+    x-tail      :x-tail
+    x-tail-list :x-tail-list
+    :as         ext-info}]
+  (let [evaluated-ys (eval-extended p run-args ext-info)]
+
+    {:xs xs
+     :ys evaluated-ys}))
+
