@@ -32,11 +32,11 @@
 
   (testing "modify-leafs"
     (let [x (F/Dummy "x")]
-      (is (= (str (.plus F/C1 ^IExpr (F/Sin x)) )
+      (is (= (str (.plus (F/num 1.0) ^IExpr (F/Sin x)) )
              (str (:expr (ops/modify {:op               :modify-leafs
                                       :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                                                           (if (and (= (.toString ie) "x"))
                                                             (F/Sin ie)
                                                             ie))}
                                      {:x-sym x
-                                      :expr  (.plus F/C1 x)}))))))))
+                                      :expr  (.plus (F/num 1.0) x)}))))))))

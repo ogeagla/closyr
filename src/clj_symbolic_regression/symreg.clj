@@ -37,7 +37,7 @@
 (defn doubles->exprs
   [numbers]
   (mapv
-    (fn [^double n] (.add F/C0 n))
+    (fn [^double n] (F/num n))
     numbers))
 
 
@@ -516,10 +516,10 @@
              (if new-state "Start" "Stop")))
 
   (let [input-exprs      (if input-data-x
-                           (mapv (fn [^double pt-x] (.add F/C0 pt-x)) input-data-x)
+                           (mapv (fn [^double pt-x] (F/num pt-x)) input-data-x)
                            input-exprs)
         output-exprs     (if input-data-y
-                           (mapv (fn [^double pt-y] (.add F/C0 pt-y)) input-data-y)
+                           (mapv (fn [^double pt-y] (F/num pt-y)) input-data-y)
                            output-exprs)
 
         output-exprs-vec (exprs->doubles output-exprs)
