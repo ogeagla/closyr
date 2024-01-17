@@ -51,15 +51,14 @@
             ^List x-data-2
             ^List y-data-1
             ^List y-data-2]
-  (let [^XYChart chart     (doto (XYChart. 900 600)
-                             (.setTitle "")
-                             (.setXAxisTitle "X")
-                             (.setYAxisTitle "Y"))
-        ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
-                             (.setMarker SeriesMarkers/CIRCLE))
-
-        ^XYSeries series-2 (doto (.addSeries chart (str/join (take 30 series-2-label)) x-data-2 y-data-2)
-                             (.setMarker SeriesMarkers/CROSS))]
+  (let [^XYChart chart (doto (XYChart. 900 600)
+                         (.setTitle "")
+                         (.setXAxisTitle "X")
+                         (.setYAxisTitle "Y"))]
+    (doto (.addSeries chart (str/join (take 30 series-2-label)) x-data-2 y-data-2)
+      (.setMarker SeriesMarkers/CROSS))
+    (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
+      (.setMarker SeriesMarkers/CIRCLE))
     chart))
 
 
