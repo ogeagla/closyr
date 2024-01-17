@@ -44,11 +44,11 @@
     (let [leafs            (.leafCount ^IExpr (:expr v))
           f-of-xs          (ops/eval-vec-pheno v run-args)
           resids           (map - output-exprs-vec f-of-xs)
-          abs-resids       (map #(min 100000 (abs %)) resids)
-          resid            (sum abs-resids)
-          ;; score            (* -1 (abs resid))
-          score            (+ (* -0.6 (/ (abs resid) (count abs-resids)))
-                              (* -0.4 (abs (last (sort abs-resids)))))
+          abs-resids       (map #(min 1000000 (abs %)) resids)
+          resid-sum        (sum abs-resids)
+          ;score            (* -1 (/ (abs resid) (count abs-resids)))
+          score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
+                                      (last (sort abs-resids))))
           length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
           overall-score    (- score length-deduction)]
 
@@ -75,24 +75,24 @@
 
 
 (defn mutation-fn
-  [initial-muts v v-discard pop]
+  [initial-muts p-winner p-discard pop]
   (try
     (let [c         (rand-nth ops/mutations-sampler)
           new-pheno (loop [c          c
-                           v          v
+                           v          p-winner
                            first-run? true]
                       (if (zero? c)
                         v
-                        (let [v     (if first-run? (assoc v :util (:util v-discard)) v)
+                        (let [v     (if first-run? (assoc v :util (:util p-discard)) v)
                               m     (rand-mut initial-muts)
                               new-v (ops/modify m v)]
                           (recur
-                            (if (fn-size-growing-too-fast? v new-v)
-                              0
-                              (dec c))
+                            (dec c) #_(if (fn-size-growing-too-fast? v new-v)
+                                        0
+                                        (dec c))
                             new-v
                             false))))
-          old-leafs (.leafCount ^IExpr (:expr v))
+          old-leafs (.leafCount ^IExpr (:expr p-winner))
           new-leafs (.leafCount ^IExpr (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts c] #(inc (or % 0)))
       (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [old-leafs]))

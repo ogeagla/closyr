@@ -276,7 +276,7 @@
     (fn []
       (let [my-frame                    (doto (JFrame. "CLJ Symbolic Regression")
                                           (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                                          (.setSize 1600 1400))
+                                          #_(.setSize 1600 1400))
 
             bottom-container            (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 1200 100)
