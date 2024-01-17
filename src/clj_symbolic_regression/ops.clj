@@ -183,6 +183,16 @@
                    (.minus expr (F/Divide 1 F/C10)))}
 
    {:op          :fn
+    :label       "+1/100"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.plus expr (F/Divide 1 F/C100)))}
+
+   {:op          :fn
+    :label       "-1/100"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.minus expr (F/Divide 1 F/C100)))}
+
+   {:op          :fn
     :label       "+Sin"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.plus expr (F/Sin x-sym)))}
@@ -308,6 +318,17 @@
                    (.times expr F/C10))}
 
 
+   {:op          :fn
+    :label       "/100"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr (F/Divide 1 F/C100)))}
+
+   {:op          :fn
+    :label       "*100"
+    :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                   (.times expr F/C100))}
+
+
 
    {:op               :modify-leafs
     :label            "x+1/2"
@@ -338,6 +359,22 @@
     :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (.times ie (F/C10))
+                          ie))}
+
+
+   {:op               :modify-leafs
+    :label            "x/100"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.divide ie (F/C100))
+                          ie))}
+
+
+   {:op               :modify-leafs
+    :label            "100*x"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.times ie (F/C100))
                           ie))}
 
    {:op               :modify-leafs
@@ -411,6 +448,21 @@
     :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
                           (.minus ie (F/Divide 1 F/C10))
+                          ie))}
+
+   {:op               :modify-leafs
+    :label            "x+1/100"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.plus ie (F/Divide 1 F/C100))
+                          ie))}
+
+
+   {:op               :modify-leafs
+    :label            "x-1/100"
+    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (rand-nth modify-leafs-sampler))
+                          (.minus ie (F/Divide 1 F/C100))
                           ie))}
 
 
