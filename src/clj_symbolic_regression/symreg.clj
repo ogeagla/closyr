@@ -44,20 +44,13 @@
     (let [leafs            (.leafCount ^IExpr (:expr v))
           f-of-xs          (ops/eval-vec-pheno v run-args)
           resids           (map - output-exprs-vec f-of-xs)
-          resid            (->>
-                             resids
-                             (map #(min 100000 (abs %)))
-                             (sum))
+          resid            (->> resids
+                                (map #(min 100000 (abs %)))
+                                (sum))
           score            (* -1 (abs resid))
-          ;; _                (when (> score -4)
-          ;;                   (println "very low score: " (str (:expr v))
-          ;;                            "\n input-exprs-count: " input-exprs-count
-          ;;                            "\n f(xs): " f-of-xs
-          ;;                            "\n resids: " resids))
           length-deduction (* 0.000001 leafs)
           overall-score    (- score length-deduction)]
 
-      #_(when (zero? resid) (println "warning: zero resid " resids))
       (when (neg? length-deduction) (println "warning: negative deduction increases score: " leafs length-deduction v))
       (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
@@ -138,20 +131,9 @@
                            first-run? true]
                       (if (zero? c)
                         v
-                        (let [v     (if first-run?
-                                      (assoc v :util (:util v-discard))
-                                      v)
+                        (let [v     (if first-run? (assoc v :util (:util v-discard)) v)
                               m     (rand-mut initial-muts)
-                              new-v (ops/modify
-                                      m
-                                      v)]
-
-                          #_(when (and (= (:label m) "Power->Plus")
-                                       (not= (str (:expr v)) (str (:expr new-v))))
-                              (println "Power->Plus mutation res: "
-                                       "\n in: " (:expr v)
-                                       "\n out: " (:expr new-v)))
-
+                              new-v (ops/modify m v)]
                           (recur
                             (if (fn-size-growing-too-fast? v new-v)
                               0
