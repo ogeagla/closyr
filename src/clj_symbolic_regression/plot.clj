@@ -51,7 +51,7 @@
             ^List x-data-2
             ^List y-data-1
             ^List y-data-2]
-  (let [^XYChart chart (doto (XYChart. 900 600)
+  (let [^XYChart chart (doto (XYChart. 900 500)
                          (.setTitle "")
                          (.setXAxisTitle "X")
                          (.setYAxisTitle "Y"))]

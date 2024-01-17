@@ -59,56 +59,6 @@
       -1000000)))
 
 
-(def mutations-sampler
-  [1 1 1 1 1 1 1 1 1 1 1
-   1 1 1 1 1 1 1 1 1 1 1
-   1 1 1 1 1 1 1 1 1 1 1
-   1 1 1 1 1 1 1 1 1 1 1
-   2 2 2 2 2 2
-   2 2 2 2 2 2
-   2 2 2 2 2 2
-   2 2 2 2 2 2
-   3 3 3 3
-   3 3 3 3
-   3 3 3 3
-   3 3 3 3
-   4 4 4
-   4 4 4
-   4 4 4
-   4 4 4
-   5 5 5
-   5 5 5
-   5 5 5
-   5 5
-   6 6
-   6 6
-   6 6
-   6 6
-   7 7
-   7 7
-   7 7
-   7
-   8 8
-   8 8
-   8 8
-   9 9
-   9 9
-   9
-   10 10
-   10
-   11 11
-   11
-   12 12
-   13 13
-   14
-   15
-   16
-   17
-   18
-   19
-   20])
-
-
 (defn rand-mut
   [initial-muts]
   (rand-nth initial-muts))
@@ -125,7 +75,7 @@
 (defn mutation-fn
   [initial-muts v v-discard pop]
   (try
-    (let [c         (rand-nth mutations-sampler)
+    (let [c         (rand-nth ops/mutations-sampler)
           new-pheno (loop [c          c
                            v          v
                            first-run? true]
