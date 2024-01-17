@@ -136,28 +136,32 @@
                  "-9/10+x+Cos(1/10+x)-(1/10+x)*Sin(2/5-x)"]
                 ["x-1/10"
                  "-11/10+x+Cos(1/10-x)+(1/10-x)*Sin(3/5-x)"]
-                ["c/2"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c*2"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c*-1"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c/10"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c*10"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c+1/10"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c-1/10"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c+1/2"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["c-1/2"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["Divide->Times"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                ["Minus->Plus"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)"]
+
+
+                ;["c/2"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c*2"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c*-1"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c/10"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c*10"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c+1/10"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c-1/10"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c+1/2"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["c-1/2"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["Divide->Times"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                ;["Minus->Plus"
+                ; "-1+x+Cos(x)-x*Sin(1/2-x)"]
+
+
                 ["Sin->Cos"
                  "-1+x-x*Cos(1/2-x)+Cos(x)"]
                 ["Cos->Sin"
