@@ -293,6 +293,11 @@
                                           (.setBackground Color/LIGHT_GRAY)
                                           (.setLayout (GridLayout. 3 1)))
 
+            inputs-container (doto (JPanel. (BorderLayout.))
+                               ;; (.setSize 600 100)
+                               (.setBackground Color/LIGHT_GRAY)
+                               (.setLayout (GridLayout. 2 2)))
+
             draw-container              (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
                                           (.setBackground Color/LIGHT_GRAY)
@@ -342,12 +347,13 @@
                                                             items-point-getters)])]
 
 
-        (.add info-container ^JComboBox (ss/combobox
+        (.add inputs-container ^JComboBox (ss/combobox
                                           :model dataset-fns
                                           :listen [:action
                                                    (partial input-dataset-change
                                                             drawing-widget
                                                             items-point-setters)]))
+        (.add info-container inputs-container)
         (.add info-container my-label)
 
         (.add draw-container drawing-widget)
