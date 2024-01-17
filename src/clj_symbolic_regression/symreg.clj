@@ -44,14 +44,16 @@
     (let [leafs            (.leafCount ^IExpr (:expr v))
           f-of-xs          (ops/eval-vec-pheno v run-args)
           resids           (map - output-exprs-vec f-of-xs)
-          resid            (->> resids
-                                (map #(min 100000 (abs %)))
-                                (sum))
-          score            (* -1 (abs resid))
-          length-deduction (* 0.000001 leafs)
+          abs-resids       (map #(min 100000 (abs %)) resids)
+          resid            (sum abs-resids)
+          ;; score            (* -1 (abs resid))
+          score            (+ (* -0.6 (/ (abs resid) (count abs-resids)))
+                              (* -0.4 (abs (last (sort abs-resids)))))
+          length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
           overall-score    (- score length-deduction)]
 
-      (when (neg? length-deduction) (println "warning: negative deduction increases score: " leafs length-deduction v))
+      (when (neg? length-deduction)
+        (println "warning: negative deduction increases score: " leafs length-deduction v))
       (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
       overall-score)
@@ -131,16 +133,27 @@
           sz-out :size-out}               :mutations
          {len-deductions :len-deductions} :scoring
          :as                              dat} @sim-stats*]
-    (let [data-str (-> dat
-                       (assoc :scoring {:len-deductions (/ (sum len-deductions) (count len-deductions))})
-                       (assoc :mutations {:counts        (reverse (sort-by second cs))
-                                          :size-in-mean  (Math/round
-                                                           ^double (/ (sum sz-in) (count sz-in)))
-                                          :size-out-mean (Math/round
-                                                           ^double (/ (sum sz-out) (count sz-out)))}))]
+    (let [len-deductions-sorted
+          (sort len-deductions)
+          data-str
+          (-> dat
+              (assoc :scoring
+                     {:len-ded-mean (/ (sum len-deductions) (count len-deductions))
+                      :len-ded-min  (first len-deductions-sorted)
+                      :len-ded-max  (last len-deductions-sorted)
+                      :len-ded-med  (nth len-deductions-sorted
+                                         (/ (count len-deductions-sorted) 2))})
+              (assoc :mutations
+                     {:counts      (reverse (sort-by second cs))
+                      :sz-in-mean  (Math/round
+                                     ^double (/ (sum sz-in) (count sz-in)))
+                      :sz-out-mean (Math/round
+                                     ^double (/ (sum sz-out) (count sz-out)))}))]
       (str "muts:" (count sz-in)
            " "
-           data-str))))
+           (:scoring data-str)
+           "\n  "
+           (:mutations data-str)))))
 
 
 (def test-timer* (atom nil))
@@ -169,10 +182,10 @@
       (println i "-step pop size: " pop-size
                " took secs: " took-s
                " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
-               "\n top best:\n"
-               (->> (take 5 bests)
-                    (map reportable-phen-str)
-                    (str/join "\n"))
+               (str "\n top best:\n"
+                    (->> (take 5 bests)
+                         (map reportable-phen-str)
+                         (str/join "\n")))
                "\n"
                (summarize-sim-stats))
 
@@ -462,7 +475,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 1000)
+                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 1500)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
