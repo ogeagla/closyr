@@ -3,7 +3,6 @@
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.gui :as gui]
     [clj-symbolic-regression.ops :as ops]
-    [clj-symbolic-regression.plot :as plot]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
     [flames.core :as flames])
@@ -15,10 +14,6 @@
       CopyOnWriteArrayList)
     (javax.swing
       JLabel)
-    (org.apache.log4j
-      Level
-      LogManager
-      Logger)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -636,13 +631,10 @@
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
-  (println-str "run for iters: " iters)
+  (println "iters: " iters)
   (println "initial pop: " (count initial-phenos))
   (println "initial muts: " (count initial-muts))
-
-  (let [{:keys [input-exprs-list input-exprs-count output-exprs-vec
-                sim-stop-start-chan sim->gui-chan]
-         :as   run-args} (start-gui-and-get-input-data run-config)]
+  (let [run-args (start-gui-and-get-input-data run-config)]
     (run-from-inputs run-config run-args)))
 
 
@@ -654,8 +646,6 @@
     (flames/stop! flames)))
 
 
-;; (def ^Logger logger (LogManager/getRootLogger))
-;; (println "Root logger name: " (.getName logger) (.setLevel logger Level/ERROR))
 
 (defn run-test
   []
