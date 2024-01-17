@@ -31,9 +31,9 @@
   (if (nil? e2)
     [e1-score [e1]]
 
-    (let [new-e-fn (if (rand-nth new-phen-modifier-sampler)
-                     mutation-fn
-                     crossover-fn)
+    (let [new-e-fn mutation-fn #_(if (rand-nth new-phen-modifier-sampler)
+                                   mutation-fn
+                                   crossover-fn)
           next-e   (if (>= e1-score e2-score)
                      (with-score score-fn (new-e-fn e1 e2 pop))
                      e2)]
