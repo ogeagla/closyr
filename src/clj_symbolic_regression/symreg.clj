@@ -35,7 +35,7 @@
 (def sim-stats* (atom {}))
 
 (def min-score -100000000)
-(def max-leafs 500)
+(def max-leafs 300)
 
 
 (defn score-fn
@@ -132,12 +132,12 @@
 
 
 (defn reportable-phen-str
-  [p]
-
+  [{:keys [^IExpr expr] :as p}]
   (str
-    " id: " (-> p :id)
-    " score: " (-> p :score)
-    " fn: " (-> p :expr str)))
+    " id: " (str/join (take 8 (str (:id p))))
+    " score: " (:score p)
+    " leafs: " (.leafCount expr)
+    " fn: " (str expr)))
 
 
 (defn summarize-sim-stats
