@@ -1,5 +1,7 @@
 (ns clj-symbolic-regression.gui
   (:require
+    [clj-symbolic-regression.dataset.prime-10000 :as data-primes]
+    [clj-symbolic-regression.dataset.prime-counting :as data-prime-counting]
     [clj-symbolic-regression.plot :as plot]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [seesaw.behave :as sb]
@@ -205,35 +207,49 @@
       (ss/set-text* start-top-label "Stop"))))
 
 
+(defn y->gui-coord-y [y]
+  (+ 150 (* -1 y)))
+
 (def input-y-fns-data
   {"sin+cos"
    {:idx 0
     :fn  (fn [i]
-           (+ 150
-              (* -50 (Math/sin (/ i 4.0)))
-              (* -30 (Math/cos (/ i 3.0)))))}
+           (y->gui-coord-y
+             (+ (* 50 (Math/sin (/ i 4.0)))
+                (* 30 (Math/cos (/ i 3.0))))))}
    "cos"
    {:idx 10
     :fn  (fn [i]
-           (+ 150
-              (* -30 (Math/cos (/ i 3.0)))))}
+           (y->gui-coord-y
+             (* 30 (Math/cos (/ i 3.0)))))}
    "sin"
    {:idx 20
     :fn  (fn [i]
-           (+ 150
-              (* -50 (Math/sin (/ i 4.0)))))}
+           (y->gui-coord-y
+             (* 50 (Math/sin (/ i 4.0)))))}
 
    "log"
    {:idx 30
     :fn  (fn [i]
-           (+ 150
-              (* -50 (Math/log (+ 0.01 (/ i 4.0))))))}
+           (y->gui-coord-y
+             (* 50 (Math/log (+ 0.01 (/ i 4.0))))))}
 
    "hline"
    {:idx 40
     :fn  (fn [i]
-           (+ 150))}
-   })
+           (y->gui-coord-y 0.0))}
+
+   "prime count"
+   {:idx 50
+    :fn  (let [xys (data-prime-counting/get-data x-count)]
+           (fn [i]
+             (y->gui-coord-y (second (nth xys i)))))}
+
+   "primes"
+   {:idx 50
+    :fn  (let [xys (data-primes/get-data x-count)]
+           (fn [i]
+             (y->gui-coord-y (second (nth xys i)))))}})
 
 
 (def input-y-fns
@@ -293,10 +309,10 @@
                                           (.setBackground Color/LIGHT_GRAY)
                                           (.setLayout (GridLayout. 3 1)))
 
-            inputs-container (doto (JPanel. (BorderLayout.))
-                               ;; (.setSize 600 100)
-                               (.setBackground Color/LIGHT_GRAY)
-                               (.setLayout (GridLayout. 2 2)))
+            inputs-container            (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 2 2)))
 
             draw-container              (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
@@ -348,11 +364,11 @@
 
 
         (.add inputs-container ^JComboBox (ss/combobox
-                                          :model dataset-fns
-                                          :listen [:action
-                                                   (partial input-dataset-change
-                                                            drawing-widget
-                                                            items-point-setters)]))
+                                            :model dataset-fns
+                                            :listen [:action
+                                                     (partial input-dataset-change
+                                                              drawing-widget
+                                                              items-point-setters)]))
         (.add info-container inputs-container)
         (.add info-container my-label)
 
