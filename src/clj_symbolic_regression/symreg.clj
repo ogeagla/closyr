@@ -37,6 +37,7 @@
 (def min-score -100000000)
 (def max-leafs 500)
 
+
 (defn score-fn
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
@@ -50,7 +51,7 @@
               resids           (map - output-exprs-vec f-of-xs)
               abs-resids       (map #(min 1000000 (abs %)) resids)
               resid-sum        (sum abs-resids)
-              ;score            (* -1 (/ (abs resid) (count abs-resids)))
+              ;; score            (* -1 (/ (abs resid) (count abs-resids)))
               score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
                                           (last (sort abs-resids))))
               length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
@@ -83,24 +84,24 @@
   [initial-muts p-winner p-discard pop]
   (try
     (let [c         (rand-nth ops/mutations-sampler)
-          [new-pheno iters] (loop [iters 0
-                           c          c
-                           v          p-winner
-                           first-run? true]
-                      (if (zero? c)
-                        [v iters]
-                        (let [v     (if first-run? (assoc v :util (:util p-discard)) v)
-                              m     (rand-mut initial-muts)
-                              new-v (ops/modify m v)]
-                          (recur
-                            (inc iters)
-                            (if (> (.leafCount ^IExpr (:expr new-v)) max-leafs)
-                              0
-                              (dec c)) #_(if (fn-size-growing-too-fast? v new-v)
-                                        0
-                                        (dec c))
-                            new-v
-                            false))))
+          [new-pheno iters] (loop [iters      0
+                                   c          c
+                                   v          p-winner
+                                   first-run? true]
+                              (if (zero? c)
+                                [v iters]
+                                (let [v     (if first-run? (assoc v :util (:util p-discard)) v)
+                                      m     (rand-mut initial-muts)
+                                      new-v (ops/modify m v)]
+                                  (recur
+                                    (inc iters)
+                                    (if (> (.leafCount ^IExpr (:expr new-v)) max-leafs)
+                                      0
+                                      (dec c)) #_(if (fn-size-growing-too-fast? v new-v)
+                                                   0
+                                                   (dec c))
+                                    new-v
+                                    false))))
           old-leafs (.leafCount ^IExpr (:expr p-winner))
           new-leafs (.leafCount ^IExpr (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts iters] #(inc (or % 0)))
@@ -164,9 +165,7 @@
 
                       :sz-out-mean-max-min [(Math/round ^double (/ (sum sz-out) (count sz-out)))
                                             (last sz-out-sorted)
-                                            (first sz-out-sorted)]
-
-                      }))]
+                                            (first sz-out-sorted)]}))]
       (str "muts:" (count sz-in)
            " "
            (:scoring data-str)
@@ -249,7 +248,7 @@
         doubles))
 
 
-(def plot-args* (atom nil))
+(def sim-input-args* (atom nil))
 
 
 (defn chart-update-loop
@@ -272,7 +271,7 @@
                        best-eval best-score best-f-str i iters]
                 :as   sim-msg} (<! sim->gui-chan)]
 
-      (let [{:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
+      (let [{:keys [input-exprs-vec output-exprs-vec]} @sim-input-args*]
         (.clear ys-best-fn)
         (.addAll ys-best-fn (if best-eval-extended
                               (clamp-infinites best-eval-extended)
@@ -321,7 +320,7 @@
   []
   (let [sim->gui-chan       (chan)
         sim-stop-start-chan (chan)
-        {:keys [input-exprs-vec output-exprs-vec]} @plot-args*]
+        {:keys [input-exprs-vec output-exprs-vec]} @sim-input-args*]
     (gui/create-and-show-gui
       {:sim-stop-start-chan       sim-stop-start-chan
        :xs-best-fn                (doto (CopyOnWriteArrayList.) (.addAll input-exprs-vec))
@@ -358,9 +357,9 @@
 
         output-exprs-vec (ops/exprs->doubles output-exprs)
         input-exprs-vec  (ops/exprs->doubles input-exprs)]
-    (reset! plot-args* {:input-exprs input-exprs
-                        :input-exprs-vec  input-exprs-vec
-                        :output-exprs-vec output-exprs-vec})
+    (reset! sim-input-args* {:input-exprs      input-exprs
+                             :input-exprs-vec  input-exprs-vec
+                             :output-exprs-vec output-exprs-vec})
     {:input-exprs      input-exprs
      :output-exprs     output-exprs
      :output-exprs-vec output-exprs-vec
@@ -394,14 +393,25 @@
                 nil))))))))
 
 
+(defn ->run-args
+  [{input-exprs      :input-exprs
+    input-exprs-vec  :input-exprs-vec
+    output-exprs-vec :output-exprs-vec}]
+  {:extended-domain-args (ops/extend-xs input-exprs-vec)
+   :input-exprs-list     (ops/exprs->input-exprs-list input-exprs)
+   :input-exprs-count    (count input-exprs)
+   :input-exprs-vec      input-exprs-vec
+   :output-exprs-vec     output-exprs-vec})
+
+
 (defn start-gui-and-get-input-data
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
   ;; to not use the GUI, pass the initial values through
   (let [input-exprs-vec  (ops/exprs->doubles input-exprs)
         output-exprs-vec (ops/exprs->doubles output-exprs)
 
-        _                (reset! plot-args* {:input-exprs-vec  input-exprs-vec
-                                             :output-exprs-vec output-exprs-vec})
+        _                (reset! sim-input-args* {:input-exprs-vec  input-exprs-vec
+                                                  :output-exprs-vec output-exprs-vec})
 
 
         {sim->gui-chan       :sim->gui-chan
@@ -419,16 +429,11 @@
          output-exprs-vec :output-exprs-vec
          input-exprs-vec  :input-exprs-vec} (update-plot-input-data msg)]
 
-    (reset! plot-args* {:input-exprs input-exprs
-                        :input-exprs-vec  input-exprs-vec
-                        :output-exprs-vec output-exprs-vec})
+    (reset! sim-input-args* {:input-exprs      input-exprs
+                             :input-exprs-vec  input-exprs-vec
+                             :output-exprs-vec output-exprs-vec})
 
-    (merge gui-comms
-           {:extended-domain-args (ops/extend-xs input-exprs-vec)
-            :input-exprs-list     (ops/exprs->input-exprs-list input-exprs)
-            :input-exprs-count    (count input-exprs)
-            :input-exprs-vec      input-exprs-vec
-            :output-exprs-vec     output-exprs-vec})))
+    (merge gui-comms (->run-args @sim-input-args*))))
 
 
 (def reset?* (atom false))
@@ -471,18 +476,7 @@
       (reset! reset?* false)
       (println "Restarting...")
       (<!! (timeout 1000))
-
-      ;; TODO FIXME: after restart, the sim still uses the previous output data because run args still has previous data
-
-      (run-from-inputs run-config (merge run-args
-                                         (let [{input-exprs :input-exprs
-                                                input-exprs-vec :input-exprs-vec
-                                                output-exprs-vec :output-exprs-vec } @plot-args*]
-                                           {:extended-domain-args (ops/extend-xs input-exprs-vec)
-                                            :input-exprs-list     (ops/exprs->input-exprs-list input-exprs)
-                                            :input-exprs-count    (count input-exprs)
-                                            :input-exprs-vec      input-exprs-vec
-                                            :output-exprs-vec     output-exprs-vec}))))))
+      (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))))
 
 
 (defn run-experiment
