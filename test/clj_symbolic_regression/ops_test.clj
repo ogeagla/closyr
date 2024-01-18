@@ -187,7 +187,8 @@
 
 
 (deftest crossover-test
-  (with-redefs-fn {#'rand-int (fn [maxv] (dec maxv))}
+  (with-redefs-fn {#'rand-int (fn [maxv] (dec maxv))
+                   #'rand-nth (fn [coll] (first coll))}
     (fn []
       (let [x (F/Dummy "x")]
         (testing "Can crossover mix of IExpr and IAST"
@@ -225,4 +226,16 @@
                           {:sym  x
                            :expr F/C1D2}
                           {:sym  x
-                           :expr F/E}))))))))))
+                           :expr F/E})))))))))
+  (with-redefs-fn {#'rand-int (fn [maxv] (dec maxv))
+                   #'rand-nth (fn [coll] (last coll))}
+    (fn []
+      (let [x (F/Dummy "x")]
+        (testing "Can crossover mix of IExpr and IAST with Times"
+          (is (= (str (F/Times F/C4 (F/Times x (F/Cos (F/Subtract  F/C1D2 x)))))
+                 (str (:expr
+                        (ops/crossover
+                          {:sym  x
+                           :expr F/C4}
+                          {:sym  x
+                           :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))}))))))))))
