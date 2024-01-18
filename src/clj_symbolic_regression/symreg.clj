@@ -35,7 +35,7 @@
 (def sim-stats* (atom {}))
 
 (def min-score -100000000)
-(def max-leafs 300)
+(def max-leafs 250)
 
 
 (defn score-fn
@@ -63,7 +63,7 @@
 
           overall-score)))
     (catch Exception e
-      (println "Error in score fn: " (.getMessage e) " for fn: " (str (:expr v)))
+      (println "Error in score fn: " (.getMessage e) " for fn: " (:expr v))
       min-score)))
 
 
@@ -214,8 +214,6 @@
                          (str/join "\n")))
                "\n"
                (summarize-sim-stats))
-
-
 
       (put! sim->gui-chan {:iters                    iters
                            :i                        (- iters i)
@@ -493,7 +491,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 2000)
+                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 2500)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs

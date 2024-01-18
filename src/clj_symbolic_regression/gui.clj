@@ -461,7 +461,7 @@
                                                               items-point-setters)]))
 
         (.add inputs-container (JLabel. "Placeholder 1"))
-        (.add inputs-container (JLabel. "Placeholder 2"))
+        (.add inputs-container brush-container )
         (.add inputs-container (JLabel. "Placeholder 3"))
         (.add info-container inputs-container)
         (.add info-container my-label)
@@ -475,7 +475,7 @@
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
 
-        (.add ctls-container brush-container)
+        (.add ctls-container (JLabel. "Placeholder 2"))
 
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
