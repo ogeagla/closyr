@@ -26,7 +26,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -120,6 +120,43 @@
   [{:keys [modifier-fn]}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
   (->phenotype x-sym (modifier-fn pheno) util))
+
+
+(defn is-expr-function?
+  [^IExpr ie]
+  (instance? IAST ie))
+
+
+(defn crossover
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p} p-discard]
+  (try
+    (let [^IExpr e1       (:expr p)
+          ^IExpr e2       (:expr p-discard)
+
+          [e1-is-fn e2-is-fn] [(is-expr-function? e1) (is-expr-function? e2)]
+
+          e1-part         (if e1-is-fn
+                            (.getArg e1 (inc (rand-int (dec (.size e1)))) nil)
+                            e1)
+
+          e2-part         (if e2-is-fn
+                            (.getArg e2 (inc (rand-int (dec (.size e2)))) nil)
+                            e2)
+          ^IExpr new-expr (.plus e1-part e2-part) #_(cond
+                            (true? e1-is-fn) (F/Plus e1-part e2-part)
+                            (true? e2-is-fn) (F/Plus e2-part e1-part)
+                            :else (.plus e1-part e2-part)
+
+                            ) #_(if e1-is-fn
+                                  ((.getArg e1 0 F/Plus) e1-part e2-part)
+                                  (F/Plus e1-part e2-part))]
+
+      ;; (println "Cross over on: 1: sz:" (.size e1) "fn: " (str e1) "2: sz: " (.size e2) "fn: " (str e2) " --->>> " (str new-expr))
+
+      (->phenotype x-sym new-expr (:util p-discard)))
+    (catch Exception e
+      (println "Error in ops/crossover: " (.getMessage e))
+      nil)))
 
 
 (defn initial-phenotypes
@@ -466,85 +503,85 @@
                           ie))}
 
 
-   ;{:op               :modify-leafs
-   ; :label            "c/2"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.times ie (F/C1D2))
-   ;                       ie))}
-   ;
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c*2"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.times ie (F/C2))
-   ;                       ie))}
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c*-1"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.times ie (F/CN1))
-   ;                       ie))}
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c/10"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.times ie (F/Divide 1 F/C10))
-   ;                       ie))}
-   ;
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c*10"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.times ie F/C10)
-   ;                       ie))}
-   ;
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c+1/10"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (do
-   ;                         ;; (println "1/10 + " (str ie))
-   ;                         (.plus ie (F/Divide 1 F/C10)))
-   ;                       ie))}
-   ;
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c-1/10"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.minus ie (F/Divide 1 F/C10))
-   ;                       ie))}
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c+1/2"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.plus ie (F/Divide 1 F/C2))
-   ;                       ie))}
-   ;
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "c-1/2"
-   ; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
-   ;                       (.minus ie (F/Divide 1 F/C2))
-   ;                       ie))}
-   ;
-   ;{:op           :substitute
-   ; :label        "Divide->Times"
-   ; :find-expr    F/Divide
-   ; :replace-expr F/Times}
-   ;
-   ;{:op           :substitute
-   ; :label        "Minus->Plus"
-   ; :find-expr    F/Minus
-   ; :replace-expr F/Plus}
+   ;; {:op               :modify-leafs
+   ;; :label            "c/2"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.times ie (F/C1D2))
+   ;;                       ie))}
+   ;;
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c*2"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.times ie (F/C2))
+   ;;                       ie))}
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c*-1"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.times ie (F/CN1))
+   ;;                       ie))}
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c/10"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.times ie (F/Divide 1 F/C10))
+   ;;                       ie))}
+   ;;
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c*10"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.times ie F/C10)
+   ;;                       ie))}
+   ;;
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c+1/10"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (do
+   ;;                         ;; (println "1/10 + " (str ie))
+   ;;                         (.plus ie (F/Divide 1 F/C10)))
+   ;;                       ie))}
+   ;;
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c-1/10"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.minus ie (F/Divide 1 F/C10))
+   ;;                       ie))}
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c+1/2"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.plus ie (F/Divide 1 F/C2))
+   ;;                       ie))}
+   ;;
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "c-1/2"
+   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (rand-nth modify-leafs-sampler))
+   ;;                       (.minus ie (F/Divide 1 F/C2))
+   ;;                       ie))}
+   ;;
+   ;; {:op           :substitute
+   ;; :label        "Divide->Times"
+   ;; :find-expr    F/Divide
+   ;; :replace-expr F/Times}
+   ;;
+   ;; {:op           :substitute
+   ;; :label        "Minus->Plus"
+   ;; :find-expr    F/Minus
+   ;; :replace-expr F/Plus}
 
    {:op           :substitute
     :label        "Sin->Cos"
@@ -724,6 +761,7 @@
     {:xs xs
      :ys evaluated-ys}))
 
+
 (def mutations-sampler
   [1 1 1 1 1 1 1 1 1
    1 1 1 1 1 1 1 1 1
@@ -761,15 +799,15 @@
    9
    10 10
    10
-   ;11 11
-   ;11
-   ;12 12
-   ;13 13
-   ;14
-   ;15
-   ;16
-   ;17
-   ;18
-   ;19
-   ;20
+   ;; 11 11
+   ;; 11
+   ;; 12 12
+   ;; 13 13
+   ;; 14
+   ;; 15
+   ;; 16
+   ;; 17
+   ;; 18
+   ;; 19
+   ;; 20
    ])

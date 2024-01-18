@@ -176,3 +176,45 @@
                                            (F/Sin (.minus x F/C1D2)))))
                                      F/C1)})))])
                    (ops/initial-mutations)))))))))
+
+
+(deftest crossover-test
+  (with-redefs-fn {#'rand-int (fn [maxv] (dec maxv))}
+    (fn []
+      (let [x (F/Dummy "x")]
+        (testing "Can crossover mix of IExpr and IAST"
+          (is (= (str (F/Plus x (F/Times x (F/Cos (F/Subtract  F/C1D2 x)))))
+                 (str (:expr
+                        (ops/crossover
+                          {:sym  x
+                           :expr (F/Cos x)}
+                          {:sym  x
+                           :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))))
+          (is (= (str (F/Plus F/C1 (F/Times x (F/Cos (F/Subtract  F/C1D2 x)))))
+                 (str (:expr
+                        (ops/crossover
+                          {:sym  x
+                           :expr (F/Plus F/C1 F/C1D3)}
+                          {:sym  x
+                           :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))))
+          (is (= (str (F/Plus F/E (F/Times x (F/Cos (F/Subtract  F/C1D2 x)))))
+                 (str (:expr
+                        (ops/crossover
+                          {:sym  x
+                           :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))}
+                          {:sym  x
+                           :expr F/E})))))
+          (is (= (str (F/Plus F/C1D2 (F/Times x (F/Cos (F/Subtract  F/C2 x)))))
+                 (str (:expr
+                        (ops/crossover
+                          {:sym  x
+                           :expr F/C1D2}
+                          {:sym  x
+                           :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C2))))})))))
+          (is (= (str (F/Plus F/C1D2 F/E))
+                 (str (:expr
+                        (ops/crossover
+                          {:sym  x
+                           :expr F/C1D2}
+                          {:sym  x
+                           :expr F/E}))))))))))

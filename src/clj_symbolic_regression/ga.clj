@@ -12,8 +12,8 @@
 
 
 (def new-phen-modifier-sampler
-  ;; 3 / 4 chance of mutation instead of crossover:
-  [true true true false])
+  ;; 4 / 5 chance of mutation instead of crossover:
+  [true true true true false])
 
 
 (defn with-score
@@ -31,7 +31,7 @@
   (if (nil? e2)
     [e1-score [e1]]
 
-    (let [new-e-fn mutation-fn #_(if (rand-nth new-phen-modifier-sampler)
+    (let [new-e-fn (if (rand-nth new-phen-modifier-sampler)
                                    mutation-fn
                                    crossover-fn)
           next-e   (if (>= e1-score e2-score)

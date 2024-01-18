@@ -63,7 +63,7 @@
 
           overall-score)))
     (catch Exception e
-      (println "Error in score fn: " (.getMessage e))
+      (println "Error in score fn: " (.getMessage e) " for fn: " (str (:expr v)))
       min-score)))
 
 
@@ -113,9 +113,13 @@
 
 
 (defn crossover-fn
-  [initial-muts v v-discard pop]
-  ;; todo do something for crossover
-  (mutation-fn initial-muts v v-discard pop))
+  [initial-muts p p-discard pop]
+  (let [x-over-res (ops/crossover p p-discard)]
+    (when x-over-res
+      (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
+    (or
+      x-over-res
+      (mutation-fn initial-muts p p-discard pop))))
 
 
 (defn sort-population
@@ -138,7 +142,8 @@
 
 (defn summarize-sim-stats
   []
-  (let [{{cs     :counts
+  (let [{{xcs :counts}                    :crossovers
+         {cs     :counts
           sz-in  :size-in
           sz-out :size-out}               :mutations
          {len-deductions :len-deductions} :scoring
@@ -149,8 +154,10 @@
           (sort sz-in)
           sz-out-sorted
           (sort sz-out)
-          data-str
+          summary-data
           (-> dat
+              (assoc :crossovers
+                     {:crossovers-count xcs})
               (assoc :scoring
                      {:len-ded-mean (/ (sum len-deductions) (count len-deductions))
                       :len-ded-min  (first len-deductions-sorted)
@@ -168,9 +175,11 @@
                                             (first sz-out-sorted)]}))]
       (str "muts:" (count sz-in)
            " "
-           (:scoring data-str)
+           (:scoring summary-data)
            "\n  "
-           (:mutations data-str)))))
+           (:mutations summary-data)
+           "\n  "
+           (:crossovers summary-data)))))
 
 
 (def test-timer* (atom nil))
