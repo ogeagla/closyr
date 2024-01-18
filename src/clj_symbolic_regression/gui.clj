@@ -34,6 +34,8 @@
       JFrame
       JLabel
       JPanel
+      JRadioButton
+      JRadioButtonMenuItem
       SwingUtilities)
     (javax.swing.border
       Border)
@@ -207,8 +209,10 @@
       (ss/set-text* start-top-label "Stop"))))
 
 
-(defn y->gui-coord-y [y]
+(defn y->gui-coord-y
+  [y]
   (+ 150 (* -1 y)))
+
 
 (def input-y-fns-data
   {"sin+cos"
@@ -290,77 +294,94 @@
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
-      (let [my-frame                    (doto (JFrame. "CLJ Symbolic Regression")
-                                          (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                                          #_(.setSize 1600 1400))
+      (let [my-frame                      (doto (JFrame. "CLJ Symbolic Regression")
+                                            (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+                                            #_(.setSize 1600 1400))
 
-            bottom-container            (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 1200 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 1)))
+            bottom-container              (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 1200 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 2 1)))
 
-            info-container              (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 1)))
+            info-container                (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 600 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 2 1)))
 
-            ctls-container              (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 3 1)))
+            ctls-container                (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 600 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 3 1)))
 
-            inputs-container            (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 2)))
+            inputs-container              (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 600 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 2 2)))
 
-            draw-container              (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 1 2)))
+            draw-container                (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 600 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 1 2)))
 
-            top-container               (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 1 2)))
+            top-container                 (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 600 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 1 2)))
 
-            content-pane                (doto (.getContentPane my-frame)
-                                          (.setLayout (GridLayout. 2 1)))
+            content-pane                  (doto (.getContentPane my-frame)
+                                            (.setLayout (GridLayout. 2 1)))
 
-            my-label                    (JLabel. "Press Start To Begin Function Search")
+            my-label                      (JLabel. "Press Start To Begin Function Search")
 
-            ^XYChart best-fn-chart      (plot/make-plot:2-series series-best-fn-label
-                                                                 series-objective-fn-label
-                                                                 xs-best-fn
-                                                                 xs-objective-fn
-                                                                 ys-best-fn
-                                                                 ys-objective-fn)
-            best-fn-chart-panel         (XChartPanel. best-fn-chart)
+            ^XYChart best-fn-chart        (plot/make-plot:2-series series-best-fn-label
+                                                                   series-objective-fn-label
+                                                                   xs-best-fn
+                                                                   xs-objective-fn
+                                                                   ys-best-fn
+                                                                   ys-objective-fn)
+            best-fn-chart-panel           (XChartPanel. best-fn-chart)
 
-            ^XYChart scores-chart       (plot/make-plot:1-series series-scores-label
-                                                                 "Iteration"
-                                                                 "Score"
-                                                                 xs-scores
-                                                                 ys-scores)
-            scores-chart-panel          (XChartPanel. scores-chart)
+            ^XYChart scores-chart         (plot/make-plot:1-series series-scores-label
+                                                                   "Iteration"
+                                                                   "Score"
+                                                                   xs-scores
+                                                                   ys-scores)
+            scores-chart-panel            (XChartPanel. scores-chart)
 
 
             [^JPanel drawing-widget items-point-getters items-point-setters] (input-data-items-widget
                                                                                (input-y-fns "sin+cos"))
 
-            ^JButton ctl-start-stop-btn (ss/button
-                                          :text "Start"
-                                          :listen [:mouse-clicked
-                                                   (partial start-stop-on-click
-                                                            sim-stop-start-chan
-                                                            items-point-getters)])
-            ^JButton ctl-reset-btn      (ss/button
-                                          :text "Restart"
-                                          :listen [:mouse-clicked
-                                                   (partial reset-on-click
-                                                            ctl-start-stop-btn
-                                                            sim-stop-start-chan
-                                                            items-point-getters)])]
+            ^JButton ctl-start-stop-btn   (ss/button
+                                            :text "Start"
+                                            :listen [:mouse-clicked
+                                                     (partial start-stop-on-click
+                                                              sim-stop-start-chan
+                                                              items-point-getters)])
+            ^JButton ctl-reset-btn        (ss/button
+                                            :text "Restart"
+                                            :listen [:mouse-clicked
+                                                     (partial reset-on-click
+                                                              ctl-start-stop-btn
+                                                              sim-stop-start-chan
+                                                              items-point-getters)])
+
+            brush-config-container        (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 600 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 1 3)))
+
+            brush-info-container          (doto (JPanel. (BorderLayout.))
+                                            ;; (.setSize 600 100)
+                                            (.setBackground Color/LIGHT_GRAY)
+                                            (.setLayout (GridLayout. 2 1)))
+            ^JLabel brush-info            (JLabel. "Brush info")
+            btn-group-brush               (ss/button-group)
+            ^JRadioButtonMenuItem radio-1 (ss/radio-menu-item :text "Skinny Brush" :group btn-group-brush :selected? true)
+            ^JRadioButtonMenuItem radio-2 (ss/radio-menu-item :text "Broad Brush" :group btn-group-brush)
+            ^JRadioButtonMenuItem radio-3 (ss/radio-menu-item :text "Other Brush" :group btn-group-brush)
+
+            ]
 
 
         (.add inputs-container ^JComboBox (ss/combobox
@@ -369,6 +390,16 @@
                                                      (partial input-dataset-change
                                                               drawing-widget
                                                               items-point-setters)]))
+        (.add brush-config-container radio-1)
+        (.add brush-config-container radio-2)
+        (.add brush-config-container radio-3)
+        (.add brush-info-container brush-info)
+        (.add brush-info-container brush-config-container)
+
+
+        (.add inputs-container (JLabel. "Placeholder 1"))
+        (.add inputs-container (JLabel. "Placeholder 2"))
+        (.add inputs-container (JLabel. "Placeholder 3"))
         (.add info-container inputs-container)
         (.add info-container my-label)
 
@@ -380,6 +411,8 @@
 
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
+
+        (.add ctls-container brush-info-container)
 
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
