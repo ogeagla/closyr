@@ -116,6 +116,7 @@
 
   (ss/repaint! e))
 
+
 (defn sketchpad-on-click:broad-brush
   [items x-scale ^MouseEvent e]
   (doall
@@ -133,6 +134,7 @@
 
   (ss/repaint! e))
 
+
 (defn sketchpad-on-click:line-brush
   [items x-scale ^MouseEvent e]
   (doall
@@ -146,13 +148,17 @@
   (ss/repaint! e))
 
 
+(def brush-label:skinny "Skinny Brush")
+(def brush-label:broad "Broad Brush")
+(def brush-label:line "Line Brush")
+
 (def brush-fn* (atom sketchpad-on-click:skinny-brush))
 
 
 (def brushes-map
-  {"Skinny Brush" sketchpad-on-click:skinny-brush
-   "Broad Brush"  sketchpad-on-click:broad-brush
-   "Line Brush"  sketchpad-on-click:line-brush})
+  {brush-label:skinny sketchpad-on-click:skinny-brush
+   brush-label:broad  sketchpad-on-click:broad-brush
+   brush-label:line   sketchpad-on-click:line-brush})
 
 
 (def x-count 50)
@@ -422,9 +428,19 @@
                                             (.setLayout (GridLayout. 2 1)))
             ^JLabel brush-info            (JLabel. "Brush info")
             btn-group-brush               (ss/button-group)
-            ^JRadioButtonMenuItem radio-1 (ss/radio-menu-item :text "Skinny Brush" :group btn-group-brush :selected? true :listen [:mouse-clicked brush-on-change])
-            ^JRadioButtonMenuItem radio-2 (ss/radio-menu-item :text "Broad Brush" :group btn-group-brush :listen [:mouse-clicked brush-on-change])
-            ^JRadioButtonMenuItem radio-3 (ss/radio-menu-item :text "Line Brush" :group btn-group-brush :listen [:mouse-clicked brush-on-change])]
+            ^JRadioButtonMenuItem radio-1 (ss/radio-menu-item
+                                            :selected? true
+                                            :text brush-label:skinny
+                                            :group btn-group-brush
+                                            :listen [:mouse-clicked brush-on-change])
+            ^JRadioButtonMenuItem radio-2 (ss/radio-menu-item
+                                            :text brush-label:broad
+                                            :group btn-group-brush
+                                            :listen [:mouse-clicked brush-on-change])
+            ^JRadioButtonMenuItem radio-3 (ss/radio-menu-item
+                                            :text brush-label:line
+                                            :group btn-group-brush
+                                            :listen [:mouse-clicked brush-on-change])]
 
 
         (.add inputs-container ^JComboBox (ss/combobox
