@@ -349,21 +349,20 @@
              (if new-state "Start" "Stop")))
 
   (let [input-exprs      (if input-data-x
-                           (mapv (fn [^double pt-x] (F/num pt-x)) input-data-x)
+                           (ops/doubles->exprs input-data-x)
                            input-exprs)
         output-exprs     (if input-data-y
-                           (mapv (fn [^double pt-y] (F/num pt-y)) input-data-y)
+                           (ops/doubles->exprs input-data-y)
                            output-exprs)
 
         output-exprs-vec (ops/exprs->doubles output-exprs)
         input-exprs-vec  (ops/exprs->doubles input-exprs)]
+
     (reset! sim-input-args* {:input-exprs      input-exprs
                              :input-exprs-vec  input-exprs-vec
                              :output-exprs-vec output-exprs-vec})
-    {:input-exprs      input-exprs
-     :output-exprs     output-exprs
-     :output-exprs-vec output-exprs-vec
-     :input-exprs-vec  input-exprs-vec}))
+
+    @sim-input-args*))
 
 
 (defn restart-with-new-inputs
@@ -406,34 +405,19 @@
 
 (defn start-gui-and-get-input-data
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
-  ;; to not use the GUI, pass the initial values through
-  (let [input-exprs-vec  (ops/exprs->doubles input-exprs)
-        output-exprs-vec (ops/exprs->doubles output-exprs)
 
-        _                (reset! sim-input-args* {:input-exprs-vec  input-exprs-vec
-                                                  :output-exprs-vec output-exprs-vec})
+  ;; these are the data shown in the plots before the expriement is started:
+  (reset! sim-input-args* {:input-exprs-vec  (ops/exprs->doubles input-exprs)
+                           :output-exprs-vec (ops/exprs->doubles output-exprs)})
 
-
-        {sim->gui-chan       :sim->gui-chan
+  (let [{sim->gui-chan       :sim->gui-chan
          sim-stop-start-chan :sim-stop-start-chan
          :as                 gui-comms} (setup-gui)
 
         ;; wait for GUI to press Start, which submits the new xs/ys data:
-        {new-state    :new-state
-         input-data-x :input-data-x
-         input-data-y :input-data-y
-         :as          msg} (<!! sim-stop-start-chan)
+        msg (<!! sim-stop-start-chan)]
 
-        {input-exprs      :input-exprs
-         output-exprs     :output-exprs
-         output-exprs-vec :output-exprs-vec
-         input-exprs-vec  :input-exprs-vec} (update-plot-input-data msg)]
-
-    (reset! sim-input-args* {:input-exprs      input-exprs
-                             :input-exprs-vec  input-exprs-vec
-                             :output-exprs-vec output-exprs-vec})
-
-    (merge gui-comms (->run-args @sim-input-args*))))
+    (merge gui-comms (->run-args (update-plot-input-data msg)))))
 
 
 (def reset?* (atom false))
