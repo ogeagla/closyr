@@ -358,7 +358,8 @@
 
         output-exprs-vec (ops/exprs->doubles output-exprs)
         input-exprs-vec  (ops/exprs->doubles input-exprs)]
-    (reset! plot-args* {:input-exprs-vec  input-exprs-vec
+    (reset! plot-args* {:input-exprs input-exprs
+                        :input-exprs-vec  input-exprs-vec
                         :output-exprs-vec output-exprs-vec})
     {:input-exprs      input-exprs
      :output-exprs     output-exprs
@@ -418,7 +419,8 @@
          output-exprs-vec :output-exprs-vec
          input-exprs-vec  :input-exprs-vec} (update-plot-input-data msg)]
 
-    (reset! plot-args* {:input-exprs-vec  input-exprs-vec
+    (reset! plot-args* {:input-exprs input-exprs
+                        :input-exprs-vec  input-exprs-vec
                         :output-exprs-vec output-exprs-vec})
 
     (merge gui-comms
@@ -469,7 +471,18 @@
       (reset! reset?* false)
       (println "Restarting...")
       (<!! (timeout 1000))
-      (run-from-inputs run-config run-args))))
+
+      ;; TODO FIXME: after restart, the sim still uses the previous output data because run args still has previous data
+
+      (run-from-inputs run-config (merge run-args
+                                         (let [{input-exprs :input-exprs
+                                                input-exprs-vec :input-exprs-vec
+                                                output-exprs-vec :output-exprs-vec } @plot-args*]
+                                           {:extended-domain-args (ops/extend-xs input-exprs-vec)
+                                            :input-exprs-list     (ops/exprs->input-exprs-list input-exprs)
+                                            :input-exprs-count    (count input-exprs)
+                                            :input-exprs-vec      input-exprs-vec
+                                            :output-exprs-vec     output-exprs-vec}))))))
 
 
 (defn run-experiment
