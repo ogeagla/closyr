@@ -99,7 +99,7 @@
       (.drawLine g 0 y w y))))
 
 
-(defn sketchpad-on-click
+(defn sketchpad-on-click:skinny-brush
   [items x-scale ^MouseEvent e]
   (doall
     (map-indexed
@@ -115,6 +115,44 @@
       items))
 
   (ss/repaint! e))
+
+(defn sketchpad-on-click:broad-brush
+  [items x-scale ^MouseEvent e]
+  (doall
+    (map-indexed
+      (fn [i ^JLabel widget]
+        (let [diff (/ (abs
+                        (- (.getX (.getLocation widget))
+                           (.getX (.getPoint e))))
+                      500.0)]
+          (.setLocation widget
+                        (+ 50.0 (* i x-scale))
+                        (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation widget)))
+                           (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
+      items))
+
+  (ss/repaint! e))
+
+(defn sketchpad-on-click:line-brush
+  [items x-scale ^MouseEvent e]
+  (doall
+    (map-indexed
+      (fn [i ^JLabel widget]
+        (.setLocation widget
+                      (+ 50.0 (* i x-scale))
+                      (.getY (.getPoint e))))
+      items))
+
+  (ss/repaint! e))
+
+
+(def brush-fn* (atom sketchpad-on-click:skinny-brush))
+
+
+(def brushes-map
+  {"Skinny Brush" sketchpad-on-click:skinny-brush
+   "Broad Brush"  sketchpad-on-click:broad-brush
+   "Line Brush"  sketchpad-on-click:line-brush})
 
 
 (def x-count 50)
@@ -164,7 +202,7 @@
                               :id :xyz
                               :background "#222222"
                               :items items #_(conj items bp)
-                              :listen [:mouse-clicked (partial sketchpad-on-click items x-scale)])]
+                              :listen [:mouse-clicked #(@brush-fn* items x-scale %) #_(partial sketchpad-on-click:skinny-brush items x-scale)])]
     [xyz-p items-point-getters items-point-setters]))
 
 
@@ -284,6 +322,13 @@
     (println "Selected: " selection)))
 
 
+(defn brush-on-change
+  [^MouseEvent e]
+  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
+    (reset! brush-fn* (brushes-map b))
+    (println "brush change to " b)))
+
+
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
@@ -377,11 +422,9 @@
                                             (.setLayout (GridLayout. 2 1)))
             ^JLabel brush-info            (JLabel. "Brush info")
             btn-group-brush               (ss/button-group)
-            ^JRadioButtonMenuItem radio-1 (ss/radio-menu-item :text "Skinny Brush" :group btn-group-brush :selected? true)
-            ^JRadioButtonMenuItem radio-2 (ss/radio-menu-item :text "Broad Brush" :group btn-group-brush)
-            ^JRadioButtonMenuItem radio-3 (ss/radio-menu-item :text "Other Brush" :group btn-group-brush)
-
-            ]
+            ^JRadioButtonMenuItem radio-1 (ss/radio-menu-item :text "Skinny Brush" :group btn-group-brush :selected? true :listen [:mouse-clicked brush-on-change])
+            ^JRadioButtonMenuItem radio-2 (ss/radio-menu-item :text "Broad Brush" :group btn-group-brush :listen [:mouse-clicked brush-on-change])
+            ^JRadioButtonMenuItem radio-3 (ss/radio-menu-item :text "Line Brush" :group btn-group-brush :listen [:mouse-clicked brush-on-change])]
 
 
         (.add inputs-container ^JComboBox (ss/combobox
@@ -395,7 +438,6 @@
         (.add brush-config-container radio-3)
         (.add brush-info-container brush-info)
         (.add brush-info-container brush-config-container)
-
 
         (.add inputs-container (JLabel. "Placeholder 1"))
         (.add inputs-container (JLabel. "Placeholder 2"))
@@ -419,7 +461,6 @@
 
         (.add content-pane top-container)
         (.add content-pane bottom-container)
-
 
         (.pack my-frame)
         (.setVisible my-frame true)
@@ -452,22 +493,16 @@
                                         :as   gui-widgets}
                                        {:keys [^List xs-best-fn ^List ys-best-fn ^List ys-objective-fn ^String series-best-fn-label ^String series-objective-fn-label update-loop]
                                         :as   gui-data}]
-
                                     (go
                                       (<! sim-stop-start-chan)
-
                                       (go-loop []
-
                                         (<! (timeout 4000))
-
                                         (let [[n ch] (alts! [sim-stop-start-chan] :default :continue :priority true)]
                                           (if (= n :continue)
                                             :ok
                                             (do
                                               (println "Parking updates to chart due to Stop command")
                                               (<! sim-stop-start-chan))))
-
-
                                         (println "Draw new points " (.size xs-best-fn))
                                         (.add xs-best-fn (.size xs-best-fn))
                                         (.add ys-best-fn (.size xs-best-fn))
