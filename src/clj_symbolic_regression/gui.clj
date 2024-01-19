@@ -49,6 +49,14 @@
 (set! *warn-on-reflection* true)
 
 
+(def brush-label:skinny "Skinny Brush")
+(def brush-label:broad "Broad Brush")
+(def brush-label:line "Line Brush")
+
+(def sketch-input-x-count 50)
+(def sketch-input-x-scale 15)
+
+
 (defn movable
   ([w] (movable w {:disable-x? false}))
   ([w {disable-x? :disable-x?}]
@@ -148,10 +156,6 @@
   (ss/repaint! e))
 
 
-(def brush-label:skinny "Skinny Brush")
-(def brush-label:broad "Broad Brush")
-(def brush-label:line "Line Brush")
-
 (def brush-fn* (atom sketchpad-on-click:skinny-brush))
 
 
@@ -159,10 +163,6 @@
   {brush-label:skinny sketchpad-on-click:skinny-brush
    brush-label:broad  sketchpad-on-click:broad-brush
    brush-label:line   sketchpad-on-click:line-brush})
-
-
-(def x-count 50)
-(def x-scale 15)
 
 
 (defn input-data-items-widget
@@ -183,8 +183,8 @@
 
         pts                 (map
                               (fn [i]
-                                [(+ 50.0 (* i x-scale)) (points-fn i)])
-                              (range x-count))
+                                [(+ 50.0 (* i sketch-input-x-scale)) (points-fn i)])
+                              (range sketch-input-x-count))
         items               (map
                               (fn [pt]
                                 (movable
@@ -208,7 +208,7 @@
                               :id :xyz
                               :background "#222222"
                               :items items #_(conj items bp)
-                              :listen [:mouse-clicked #(@brush-fn* items x-scale %) #_(partial sketchpad-on-click:skinny-brush items x-scale)])]
+                              :listen [:mouse-clicked #(@brush-fn* items sketch-input-x-scale %) #_(partial sketchpad-on-click:skinny-brush items sketch-input-x-scale)])]
     [xyz-p items-point-getters items-point-setters]))
 
 
@@ -289,13 +289,13 @@
 
    "prime count"
    {:idx 50
-    :fn  (let [xys (data-prime-counting/get-data x-count)]
+    :fn  (let [xys (data-prime-counting/get-data sketch-input-x-count)]
            (fn [i]
              (y->gui-coord-y (second (nth xys i)))))}
 
    "primes"
    {:idx 50
-    :fn  (let [xys (data-primes/get-data x-count)]
+    :fn  (let [xys (data-primes/get-data sketch-input-x-count)]
            (fn [i]
              (y->gui-coord-y (second (nth xys i)))))}})
 
@@ -323,7 +323,7 @@
       (fn [i]
         ((nth items-point-setters i)
          (new-fn i)))
-      (range x-count))
+      (range sketch-input-x-count))
     (ss/repaint! drawing-widget)
     (println "Selected: " selection)))
 
@@ -461,7 +461,7 @@
                                                               items-point-setters)]))
 
         (.add inputs-container (JLabel. "Placeholder 1"))
-        (.add inputs-container brush-container )
+        (.add inputs-container brush-container)
         (.add inputs-container (JLabel. "Placeholder 3"))
         (.add info-container inputs-container)
         (.add info-container my-label)

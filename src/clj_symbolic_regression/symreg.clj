@@ -33,6 +33,12 @@
 
 
 (def sim-stats* (atom {}))
+(def reset?* (atom false))
+(def test-timer* (atom nil))
+(def sim-input-args* (atom nil))
+
+
+(def log-steps 1)
 
 (def min-score -100000000)
 (def max-leafs 250)
@@ -182,11 +188,6 @@
            (:crossovers summary-data)))))
 
 
-(def test-timer* (atom nil))
-
-(def log-steps 1)
-
-
 (defn report-iteration
   [i
    iters
@@ -253,9 +254,6 @@
             (> (abs v) 10e9) 0.0
             :else v))
         doubles))
-
-
-(def sim-input-args* (atom nil))
 
 
 (defn chart-update-loop
@@ -425,9 +423,6 @@
         msg (<!! sim-stop-start-chan)]
 
     (merge gui-comms (->run-args (update-plot-input-data msg)))))
-
-
-(def reset?* (atom false))
 
 
 (defn run-from-inputs
