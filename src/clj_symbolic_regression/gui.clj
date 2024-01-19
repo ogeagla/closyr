@@ -414,7 +414,7 @@
             top-container               (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
                                           (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 2)))
+                                          (.setLayout (GridLayout. 1 2)))
             input-fn-container          (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
                                           (.setBackground Color/LIGHT_GRAY)
