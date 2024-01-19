@@ -167,49 +167,52 @@
 
 (defn input-data-items-widget
   [points-fn]
-  (let [^JPanel bp          (doto (ss/border-panel
-                                    :border (sbr/line-border :top 15 :color "#AAFFFF")
-                                    :north (ss/label "I'm a draggable label with a text box!")
-                                    :center (ss/text
-                                              :text "Hey type some stuff here"
-                                              :listen [:document
-                                                       (fn [^AbstractDocument$DefaultDocumentEvent e]
-                                                         (let [doc     (.getDocument e)
-                                                               doc-txt (.getText doc 0 (.getLength doc))]
-                                                           (println "New text: " doc-txt)))]))
-                              (ss/config! :bounds :preferred)
-                              (movable))
+  (let [^JPanel bp             (doto (ss/border-panel
+                                       :border (sbr/line-border :top 15 :color "#AAFFFF")
+                                       :north (ss/label "I'm a draggable label with a text box!")
+                                       :center (ss/text
+                                                 :text "Hey type some stuff here"
+                                                 :listen [:document
+                                                          (fn [^AbstractDocument$DefaultDocumentEvent e]
+                                                            (let [doc     (.getDocument e)
+                                                                  doc-txt (.getText doc 0 (.getLength doc))]
+                                                              (println "New text: " doc-txt)))]))
+                                 (ss/config! :bounds :preferred)
+                                 (movable))
 
 
-        pts                 (map
-                              (fn [i]
-                                [(+ 50.0 (* i sketch-input-x-scale)) (points-fn i)])
-                              (range sketch-input-x-count))
-        items               (map
-                              (fn [pt]
-                                (movable
-                                  (make-label #(do pt)
-                                              (str "x"))
-                                  {:disable-x? true}))
-                              pts)
+        pts                    (map
+                                 (fn [i]
+                                   [(+ 50.0 (* i sketch-input-x-scale)) (points-fn i)])
+                                 (range sketch-input-x-count))
+        items                  (map
+                                 (fn [pt]
+                                   (movable
+                                     (make-label #(do pt)
+                                                 (str "x"))
+                                     {:disable-x? true}))
+                                 pts)
 
-        items-point-getters (map
-                              (fn [^JLabel widget]
-                                (fn [] (.getLocation widget)))
-                              items)
+        items-point-getters    (map
+                                 (fn [^JLabel widget]
+                                   (fn [] (.getLocation widget)))
+                                 items)
 
-        items-point-setters (map
-                              (fn [^JLabel widget]
-                                (fn [^double y] (.setLocation widget (.getX (.getLocation widget)) y)))
-                              items)
+        items-point-setters    (map
+                                 (fn [^JLabel widget]
+                                   (fn [^double y] (.setLocation widget (.getX (.getLocation widget)) y)))
+                                 items)
 
-        ^JPanel xyz-p       (ss/xyz-panel
-                              :paint draw-grid
-                              :id :xyz
-                              :background "#222222"
-                              :items items #_(conj items bp)
-                              :listen [:mouse-clicked #(@brush-fn* items sketch-input-x-scale %) #_(partial sketchpad-on-click:skinny-brush items sketch-input-x-scale)])]
-    [xyz-p items-point-getters items-point-setters]))
+        ^JPanel drawing-widget (ss/xyz-panel
+                                 :paint draw-grid
+                                 :id :xyz
+                                 :background "#222222"
+                                 :items items #_(conj items bp)
+                                 :listen [:mouse-clicked #(@brush-fn* items sketch-input-x-scale %)
+                                          #_(partial sketchpad-on-click:skinny-brush items sketch-input-x-scale)])]
+    {:drawing-widget      drawing-widget
+     :items-point-getters items-point-getters
+     :items-point-setters items-point-setters}))
 
 
 (defn getters->input-data
@@ -346,7 +349,7 @@
                                         ;; (.setSize 600 100)
                                         (.setBackground Color/LIGHT_GRAY)
                                         (.setLayout (GridLayout. 2 1)))
-        ^JLabel brush-info            (JLabel. "Brush info")
+        ^JLabel brush-info            (JLabel. "Brush info placeholder")
         btn-group-brush               (ss/button-group)
         ^JRadioButtonMenuItem radio-1 (ss/radio-menu-item
                                         :selected? true
@@ -411,6 +414,10 @@
             top-container               (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
                                           (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 2 2)))
+            input-fn-container          (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
                                           (.setLayout (GridLayout. 1 2)))
 
             content-pane                (doto (.getContentPane my-frame)
@@ -434,8 +441,8 @@
             scores-chart-panel          (XChartPanel. scores-chart)
 
 
-            [^JPanel drawing-widget items-point-getters items-point-setters] (input-data-items-widget
-                                                                               (input-y-fns "sin+cos"))
+            {:keys [^JPanel drawing-widget items-point-getters items-point-setters]} (input-data-items-widget
+                                                                                       (input-y-fns "sin+cos"))
 
             ^JButton ctl-start-stop-btn (ss/button
                                           :text "Start"
@@ -450,18 +457,21 @@
                                                             ctl-start-stop-btn
                                                             sim-stop-start-chan
                                                             items-point-getters)])
-            brush-container             (brush-panel)]
+            brush-container             (brush-panel)
+            ^JComboBox input-fn-picker  (ss/combobox
+                                          :model dataset-fns
+                                          :listen [:action
+                                                   (partial input-dataset-change
+                                                            drawing-widget
+                                                            items-point-setters)])]
 
 
-        (.add inputs-container ^JComboBox (ss/combobox
-                                            :model dataset-fns
-                                            :listen [:action
-                                                     (partial input-dataset-change
-                                                              drawing-widget
-                                                              items-point-setters)]))
+        (.add input-fn-container input-fn-picker)
+        (.add input-fn-container brush-container)
+        (.add inputs-container input-fn-container)
 
         (.add inputs-container (JLabel. "Placeholder 1"))
-        (.add inputs-container brush-container)
+        (.add inputs-container (JLabel. "Placeholder 2"))
         (.add inputs-container (JLabel. "Placeholder 3"))
         (.add info-container inputs-container)
         (.add info-container my-label)
@@ -487,8 +497,11 @@
         (.setVisible my-frame true)
 
         (update-loop
-          {:best-fn-chart      best-fn-chart :best-fn-chart-panel best-fn-chart-panel :info-label my-label
-           :scores-chart-panel scores-chart-panel :scores-chart scores-chart}
+          {:best-fn-chart       best-fn-chart
+           :best-fn-chart-panel best-fn-chart-panel
+           :info-label          my-label
+           :scores-chart-panel  scores-chart-panel
+           :scores-chart        scores-chart}
           gui-data)))))
 
 
