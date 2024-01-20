@@ -48,12 +48,11 @@
     exprs-list))
 
 
-
 (defn ^IAST expr->fn
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -695,7 +694,6 @@
 (def ^ISymbol sym-x (F/Dummy "x"))
 
 
-
 (defn eval-vec-pheno
   [p
    {:keys [input-exprs-list input-exprs-count output-exprs-vec]
@@ -841,9 +839,8 @@
    13 13
    14
    15
-   ;; 16
-   ;; 17
-   ;; 18
-   ;; 19
-   ;; 20
-   ])
+   16
+   17
+   18
+   19
+   20])
