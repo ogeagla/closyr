@@ -53,8 +53,8 @@
 (def brush-label:broad "Broad Brush")
 (def brush-label:line "Line Brush")
 
-(def sketch-input-x-count 50)
-(def sketch-input-x-scale 15)
+(def sketch-input-x-count* (atom 50))
+(def sketch-input-x-scale* (atom 15))
 
 
 (defn movable
@@ -183,8 +183,8 @@
 
         pts                    (map
                                  (fn [i]
-                                   [(+ 50.0 (* i sketch-input-x-scale)) (points-fn i)])
-                                 (range sketch-input-x-count))
+                                   [(+ 50.0 (* i @sketch-input-x-scale*)) (points-fn i)])
+                                 (range @sketch-input-x-count*))
         items                  (map
                                  (fn [pt]
                                    (movable
@@ -208,8 +208,8 @@
                                  :id :xyz
                                  :background "#222222"
                                  :items items #_(conj items bp)
-                                 :listen [:mouse-clicked #(@brush-fn* items sketch-input-x-scale %)
-                                          #_(partial sketchpad-on-click:skinny-brush items sketch-input-x-scale)])]
+                                 :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)
+                                          #_(partial sketchpad-on-click:skinny-brush items @sketch-input-x-scale*)])]
     {:drawing-widget      drawing-widget
      :items-point-getters items-point-getters
      :items-point-setters items-point-setters}))
@@ -292,13 +292,13 @@
 
    "prime count"
    {:idx 50
-    :fn  (let [xys (data-prime-counting/get-data sketch-input-x-count)]
+    :fn  (let [xys (data-prime-counting/get-data @sketch-input-x-count*)]
            (fn [i]
              (y->gui-coord-y (second (nth xys i)))))}
 
    "primes"
    {:idx 50
-    :fn  (let [xys (data-primes/get-data sketch-input-x-count)]
+    :fn  (let [xys (data-primes/get-data @sketch-input-x-count*)]
            (fn [i]
              (y->gui-coord-y (second (nth xys i)))))}})
 
@@ -326,7 +326,7 @@
       (fn [i]
         ((nth items-point-setters i)
          (new-fn i)))
-      (range sketch-input-x-count))
+      (range @sketch-input-x-count*))
     (ss/repaint! drawing-widget)
     (println "Selected: " selection)))
 
@@ -338,36 +338,75 @@
     (println "brush change to " b)))
 
 
-(defn ^JPanel brush-panel
-  []
-  (let [brush-config-container        (doto (JPanel. (BorderLayout.))
-                                        ;; (.setSize 600 100)
-                                        (.setBackground Color/LIGHT_GRAY)
-                                        (.setLayout (GridLayout. 1 3)))
+(defn xs-on-change
+  [^JPanel sketch-container ^MouseEvent e]
+  (let [xs-str (.getText ^JRadioButtonMenuItem (.getSource e))
+        new-xs (Integer/parseInt xs-str)]
+    (reset! sketch-input-x-count* new-xs)
 
-        ^JPanel brush-container       (doto (JPanel. (BorderLayout.))
-                                        ;; (.setSize 600 100)
-                                        (.setBackground Color/LIGHT_GRAY)
-                                        (.setLayout (GridLayout. 2 1)))
-        ^JLabel brush-info            (JLabel. "Brush info placeholder")
-        btn-group-brush               (ss/button-group)
-        ^JRadioButtonMenuItem radio-1 (ss/radio-menu-item
-                                        :selected? true
-                                        :text brush-label:skinny
-                                        :group btn-group-brush
-                                        :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem radio-2 (ss/radio-menu-item
-                                        :text brush-label:broad
-                                        :group btn-group-brush
-                                        :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem radio-3 (ss/radio-menu-item
-                                        :text brush-label:line
-                                        :group btn-group-brush
-                                        :listen [:mouse-clicked brush-on-change])]
-    (.add brush-config-container radio-1)
-    (.add brush-config-container radio-2)
-    (.add brush-config-container radio-3)
-    (.add brush-container brush-info)
+    ;; this doesnt actually call the constructor with xs again, obviously, so this cant work:
+    (.revalidate sketch-container)
+    (.repaint sketch-container)
+
+    (println "brush xs to " xs-str " -> " new-xs)))
+
+
+
+(defn ^JPanel inputs-xs-and-brush-panel
+  []
+  (let [brush-config-container           (doto (JPanel. (BorderLayout.))
+                                           ;; (.setSize 600 100)
+                                           (.setBackground Color/LIGHT_GRAY)
+                                           (.setLayout (GridLayout. 1 3)))
+
+        ;xs-config-container              (doto (JPanel. (BorderLayout.))
+        ;                                   ;; (.setSize 600 100)
+        ;                                   (.setBackground Color/LIGHT_GRAY)
+        ;                                   (.setLayout (GridLayout. 1 4)))
+
+        ^JPanel brush-container          (doto (JPanel. (BorderLayout.))
+                                           ;; (.setSize 600 100)
+                                           (.setBackground Color/LIGHT_GRAY)
+                                           (.setLayout (GridLayout. 2 1)))
+        ;^JLabel xs-info            (JLabel. "Xs:")
+        ;btn-group-xs                     (ss/button-group)
+        ;^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
+        ;                                   :text "10"
+        ;                                   :group btn-group-xs
+        ;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
+        ;^JRadioButtonMenuItem xs-radio-2 (ss/radio-menu-item
+        ;                                   :selected? true
+        ;                                   :text "50"
+        ;                                   :group btn-group-xs
+        ;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
+        ;^JRadioButtonMenuItem xs-radio-3 (ss/radio-menu-item
+        ;                                   :text "100"
+        ;                                   :group btn-group-xs
+        ;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
+
+
+        btn-group-brush                  (ss/button-group)
+        ^JRadioButtonMenuItem b-radio-1  (ss/radio-menu-item
+                                           :selected? true
+                                           :text brush-label:skinny
+                                           :group btn-group-brush
+                                           :listen [:mouse-clicked brush-on-change])
+        ^JRadioButtonMenuItem b-radio-2  (ss/radio-menu-item
+                                           :text brush-label:broad
+                                           :group btn-group-brush
+                                           :listen [:mouse-clicked brush-on-change])
+        ^JRadioButtonMenuItem b-radio-3  (ss/radio-menu-item
+                                           :text brush-label:line
+                                           :group btn-group-brush
+                                           :listen [:mouse-clicked brush-on-change])]
+    ;(.add xs-config-container xs-info)
+    ;(.add xs-config-container xs-radio-1)
+    ;(.add xs-config-container xs-radio-2)
+    ;(.add xs-config-container xs-radio-3)
+    (.add brush-config-container b-radio-1)
+    (.add brush-config-container b-radio-2)
+    (.add brush-config-container b-radio-3)
+    ;(.add brush-container xs-config-container)
     (.add brush-container brush-config-container)
     brush-container))
 
@@ -457,7 +496,7 @@
                                                             ctl-start-stop-btn
                                                             sim-stop-start-chan
                                                             items-point-getters)])
-            brush-container             (brush-panel)
+            brush-container             (inputs-xs-and-brush-panel )
             ^JComboBox input-fn-picker  (ss/combobox
                                           :model dataset-fns
                                           :listen [:action
