@@ -69,7 +69,7 @@
 
           overall-score)))
     (catch Exception e
-      (println "Error in score fn: " (.getMessage e) " for fn: " (:expr v))
+      (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr v)) ", from: " (:expr v))
       min-score)))
 
 

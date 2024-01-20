@@ -22,11 +22,38 @@
 (set! *warn-on-reflection* true)
 
 
+(defn doubles->exprs
+  [numbers]
+  (mapv
+    (fn [^double n] (F/num n))
+    numbers))
+
+
+(defn expr->double
+  [^IExpr expr]
+  (.doubleValue (.toNumber expr)))
+
+
+(defn exprs->doubles
+  [exprs]
+  (mapv expr->double exprs))
+
+
+(defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
+  [exprs]
+  (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
+        (into-array IExpr exprs)
+        ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-list
+        (into-array IExpr [(F/List exprs-arr)])]
+    exprs-list))
+
+
+
 (defn ^IAST expr->fn
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -197,7 +224,7 @@
                          (max 0.005
                               (/ 1.0 (.leafCount expr))))
         r           (rand)
-        do?         (< r (* 1.5 leaf-scalar))]
+        do?         (< r (* 2.0 leaf-scalar))]
     #_(when do?
         (println "do mod: leafs: " (.leafCount expr) " , " r " < 1.5 *" leaf-scalar))
     do?))
@@ -667,31 +694,6 @@
 
 (def ^ISymbol sym-x (F/Dummy "x"))
 
-
-(defn doubles->exprs
-  [numbers]
-  (mapv
-    (fn [^double n] (F/num n))
-    numbers))
-
-
-(defn expr->double
-  [^IExpr expr]
-  (.doubleValue (.toNumber expr)))
-
-
-(defn exprs->doubles
-  [exprs]
-  (mapv expr->double exprs))
-
-
-(defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
-  [exprs]
-  (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
-        (into-array IExpr exprs)
-        ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-list
-        (into-array IExpr [(F/List exprs-arr)])]
-    exprs-list))
 
 
 (defn eval-vec-pheno
