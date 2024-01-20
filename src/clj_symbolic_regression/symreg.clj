@@ -41,7 +41,7 @@
 (def log-steps 1)
 
 (def min-score -100000000)
-(def max-leafs 200)
+(def max-leafs 160)
 
 
 (defn score-fn
