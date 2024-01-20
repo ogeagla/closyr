@@ -41,7 +41,7 @@
 (def log-steps 1)
 
 (def min-score -100000000)
-(def max-leafs 250)
+(def max-leafs 200)
 
 
 (defn score-fn
@@ -486,7 +486,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 2500)
+                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 3000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs

@@ -48,142 +48,144 @@
 (deftest mutations-test
 
   (testing "all mutations results on a function"
-    (with-redefs [ops/modify-leafs-sampler [true]]
-      (let [x (F/Dummy "x")]
-        (is (= [["Derivative"
-                 "1+x*Cos(1/2-x)-Sin(1/2-x)-Sin(x)"]
-                ["+1/2"
-                 "-1/2+x+Cos(x)-x*Sin(1/2-x)"]
-                ["-1/2"
-                 "-3/2+x+Cos(x)-x*Sin(1/2-x)"]
-                ["+1/10"
-                 "-9/10+x+Cos(x)-x*Sin(1/2-x)"]
-                ["-1/10"
-                 "-11/10+x+Cos(x)-x*Sin(1/2-x)"]
-                ["+1/100"
-                 "-99/100+x+Cos(x)-x*Sin(1/2-x)"]
-                ["-1/100"
-                 "-101/100+x+Cos(x)-x*Sin(1/2-x)"]
-                ["+Sin"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)+Sin(x)"]
-                ["-Sin"
-                 "-1+x+Cos(x)-x*Sin(1/2-x)-Sin(x)"]
-                ["+Log"
-                 "-1+x+Cos(x)+Log(x)-x*Sin(1/2-x)"]
-                ["-Log"
-                 "-1+x+Cos(x)-Log(x)-x*Sin(1/2-x)"]
-                ["+Exp"
-                 "-1+E^x+x+Cos(x)-x*Sin(1/2-x)"]
-                ["-Exp"
-                 "-1-E^x+x+Cos(x)-x*Sin(1/2-x)"]
-                ["+Cos"
-                 "-1+x+2*Cos(x)-x*Sin(1/2-x)"]
-                ["-Cos"
-                 "-1+x-x*Sin(1/2-x)"]
-                ["*Sin"
-                 "(-1+x+Cos(x)-x*Sin(1/2-x))*Sin(x)"]
-                ["/Sin"
-                 "Csc(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["*Cos"
-                 "Cos(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["/Cos"
-                 "Sec(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["+x"
-                 "-1+2*x+Cos(x)-x*Sin(1/2-x)"]
-                ["-x"
-                 "-1+Cos(x)-x*Sin(1/2-x)"]
-                ["+x^2"
-                 "-1+x+x^2+Cos(x)-x*Sin(1/2-x)"]
-                ["-x^2"
-                 "-1+x-x^2+Cos(x)-x*Sin(1/2-x)"]
-                ["+x^1/2"
-                 "-1+Sqrt(x)+x+Cos(x)-x*Sin(1/2-x)"]
-                ["-x^1/2"
-                 "-1-Sqrt(x)+x+Cos(x)-x*Sin(1/2-x)"]
-                ["*x"
-                 "x*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["/x"
-                 "(-1+x+Cos(x)-x*Sin(1/2-x))/x"]
-                ["*-1"
-                 "1-x-Cos(x)+x*Sin(1/2-x)"]
-                ["/2"
-                 "1/2*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["*2"
-                 "2*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["/10"
-                 "1/10*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["*10"
-                 "10*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["/100"
-                 "1/100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["*100"
-                 "100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["*1.1"
-                 "1.1*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["*0.9"
-                 "0.9*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                ["x+1/2"
-                 "-1/2+x+Cos(1/2+x)+(1/2+x)*Sin(x)"]
-                ["x-1/2"
-                 "-3/2+x+Cos(1/2-x)+(1/2-x)*Sin(1-x)"]
-                ["x/10"
-                 "-1+x/10+Cos(x/10)-1/10*x*Sin(1/2-x/10)"]
-                ["10*x"
-                 "-1+10*x+Cos(10*x)-10*x*Sin(1/2-10*x)"]
-                ["x/100"
-                 "-1+x/100+Cos(x/100)-1/100*x*Sin(1/2-x/100)"]
-                ["100*x"
-                 "-1+100*x+Cos(100*x)-100*x*Sin(1/2-100*x)"]
-                ["-1*x"
-                 "-1-x+Cos(x)+x*Sin(1/2+x)"]
-                ["1.1*x"
-                 "-1+1.1*x+Cos(1.1*x)-1.1*x*Sin(1/2-1.1*x)"]
-                ["0.9*x"
-                 "-1+0.9*x+Cos(0.9*x)-0.9*x*Sin(1/2-0.9*x)"]
-                ["sin(x)"
-                 "-1+Cos(Sin(x))+Sin(x)-Sin(x)*Sin(1/2-Sin(x))"]
-                ["cos(x)"
-                 "-1+Cos(x)+Cos(Cos(x))-Cos(x)*Sin(1/2-Cos(x))"]
-                ["log(x)"
-                 "-1+Cos(Log(x))+Log(x)-Log(x)*Sin(1/2-Log(x))"]
-                ["exp(x)"
-                 "-1+E^x+Cos(E^x)-E^x*Sin(1/2-E^x)"]
-                ["x^1/2"
-                 "-1+Sqrt(x)+Cos(Sqrt(x))-Sqrt(x)*Sin(1/2-Sqrt(x))"]
-                ["x^2"
-                 "-1+x^2+Cos(x^2)-x^2*Sin(1/2-x^2)"]
-                ["x+1/10"
-                 "-9/10+x+Cos(1/10+x)-(1/10+x)*Sin(2/5-x)"]
-                ["x-1/10"
-                 "-11/10+x+Cos(1/10-x)+(1/10-x)*Sin(3/5-x)"]
-                ["x+1/100"
-                 "-99/100+x+Cos(1/100+x)-(1/100+x)*Sin(49/100-x)"]
-                ["x-1/100"
-                 "-101/100+x+Cos(1/100-x)+(1/100-x)*Sin(51/100-x)"]
-                ["Sin->Cos"
-                 "-1+x-x*Cos(1/2-x)+Cos(x)"]
-                ["Cos->Sin"
-                 "-1+x-x*Sin(1/2-x)+Sin(x)"]]
-               (vec
-                 (map
-                   (fn [m]
-                     [(:label m)
-                      (str
-                        (:expr
-                          (ops/modify
-                            m
-                            {:sym  x
-                             ;; x + cos(x) + x*sin(x-0.5) - 1
-                             :expr (.minus
-                                     (.plus
-                                       x
+    (with-redefs-fn {#'rand (fn [] 0.0)}
+
+      (fn []
+        (let [x (F/Dummy "x")]
+          (is (= [["Derivative"
+                   "1+x*Cos(1/2-x)-Sin(1/2-x)-Sin(x)"]
+                  ["+1/2"
+                   "-1/2+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["-1/2"
+                   "-3/2+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["+1/10"
+                   "-9/10+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["-1/10"
+                   "-11/10+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["+1/100"
+                   "-99/100+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["-1/100"
+                   "-101/100+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["+Sin"
+                   "-1+x+Cos(x)-x*Sin(1/2-x)+Sin(x)"]
+                  ["-Sin"
+                   "-1+x+Cos(x)-x*Sin(1/2-x)-Sin(x)"]
+                  ["+Log"
+                   "-1+x+Cos(x)+Log(x)-x*Sin(1/2-x)"]
+                  ["-Log"
+                   "-1+x+Cos(x)-Log(x)-x*Sin(1/2-x)"]
+                  ["+Exp"
+                   "-1+E^x+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["-Exp"
+                   "-1-E^x+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["+Cos"
+                   "-1+x+2*Cos(x)-x*Sin(1/2-x)"]
+                  ["-Cos"
+                   "-1+x-x*Sin(1/2-x)"]
+                  ["*Sin"
+                   "(-1+x+Cos(x)-x*Sin(1/2-x))*Sin(x)"]
+                  ["/Sin"
+                   "Csc(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["*Cos"
+                   "Cos(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["/Cos"
+                   "Sec(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["+x"
+                   "-1+2*x+Cos(x)-x*Sin(1/2-x)"]
+                  ["-x"
+                   "-1+Cos(x)-x*Sin(1/2-x)"]
+                  ["+x^2"
+                   "-1+x+x^2+Cos(x)-x*Sin(1/2-x)"]
+                  ["-x^2"
+                   "-1+x-x^2+Cos(x)-x*Sin(1/2-x)"]
+                  ["+x^1/2"
+                   "-1+Sqrt(x)+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["-x^1/2"
+                   "-1-Sqrt(x)+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["*x"
+                   "x*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["/x"
+                   "(-1+x+Cos(x)-x*Sin(1/2-x))/x"]
+                  ["*-1"
+                   "1-x-Cos(x)+x*Sin(1/2-x)"]
+                  ["/2"
+                   "1/2*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["*2"
+                   "2*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["/10"
+                   "1/10*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["*10"
+                   "10*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["/100"
+                   "1/100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["*100"
+                   "100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["*1.1"
+                   "1.1*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["*0.9"
+                   "0.9*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["x+1/2"
+                   "-1/2+x+Cos(1/2+x)+(1/2+x)*Sin(x)"]
+                  ["x-1/2"
+                   "-3/2+x+Cos(1/2-x)+(1/2-x)*Sin(1-x)"]
+                  ["x/10"
+                   "-1+x/10+Cos(x/10)-1/10*x*Sin(1/2-x/10)"]
+                  ["10*x"
+                   "-1+10*x+Cos(10*x)-10*x*Sin(1/2-10*x)"]
+                  ["x/100"
+                   "-1+x/100+Cos(x/100)-1/100*x*Sin(1/2-x/100)"]
+                  ["100*x"
+                   "-1+100*x+Cos(100*x)-100*x*Sin(1/2-100*x)"]
+                  ["-1*x"
+                   "-1-x+Cos(x)+x*Sin(1/2+x)"]
+                  ["1.1*x"
+                   "-1+1.1*x+Cos(1.1*x)-1.1*x*Sin(1/2-1.1*x)"]
+                  ["0.9*x"
+                   "-1+0.9*x+Cos(0.9*x)-0.9*x*Sin(1/2-0.9*x)"]
+                  ["sin(x)"
+                   "-1+Cos(Sin(x))+Sin(x)-Sin(x)*Sin(1/2-Sin(x))"]
+                  ["cos(x)"
+                   "-1+Cos(x)+Cos(Cos(x))-Cos(x)*Sin(1/2-Cos(x))"]
+                  ["log(x)"
+                   "-1+Cos(Log(x))+Log(x)-Log(x)*Sin(1/2-Log(x))"]
+                  ["exp(x)"
+                   "-1+E^x+Cos(E^x)-E^x*Sin(1/2-E^x)"]
+                  ["x^1/2"
+                   "-1+Sqrt(x)+Cos(Sqrt(x))-Sqrt(x)*Sin(1/2-Sqrt(x))"]
+                  ["x^2"
+                   "-1+x^2+Cos(x^2)-x^2*Sin(1/2-x^2)"]
+                  ["x+1/10"
+                   "-9/10+x+Cos(1/10+x)-(1/10+x)*Sin(2/5-x)"]
+                  ["x-1/10"
+                   "-11/10+x+Cos(1/10-x)+(1/10-x)*Sin(3/5-x)"]
+                  ["x+1/100"
+                   "-99/100+x+Cos(1/100+x)-(1/100+x)*Sin(49/100-x)"]
+                  ["x-1/100"
+                   "-101/100+x+Cos(1/100-x)+(1/100-x)*Sin(51/100-x)"]
+                  ["Sin->Cos"
+                   "-1+x-x*Cos(1/2-x)+Cos(x)"]
+                  ["Cos->Sin"
+                   "-1+x-x*Sin(1/2-x)+Sin(x)"]]
+                 (vec
+                   (map
+                     (fn [m]
+                       [(:label m)
+                        (str
+                          (:expr
+                            (ops/modify
+                              m
+                              {:sym  x
+                               ;; x + cos(x) + x*sin(x-0.5) - 1
+                               :expr (.minus
                                        (.plus
-                                         (F/Cos x)
-                                         (.times
-                                           x
-                                           (F/Sin (.minus x F/C1D2)))))
-                                     F/C1)})))])
-                   (ops/initial-mutations)))))))))
+                                         x
+                                         (.plus
+                                           (F/Cos x)
+                                           (.times
+                                             x
+                                             (F/Sin (.minus x F/C1D2)))))
+                                       F/C1)})))])
+                     (ops/initial-mutations))))))))))
 
 
 (deftest crossover-test
