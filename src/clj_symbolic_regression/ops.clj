@@ -225,7 +225,7 @@
                          (max 0.005
                               (/ 1.0 leaf-count)))
         r           (rand)
-        do?         (< r (* 2.0 leaf-scalar))]
+        do?         (< r (* 3.0 leaf-scalar))]
     #_(when do?
         (println "do mod: leafs: " (.leafCount expr) " , " r " < 1.5 *" leaf-scalar))
     do?))
