@@ -722,6 +722,11 @@
                             (range input-exprs-count)))]
     vs))
 
+(defn clamp-oversampled-ys [y]
+  (if (infinite? y)
+    y
+    (min 10.0 (max y -10.0))))
+
 
 (defn extend-xs
   [input-exprs-vec]
@@ -761,9 +766,9 @@
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
   (concat
-    (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
+    (mapv clamp-oversampled-ys (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head))))
     (eval-vec-pheno p run-args)
-    (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))))
+    (mapv clamp-oversampled-ys (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))))
 
 
 (defn eval-vec-pheno-oversample-from-orig-xs
