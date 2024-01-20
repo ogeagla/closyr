@@ -139,7 +139,7 @@
 (defmethod modify :modify-leafs
   [{:keys [leaf-modifier-fn]}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn pheno))) util))
+  (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util))
 
 
 (defmethod modify :fn
@@ -218,10 +218,10 @@
 
 
 (defn should-modify-leaf
-  [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+  [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
   (let [leaf-scalar (min 1.0
                          (max 0.005
-                              (/ 1.0 (.leafCount expr))))
+                              (/ 1.0 leaf-count)))
         r           (rand)
         do?         (< r (* 2.0 leaf-scalar))]
     #_(when do?
@@ -415,69 +415,69 @@
 
    {:op               :modify-leafs
     :label            "x+1/2"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.plus ie (F/C1D2))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "x-1/2"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.minus ie (F/C1D2))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "x/10"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.divide ie (F/C10))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "10*x"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.times ie (F/C10))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "x/100"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.divide ie (F/C100))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "100*x"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.times ie (F/C100))
                           ie))}
 
    {:op               :modify-leafs
     :label            "-1*x"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.times ie (F/CN1))
                           ie))}
 
    {:op               :modify-leafs
     :label            "1.1*x"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.times ie (F/num 1.1))
                           ie))}
 
    {:op               :modify-leafs
     :label            "0.9*x"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.times ie (F/num 0.9))
                           ie))}
 
@@ -485,15 +485,15 @@
 
    {:op               :modify-leafs
     :label            "sin(x)"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (F/Sin x-sym)
                           ie))}
 
    {:op               :modify-leafs
     :label            "cos(x)"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (F/Cos x-sym)
                           ie))}
 
@@ -502,15 +502,15 @@
 
    {:op               :modify-leafs
     :label            "log(x)"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (F/Log x-sym)
                           ie))}
 
    {:op               :modify-leafs
     :label            "exp(x)"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (F/Exp x-sym)
                           ie))}
 
@@ -518,93 +518,93 @@
 
    {:op               :modify-leafs
     :label            "x^1/2"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.pow ie (F/C1D2))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "x^2"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.pow ie (F/C2))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "x+1/10"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.plus ie (F/Divide 1 F/C10))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "x-1/10"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.minus ie (F/Divide 1 F/C10))
                           ie))}
 
    {:op               :modify-leafs
     :label            "x+1/100"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.plus ie (F/Divide 1 F/C100))
                           ie))}
 
 
    {:op               :modify-leafs
     :label            "x-1/100"
-    :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (= (.toString ie) "x") (should-modify-leaf pheno))
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (= (.toString ie) "x") (should-modify-leaf leaf-count pheno))
                           (.minus ie (F/Divide 1 F/C100))
                           ie))}
 
 
    ;; {:op               :modify-leafs
    ;; :label            "c/2"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.times ie (F/C1D2))
    ;;                       ie))}
    ;;
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c*2"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.times ie (F/C2))
    ;;                       ie))}
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c*-1"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.times ie (F/CN1))
    ;;                       ie))}
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c/10"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.times ie (F/Divide 1 F/C10))
    ;;                       ie))}
    ;;
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c*10"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.times ie F/C10)
    ;;                       ie))}
    ;;
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c+1/10"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (do
    ;;                         ;; (println "1/10 + " (str ie))
    ;;                         (.plus ie (F/Divide 1 F/C10)))
@@ -613,23 +613,23 @@
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c-1/10"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.minus ie (F/Divide 1 F/C10))
    ;;                       ie))}
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c+1/2"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.plus ie (F/Divide 1 F/C2))
    ;;                       ie))}
    ;;
    ;;
    ;; {:op               :modify-leafs
    ;; :label            "c-1/2"
-   ;; :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf pheno))
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isNumericArgument ie) (should-modify-leaf leaf-count pheno))
    ;;                       (.minus ie (F/Divide 1 F/C2))
    ;;                       ie))}
    ;;
