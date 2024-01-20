@@ -37,7 +37,7 @@
       (is (= (str (.plus (F/num 1.0) ^IExpr (F/Sin x)))
              (str (:expr (ops/modify
                            {:op               :modify-leafs
-                            :leaf-modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                            :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                                                 (if (and (= (.toString ie) "x"))
                                                   (F/Sin ie)
                                                   ie))}
