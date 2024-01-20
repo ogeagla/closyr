@@ -52,7 +52,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -153,7 +153,7 @@
   (instance? IAST ie))
 
 
-(def crossover-sampler [true false])
+(def crossover-sampler [:plus :times :divide12 :divide21])
 
 
 (defn crossover
@@ -171,9 +171,11 @@
           e2-part         (if e2-is-fn
                             (.getArg e2 (inc (rand-int (dec (.size e2)))) nil)
                             e2)
-          ^IExpr new-expr (if (rand-nth crossover-sampler)
-                            (F/Plus e1-part e2-part)
-                            (F/Times e1-part e2-part))]
+          ^IExpr new-expr (case (rand-nth crossover-sampler)
+                            :divide12 (F/Divide e1-part e2-part)
+                            :divide21 (F/Divide e2-part e1-part)
+                            :plus (F/Plus e1-part e2-part)
+                            :times (F/Times e1-part e2-part))]
 
       ;; (println "Cross over on: 1: sz:" (.size e1) "fn: " (str e1) "2: sz: " (.size e2) "fn: " (str e2) " --->>> " (str new-expr))
 
@@ -840,7 +842,8 @@
    14
    15
    16
-   17
-   18
-   19
-   20])
+   ;17
+   ;18
+   ;19
+   ;20
+   ])
