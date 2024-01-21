@@ -50,7 +50,7 @@
                          (shuffle))
 
           new-pop-data (->>
-                         (partition-all 40 pop-shuff)
+                         (partition-all 80 pop-shuff)
                          (pmap (fn [pop-chunk]
                                  (mapv (partial compete config)
                                        (partition-all 2 pop-chunk))))

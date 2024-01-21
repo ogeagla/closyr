@@ -295,7 +295,7 @@
         (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
         (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
 
-        (when (zero? i)
+        (when (= 1 i)
           (.clear xs-scores)
           (.clear ys-scores))
 
