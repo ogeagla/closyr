@@ -43,6 +43,9 @@
 (def min-score -100000000)
 (def max-leafs 160)
 
+(defn tally-min-score []
+  (swap! sim-stats* update-in [:scoring :min-scores ] #(inc (or % 0)))
+  )
 
 (defn score-fn
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
@@ -52,25 +55,33 @@
   (try
     (let [leafs (.leafCount ^IExpr (:expr v))]
       (if (> leafs max-leafs)
-        min-score
-        (let [f-of-xs          (ops/eval-vec-pheno v run-args)
-              resids           (map - output-exprs-vec f-of-xs)
-              abs-resids       (map #(min 1000000 (abs %)) resids)
-              resid-sum        (sum abs-resids)
-              ;; score            (* -1 (/ (abs resid) (count abs-resids)))
-              score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
-                                          (last (sort abs-resids))))
-              length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
-              overall-score    (- score length-deduction)]
+        (do
+          (tally-min-score)
+          min-score)
+        (let [f-of-xs          (ops/eval-vec-pheno v run-args)]
+          (if f-of-xs
+            (let [resids           (map - output-exprs-vec f-of-xs)
+                  abs-resids       (map #(min 1000000 (abs %)) resids)
+                  resid-sum        (sum abs-resids)
+                  ;; score            (* -1 (/ (abs resid) (count abs-resids)))
+                  score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
+                                              (last (sort abs-resids))))
+                  length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
+                  overall-score    (- score length-deduction)]
 
-          (when (neg? length-deduction)
-            (println "warning: negative deduction increases score: " leafs length-deduction v))
-          (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
+              (when (neg? length-deduction)
+                (println "warning: negative deduction increases score: " leafs length-deduction v))
+              (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
-          overall-score)))
+              overall-score)
+            (do
+              (tally-min-score)
+              min-score)))))
     (catch Exception e
       (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr v)) ", from: " (:expr v))
-      min-score)))
+      (do
+        (tally-min-score)
+        min-score))))
 
 
 (defn rand-mut
@@ -152,7 +163,8 @@
          {cs     :counts
           sz-in  :size-in
           sz-out :size-out}               :mutations
-         {len-deductions :len-deductions} :scoring
+         {len-deductions :len-deductions
+          min-scores :min-scores} :scoring
          :as                              dat} @sim-stats*]
     (let [len-deductions-sorted
           (sort len-deductions)
@@ -179,7 +191,7 @@
                       :sz-out-mean-max-min [(Math/round ^double (/ (sum sz-out) (count sz-out)))
                                             (last sz-out-sorted)
                                             (first sz-out-sorted)]}))]
-      (str "muts:" (count sz-in)
+      (str "muts:" (count sz-in) " min scores: " min-scores
            " "
            (:scoring summary-data)
            "\n  "

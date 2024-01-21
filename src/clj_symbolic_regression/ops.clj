@@ -6,6 +6,8 @@
     (org.matheclipse.core.eval
       EvalEngine
       ExprEvaluator)
+    (org.matheclipse.core.eval.exception
+      ArgumentTypeException)
     (org.matheclipse.core.expression
       AST
       F)
@@ -52,7 +54,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -113,6 +115,7 @@
     (let [^IAST ast  (F/ast expr-args (expr->fn x-sym expr))
           ^IExpr res (.eval util ast)]
       res)
+    (catch ArgumentTypeException se (println "Warning: argument type error in eval: " se))
     (catch SyntaxError se (println "Warning: syntax error in eval: " se))
     (catch MathException me (println "Warning: math error in eval: " me))
     (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
@@ -703,26 +706,40 @@
   (let [^IExpr new-expr (:expr p)
         new-is-const    (.isNumber new-expr)
         ^IExpr eval-p   (eval-phenotype-on-expr-args p input-exprs-list)
-        vs              (mapv
-                          (fn [i]
-                            (try
-                              (expr->double
-                                (.getArg eval-p (inc i) F/Infinity))
-                              (catch Exception e
-                                Double/POSITIVE_INFINITY)))
-                          (range (dec (.size eval-p))))
-        vs              (if (= input-exprs-count (count vs))
-                          vs
-                          (mapv
-                            (fn [i]
-                              (expr->double
-                                (if new-is-const
-                                  new-expr
-                                  (.getArg eval-p 0 F/Infinity))))
-                            (range input-exprs-count)))]
-    vs))
 
-(defn clamp-oversampled-ys [y]
+       ]
+    (if (= "Indeterminate" (str eval-p))
+      nil
+      (let [vs (mapv
+                 (fn [i]
+                   (try
+                     (expr->double
+                       (.getArg eval-p (inc i) F/Infinity))
+                     (catch Exception e
+                       Double/POSITIVE_INFINITY)))
+                 (range (dec (.size eval-p))))
+            vs (if (= input-exprs-count (count vs))
+                 vs
+                 (mapv
+                   (fn [i]
+                     (try
+                       (let [^IExpr arg0 (.getArg eval-p 0 F/Infinity)]
+                         (expr->double
+                           (if new-is-const
+                             new-expr
+                             (if (.isBuiltInSymbol arg0)
+                               eval-p
+                               arg0))))
+                       (catch Exception e
+                         (println "Error in evaling function on const xs vector: "
+                                  (str eval-p) " : " e)
+                         (throw e))))
+                   (range input-exprs-count)))]
+        vs))))
+
+
+(defn clamp-oversampled-ys
+  [y]
   (if (infinite? y)
     y
     (min 10.0 (max y -10.0))))
@@ -847,8 +864,8 @@
    14
    15
    16
-   ;17
-   ;18
-   ;19
-   ;20
+   ;; 17
+   ;; 18
+   ;; 19
+   ;; 20
    ])
