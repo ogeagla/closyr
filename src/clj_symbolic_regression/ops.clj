@@ -54,7 +54,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -395,7 +395,6 @@
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr F/C10))}
 
-
    {:op          :fn
     :label       "/100"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
@@ -416,15 +415,12 @@
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr (F/num 0.9)))}
 
-
-
    {:op               :modify-leafs
     :label            "x+1/2"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
                           (.plus ie (F/C1D2))
                           ie))}
-
 
    {:op               :modify-leafs
     :label            "x-1/2"
@@ -433,7 +429,6 @@
                           (.minus ie (F/C1D2))
                           ie))}
 
-
    {:op               :modify-leafs
     :label            "x/10"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
@@ -441,14 +436,12 @@
                           (.divide ie (F/C10))
                           ie))}
 
-
    {:op               :modify-leafs
     :label            "10*x"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
                           (.times ie (F/C10))
                           ie))}
-
 
    {:op               :modify-leafs
     :label            "x/100"
@@ -486,8 +479,6 @@
                           (.times ie (F/num 0.9))
                           ie))}
 
-
-
    {:op               :modify-leafs
     :label            "sin(x)"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
@@ -501,9 +492,6 @@
                         (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
                           (F/Cos x-sym)
                           ie))}
-
-
-
 
    {:op               :modify-leafs
     :label            "log(x)"
@@ -519,15 +507,12 @@
                           (F/Exp x-sym)
                           ie))}
 
-
-
    {:op               :modify-leafs
     :label            "x^1/2"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
                           (.pow ie (F/C1D2))
                           ie))}
-
 
    {:op               :modify-leafs
     :label            "x^2"
@@ -536,14 +521,12 @@
                           (.pow ie (F/C2))
                           ie))}
 
-
    {:op               :modify-leafs
     :label            "x+1/10"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
                           (.plus ie (F/Divide 1 F/C10))
                           ie))}
-
 
    {:op               :modify-leafs
     :label            "x-1/10"
@@ -566,74 +549,72 @@
                           (.minus ie (F/Divide 1 F/C100))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c/2"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (.times ie (F/C1D2))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c*2"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (.times ie (F/C2))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c*-1"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (.times ie (F/CN1))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c/10"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (.times ie (F/Divide 1 F/C10))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c*10"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (.times ie F/C10)
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c+1/10"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (do
-                            ;; (println "1/10 + " (str ie))
                             (.plus ie (F/Divide 1 F/C10)))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c-1/10"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (.minus ie (F/Divide 1 F/C10))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c+1/100"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (do
-                            ;; (println "1/10 + " (str ie))
                             (.plus ie (F/Divide 1 F/C100)))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c-1/100"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (.minus ie (F/Divide 1 F/C100))
                           ie))}
 
-    {:op               :modify-leafs
+   {:op               :modify-leafs
     :label            "c+1/2"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
@@ -713,10 +694,7 @@
    {:keys [input-exprs-list input-exprs-count output-exprs-vec]
     :as   run-args}]
   (let [^IExpr new-expr (:expr p)
-        new-is-const    (.isNumber new-expr)
-        ^IExpr eval-p   (eval-phenotype-on-expr-args p input-exprs-list)
-
-       ]
+        ^IExpr eval-p   (eval-phenotype-on-expr-args p input-exprs-list)]
     (if (= "Indeterminate" (str eval-p))
       nil
       (let [vs (mapv
@@ -732,7 +710,8 @@
                  (mapv
                    (fn [i]
                      (try
-                       (let [^IExpr arg0 (.getArg eval-p 0 F/Infinity)]
+                       (let [new-is-const (.isNumber new-expr)
+                             ^IExpr arg0  (.getArg eval-p 0 F/Infinity)]
                          (expr->double
                            (if new-is-const
                              new-expr
