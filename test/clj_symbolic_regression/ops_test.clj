@@ -250,10 +250,31 @@
       (with-redefs [ops/crossover-sampler [:divide12]]
         (let [x (F/Dummy "x")]
           (testing "Can crossover mix of IExpr and IAST with Divide12"
-            (is (= (str (F/Divide  (F/Times F/C4 (F/Sec (F/Subtract F/C1D2 x))) x))
+            (is (= (str (F/Divide (F/Times F/C4 (F/Sec (F/Subtract F/C1D2 x))) x))
                    (str (:expr
                           (ops/crossover
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))))))))))
+
+
+(deftest eval-f-test
+  (let [x (F/Dummy "x")]
+    (testing "can eval various fns for simple inputs"
+      (is (= [0.0]
+             (mapv
+               ops/expr->double
+               (ops/eval-phenotype-on-expr-args (ops/->phenotype x (F/Subtract x F/C1D2) nil)
+                                                (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))))))
+
+      ;; todo: how to fix this? I see this error intermittently when running experiments:
+      #_(is (= [0.0]
+               (ops/eval-vec-pheno (ops/->phenotype x (F/Subtract F/E F/C1D2) nil)
+                                   {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
+                                    :input-exprs-count 1})))
+
+      (is (= [0.5]
+             (ops/eval-vec-pheno (ops/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
+                                 {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
+                                  :input-exprs-count 1}))))))
