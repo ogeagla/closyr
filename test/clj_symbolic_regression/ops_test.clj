@@ -268,6 +268,18 @@
                (ops/eval-phenotype-on-expr-args (ops/->phenotype x (F/Subtract x F/C1D2) nil)
                                                 (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))))))
 
+      (is (instance? IExpr (F/Subtract F/E F/C1D2)))
+      (is (instance? IAST (F/Subtract F/E F/C1D2)))
+      (is (= "-1/2+E"
+             (str (F/Subtract F/E F/C1D2))))
+      (is (= "-1/2+E"
+             (str (.eval (F/Subtract F/E F/C1D2)))))
+      (is (= 2.218281828459045
+             (.toNumber (F/Subtract F/E F/C1D2))))
+
+      (is (= nil
+             (try (.toNumber (F/Subtract x F/C1D2))
+                  (catch Exception e nil))))
       ;; todo: how to fix this? I see this error intermittently when running experiments:
       #_(is (= [0.0]
                (ops/eval-vec-pheno (ops/->phenotype x (F/Subtract F/E F/C1D2) nil)
