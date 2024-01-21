@@ -54,7 +54,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -687,6 +687,28 @@
 
 
 (def ^ISymbol sym-x (F/Dummy "x"))
+
+
+(defn apply-modifications
+  [max-leafs mods-count initial-muts p-winner p-discard]
+  (loop [iters      0
+         c          mods-count
+         v          p-winner
+         first-run? true]
+    (if (zero? c)
+      [v iters]
+      (let [v     (if first-run? (assoc v :util (:util p-discard)) v)
+            m     (rand-nth initial-muts)
+            new-v (modify m v)]
+        (recur
+          (inc iters)
+          (if (> (.leafCount ^IExpr (:expr new-v)) max-leafs)
+            0
+            (dec c)) #_(if (fn-size-growing-too-fast? v new-v)
+                         0
+                         (dec c))
+          new-v
+          false)))))
 
 
 (defn eval-vec-pheno

@@ -86,11 +86,6 @@
         min-score))))
 
 
-(defn rand-mut
-  [initial-muts]
-  (rand-nth initial-muts))
-
-
 (defn fn-size-growing-too-fast?
   [v new-v]
   (let [old-count (count (str (:expr v)))
@@ -103,24 +98,7 @@
   [initial-muts p-winner p-discard pop]
   (try
     (let [c         (rand-nth ops/mutations-sampler)
-          [new-pheno iters] (loop [iters      0
-                                   c          c
-                                   v          p-winner
-                                   first-run? true]
-                              (if (zero? c)
-                                [v iters]
-                                (let [v     (if first-run? (assoc v :util (:util p-discard)) v)
-                                      m     (rand-mut initial-muts)
-                                      new-v (ops/modify m v)]
-                                  (recur
-                                    (inc iters)
-                                    (if (> (.leafCount ^IExpr (:expr new-v)) max-leafs)
-                                      0
-                                      (dec c)) #_(if (fn-size-growing-too-fast? v new-v)
-                                                   0
-                                                   (dec c))
-                                    new-v
-                                    false))))
+          [new-pheno iters] (ops/apply-modifications max-leafs c initial-muts p-winner p-discard)
           old-leafs (.leafCount ^IExpr (:expr p-winner))
           new-leafs (.leafCount ^IExpr (:expr new-pheno))]
       (swap! sim-stats* update-in [:mutations :counts iters] #(inc (or % 0)))
