@@ -741,7 +741,7 @@
                                arg0))))
                        (catch Exception e
                          (println "Error in evaling function on const xs vector: "
-                                  (str eval-p) " : " e)
+                                  (str eval-p) " : " (.getMessage e))
                          (throw e))))
                    (range input-exprs-count)))]
         vs))))
