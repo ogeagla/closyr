@@ -41,11 +41,13 @@
 (def log-steps 1)
 
 (def min-score -100000000)
-(def max-leafs 160)
+(def max-leafs 120)
 
-(defn tally-min-score []
-  (swap! sim-stats* update-in [:scoring :min-scores ] #(inc (or % 0)))
-  )
+
+(defn tally-min-score
+  []
+  (swap! sim-stats* update-in [:scoring :min-scores] #(inc (or % 0))))
+
 
 (defn score-fn
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
@@ -58,7 +60,7 @@
         (do
           (tally-min-score)
           min-score)
-        (let [f-of-xs          (ops/eval-vec-pheno v run-args)]
+        (let [f-of-xs (ops/eval-vec-pheno v run-args)]
           (if f-of-xs
             (let [resids           (map - output-exprs-vec f-of-xs)
                   abs-resids       (map #(min 1000000 (abs %)) resids)
@@ -159,13 +161,13 @@
 
 (defn summarize-sim-stats
   []
-  (let [{{xcs :counts}                    :crossovers
+  (let [{{xcs :counts}                :crossovers
          {cs     :counts
           sz-in  :size-in
-          sz-out :size-out}               :mutations
+          sz-out :size-out}           :mutations
          {len-deductions :len-deductions
-          min-scores :min-scores} :scoring
-         :as                              dat} @sim-stats*]
+          min-scores     :min-scores} :scoring
+         :as                          dat} @sim-stats*]
     (let [len-deductions-sorted
           (sort len-deductions)
           sz-in-sorted
