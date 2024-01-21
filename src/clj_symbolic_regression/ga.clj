@@ -64,7 +64,6 @@
 
       (merge config
              {:pop            new-pop
-              :pop-old        pop
               :score-fn       score-fn
               :pop-old-score  pop-score
               :pop-old-scores pop-scores
