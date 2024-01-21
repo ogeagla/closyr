@@ -217,7 +217,7 @@
                (summarize-sim-stats))
 
       (put! sim->gui-chan {:iters                    iters
-                           :i                        (- iters i)
+                           :i                        (inc (- iters i))
                            :best-eval                evaled
                            :input-exprs-vec-extended xs-extended
                            :best-eval-extended       evaled-extended
