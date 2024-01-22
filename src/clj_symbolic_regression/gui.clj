@@ -426,12 +426,16 @@
     (mapv #(first %))))
 
 
+(def input-y-fn* (atom "sin+cos"))
+
+
 (defn input-dataset-change
   [^ActionEvent e]
   (let [{:keys [^JPanel drawing-widget items-point-setters]} @items-points-accessors*
         ^JComboBox jcb (.getSource e)
         selection      (-> jcb .getSelectedItem str)
         new-fn         (input-y-fns selection)]
+    (reset! input-y-fn* selection)
     (mapv
       (fn [i]
         ((nth items-point-setters i)
@@ -454,8 +458,8 @@
         new-xs (Integer/parseInt xs-str)]
     (reset! sketch-input-x-count* new-xs)
     (reset! sketch-input-x-scale* ({100 8
-                                    50 15
-                                    20 27}
+                                    50  15
+                                    20  27}
                                    new-xs))
 
 
@@ -601,17 +605,8 @@
             scores-chart-panel          (XChartPanel. scores-chart)
 
 
-            {:keys [^JPanel drawing-widget items-point-getters items-point-setters]} (input-data-items-widget
-                                                                                       (input-y-fns "sin+cos"))
+            {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
 
-            _                           (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
-                                                                           (println "REPLACE DRAWING WIDGET!")
-                                                                           (ss/replace!
-                                                                             draw-container
-                                                                             drawing-widget
-                                                                             (:drawing-widget
-                                                                               (input-data-items-widget
-                                                                                 (input-y-fns "hline"))))))
             ^JButton ctl-start-stop-btn (ss/button
                                           :text "Start"
                                           :listen [:mouse-clicked
@@ -629,6 +624,15 @@
             ^JComboBox input-fn-picker  (ss/combobox
                                           :model dataset-fns
                                           :listen [:action input-dataset-change])]
+
+        (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
+                                           (println "REPLACE DRAWING WIDGET!")
+                                           (ss/replace!
+                                             draw-container
+                                             drawing-widget
+                                             (:drawing-widget
+                                               (input-data-items-widget
+                                                 (input-y-fns @input-y-fn*))))))
 
 
         (.add input-fn-container input-fn-picker)
