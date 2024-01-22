@@ -540,7 +540,8 @@
            :best-fn-chart-panel best-fn-chart-panel
            :info-label          my-label
            :scores-chart-panel  scores-chart-panel
-           :scores-chart        scores-chart}
+           :scores-chart        scores-chart
+           :ctl-start-stop-btn ctl-start-stop-btn}
           gui-data)))))
 
 

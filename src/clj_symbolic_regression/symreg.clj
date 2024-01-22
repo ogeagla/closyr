@@ -5,7 +5,8 @@
     [clj-symbolic-regression.ops :as ops]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
-    [flames.core :as flames])
+    [flames.core :as flames]
+    [seesaw.core :as ss])
   (:import
     (java.util
       Date
@@ -13,7 +14,7 @@
     (java.util.concurrent
       CopyOnWriteArrayList)
     (javax.swing
-      JLabel)
+      JButton JLabel)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -254,7 +255,8 @@
            ^XYChart scores-chart
            ^XChartPanel best-fn-chart-panel
            ^XChartPanel scores-chart-panel
-           ^JLabel info-label]}
+           ^JLabel info-label
+           ^JButton ctl-start-stop-btn]}
    {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
            ^String series-best-fn-label ^String series-objective-fn-label
            ^List xs-scores
@@ -290,6 +292,9 @@
         (when (= 1 i)
           (.clear xs-scores)
           (.clear ys-scores))
+
+        (when (= iters i)
+          (ss/set-text* ctl-start-stop-btn "Start"))
 
         (.add xs-scores i)
         (.add ys-scores best-score)
@@ -400,6 +405,12 @@
    :output-exprs-vec     output-exprs-vec})
 
 
+(defn wait-and-get-gui-args [sim-stop-start-chan]
+  ;; wait for GUI to press Start, which submits the new xs/ys data:
+  (let [msg (<!! sim-stop-start-chan)]
+    (->run-args (update-plot-input-data msg)) )
+  )
+
 (defn start-gui-and-get-input-data
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
 
@@ -409,12 +420,9 @@
 
   (let [{sim->gui-chan       :sim->gui-chan
          sim-stop-start-chan :sim-stop-start-chan
-         :as                 gui-comms} (setup-gui)
+         :as                 gui-comms} (setup-gui)]
 
-        ;; wait for GUI to press Start, which submits the new xs/ys data:
-        msg (<!! sim-stop-start-chan)]
-
-    (merge gui-comms (->run-args (update-plot-input-data msg)))))
+    (merge gui-comms (wait-and-get-gui-args sim-stop-start-chan))))
 
 
 (defn run-from-inputs
@@ -450,11 +458,17 @@
 
       (println "Took " (/ diff 1000.0) " seconds"))
 
-    (when @reset?*
-      (reset! reset?* false)
-      (println "Restarting...")
-      (<!! (timeout 1000))
-      (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))))
+    (if  @reset?*
+      (do
+        (reset! reset?* false)
+        (println "Restarting...")
+        (<!! (timeout 1000))
+        (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))
+      (do
+        (run-from-inputs run-config (merge run-args (wait-and-get-gui-args sim-stop-start-chan)))
+        )
+      )
+    ))
 
 
 (defn run-experiment
@@ -478,7 +492,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 3500)
+                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 4000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs

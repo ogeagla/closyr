@@ -194,15 +194,10 @@
     (fn []
       [F/C0
        F/C1
-       F/CN1
        x
        x
        x
        x
-       x
-       x
-       (F/Times -1 (->iexprs [x]))
-       (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
        (F/Times -1 (->iexprs [x]))
