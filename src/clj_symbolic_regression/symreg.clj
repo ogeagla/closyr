@@ -343,7 +343,9 @@
   [{new-state    :new-state
     reset?       :reset
     input-data-x :input-data-x
-    input-data-y :input-data-y}]
+    input-data-y :input-data-y
+    input-iters :input-iters
+    input-phenos-count  :input-phenos-count }]
 
   (println "Got state req: "
            (if reset?
@@ -362,7 +364,10 @@
 
     (reset! sim-input-args* {:input-exprs      input-exprs
                              :input-exprs-vec  input-exprs-vec
-                             :output-exprs-vec output-exprs-vec})
+                             :output-exprs-vec output-exprs-vec
+                             :input-iters input-iters
+                             :input-phenos-count input-phenos-count
+                             })
 
     @sim-input-args*))
 
@@ -397,12 +402,16 @@
 (defn ->run-args
   [{input-exprs      :input-exprs
     input-exprs-vec  :input-exprs-vec
-    output-exprs-vec :output-exprs-vec}]
+    output-exprs-vec :output-exprs-vec
+    input-iters :input-iters
+    input-phenos-count  :input-phenos-count}]
   {:extended-domain-args (ops/extend-xs input-exprs-vec)
    :input-exprs-list     (ops/exprs->input-exprs-list input-exprs)
    :input-exprs-count    (count input-exprs)
    :input-exprs-vec      input-exprs-vec
-   :output-exprs-vec     output-exprs-vec})
+   :output-exprs-vec     output-exprs-vec
+   :input-iters input-iters
+   :input-phenos-count input-phenos-count})
 
 
 (defn wait-and-get-gui-args [sim-stop-start-chan]
@@ -427,10 +436,12 @@
 
 (defn run-from-inputs
   [{:keys [iters initial-phenos initial-muts] :as run-config}
-   {:keys [input-exprs-list input-exprs-count output-exprs-vec
+   {:keys [input-iters input-phenos-count input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
-  (let [start (Date.)
+  (let [iters (or input-iters iters)
+        initial-phenos (or initial-phenos (ops/initial-phenotypes input-phenos-count))
+        start (Date.)
         pop1  (ga/initialize
                 initial-phenos
                 (partial score-fn run-args)
@@ -492,7 +503,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes ops/sym-x 4000)
+                          {:initial-phenos (ops/initial-phenotypes  4000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs

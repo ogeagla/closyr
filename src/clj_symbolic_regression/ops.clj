@@ -187,31 +187,34 @@
       (println "Error in ops/crossover: " (.getMessage e))
       nil)))
 
+(def ^ISymbol sym-x (F/Dummy "x"))
 
 (defn initial-phenotypes
-  [^ISymbol x reps]
-  (->>
-    (fn []
-      [F/C0
-       F/C1
-       x
-       x
-       x
-       x
-       (F/Times -1 (->iexprs [x]))
-       (F/Times -1 (->iexprs [x]))
-       (F/Times -1 (->iexprs [x]))
-       (F/Times -1 (->iexprs [x]))
-       ;; (F/Log x)
-       ;; (F/Exp x)
-       ;; (F/Sin x)
-       ;; (F/Cos x)
-       ;; (F/Sqr x)
-       ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
-       ])
-    (repeatedly reps)
-    (mapcat identity)
-    (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
+  [ reps]
+  (let [^ISymbol x sym-x]
+    (->>
+      (fn []
+        [F/C0
+         F/C1
+         x
+         x
+         x
+         x
+         (F/Times -1 (->iexprs [x]))
+         (F/Times -1 (->iexprs [x]))
+         (F/Times -1 (->iexprs [x]))
+         (F/Times -1 (->iexprs [x]))
+         ;; (F/Log x)
+         ;; (F/Exp x)
+         ;; (F/Sin x)
+         ;; (F/Cos x)
+         ;; (F/Sqr x)
+         ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
+         ])
+      (repeatedly reps)
+      (mapcat identity)
+      (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
+  )
 
 
 (def modify-leafs-sampler [true false false false])
@@ -681,7 +684,7 @@
       :replace-expr F/Times}])
 
 
-(def ^ISymbol sym-x (F/Dummy "x"))
+
 
 
 (defn apply-modifications

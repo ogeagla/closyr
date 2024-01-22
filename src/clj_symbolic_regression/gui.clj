@@ -234,6 +234,11 @@
           input-y    (mapv second input-data)]
       (println "clicked Start/Stop: " is-start)
       (put! sim-stop-start-chan {:new-state    is-start
+
+                                 ;; todo from this gui:
+                                 :input-iters nil
+                                 :input-phenos-count nil
+
                                  :input-data-x input-x
                                  :input-data-y input-y})
       (ss/set-text* e (if is-start
@@ -251,6 +256,11 @@
       (println "clicked Reset: ")
       (put! sim-stop-start-chan {:new-state    true
                                  :reset        true
+
+                                 ;; todo from this gui:
+                                 :input-iters nil
+                                 :input-phenos-count nil
+
                                  :input-data-x input-x
                                  :input-data-y input-y})
       (ss/set-text* start-top-label "Stop"))))
