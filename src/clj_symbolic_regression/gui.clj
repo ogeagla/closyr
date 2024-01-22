@@ -57,6 +57,20 @@
 (def sketch-input-x-scale* (atom 15))
 
 
+(def xs->gap
+  {100 8
+   50  15
+   20  27})
+
+
+(defn ^JPanel panel-grid
+  [{:keys [rows cols]}]
+  (doto (JPanel. (BorderLayout.))
+    ;; (.setSize 1200 100)
+    (.setBackground Color/LIGHT_GRAY)
+    (.setLayout (GridLayout. rows cols))))
+
+
 (defn movable
   ([w] (movable w {:disable-x? false}))
   ([w {disable-x? :disable-x?}]
@@ -259,19 +273,9 @@
 
 (defn ^JPanel experiment-settings-panel
   []
-  (let [iters-settings-container             (doto (JPanel. (BorderLayout.))
-                                               ;; (.setSize 600 100)
-                                               (.setBackground Color/LIGHT_GRAY)
-                                               (.setLayout (GridLayout. 1 4)))
-        pcount-settings-container            (doto (JPanel. (BorderLayout.))
-                                               ;; (.setSize 600 100)
-                                               (.setBackground Color/LIGHT_GRAY)
-                                               (.setLayout (GridLayout. 1 4)))
-
-        ^JPanel settings-container           (doto (JPanel. (BorderLayout.))
-                                               ;; (.setSize 600 100)
-                                               (.setBackground Color/LIGHT_GRAY)
-                                               (.setLayout (GridLayout. 2 1)))
+  (let [iters-settings-container             (panel-grid {:rows 1 :cols 4})
+        pcount-settings-container            (panel-grid {:rows 1 :cols 4})
+        ^JPanel settings-container           (panel-grid {:rows 2 :cols 1})
 
         btn-group-iters                      (ss/button-group)
         ^JRadioButtonMenuItem iter-radio-1   (ss/radio-menu-item
@@ -457,29 +461,15 @@
   (let [xs-str (.getText ^JRadioButtonMenuItem (.getSource e))
         new-xs (Integer/parseInt xs-str)]
     (reset! sketch-input-x-count* new-xs)
-    (reset! sketch-input-x-scale* ({100 8
-                                    50  15
-                                    20  27}
-                                   new-xs))
-
-
-
-    (println "brush xs to " xs-str " -> " new-xs)
-
-    (@replace-drawing-widget!* (:drawing-widget @items-points-accessors*))))
+    (reset! sketch-input-x-scale* (xs->gap new-xs))
+    (@replace-drawing-widget!* (:drawing-widget @items-points-accessors*))
+    (println "brush xs to " xs-str " -> " new-xs)))
 
 
 (defn ^JPanel brush-panel
   []
-  (let [brush-config-container          (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 1 3)))
-
-        ^JPanel brush-container         (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 1)))
+  (let [brush-config-container          (panel-grid {:rows 1 :cols 3})
+        ^JPanel brush-container         (panel-grid {:rows 2 :cols 1})
 
         btn-group-brush                 (ss/button-group)
         ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
@@ -504,15 +494,8 @@
 
 (defn ^JPanel xs-panel
   []
-  (let [xs-config-container              (doto (JPanel. (BorderLayout.))
-                                           ;; (.setSize 600 100)
-                                           (.setBackground Color/LIGHT_GRAY)
-                                           (.setLayout (GridLayout. 1 4)))
-
-        ^JPanel xs-container             (doto (JPanel. (BorderLayout.))
-                                           ;; (.setSize 600 100)
-                                           (.setBackground Color/LIGHT_GRAY)
-                                           (.setLayout (GridLayout. 2 1)))
+  (let [xs-config-container              (panel-grid {:rows 1 :cols 4})
+        ^JPanel xs-container             (panel-grid {:rows 2 :cols 1})
 
         btn-group-xs                     (ss/button-group)
         ^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
@@ -550,39 +533,13 @@
                                           (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
                                           #_(.setSize 1600 1400))
 
-            bottom-container            (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 1200 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 1)))
-
-            info-container              (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 1)))
-
-            ctls-container              (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 3 1)))
-
-            inputs-container            (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 2 2)))
-
-            draw-container              (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 1 2)))
-
-            top-container               (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 1 2)))
-            input-fn-container          (doto (JPanel. (BorderLayout.))
-                                          ;; (.setSize 600 100)
-                                          (.setBackground Color/LIGHT_GRAY)
-                                          (.setLayout (GridLayout. 1 2)))
+            bottom-container            (panel-grid {:rows 2 :cols 1})
+            info-container              (panel-grid {:rows 2 :cols 1})
+            ctls-container              (panel-grid {:rows 3 :cols 1})
+            inputs-container            (panel-grid {:rows 2 :cols 2})
+            draw-container              (panel-grid {:rows 1 :cols 2})
+            top-container               (panel-grid {:rows 1 :cols 2})
+            input-fn-container          (panel-grid {:rows 1 :cols 2})
 
             content-pane                (doto (.getContentPane my-frame)
                                           (.setLayout (GridLayout. 2 1)))
