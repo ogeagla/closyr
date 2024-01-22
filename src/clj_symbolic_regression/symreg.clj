@@ -14,7 +14,8 @@
     (java.util.concurrent
       CopyOnWriteArrayList)
     (javax.swing
-      JButton JLabel)
+      JButton
+      JLabel)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -340,12 +341,12 @@
 
 
 (defn update-plot-input-data
-  [{new-state    :new-state
-    reset?       :reset
-    input-data-x :input-data-x
-    input-data-y :input-data-y
-    input-iters :input-iters
-    input-phenos-count  :input-phenos-count }]
+  [{new-state          :new-state
+    reset?             :reset
+    input-data-x       :input-data-x
+    input-data-y       :input-data-y
+    input-iters        :input-iters
+    input-phenos-count :input-phenos-count}]
 
   (println "Got state req: "
            (if reset?
@@ -362,12 +363,11 @@
         output-exprs-vec (ops/exprs->doubles output-exprs)
         input-exprs-vec  (ops/exprs->doubles input-exprs)]
 
-    (reset! sim-input-args* {:input-exprs      input-exprs
-                             :input-exprs-vec  input-exprs-vec
-                             :output-exprs-vec output-exprs-vec
-                             :input-iters input-iters
-                             :input-phenos-count input-phenos-count
-                             })
+    (reset! sim-input-args* {:input-exprs        input-exprs
+                             :input-exprs-vec    input-exprs-vec
+                             :output-exprs-vec   output-exprs-vec
+                             :input-iters        input-iters
+                             :input-phenos-count input-phenos-count})
 
     @sim-input-args*))
 
@@ -400,25 +400,26 @@
 
 
 (defn ->run-args
-  [{input-exprs      :input-exprs
-    input-exprs-vec  :input-exprs-vec
-    output-exprs-vec :output-exprs-vec
-    input-iters :input-iters
-    input-phenos-count  :input-phenos-count}]
+  [{input-exprs        :input-exprs
+    input-exprs-vec    :input-exprs-vec
+    output-exprs-vec   :output-exprs-vec
+    input-iters        :input-iters
+    input-phenos-count :input-phenos-count}]
   {:extended-domain-args (ops/extend-xs input-exprs-vec)
    :input-exprs-list     (ops/exprs->input-exprs-list input-exprs)
    :input-exprs-count    (count input-exprs)
    :input-exprs-vec      input-exprs-vec
    :output-exprs-vec     output-exprs-vec
-   :input-iters input-iters
-   :input-phenos-count input-phenos-count})
+   :input-iters          input-iters
+   :input-phenos-count   input-phenos-count})
 
 
-(defn wait-and-get-gui-args [sim-stop-start-chan]
+(defn wait-and-get-gui-args
+  [sim-stop-start-chan]
   ;; wait for GUI to press Start, which submits the new xs/ys data:
   (let [msg (<!! sim-stop-start-chan)]
-    (->run-args (update-plot-input-data msg)) )
-  )
+    (->run-args (update-plot-input-data msg))))
+
 
 (defn start-gui-and-get-input-data
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
@@ -439,14 +440,14 @@
    {:keys [input-iters input-phenos-count input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
-  (let [iters (or input-iters iters)
+  (let [iters          (or input-iters iters)
         initial-phenos (or initial-phenos (ops/initial-phenotypes input-phenos-count))
-        start (Date.)
-        pop1  (ga/initialize
-                initial-phenos
-                (partial score-fn run-args)
-                (partial mutation-fn initial-muts)
-                (partial crossover-fn initial-muts))]
+        start          (Date.)
+        pop1           (ga/initialize
+                         initial-phenos
+                         (partial score-fn run-args)
+                         (partial mutation-fn initial-muts)
+                         (partial crossover-fn initial-muts))]
     (println "Start " start)
     (reset! test-timer* start)
 
@@ -469,17 +470,14 @@
 
       (println "Took " (/ diff 1000.0) " seconds"))
 
-    (if  @reset?*
+    (if @reset?*
       (do
         (reset! reset?* false)
         (println "Restarting...")
         (<!! (timeout 1000))
         (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))
       (do
-        (run-from-inputs run-config (merge run-args (wait-and-get-gui-args sim-stop-start-chan)))
-        )
-      )
-    ))
+        (run-from-inputs run-config (merge run-args (wait-and-get-gui-args sim-stop-start-chan)))))))
 
 
 (defn run-experiment
@@ -503,7 +501,7 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes  4000)
+                          {:initial-phenos (ops/initial-phenotypes 4000)
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs

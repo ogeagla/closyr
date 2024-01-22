@@ -233,14 +233,14 @@
           input-x    (mapv first input-data)
           input-y    (mapv second input-data)]
       (println "clicked Start/Stop: " is-start)
-      (put! sim-stop-start-chan {:new-state    is-start
+      (put! sim-stop-start-chan {:new-state          is-start
 
                                  ;; todo from this gui:
-                                 :input-iters nil
+                                 :input-iters        nil
                                  :input-phenos-count nil
 
-                                 :input-data-x input-x
-                                 :input-data-y input-y})
+                                 :input-data-x       input-x
+                                 :input-data-y       input-y})
       (ss/set-text* e (if is-start
                         "Stop"
                         "Start")))))
@@ -254,15 +254,15 @@
           input-x    (mapv first input-data)
           input-y    (mapv second input-data)]
       (println "clicked Reset")
-      (put! sim-stop-start-chan {:new-state    true
-                                 :reset        true
+      (put! sim-stop-start-chan {:new-state          true
+                                 :reset              true
 
                                  ;; todo from this gui:
-                                 :input-iters nil
+                                 :input-iters        nil
                                  :input-phenos-count nil
 
-                                 :input-data-x input-x
-                                 :input-data-y input-y})
+                                 :input-data-x       input-x
+                                 :input-data-y       input-y})
       (ss/set-text* start-top-label "Stop"))))
 
 
@@ -361,62 +361,61 @@
     (println "brush xs to " xs-str " -> " new-xs)))
 
 
-
 (defn ^JPanel inputs-xs-and-brush-panel
   []
-  (let [brush-config-container           (doto (JPanel. (BorderLayout.))
-                                           ;; (.setSize 600 100)
-                                           (.setBackground Color/LIGHT_GRAY)
-                                           (.setLayout (GridLayout. 1 3)))
+  (let [brush-config-container          (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 1 3)))
 
-        ;xs-config-container              (doto (JPanel. (BorderLayout.))
-        ;                                   ;; (.setSize 600 100)
-        ;                                   (.setBackground Color/LIGHT_GRAY)
-        ;                                   (.setLayout (GridLayout. 1 4)))
+        ;; xs-config-container              (doto (JPanel. (BorderLayout.))
+        ;;                                   ;; (.setSize 600 100)
+        ;;                                   (.setBackground Color/LIGHT_GRAY)
+        ;;                                   (.setLayout (GridLayout. 1 4)))
 
-        ^JPanel brush-container          (doto (JPanel. (BorderLayout.))
-                                           ;; (.setSize 600 100)
-                                           (.setBackground Color/LIGHT_GRAY)
-                                           (.setLayout (GridLayout. 2 1)))
-        ;^JLabel xs-info            (JLabel. "Xs:")
-        ;btn-group-xs                     (ss/button-group)
-        ;^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
-        ;                                   :text "10"
-        ;                                   :group btn-group-xs
-        ;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
-        ;^JRadioButtonMenuItem xs-radio-2 (ss/radio-menu-item
-        ;                                   :selected? true
-        ;                                   :text "50"
-        ;                                   :group btn-group-xs
-        ;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
-        ;^JRadioButtonMenuItem xs-radio-3 (ss/radio-menu-item
-        ;                                   :text "100"
-        ;                                   :group btn-group-xs
-        ;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
+        ^JPanel brush-container         (doto (JPanel. (BorderLayout.))
+                                          ;; (.setSize 600 100)
+                                          (.setBackground Color/LIGHT_GRAY)
+                                          (.setLayout (GridLayout. 2 1)))
+        ;; ^JLabel xs-info            (JLabel. "Xs:")
+        ;; btn-group-xs                     (ss/button-group)
+        ;; ^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
+        ;;                                   :text "10"
+        ;;                                   :group btn-group-xs
+        ;;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
+        ;; ^JRadioButtonMenuItem xs-radio-2 (ss/radio-menu-item
+        ;;                                   :selected? true
+        ;;                                   :text "50"
+        ;;                                   :group btn-group-xs
+        ;;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
+        ;; ^JRadioButtonMenuItem xs-radio-3 (ss/radio-menu-item
+        ;;                                   :text "100"
+        ;;                                   :group btn-group-xs
+        ;;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
 
 
-        btn-group-brush                  (ss/button-group)
-        ^JRadioButtonMenuItem b-radio-1  (ss/radio-menu-item
-                                           :selected? true
-                                           :text brush-label:skinny
-                                           :group btn-group-brush
-                                           :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem b-radio-2  (ss/radio-menu-item
-                                           :text brush-label:broad
-                                           :group btn-group-brush
-                                           :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem b-radio-3  (ss/radio-menu-item
-                                           :text brush-label:line
-                                           :group btn-group-brush
-                                           :listen [:mouse-clicked brush-on-change])]
-    ;(.add xs-config-container xs-info)
-    ;(.add xs-config-container xs-radio-1)
-    ;(.add xs-config-container xs-radio-2)
-    ;(.add xs-config-container xs-radio-3)
+        btn-group-brush                 (ss/button-group)
+        ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
+                                          :selected? true
+                                          :text brush-label:skinny
+                                          :group btn-group-brush
+                                          :listen [:mouse-clicked brush-on-change])
+        ^JRadioButtonMenuItem b-radio-2 (ss/radio-menu-item
+                                          :text brush-label:broad
+                                          :group btn-group-brush
+                                          :listen [:mouse-clicked brush-on-change])
+        ^JRadioButtonMenuItem b-radio-3 (ss/radio-menu-item
+                                          :text brush-label:line
+                                          :group btn-group-brush
+                                          :listen [:mouse-clicked brush-on-change])]
+    ;; (.add xs-config-container xs-info)
+    ;; (.add xs-config-container xs-radio-1)
+    ;; (.add xs-config-container xs-radio-2)
+    ;; (.add xs-config-container xs-radio-3)
     (.add brush-config-container b-radio-1)
     (.add brush-config-container b-radio-2)
     (.add brush-config-container b-radio-3)
-    ;(.add brush-container xs-config-container)
+    ;; (.add brush-container xs-config-container)
     (.add brush-container brush-config-container)
     brush-container))
 
@@ -506,7 +505,7 @@
                                                             ctl-start-stop-btn
                                                             sim-stop-start-chan
                                                             items-point-getters)])
-            brush-container             (inputs-xs-and-brush-panel )
+            brush-container             (inputs-xs-and-brush-panel)
             ^JComboBox input-fn-picker  (ss/combobox
                                           :model dataset-fns
                                           :listen [:action
@@ -551,7 +550,7 @@
            :info-label          my-label
            :scores-chart-panel  scores-chart-panel
            :scores-chart        scores-chart
-           :ctl-start-stop-btn ctl-start-stop-btn}
+           :ctl-start-stop-btn  ctl-start-stop-btn}
           gui-data)))))
 
 

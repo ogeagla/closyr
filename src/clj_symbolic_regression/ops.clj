@@ -187,10 +187,12 @@
       (println "Error in ops/crossover: " (.getMessage e))
       nil)))
 
+
 (def ^ISymbol sym-x (F/Dummy "x"))
 
+
 (defn initial-phenotypes
-  [ reps]
+  [reps]
   (let [^ISymbol x sym-x]
     (->>
       (fn []
@@ -213,8 +215,7 @@
          ])
       (repeatedly reps)
       (mapcat identity)
-      (mapv (fn [^IExpr expr] (->phenotype x expr nil)))))
-  )
+      (mapv (fn [^IExpr expr] (->phenotype x expr nil))))))
 
 
 (def modify-leafs-sampler [true false false false])
@@ -682,9 +683,6 @@
       :label        "Power->Times"
       :find-expr    F/Power
       :replace-expr F/Times}])
-
-
-
 
 
 (defn apply-modifications
