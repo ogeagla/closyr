@@ -165,6 +165,10 @@
    brush-label:line   sketchpad-on-click:line-brush})
 
 
+(def items-points-accessors* (atom {}))
+(def replace-drawing-widget!* (atom nil))
+
+
 (defn input-data-items-widget
   [points-fn]
   (let [^JPanel bp             (doto (ss/border-panel
@@ -209,7 +213,17 @@
                                  :background "#222222"
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)
-                                          #_(partial sketchpad-on-click:skinny-brush items @sketch-input-x-scale*)])]
+                                          #_(partial sketchpad-on-click:skinny-brush items @sketch-input-x-scale*)])
+        ;; ^JPanel container      (doto (JPanel. (BorderLayout.))
+        ;;                         ;; (.setSize 600 100)
+        ;;                         (.setBackground Color/LIGHT_GRAY)
+        ;;                         (.setLayout (GridLayout. 1 1)))
+        ]
+    ;; (.add container drawing-widget)
+    (reset! items-points-accessors* {:drawing-widget      drawing-widget
+                                     :items-point-getters items-point-getters
+                                     :items-point-setters items-point-setters})
+
     {:drawing-widget      drawing-widget
      :items-point-getters items-point-getters
      :items-point-setters items-point-setters}))
@@ -248,11 +262,11 @@
   (let [iters-settings-container             (doto (JPanel. (BorderLayout.))
                                                ;; (.setSize 600 100)
                                                (.setBackground Color/LIGHT_GRAY)
-                                               (.setLayout (GridLayout. 1 3)))
+                                               (.setLayout (GridLayout. 1 4)))
         pcount-settings-container            (doto (JPanel. (BorderLayout.))
                                                ;; (.setSize 600 100)
                                                (.setBackground Color/LIGHT_GRAY)
-                                               (.setLayout (GridLayout. 1 3)))
+                                               (.setLayout (GridLayout. 1 4)))
 
         ^JPanel settings-container           (doto (JPanel. (BorderLayout.))
                                                ;; (.setSize 600 100)
@@ -313,40 +327,42 @@
 
 
 (defn start-stop-on-click
-  [sim-stop-start-chan items-point-getters ^MouseEvent e]
-  (if-not sim-stop-start-chan
-    (println "warning: no sim-stop-start-chan provided")
-    (let [is-start   (= "Start" (ss/get-text* e))
-          input-data (getters->input-data items-point-getters)
-          input-x    (mapv first input-data)
-          input-y    (mapv second input-data)]
-      (println "clicked Start/Stop: " is-start)
-      (put! sim-stop-start-chan (merge @experiment-settings*
-                                       {:new-state    is-start
+  [sim-stop-start-chan ^MouseEvent e]
+  (let [{:keys [items-point-getters]} @items-points-accessors*]
+    (if-not sim-stop-start-chan
+      (println "warning: no sim-stop-start-chan provided")
+      (let [is-start   (= "Start" (ss/get-text* e))
+            input-data (getters->input-data items-point-getters)
+            input-x    (mapv first input-data)
+            input-y    (mapv second input-data)]
+        (println "clicked Start/Stop: " is-start)
+        (put! sim-stop-start-chan (merge @experiment-settings*
+                                         {:new-state    is-start
 
 
-                                        :input-data-x input-x
-                                        :input-data-y input-y}))
-      (ss/set-text* e (if is-start
-                        "Stop"
-                        "Start")))))
+                                          :input-data-x input-x
+                                          :input-data-y input-y}))
+        (ss/set-text* e (if is-start
+                          "Stop"
+                          "Start"))))))
 
 
 (defn reset-on-click
-  [^JButton start-top-label sim-stop-start-chan items-point-getters ^MouseEvent e]
-  (if-not sim-stop-start-chan
-    (println "warning: no sim-stop-start-chan provided")
-    (let [input-data (getters->input-data items-point-getters)
-          input-x    (mapv first input-data)
-          input-y    (mapv second input-data)]
-      (println "clicked Reset")
-      (put! sim-stop-start-chan (merge @experiment-settings*
-                                       {:new-state    true
-                                        :reset        true
+  [^JButton start-top-label sim-stop-start-chan ^MouseEvent e]
+  (let [{:keys [items-point-getters]} @items-points-accessors*]
+    (if-not sim-stop-start-chan
+      (println "warning: no sim-stop-start-chan provided")
+      (let [input-data (getters->input-data items-point-getters)
+            input-x    (mapv first input-data)
+            input-y    (mapv second input-data)]
+        (println "clicked Reset")
+        (put! sim-stop-start-chan (merge @experiment-settings*
+                                         {:new-state    true
+                                          :reset        true
 
-                                        :input-data-x input-x
-                                        :input-data-y input-y}))
-      (ss/set-text* start-top-label "Stop"))))
+                                          :input-data-x input-x
+                                          :input-data-y input-y}))
+        (ss/set-text* start-top-label "Stop")))))
 
 
 (defn y->gui-coord-y
@@ -411,8 +427,9 @@
 
 
 (defn input-dataset-change
-  [^JPanel drawing-widget items-point-setters ^ActionEvent e]
-  (let [^JComboBox jcb (.getSource e)
+  [^ActionEvent e]
+  (let [{:keys [^JPanel drawing-widget items-point-setters]} @items-points-accessors*
+        ^JComboBox jcb (.getSource e)
         selection      (-> jcb .getSelectedItem str)
         new-fn         (input-y-fns selection)]
     (mapv
@@ -432,19 +449,23 @@
 
 
 (defn xs-on-change
-  [^JPanel sketch-container ^MouseEvent e]
+  [^MouseEvent e]
   (let [xs-str (.getText ^JRadioButtonMenuItem (.getSource e))
         new-xs (Integer/parseInt xs-str)]
     (reset! sketch-input-x-count* new-xs)
-
-    ;; this doesnt actually call the constructor with xs again, obviously, so this cant work:
-    (.revalidate sketch-container)
-    (.repaint sketch-container)
-
-    (println "brush xs to " xs-str " -> " new-xs)))
+    (reset! sketch-input-x-scale* ({100 8
+                                    50 15
+                                    20 27}
+                                   new-xs))
 
 
-(defn ^JPanel inputs-xs-and-brush-panel
+
+    (println "brush xs to " xs-str " -> " new-xs)
+
+    (@replace-drawing-widget!* (:drawing-widget @items-points-accessors*))))
+
+
+(defn ^JPanel brush-panel
   []
   (let [brush-config-container          (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
@@ -475,6 +496,40 @@
     (.add brush-config-container b-radio-3)
     (.add brush-container brush-config-container)
     brush-container))
+
+
+(defn ^JPanel xs-panel
+  []
+  (let [xs-config-container              (doto (JPanel. (BorderLayout.))
+                                           ;; (.setSize 600 100)
+                                           (.setBackground Color/LIGHT_GRAY)
+                                           (.setLayout (GridLayout. 1 4)))
+
+        ^JPanel xs-container             (doto (JPanel. (BorderLayout.))
+                                           ;; (.setSize 600 100)
+                                           (.setBackground Color/LIGHT_GRAY)
+                                           (.setLayout (GridLayout. 2 1)))
+
+        btn-group-xs                     (ss/button-group)
+        ^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
+                                           :text "20"
+                                           :group btn-group-xs
+                                           :listen [:mouse-clicked xs-on-change])
+        ^JRadioButtonMenuItem xs-radio-2 (ss/radio-menu-item
+                                           :selected? true
+                                           :text "50"
+                                           :group btn-group-xs
+                                           :listen [:mouse-clicked xs-on-change])
+        ^JRadioButtonMenuItem xs-radio-3 (ss/radio-menu-item
+                                           :text "100"
+                                           :group btn-group-xs
+                                           :listen [:mouse-clicked xs-on-change])]
+    (.add xs-config-container (JLabel. "Points: "))
+    (.add xs-config-container xs-radio-1)
+    (.add xs-config-container xs-radio-2)
+    (.add xs-config-container xs-radio-3)
+    (.add xs-container xs-config-container)
+    xs-container))
 
 
 (defn create-and-show-gui
@@ -549,27 +604,31 @@
             {:keys [^JPanel drawing-widget items-point-getters items-point-setters]} (input-data-items-widget
                                                                                        (input-y-fns "sin+cos"))
 
+            _                           (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
+                                                                           (println "REPLACE DRAWING WIDGET!")
+                                                                           (ss/replace!
+                                                                             draw-container
+                                                                             drawing-widget
+                                                                             (:drawing-widget
+                                                                               (input-data-items-widget
+                                                                                 (input-y-fns "hline"))))))
             ^JButton ctl-start-stop-btn (ss/button
                                           :text "Start"
                                           :listen [:mouse-clicked
                                                    (partial start-stop-on-click
-                                                            sim-stop-start-chan
-                                                            items-point-getters)])
+                                                            sim-stop-start-chan)])
             ^JButton ctl-reset-btn      (ss/button
                                           :text "Restart"
                                           :listen [:mouse-clicked
                                                    (partial reset-on-click
                                                             ctl-start-stop-btn
-                                                            sim-stop-start-chan
-                                                            items-point-getters)])
-            brush-container             (inputs-xs-and-brush-panel)
+                                                            sim-stop-start-chan)])
+            brush-container             (brush-panel)
+            xs-container                (xs-panel)
             settings-panel              (experiment-settings-panel)
             ^JComboBox input-fn-picker  (ss/combobox
                                           :model dataset-fns
-                                          :listen [:action
-                                                   (partial input-dataset-change
-                                                            drawing-widget
-                                                            items-point-setters)])]
+                                          :listen [:action input-dataset-change])]
 
 
         (.add input-fn-container input-fn-picker)
@@ -577,7 +636,7 @@
         (.add inputs-container input-fn-container)
 
         (.add inputs-container settings-panel)
-        (.add inputs-container (JLabel. ""))
+        (.add inputs-container xs-container)
         (.add inputs-container (JLabel. ""))
         (.add info-container inputs-container)
         (.add info-container my-label)
