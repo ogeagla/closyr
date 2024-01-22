@@ -273,8 +273,16 @@
                                                :text "1000"
                                                :group btn-group-iters
                                                :listen [:mouse-clicked settings-iters-on-change])
+        ^JRadioButtonMenuItem iter-radio-4   (ss/radio-menu-item
+                                               :text "10000"
+                                               :group btn-group-iters
+                                               :listen [:mouse-clicked settings-iters-on-change])
 
         btn-group-pcounts                    (ss/button-group)
+        ^JRadioButtonMenuItem pcount-radio-4 (ss/radio-menu-item
+                                               :text "1000"
+                                               :group btn-group-pcounts
+                                               :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-1 (ss/radio-menu-item
                                                :text "4000"
                                                :group btn-group-pcounts
@@ -289,6 +297,7 @@
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])]
     (.add pcount-settings-container (JLabel. "Pop Count:"))
+    (.add pcount-settings-container pcount-radio-4)
     (.add pcount-settings-container pcount-radio-1)
     (.add pcount-settings-container pcount-radio-2)
     (.add pcount-settings-container pcount-radio-3)
@@ -297,6 +306,7 @@
     (.add iters-settings-container iter-radio-1)
     (.add iters-settings-container iter-radio-2)
     (.add iters-settings-container iter-radio-3)
+    (.add iters-settings-container iter-radio-4)
     (.add settings-container iters-settings-container)
     (.add settings-container pcount-settings-container)
     settings-container))
@@ -567,8 +577,8 @@
         (.add inputs-container input-fn-container)
 
         (.add inputs-container settings-panel)
-        (.add inputs-container (JLabel. "Placeholder 2"))
-        (.add inputs-container (JLabel. "Placeholder 3"))
+        (.add inputs-container (JLabel. ""))
+        (.add inputs-container (JLabel. ""))
         (.add info-container inputs-container)
         (.add info-container my-label)
 
@@ -581,7 +591,7 @@
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
 
-        (.add ctls-container (JLabel. "Placeholder 2"))
+        (.add ctls-container (JLabel. ""))
 
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
