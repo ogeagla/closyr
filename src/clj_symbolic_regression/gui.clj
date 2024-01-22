@@ -253,7 +253,7 @@
     (let [input-data (getters->input-data items-point-getters)
           input-x    (mapv first input-data)
           input-y    (mapv second input-data)]
-      (println "clicked Reset: ")
+      (println "clicked Reset")
       (put! sim-stop-start-chan {:new-state    true
                                  :reset        true
 
