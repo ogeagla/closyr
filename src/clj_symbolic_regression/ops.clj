@@ -190,29 +190,32 @@
 
 (def ^ISymbol sym-x (F/Dummy "x"))
 
+(def initial-exprs
+  (let [^ISymbol x sym-x]
+    [F/C0
+     F/C1
+     x
+     x
+     x
+     x
+     (F/Times -1 (->iexprs [x]))
+     (F/Times -1 (->iexprs [x]))
+     (F/Times -1 (->iexprs [x]))
+     (F/Times -1 (->iexprs [x]))
+     ;; (F/Log x)
+     ;; (F/Exp x)
+     ;; (F/Sin x)
+     ;; (F/Cos x)
+     ;; (F/Sqr x)
+     ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
+     ]))
 
 (defn initial-phenotypes
   [reps]
   (let [^ISymbol x sym-x]
     (->>
       (fn []
-        [F/C0
-         F/C1
-         x
-         x
-         x
-         x
-         (F/Times -1 (->iexprs [x]))
-         (F/Times -1 (->iexprs [x]))
-         (F/Times -1 (->iexprs [x]))
-         (F/Times -1 (->iexprs [x]))
-         ;; (F/Log x)
-         ;; (F/Exp x)
-         ;; (F/Sin x)
-         ;; (F/Cos x)
-         ;; (F/Sqr x)
-         ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
-         ])
+        initial-exprs)
       (repeatedly reps)
       (mapcat identity)
       (mapv (fn [^IExpr expr] (->phenotype x expr nil))))))

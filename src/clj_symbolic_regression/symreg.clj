@@ -441,14 +441,16 @@
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
   (let [iters          (or input-iters iters)
-        initial-phenos (or initial-phenos (ops/initial-phenotypes input-phenos-count))
+        initial-phenos (if input-phenos-count
+                         (ops/initial-phenotypes (/ input-phenos-count (count ops/initial-exprs)))
+                         initial-phenos)
         start          (Date.)
         pop1           (ga/initialize
                          initial-phenos
                          (partial score-fn run-args)
                          (partial mutation-fn initial-muts)
                          (partial crossover-fn initial-muts))]
-    (println "Start " start)
+    (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
     (reset! test-timer* start)
 
     (loop [pop pop1
@@ -505,7 +507,7 @@
                            :initial-muts   (ops/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          500}))]
+                           :iters          200}))]
     ;; with flame graph analysis:
     ;; (in-flames experiment-fn)
     ;; plain experiment:

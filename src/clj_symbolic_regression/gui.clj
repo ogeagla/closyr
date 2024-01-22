@@ -224,6 +224,84 @@
         items-point-getters))
 
 
+(def experiment-settings*
+  (atom {:input-iters        200
+         :input-phenos-count 40000}))
+
+
+(defn settings-iters-on-change
+  [^MouseEvent e]
+  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
+    (swap! experiment-settings* assoc :input-iters (Integer/parseInt b))
+    (println "iters changed to " b)))
+
+
+(defn settings-pheno-count-on-change
+  [^MouseEvent e]
+  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
+    (swap! experiment-settings* assoc :input-phenos-count (Integer/parseInt b))
+    (println "pheno count changed to " b)))
+
+
+(defn ^JPanel experiment-settings-panel
+  []
+  (let [iters-settings-container             (doto (JPanel. (BorderLayout.))
+                                               ;; (.setSize 600 100)
+                                               (.setBackground Color/LIGHT_GRAY)
+                                               (.setLayout (GridLayout. 1 3)))
+        pcount-settings-container            (doto (JPanel. (BorderLayout.))
+                                               ;; (.setSize 600 100)
+                                               (.setBackground Color/LIGHT_GRAY)
+                                               (.setLayout (GridLayout. 1 3)))
+
+        ^JPanel settings-container           (doto (JPanel. (BorderLayout.))
+                                               ;; (.setSize 600 100)
+                                               (.setBackground Color/LIGHT_GRAY)
+                                               (.setLayout (GridLayout. 2 1)))
+
+        btn-group-iters                      (ss/button-group)
+        ^JRadioButtonMenuItem iter-radio-1   (ss/radio-menu-item
+                                               :text "10"
+                                               :group btn-group-iters
+                                               :listen [:mouse-clicked settings-iters-on-change])
+        ^JRadioButtonMenuItem iter-radio-2   (ss/radio-menu-item
+                                               :selected? true
+                                               :text "200"
+                                               :group btn-group-iters
+                                               :listen [:mouse-clicked settings-iters-on-change])
+        ^JRadioButtonMenuItem iter-radio-3   (ss/radio-menu-item
+                                               :text "1000"
+                                               :group btn-group-iters
+                                               :listen [:mouse-clicked settings-iters-on-change])
+
+        btn-group-pcounts                    (ss/button-group)
+        ^JRadioButtonMenuItem pcount-radio-1 (ss/radio-menu-item
+                                               :text "4000"
+                                               :group btn-group-pcounts
+                                               :listen [:mouse-clicked settings-pheno-count-on-change])
+        ^JRadioButtonMenuItem pcount-radio-2 (ss/radio-menu-item
+                                               :selected? true
+                                               :text "40000"
+                                               :group btn-group-pcounts
+                                               :listen [:mouse-clicked settings-pheno-count-on-change])
+        ^JRadioButtonMenuItem pcount-radio-3 (ss/radio-menu-item
+                                               :text "100000"
+                                               :group btn-group-pcounts
+                                               :listen [:mouse-clicked settings-pheno-count-on-change])]
+    (.add pcount-settings-container (JLabel. "Pop Count:"))
+    (.add pcount-settings-container pcount-radio-1)
+    (.add pcount-settings-container pcount-radio-2)
+    (.add pcount-settings-container pcount-radio-3)
+
+    (.add iters-settings-container (JLabel. "Iterations:"))
+    (.add iters-settings-container iter-radio-1)
+    (.add iters-settings-container iter-radio-2)
+    (.add iters-settings-container iter-radio-3)
+    (.add settings-container iters-settings-container)
+    (.add settings-container pcount-settings-container)
+    settings-container))
+
+
 (defn start-stop-on-click
   [sim-stop-start-chan items-point-getters ^MouseEvent e]
   (if-not sim-stop-start-chan
@@ -233,14 +311,12 @@
           input-x    (mapv first input-data)
           input-y    (mapv second input-data)]
       (println "clicked Start/Stop: " is-start)
-      (put! sim-stop-start-chan {:new-state          is-start
+      (put! sim-stop-start-chan (merge @experiment-settings*
+                                       {:new-state    is-start
 
-                                 ;; todo from this gui:
-                                 :input-iters        nil
-                                 :input-phenos-count nil
 
-                                 :input-data-x       input-x
-                                 :input-data-y       input-y})
+                                        :input-data-x input-x
+                                        :input-data-y input-y}))
       (ss/set-text* e (if is-start
                         "Stop"
                         "Start")))))
@@ -254,15 +330,12 @@
           input-x    (mapv first input-data)
           input-y    (mapv second input-data)]
       (println "clicked Reset")
-      (put! sim-stop-start-chan {:new-state          true
-                                 :reset              true
+      (put! sim-stop-start-chan (merge @experiment-settings*
+                                       {:new-state    true
+                                        :reset        true
 
-                                 ;; todo from this gui:
-                                 :input-iters        nil
-                                 :input-phenos-count nil
-
-                                 :input-data-x       input-x
-                                 :input-data-y       input-y})
+                                        :input-data-x input-x
+                                        :input-data-y input-y}))
       (ss/set-text* start-top-label "Stop"))))
 
 
@@ -368,31 +441,10 @@
                                           (.setBackground Color/LIGHT_GRAY)
                                           (.setLayout (GridLayout. 1 3)))
 
-        ;; xs-config-container              (doto (JPanel. (BorderLayout.))
-        ;;                                   ;; (.setSize 600 100)
-        ;;                                   (.setBackground Color/LIGHT_GRAY)
-        ;;                                   (.setLayout (GridLayout. 1 4)))
-
         ^JPanel brush-container         (doto (JPanel. (BorderLayout.))
                                           ;; (.setSize 600 100)
                                           (.setBackground Color/LIGHT_GRAY)
                                           (.setLayout (GridLayout. 2 1)))
-        ;; ^JLabel xs-info            (JLabel. "Xs:")
-        ;; btn-group-xs                     (ss/button-group)
-        ;; ^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
-        ;;                                   :text "10"
-        ;;                                   :group btn-group-xs
-        ;;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
-        ;; ^JRadioButtonMenuItem xs-radio-2 (ss/radio-menu-item
-        ;;                                   :selected? true
-        ;;                                   :text "50"
-        ;;                                   :group btn-group-xs
-        ;;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
-        ;; ^JRadioButtonMenuItem xs-radio-3 (ss/radio-menu-item
-        ;;                                   :text "100"
-        ;;                                   :group btn-group-xs
-        ;;                                   :listen [:mouse-clicked (partial xs-on-change sketch-container)])
-
 
         btn-group-brush                 (ss/button-group)
         ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
@@ -408,14 +460,9 @@
                                           :text brush-label:line
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])]
-    ;; (.add xs-config-container xs-info)
-    ;; (.add xs-config-container xs-radio-1)
-    ;; (.add xs-config-container xs-radio-2)
-    ;; (.add xs-config-container xs-radio-3)
     (.add brush-config-container b-radio-1)
     (.add brush-config-container b-radio-2)
     (.add brush-config-container b-radio-3)
-    ;; (.add brush-container xs-config-container)
     (.add brush-container brush-config-container)
     brush-container))
 
@@ -506,6 +553,7 @@
                                                             sim-stop-start-chan
                                                             items-point-getters)])
             brush-container             (inputs-xs-and-brush-panel)
+            settings-panel              (experiment-settings-panel)
             ^JComboBox input-fn-picker  (ss/combobox
                                           :model dataset-fns
                                           :listen [:action
@@ -518,7 +566,7 @@
         (.add input-fn-container brush-container)
         (.add inputs-container input-fn-container)
 
-        (.add inputs-container (JLabel. "Placeholder 1"))
+        (.add inputs-container settings-panel)
         (.add inputs-container (JLabel. "Placeholder 2"))
         (.add inputs-container (JLabel. "Placeholder 3"))
         (.add info-container inputs-container)
