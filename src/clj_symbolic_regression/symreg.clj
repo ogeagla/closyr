@@ -499,6 +499,8 @@
     (flames/stop! flames)))
 
 
+(def ^:dynamic *use-flamechart* false)
+
 (defn run-test
   []
   (let [experiment-fn (fn []
@@ -508,12 +510,12 @@
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
                            :iters          200}))]
-    ;; with flame graph analysis:
-    ;; (in-flames experiment-fn)
-    ;; plain experiment:
-    (experiment-fn)))
+    (if *use-flamechart*
+      ;; with flame graph analysis:
+      (in-flames experiment-fn)
+      ;; plain experiment:
+      (experiment-fn))))
 
 
-;; todo: pick iters / phenos count in gui
 
 (comment (run-test))
