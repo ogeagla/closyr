@@ -136,7 +136,7 @@
   [{:keys [^IExpr expr ^double score last-op] p-id :id :as p}]
   (str
     " id: " (str/join (take 3 (str p-id)))
-    " last op: " (format "%20s" (str last-op)) #_(str/join (take 8 (str last-op)))
+    " last op: " (format "%17s" (str last-op)) #_(str/join (take 8 (str last-op)))
     " score: " (.format score-format score)
     " leafs: " (.leafCount expr)
     " fn: " (str/trim-newline (str expr))))
