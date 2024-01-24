@@ -495,7 +495,7 @@
 (defn ^JPanel xs-panel
   []
   (let [xs-config-container              (panel-grid {:rows 1 :cols 4})
-        ^JPanel xs-container             (panel-grid {:rows 2 :cols 1})
+        ^JPanel xs-container             (panel-grid {:rows 1 :cols 1})
 
         btn-group-xs                     (ss/button-group)
         ^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
@@ -597,7 +597,7 @@
         (.add inputs-container input-fn-container)
 
         (.add inputs-container settings-panel)
-        (.add inputs-container xs-container)
+        (.add brush-container xs-container)
         (.add inputs-container (JLabel. ""))
         (.add info-container inputs-container)
         (.add info-container my-label)
