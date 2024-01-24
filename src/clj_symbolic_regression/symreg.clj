@@ -8,7 +8,8 @@
     [flames.core :as flames]
     [seesaw.core :as ss])
   (:import
-    (java.text DecimalFormat)
+    (java.text
+      DecimalFormat)
     (java.util
       Date
       List)
@@ -130,7 +131,9 @@
     (sort-by :score)
     (reverse)))
 
+
 (def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
+
 
 (defn reportable-phen-str
   [{:keys [^IExpr expr ^double score last-op] p-id :id :as p}]
@@ -487,9 +490,10 @@
 
 (defn run-experiment
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
-  (println "iters: " iters)
-  (println "initial pop: " (count initial-phenos))
-  (println "initial muts: " (count initial-muts))
+  (println "initial data: iters: " iters
+           "pop: " (count initial-phenos)
+           "muts: " (count initial-muts))
+
   (let [run-args (start-gui-and-get-input-data run-config)]
     (run-from-inputs run-config run-args)))
 
@@ -503,6 +507,7 @@
 
 
 (def ^:dynamic *use-flamechart* false)
+
 
 (defn run-test
   []
@@ -518,7 +523,6 @@
       (in-flames experiment-fn)
       ;; plain experiment:
       (experiment-fn))))
-
 
 
 (comment (run-test))

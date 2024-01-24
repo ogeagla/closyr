@@ -737,7 +737,14 @@
       [v iters]
       (let [v     (if first-run? (assoc v :util (:util p-discard)) v)
             m     (rand-nth initial-muts)
-            new-v (modify m v)]
+            new-v (try
+                    (modify m v)
+                    (catch Exception e
+                      (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
+                        (println "Warning, mutation failed: " (:label m)
+                                 " on: " (str (:expr v))
+                                 " due to: " (.getMessage e)))
+                      v))]
         (recur
           (inc iters)
           (if (> (.leafCount ^IExpr (:expr new-v)) max-leafs)
