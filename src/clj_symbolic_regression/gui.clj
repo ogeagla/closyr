@@ -54,13 +54,15 @@
 (def brush-label:line "Line Brush")
 
 (def sketch-input-x-count* (atom 50))
-(def sketch-input-x-scale* (atom 15))
 
 
 (def xs->gap
-  {100 8
-   50  15
+  {100 5
+   50  11
    20  27})
+
+
+(def sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
 
 
 (defn ^JPanel panel-grid
@@ -248,7 +250,7 @@
   (mapv (fn [getter]
           (let [^Point pt (getter)]
             [(/ (- (.getX pt) 50.0) 50.0)
-             (- 6.0 (/ (.getY pt) 25.0))]))
+             (- 6.0 (/ (.getY pt) 15.0))]))
         items-point-getters))
 
 
@@ -371,7 +373,7 @@
 
 (defn y->gui-coord-y
   [y]
-  (+ 150 (* -1 y)))
+  (+ 90 (* -1 y)))
 
 
 (def input-y-fns-data
@@ -664,7 +666,7 @@
                                             (do
                                               (println "Parking updates to chart due to Stop command")
                                               (<! sim-stop-start-chan))))
-                                        (println "Draw new points " (.size xs-best-fn))
+                                        ;(println "Draw new points " (.size xs-best-fn))
                                         (.add xs-best-fn (.size xs-best-fn))
                                         (.add ys-best-fn (.size xs-best-fn))
                                         ;; (.remove ys-objective-fn 0)
