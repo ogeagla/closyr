@@ -1,5 +1,7 @@
 (ns clj-symbolic-regression.dataset.prime-10000)
 
+(set! *warn-on-reflection* true)
+
 
 (def prime-10000
   [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,

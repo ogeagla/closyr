@@ -1,5 +1,7 @@
 (ns clj-symbolic-regression.dataset.prime-counting)
 
+(set! *warn-on-reflection* true)
+
 
 (def all-maps
   [{:x 0, :pi_x 0}

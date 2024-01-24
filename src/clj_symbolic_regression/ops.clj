@@ -224,7 +224,8 @@
                             :plus (F/Plus e1-part e2-part)
                             :times (F/Times e1-part e2-part))]
 
-      ;; (println "Cross over on: 1: sz:" (.size e1) "fn: " (str e1) "2: sz: " (.size e2) "fn: " (str e2) " --->>> " (str new-expr))
+      ;; (println "Cross over on: 1: sz:"
+      ;;   (.size e1) "fn: " (str e1) "2: sz: " (.size e2) "fn: " (str e2) " --->>> " (str new-expr))
 
       (-> (->phenotype x-sym new-expr (:util p-discard))
           (with-last-op {:label ""
@@ -984,9 +985,11 @@
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
   (concat
-    (mapv clamp-oversampled-ys (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head))))
+    (mapv clamp-oversampled-ys
+          (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head))))
     (eval-vec-pheno p run-args)
-    (mapv clamp-oversampled-ys (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))))
+    (mapv clamp-oversampled-ys
+          (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))))
 
 
 (defn eval-vec-pheno-oversample-from-orig-xs

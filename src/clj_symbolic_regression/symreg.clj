@@ -46,11 +46,18 @@
 
 (def min-score -100000000)
 (def max-leafs 120)
+(def max-resid 1000000)
 
 
 (defn tally-min-score
   []
   (swap! sim-stats* update-in [:scoring :min-scores] #(inc (or % 0))))
+
+
+(defn not-finite?
+  [n]
+  (or (not (number? n))
+      (and (number? n) (Double/isNaN n))))
 
 
 (defn score-fn
@@ -66,37 +73,32 @@
           min-score)
         (let [f-of-xs (ops/eval-vec-pheno v run-args)]
           (if f-of-xs
-            (let [resids           (map (fn [expected actual]
-                                          (when (or (not (number? actual)) (Double/isNaN actual))
-                                            (println "warning, actual not a number: " actual " from " (str (:expr v))))
-                                          (let [res (if (or (not (number? actual)) (Double/isNaN actual))
-                                                      1000000
-                                                      (- expected actual))]
-                                            (if (or (not (number? res)) (Double/isNaN res))
-                                              (do
-                                                (println "warning, res not a number: " res
-                                                         " exp: " expected " actual: " actual)
-                                                1000000)
-                                              res)))
-                                        output-exprs-vec f-of-xs)
-                  abs-resids       (map
-                                     (fn [r] (min 1000000 (abs r)))
-                                     resids)
+            (let [abs-resids       (map
+                                     (fn [expected actual]
+                                       (let [bad-actual (when (not-finite? actual)
+                                                          #_(println "warning, actual not a number: "
+                                                                     actual " from " (str (:expr v)))
+                                                          true)
+                                             res        (if bad-actual
+                                                          max-resid
+                                                          (- expected actual))]
+                                         (if (not-finite? res)
+                                           (do
+                                             (println "warning, res not a number: " res
+                                                      " exp: " expected " actual: " actual)
+                                             max-resid)
+                                           (min max-resid (abs res)))))
+                                     output-exprs-vec
+                                     f-of-xs)
                   resid-sum        (sum abs-resids)
                   score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
                                               (last (sort abs-resids))))
                   length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
                   overall-score    (- score length-deduction)]
 
-              (when (Double/isNaN length-deduction)
-                (println "Bad len deduct: " length-deduction "from score: " score " leafs: " leafs " sum: " resid-sum
-                         " resids count: " (count abs-resids)
-                         "\n abs-resids: " abs-resids
-                         "\n resids: " resids))
 
-
-              (when (neg? length-deduction)
-                (println "warning: negative deduction increases score: " leafs length-deduction v))
+              (when (or (neg? length-deduction) (Double/isNaN length-deduction))
+                (println "warning: bad/negative deduction increases score: " leafs length-deduction (str (:expr v))))
               (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
               overall-score)
@@ -226,7 +228,8 @@
           pop-size (count (:pop ga-result))
           best-v   (first bests)
           evaled   (ops/eval-vec-pheno best-v run-args)
-          {evaled-extended :ys xs-extended :xs} (ops/eval-vec-pheno-oversample best-v run-args extended-domain-args)]
+          {evaled-extended :ys xs-extended :xs} (ops/eval-vec-pheno-oversample
+                                                  best-v run-args extended-domain-args)]
 
       (reset! test-timer* end)
       (println i "-step pop size: " pop-size
