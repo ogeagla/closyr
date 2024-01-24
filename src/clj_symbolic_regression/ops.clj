@@ -1,4 +1,6 @@
 (ns clj-symbolic-regression.ops
+  (:require
+    [clojure.string :as str])
   (:import
     (java.util
       Date
@@ -130,25 +132,46 @@
                    (modifier ie)))))
 
 
+(defn op-short-str_unmemo
+  [{:keys [op label] :as modif}]
+  (let [op-str    (name op)
+        ops-short (->> (str/split op-str #"-")
+                       (map #(-> (take 4 %)
+                                 (str/join)))
+                       (str/join "-"))]
+    (str ops-short ":" label)))
+
+
+(def op-short-str (memoize op-short-str_unmemo))
+
+
+(defn with-last-op
+  [p {:keys [op label] :as modif}]
+  (assoc p :last-op (op-short-str (select-keys modif [:op :label]))))
+
+
 (defmulti modify (fn [{:keys [op]} pheno] op))
 
 
 (defmethod modify :substitute
-  [{:keys [^IExpr find-expr ^IExpr replace-expr]}
+  [{:keys [label ^IExpr find-expr ^IExpr replace-expr] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (.subs expr find-expr replace-expr) util))
+  (-> (->phenotype x-sym (.subs expr find-expr replace-expr) util)
+      (with-last-op modif)))
 
 
 (defmethod modify :modify-leafs
-  [{:keys [leaf-modifier-fn]}
+  [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util))
+  (-> (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
+      (with-last-op modif)))
 
 
 (defmethod modify :fn
-  [{:keys [modifier-fn]}
+  [{:keys [label modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->phenotype x-sym (modifier-fn pheno) util))
+  (-> (->phenotype x-sym (modifier-fn pheno) util)
+      (with-last-op modif)))
 
 
 (defn is-expr-function?
@@ -182,13 +205,16 @@
 
       ;; (println "Cross over on: 1: sz:" (.size e1) "fn: " (str e1) "2: sz: " (.size e2) "fn: " (str e2) " --->>> " (str new-expr))
 
-      (->phenotype x-sym new-expr (:util p-discard)))
+      (-> (->phenotype x-sym new-expr (:util p-discard))
+          (with-last-op {:label ""
+                         :op    :crossover})))
     (catch Exception e
       (println "Error in ops/crossover: " (.getMessage e))
       nil)))
 
 
 (def ^ISymbol sym-x (F/Dummy "x"))
+
 
 (def initial-exprs
   (let [^ISymbol x sym-x]
@@ -209,6 +235,7 @@
      ;; (F/Sqr x)
      ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
      ]))
+
 
 (defn initial-phenotypes
   [reps]

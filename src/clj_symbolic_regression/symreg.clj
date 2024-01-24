@@ -8,6 +8,7 @@
     [flames.core :as flames]
     [seesaw.core :as ss])
   (:import
+    (java.text DecimalFormat)
     (java.util
       Date
       List)
@@ -129,14 +130,16 @@
     (sort-by :score)
     (reverse)))
 
+(def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
 
 (defn reportable-phen-str
-  [{:keys [^IExpr expr] :as p}]
+  [{:keys [^IExpr expr ^double score last-op] p-id :id :as p}]
   (str
-    " id: " (str/join (take 8 (str (:id p))))
-    " score: " (:score p)
+    " id: " (str/join (take 3 (str p-id)))
+    " last op: " (format "%20s" (str last-op)) #_(str/join (take 8 (str last-op)))
+    " score: " (.format score-format score)
     " leafs: " (.leafCount expr)
-    " fn: " (str expr)))
+    " fn: " (str/trim-newline (str expr))))
 
 
 (defn summarize-sim-stats
@@ -204,7 +207,7 @@
                " took secs: " took-s
                " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
                (str "\n top best:\n"
-                    (->> (take 5 bests)
+                    (->> (take 10 bests)
                          (map reportable-phen-str)
                          (str/join "\n")))
                "\n"
