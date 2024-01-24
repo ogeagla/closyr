@@ -213,6 +213,14 @@
                    "E^(-1+E^(-E^Sin(E^(1/2+E^(-x)))*x)+E^Cos(x)+x)"]
                   ["b log"
                    "Log(-1+x+Log(Cos(x))+Log(-x*Log(Sin(Log(1/2+Log(-x))))))"]
+                  ["b * b"
+                   "(1-x-Cos(x)^2-x^2*Sin((1/2+x^2)^2)^4)^2"]
+                  ["b ^1/2"
+                   "Sqrt(-1+x+Sqrt(Cos(x))+Sqrt(-x*Sqrt(Sin(Sqrt(1/2+Sqrt(-x))))))"]
+                  ["b ^-2"
+                   "1/(1-x-Sec(x)^2-Sin(1/(1/2+1/x^2)^2)^4/x^2)^2"]
+                  ["b ^-1"
+                   "1/(-1+x+Sec(x)-Sin(1/(1/2-1/x))/x)"]
                   ["b *-1"
                    "1-x+Cos(x)-x*Sin(1/2+x)"]
                   ["b *1.1"
