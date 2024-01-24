@@ -16,7 +16,7 @@
     (let [x (F/Dummy "x")]
       (is (= (str (F/Sin x))
              (str (:expr (ops/modify
-                           {:op           :substitute
+                           {:op           :modify-substitute
                             :find-expr    F/Cos
                             :replace-expr F/Sin}
                            {:sym  x
@@ -26,7 +26,7 @@
     (let [x (F/Dummy "x")]
       (is (= (str (.plus x (F/Sin x)))
              (str (:expr (ops/modify
-                           {:op          :fn
+                           {:op          :modify-fn
                             :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                                            (F/Plus expr (F/Sin expr)))}
                            {:sym  x
@@ -203,6 +203,20 @@
                    "-1+x-x*Cos(1/2-x)+Cos(x)"]
                   ["Cos->Sin"
                    "-1+x-x*Sin(1/2-x)+Sin(x)"]
+                  ["ast-h sin->cos"
+                   "-1+x-x*Cos(1/2-x)+Cos(x)"]
+                  ["ast-h cos->sin"
+                   "-1+x-x*Sin(1/2-x)+Sin(x)"]
+                  ["ast-h +->*"
+                   "-x^2*Cos(x)*Sin(x/2)"]
+                  ["ast-h *->+"
+                   "-2+2*x+Cos(x)-Sin(1/2-x)"]
+                  ["ast-h ^->*"
+                   "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["ast-h /->*"
+                   "-1+x+Cos(x)-x*Sin(1/2-x)"]
+                  ["ast-h /->+"
+                   "-1+x+Cos(x)-x*Sin(1/2-x)"]
                   ["b derivative"
                    "1-Cos(x)"]
                   ["b sin"
