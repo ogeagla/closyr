@@ -65,6 +65,12 @@
 (def sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
 
 
+(def items-points-accessors* (atom {}))
+(def replace-drawing-widget!* (atom nil))
+
+(def sketchpad-size* (atom {}))
+
+
 (defn ^JPanel panel-grid
   [{:keys [rows cols]}]
   (doto (JPanel. (BorderLayout.))
@@ -116,51 +122,70 @@
 
 (defn sketchpad-on-click:skinny-brush
   [items x-scale ^MouseEvent e]
-  (doall
-    (map-indexed
-      (fn [i ^JLabel widget]
-        (let [diff (/ (abs
-                        (- (.getX (.getLocation widget))
-                           (.getX (.getPoint e))))
-                      500.0)]
-          (.setLocation widget
-                        (+ 50.0 (* i x-scale))
-                        (+ (* (min 1 (+ 0.85 diff)) (.getY (.getLocation widget)))
-                           (* (max 0 (- 0.15 diff)) (.getY (.getPoint e)))))))
-      items))
+  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
 
-  (ss/repaint! e))
+
+
+    (doall
+      (map-indexed
+        (fn [i getter]
+          (let [^Point pt (getter)
+                setter    (nth items-point-setters i)
+                pt-x      (.getX pt)
+                pt-y      (.getY pt)
+                diff      (/ (abs
+                               (- pt-x
+                                  (.getX (.getPoint e))))
+                             500.0)]
+
+
+            (setter
+              pt-x
+              (+ (* (min 1 (+ 0.85 diff)) pt-y)
+                 (* (max 0 (- 0.15 diff)) (.getY (.getPoint e)))))))
+        items-point-getters)))
+
+  #_(ss/repaint! e))
 
 
 (defn sketchpad-on-click:broad-brush
   [items x-scale ^MouseEvent e]
-  (doall
-    (map-indexed
-      (fn [i ^JLabel widget]
-        (let [diff (/ (abs
-                        (- (.getX (.getLocation widget))
-                           (.getX (.getPoint e))))
-                      500.0)]
-          (.setLocation widget
-                        (+ 50.0 (* i x-scale))
-                        (+ (* (min 1 (+ 0.65 diff)) (.getY (.getLocation widget)))
-                           (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
-      items))
+  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
+    (doall
+      (map-indexed
+        (fn [i getter]
+          (let [^Point pt (getter)
+                setter    (nth items-point-setters i)
+                pt-x      (.getX pt)
+                pt-y      (.getY pt)
 
-  (ss/repaint! e))
+                diff      (/ (abs
+                               (- pt-x
+                                  (.getX (.getPoint e))))
+                             500.0)]
+            (setter
+              pt-x
+              (+ (* (min 1 (+ 0.65 diff)) pt-y)
+                 (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
+        items-point-getters)))
+
+  #_(ss/repaint! e))
 
 
 (defn sketchpad-on-click:line-brush
   [items x-scale ^MouseEvent e]
-  (doall
-    (map-indexed
-      (fn [i ^JLabel widget]
-        (.setLocation widget
-                      (+ 50.0 (* i x-scale))
-                      (.getY (.getPoint e))))
-      items))
+  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
+    (doall
+      (map-indexed
+        (fn [i getter]
+          (let [^Point pt (getter)
+                setter    (nth items-point-setters i)
+                pt-x      (.getX pt)
+                pt-y      (.getY pt)]
+            (setter pt-x (.getY (.getPoint e)))))
+        items-point-getters)))
 
-  (ss/repaint! e))
+  #_(ss/repaint! e))
 
 
 (def brush-fn* (atom sketchpad-on-click:skinny-brush))
@@ -172,15 +197,19 @@
    brush-label:line   sketchpad-on-click:line-brush})
 
 
-(def items-points-accessors* (atom {}))
-(def replace-drawing-widget!* (atom nil))
-
-(def sketchpad-size* (atom {}))
-
-
 (defn y->gui-coord-y
   [y]
-  (+ 85 (* -1 y)))
+  (+ (/ (or (:h @sketchpad-size*)
+            170)
+        2)
+     (* -1 y)))
+
+
+(defn gui-coord-y->y
+  [y]
+  (* -1 (- y (/ (or (:h @sketchpad-size*)
+                    170)
+                2))))
 
 
 (def input-y-fns-data
@@ -255,18 +284,41 @@
 (defn reposition-labels
   [[c ^Graphics2D g]]
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
-        w  (ss/width c)
-        h  (ss/height c)
-        ff (input-y-fns @input-y-fn*)]
-
+        w     (ss/width c)
+        h     (ss/height c)
+        ff    (input-y-fns @input-y-fn*)
+        old-w (or (:w @sketchpad-size*) w)
+        old-h (or (:h @sketchpad-size*) h)]
     (reset! sketchpad-size* {:h h :w w})
-    (mapv
-      (fn [i]
-        (let [setter (nth items-point-setters i)]
-          (setter
-            (+ 50.0 (* i @sketch-input-x-scale* (/ w 700)))
-            (* (ff i) (/ h 200)))))
-      (range @sketch-input-x-count*))))
+    ;; only on resize:
+    (when-not (and (= w old-w)
+                   (= h old-h))
+
+      ;(println "resize: " old-w old-h " -> " w h)
+      (reset! sketchpad-size* {:h h :w w})
+      (mapv
+        (fn [i]
+          (let [setter (nth items-point-setters i)
+                getter (nth items-point-getters i)]
+            (setter
+              (+ 50.0 (* i @sketch-input-x-scale* (/ w 675)))
+
+              (* (+ (* (.getY ^Point (getter))
+                       #_(+ 0.5 (* 0.5 (/ h (or old-h h)))))
+                    (if (pos? (- h old-h))
+                      (Math/ceil (/ (- h old-h) 2))
+                      (Math/floor (/ (- h old-h) 2)))))
+              #_(y->gui-coord-y
+                  (* (gui-coord-y->y (.getY ^Point (getter)))
+                     (+ 0.5 (* 0.5 (/ h (or old-h h))))
+
+                     )) #_(* (ff i) (/ h 200)))))
+        (range @sketch-input-x-count*)))))
+
+
+(defn set-widget-location
+  ([^JLabel widget ^double y] (.setLocation widget (.getX (.getLocation widget)) y))
+  ([^JLabel widget ^double x ^double y] (.setLocation widget x y)))
 
 
 (defn input-data-items-widget
@@ -304,9 +356,9 @@
 
         items-point-setters    (map
                                  (fn [^JLabel widget]
-                                   (fn
-                                     ([^double y] (.setLocation widget (.getX (.getLocation widget)) y))
-                                     ([^double x ^double y] (.setLocation widget x y))))
+                                   (fn [x y]
+                                     ;; (println "set widget loc: " x y)
+                                     (set-widget-location widget x y)))
                                  items)
 
         ^JPanel drawing-widget (ss/xyz-panel
@@ -336,7 +388,7 @@
   (mapv (fn [getter]
           (let [^Point pt (getter)]
             [(/ (- (.getX pt) 50.0) (/ (:w @sketchpad-size*) 20.0 #_@sketch-input-x-count*))
-             (- 6.0 (/ (.getY pt) (/ (:h @sketchpad-size*) 15.0)))]))
+             (- 6.0 (/ (.getY pt) (/ 170 #_(:h @sketchpad-size*) 15.0)))]))
         items-point-getters))
 
 
@@ -459,7 +511,7 @@
 
 (defn input-dataset-change
   [^ActionEvent e]
-  (let [{:keys [^JPanel drawing-widget items-point-setters]} @items-points-accessors*
+  (let [{:keys [^JPanel drawing-widget items-point-setters items-point-getters]} @items-points-accessors*
         ^JComboBox jcb (.getSource e)
         selection      (-> jcb .getSelectedItem str)
         new-fn         (input-y-fns selection)]
@@ -467,6 +519,7 @@
     (mapv
       (fn [i]
         ((nth items-point-setters i)
+         (.getX ^Point ((nth items-point-getters i)))
          (new-fn i)))
       (range @sketch-input-x-count*))
     (ss/repaint! drawing-widget)
