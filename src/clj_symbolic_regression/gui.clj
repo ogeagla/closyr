@@ -114,15 +114,6 @@
     (ss/config! :bounds :preferred)))
 
 
-(defn draw-grid
-  [c ^Graphics2D g]
-  (let [w (ss/width c) h (ss/height c)]
-    (doseq [x (range 0 w 10)]
-      (.drawLine g x 0 x h))
-    (doseq [y (range 0 h 10)]
-      (.drawLine g 0 y w y))))
-
-
 (defn sketchpad-on-click:skinny-brush
   [items x-scale ^MouseEvent e]
   (doall
@@ -184,6 +175,99 @@
 (def items-points-accessors* (atom {}))
 (def replace-drawing-widget!* (atom nil))
 
+(def sketchpad-size* (atom {}))
+
+
+(defn y->gui-coord-y
+  [y]
+  (+ 85 (* -1 y)))
+
+
+(def input-y-fns-data
+  {"sin+cos"
+   {:idx 0
+    :fn  (fn [i]
+           (y->gui-coord-y
+             (+ (* 50 (Math/sin (/ i 4.0)))
+                (* 30 (Math/cos (/ i 3.0))))))}
+   "cos"
+   {:idx 10
+    :fn  (fn [i]
+           (y->gui-coord-y
+             (* 30 (Math/cos (/ i 3.0)))))}
+   "sin"
+   {:idx 20
+    :fn  (fn [i]
+           (y->gui-coord-y
+             (* 50 (Math/sin (/ i 4.0)))))}
+
+   "log"
+   {:idx 30
+    :fn  (fn [i]
+           (y->gui-coord-y
+             (* 50 (Math/log (+ 0.01 (/ i 4.0))))))}
+
+   "hline"
+   {:idx 40
+    :fn  (fn [i]
+           (y->gui-coord-y 0.0))}
+
+   "prime count"
+   {:idx 50
+    :fn  (let [xys (data-prime-counting/get-data @sketch-input-x-count*)]
+           (fn [i]
+             (y->gui-coord-y (second (nth xys i)))))}
+
+   "primes"
+   {:idx 50
+    :fn  (let [xys (data-primes/get-data @sketch-input-x-count*)]
+           (fn [i]
+             (y->gui-coord-y (second (nth xys i)))))}})
+
+
+(def input-y-fns
+  (into {}
+        (map
+          (fn [[k v]] [k (:fn v)])
+          input-y-fns-data)))
+
+
+(def dataset-fns
+  (->>
+    input-y-fns-data
+    (sort-by #(:idx (second %)))
+    (mapv #(first %))))
+
+
+(def input-y-fn* (atom "sin+cos"))
+
+
+(defn draw-grid
+  [c ^Graphics2D g]
+  (let [w (ss/width c) h (ss/height c)]
+    (doseq [x (range 0 w 10)]
+      (.drawLine g x 0 x h))
+    (doseq [y (range 0 h 10)]
+      (.drawLine g 0 y w y)))
+  [c g])
+
+
+(defn reposition-labels
+  [[c ^Graphics2D g]]
+  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
+        w  (ss/width c)
+        h  (ss/height c)
+        ff (input-y-fns @input-y-fn*)]
+
+    (reset! sketchpad-size* {:h h :w w})
+    (mapv
+      (fn [i]
+        (let [setter (nth items-point-setters i)]
+          (setter
+            (+ 50.0 (* i @sketch-input-x-scale* (/ w 700)))
+            (* (ff i) (/ h 200)))))
+      (range @sketch-input-x-count*))))
+
 
 (defn input-data-items-widget
   [points-fn]
@@ -220,11 +304,13 @@
 
         items-point-setters    (map
                                  (fn [^JLabel widget]
-                                   (fn [^double y] (.setLocation widget (.getX (.getLocation widget)) y)))
+                                   (fn
+                                     ([^double y] (.setLocation widget (.getX (.getLocation widget)) y))
+                                     ([^double x ^double y] (.setLocation widget x y))))
                                  items)
 
         ^JPanel drawing-widget (ss/xyz-panel
-                                 :paint draw-grid
+                                 :paint (comp reposition-labels draw-grid)
                                  :id :xyz
                                  :background "#222222"
                                  :items items #_(conj items bp)
@@ -249,8 +335,8 @@
   [items-point-getters]
   (mapv (fn [getter]
           (let [^Point pt (getter)]
-            [(/ (- (.getX pt) 50.0) 50.0)
-             (- 6.0 (/ (.getY pt) 15.0))]))
+            [(/ (- (.getX pt) 50.0) (/ (:w @sketchpad-size*) 20.0 #_@sketch-input-x-count*))
+             (- 6.0 (/ (.getY pt) (/ (:h @sketchpad-size*) 15.0)))]))
         items-point-getters))
 
 
@@ -369,70 +455,6 @@
                                           :input-data-x input-x
                                           :input-data-y input-y}))
         (ss/set-text* start-top-label "Stop")))))
-
-
-(defn y->gui-coord-y
-  [y]
-  (+ 90 (* -1 y)))
-
-
-(def input-y-fns-data
-  {"sin+cos"
-   {:idx 0
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (+ (* 50 (Math/sin (/ i 4.0)))
-                (* 30 (Math/cos (/ i 3.0))))))}
-   "cos"
-   {:idx 10
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 30 (Math/cos (/ i 3.0)))))}
-   "sin"
-   {:idx 20
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 50 (Math/sin (/ i 4.0)))))}
-
-   "log"
-   {:idx 30
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 50 (Math/log (+ 0.01 (/ i 4.0))))))}
-
-   "hline"
-   {:idx 40
-    :fn  (fn [i]
-           (y->gui-coord-y 0.0))}
-
-   "prime count"
-   {:idx 50
-    :fn  (let [xys (data-prime-counting/get-data @sketch-input-x-count*)]
-           (fn [i]
-             (y->gui-coord-y (second (nth xys i)))))}
-
-   "primes"
-   {:idx 50
-    :fn  (let [xys (data-primes/get-data @sketch-input-x-count*)]
-           (fn [i]
-             (y->gui-coord-y (second (nth xys i)))))}})
-
-
-(def input-y-fns
-  (into {}
-        (map
-          (fn [[k v]] [k (:fn v)])
-          input-y-fns-data)))
-
-
-(def dataset-fns
-  (->>
-    input-y-fns-data
-    (sort-by #(:idx (second %)))
-    (mapv #(first %))))
-
-
-(def input-y-fn* (atom "sin+cos"))
 
 
 (defn input-dataset-change
@@ -666,7 +688,7 @@
                                             (do
                                               (println "Parking updates to chart due to Stop command")
                                               (<! sim-stop-start-chan))))
-                                        ;(println "Draw new points " (.size xs-best-fn))
+                                        ;; (println "Draw new points " (.size xs-best-fn))
                                         (.add xs-best-fn (.size xs-best-fn))
                                         (.add ys-best-fn (.size xs-best-fn))
                                         ;; (.remove ys-objective-fn 0)
