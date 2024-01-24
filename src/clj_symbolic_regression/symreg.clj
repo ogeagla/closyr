@@ -66,14 +66,34 @@
           min-score)
         (let [f-of-xs (ops/eval-vec-pheno v run-args)]
           (if f-of-xs
-            (let [resids           (map - output-exprs-vec f-of-xs)
-                  abs-resids       (map #(min 1000000 (abs %)) resids)
+            (let [resids           (map (fn [expected actual]
+                                          (when (or (not (number? actual)) (Double/isNaN actual))
+                                            (println "warning, actual not a number: " actual " from " (str (:expr v))))
+                                          (let [res (if (or (not (number? actual)) (Double/isNaN actual))
+                                                      1000000
+                                                      (- expected actual))]
+                                            (if (or (not (number? res)) (Double/isNaN res))
+                                              (do
+                                                (println "warning, res not a number: " res
+                                                         " exp: " expected " actual: " actual)
+                                                1000000)
+                                              res)))
+                                        output-exprs-vec f-of-xs)
+                  abs-resids       (map
+                                     (fn [r] (min 1000000 (abs r)))
+                                     resids)
                   resid-sum        (sum abs-resids)
-                  ;; score            (* -1 (/ (abs resid) (count abs-resids)))
                   score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
                                               (last (sort abs-resids))))
                   length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
                   overall-score    (- score length-deduction)]
+
+              (when (Double/isNaN length-deduction)
+                (println "Bad len deduct: " length-deduction "from score: " score " leafs: " leafs " sum: " resid-sum
+                         " resids count: " (count abs-resids)
+                         "\n abs-resids: " abs-resids
+                         "\n resids: " resids))
+
 
               (when (neg? length-deduction)
                 (println "warning: negative deduction increases score: " leafs length-deduction v))
@@ -156,8 +176,10 @@
          :as                          dat} @sim-stats*]
     (let [len-deductions-sorted
           (sort len-deductions)
+
           sz-in-sorted
           (sort sz-in)
+
           sz-out-sorted
           (sort sz-out)
           summary-data
@@ -165,11 +187,12 @@
               (assoc :crossovers
                      {:crossovers-count xcs})
               (assoc :scoring
-                     {:len-ded-mean (/ (sum len-deductions) (count len-deductions))
-                      :len-ded-min  (first len-deductions-sorted)
-                      :len-ded-max  (last len-deductions-sorted)
-                      :len-ded-med  (nth len-deductions-sorted
-                                         (/ (count len-deductions-sorted) 2))})
+                     {:len-deductions (count len-deductions)
+                      :len-ded-mean   (/ (sum len-deductions) (count len-deductions))
+                      :len-ded-min    (first len-deductions-sorted)
+                      :len-ded-max    (last len-deductions-sorted)
+                      :len-ded-med    (nth len-deductions-sorted
+                                           (/ (count len-deductions-sorted) 2))})
               (assoc :mutations
                      {:counts              (reverse (sort-by second cs))
                       :sz-in-mean-max-min  [(Math/round ^double (/ (sum sz-in) (count sz-in)))
