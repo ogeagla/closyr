@@ -132,6 +132,16 @@
                    (modifier ie)))))
 
 
+(defn ^java.util.function.Function tree-branch-modifier
+  [modifier]
+  (as-function (fn ^IExpr [^IExpr ie]
+                 (if (instance? IAST ie)
+                   (let [^IAST ie ie]
+                     (modifier
+                       (F/ast (->iexprs (.map ie (tree-branch-modifier modifier))) (.head ie))))
+                   ie))))
+
+
 (defn op-short-str_unmemo
   [{:keys [op label] :as modif}]
   (let [op-str    (name op)
@@ -164,6 +174,13 @@
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
   (-> (->phenotype x-sym (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
+      (with-last-op modif)))
+
+
+(defmethod modify :modify-branches
+  [{:keys [label leaf-modifier-fn] :as modif}
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
+  (-> (->phenotype x-sym (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
       (with-last-op modif)))
 
 
@@ -448,6 +465,78 @@
     :label       "*0.9"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (.times expr (F/num 0.9)))}
+
+
+
+   {:op               :modify-branches
+    :label            "branch derivative"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (F/D ie x-sym)
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "branch sin"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (F/Sin ie)
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "branch cos"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (F/Cos ie)
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "branch exp"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (F/Exp ie)
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "branch log"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (F/Log ie)
+                          ie))}
+
+
+   {:op               :modify-branches
+    :label            "branch *-1"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (.times ie F/CN1)
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "branch *1.1"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (.times ie (F/num 1.1))
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "branch *0.9"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (.times ie (F/num 0.9))
+                          ie))}
+   {:op               :modify-branches
+    :label            "branch +0.1"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (.plus ie (F/num 0.1))
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "branch -0.1"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-leaf leaf-count pheno)
+                          (.minus ie (F/num 0.1))
+                          ie))}
 
    {:op               :modify-leafs
     :label            "x+1/2"

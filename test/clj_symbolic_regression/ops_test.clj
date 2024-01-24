@@ -126,6 +126,26 @@
                    "1.1*(-1+x+Cos(x)-x*Sin(1/2-x))"]
                   ["*0.9"
                    "0.9*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+                  ["branch derivative"
+                   "1-Cos(x)"]
+                  ["branch sin"
+                   "-Sin(1-x-Sin(Cos(x))+Sin(x*Sin(Sin(Sin(1/2-Sin(x))))))"]
+                  ["branch cos"
+                   "Cos(1-x-Cos(Cos(x))-Cos(x*Cos(Sin(Cos(1/2+Cos(x))))))"]
+                  ["branch exp"
+                   "E^(-1+E^(-E^Sin(E^(1/2+E^(-x)))*x)+E^Cos(x)+x)"]
+                  ["branch log"
+                   "Log(-1+x+Log(Cos(x))+Log(-x*Log(Sin(Log(1/2+Log(-x))))))"]
+                  ["branch *-1"
+                   "1-x+Cos(x)-x*Sin(1/2+x)"]
+                  ["branch *1.1"
+                   "1.1*(-1+x+1.1*Cos(x)-1.2100000000000002*x*Sin(1.1*(1/2-1.1*x)))"]
+                  ["branch *0.9"
+                   "0.9*(-1+x+0.9*Cos(x)-0.81*x*Sin(0.9*(1/2-0.9*x)))"]
+                  ["branch +0.1"
+                   "-0.7000000000000001+x+Cos(x)-x*(0.1+Sin(0.7-x))"]
+                  ["branch -0.1"
+                   "-1.3000000000000003+x+Cos(x)+x*(0.1-Sin(0.3-x))"]
                   ["x+1/2"
                    "-1/2+x+Cos(1/2+x)+(1/2+x)*Sin(x)"]
                   ["x-1/2"
