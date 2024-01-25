@@ -294,7 +294,7 @@
     (when-not (and (= w old-w)
                    (= h old-h))
 
-      ;(println "resize: " old-w old-h " -> " w h)
+      ;; (println "resize: " old-w old-h " -> " w h)
       (reset! sketchpad-size* {:h h :w w})
       (mapv
         (fn [i]
@@ -388,7 +388,8 @@
   (mapv (fn [getter]
           (let [^Point pt (getter)]
             [(/ (- (.getX pt) 50.0) (/ (:w @sketchpad-size*) 20.0 #_@sketch-input-x-count*))
-             (- 6.0 (/ (.getY pt) (/ 170 #_(:h @sketchpad-size*) 15.0)))]))
+             (- 7.5 (/ (.getY pt)
+                       (/ (:h @sketchpad-size*) 15.0)))]))
         items-point-getters))
 
 
