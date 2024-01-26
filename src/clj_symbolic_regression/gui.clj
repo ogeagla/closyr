@@ -243,14 +243,14 @@
 
    "prime count"
    {:idx 50
-    :fn  (let [xys (data-prime-counting/get-data @sketch-input-x-count*)]
-           (fn [i]
+    :fn  (fn [i]
+           (let [xys (data-prime-counting/get-data @sketch-input-x-count*)]
              (y->gui-coord-y (second (nth xys i)))))}
 
    "primes"
-   {:idx 50
-    :fn  (let [xys (data-primes/get-data @sketch-input-x-count*)]
-           (fn [i]
+   {:idx 60
+    :fn  (fn [i]
+           (let [xys (data-primes/get-data @sketch-input-x-count*)]
              (y->gui-coord-y (second (nth xys i)))))}})
 
 
