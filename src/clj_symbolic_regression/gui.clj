@@ -286,33 +286,25 @@
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
         w     (ss/width c)
         h     (ss/height c)
-        ff    (input-y-fns @input-y-fn*)
         old-w (or (:w @sketchpad-size*) w)
         old-h (or (:h @sketchpad-size*) h)]
+
     (reset! sketchpad-size* {:h h :w w})
     ;; only on resize:
+
     (when-not (and (= w old-w)
                    (= h old-h))
 
-      ;; (println "resize: " old-w old-h " -> " w h)
-      (reset! sketchpad-size* {:h h :w w})
       (mapv
         (fn [i]
           (let [setter (nth items-point-setters i)
                 getter (nth items-point-getters i)]
             (setter
               (+ 50.0 (* i @sketch-input-x-scale* (/ w 675)))
-
-              (* (+ (* (.getY ^Point (getter))
-                       #_(+ 0.5 (* 0.5 (/ h (or old-h h)))))
-                    (if (pos? (- h old-h))
-                      (Math/ceil (/ (- h old-h) 2))
-                      (Math/floor (/ (- h old-h) 2)))))
-              #_(y->gui-coord-y
-                  (* (gui-coord-y->y (.getY ^Point (getter)))
-                     (+ 0.5 (* 0.5 (/ h (or old-h h))))
-
-                     )) #_(* (ff i) (/ h 200)))))
+              (+ (.getY ^Point (getter))
+                 (if (pos? (- h old-h))
+                   (Math/ceil (/ (- h old-h) 2))
+                   (Math/floor (/ (- h old-h) 2)))))))
         (range @sketch-input-x-count*)))))
 
 
