@@ -333,17 +333,13 @@
                                  (fn [i]
                                    [(+ 50.0 (* i @sketch-input-x-scale*)) (points-fn i)])
                                  (range @sketch-input-x-count*))
+
         items                  (map
-                                 (fn [pt]
-                                   (movable
-                                     (make-label #(do pt)
-                                                 (str "x"))
-                                     {:disable-x? true}))
+                                 (fn [pt] (movable (make-label #(do pt) (str "x")) {:disable-x? true}))
                                  pts)
 
         items-point-getters    (map
-                                 (fn [^JLabel widget]
-                                   (fn [] (.getLocation widget)))
+                                 (fn [^JLabel widget] (fn [] (.getLocation widget)))
                                  items)
 
         items-point-setters    (map
@@ -358,14 +354,8 @@
                                  :id :xyz
                                  :background "#222222"
                                  :items items #_(conj items bp)
-                                 :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)
-                                          #_(partial sketchpad-on-click:skinny-brush items @sketch-input-x-scale*)])
-        ;; ^JPanel container      (doto (JPanel. (BorderLayout.))
-        ;;                         ;; (.setSize 600 100)
-        ;;                         (.setBackground Color/LIGHT_GRAY)
-        ;;                         (.setLayout (GridLayout. 1 1)))
-        ]
-    ;; (.add container drawing-widget)
+                                 :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
+
     (reset! items-points-accessors* {:drawing-widget      drawing-widget
                                      :items-point-getters items-point-getters
                                      :items-point-setters items-point-setters})
