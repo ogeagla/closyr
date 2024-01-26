@@ -56,7 +56,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -1026,10 +1026,11 @@
 
 
 (defn clamp-oversampled-ys
-  [y]
+  [max-y min-y y]
   (if (infinite? y)
     y
-    (min 10.0 (max y -10.0))))
+    (min (+ max-y 10.0)
+         (max y (- min-y 10.0)))))
 
 
 (defn extend-xs
@@ -1070,11 +1071,15 @@
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
   (concat
-    (mapv clamp-oversampled-ys
-          (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head))))
+
+    (let [res (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))]
+      (mapv #(clamp-oversampled-ys (apply max res) (apply min res) %)
+            res))
     (eval-vec-pheno p run-args)
-    (mapv clamp-oversampled-ys
-          (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail))))))
+
+    (let [res (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))]
+      (mapv #(clamp-oversampled-ys (apply max res) (apply min res) %)
+            res))))
 
 
 (defn eval-vec-pheno-oversample-from-orig-xs
