@@ -1072,13 +1072,17 @@
     x-tail-list :x-tail-list}]
   (concat
 
-    (let [res (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))]
-      (mapv #(clamp-oversampled-ys (apply max res) (apply min res) %)
+    (let [res   (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
+          max-y (apply max res)
+          min-y (apply min res)]
+      (mapv #(clamp-oversampled-ys max-y min-y %)
             res))
     (eval-vec-pheno p run-args)
 
-    (let [res (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))]
-      (mapv #(clamp-oversampled-ys (apply max res) (apply min res) %)
+    (let [res   (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))
+          max-y (apply max res)
+          min-y (apply min res)]
+      (mapv #(clamp-oversampled-ys max-y min-y %)
             res))))
 
 
