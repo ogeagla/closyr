@@ -251,7 +251,17 @@
    {:idx 60
     :fn  (fn [i]
            (let [xys (data-primes/get-data @sketch-input-x-count*)]
-             (y->gui-coord-y (second (nth xys i)))))}})
+             (y->gui-coord-y (second (nth xys i)))))}
+
+   "gaussian"
+   {:idx 70
+    :fn  (fn [i]
+           (y->gui-coord-y
+             (* 50
+                (Math/sqrt (* 2.0 Math/PI))
+                (Math/exp (- (* (/(/ (- i (/ @sketch-input-x-count* 2)) 5.0) 2.0)
+                                  (/ (- i (/ @sketch-input-x-count* 2)) 5.0)
+                                   ))))))}})
 
 
 (def input-y-fns
