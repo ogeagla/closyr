@@ -10,6 +10,7 @@
       IExpr
       ISymbol)))
 
+(set! *warn-on-reflection* true)
 
 (deftest modify-test
   (testing "substitute"
@@ -53,7 +54,20 @@
                             :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                                                 (F/Cos ie))}
                            {:sym  x
-                            :expr (.plus (F/num 1.0) x)}))))))))
+                            :expr (.plus (F/num 1.0) x)})))))))
+
+  (testing "modify-ast-head"
+    (let [x (F/Dummy "x")]
+      (is (= (str (.plus (F/num 1.0) ^IExpr (F/Cos x)))
+             (str (:expr (ops/modify
+                           {:op               :modify-ast-head
+                            :label            "sin->cos"
+                            :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                (if (= F/Sin ie)
+                                                  F/Cos
+                                                  ie))}
+                           {:sym  x
+                            :expr (.plus (F/num 1.0) ^IExpr (F/Sin x))}))))))))
 
 
 (deftest mutations-test
