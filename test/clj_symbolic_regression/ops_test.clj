@@ -10,7 +10,9 @@
       IExpr
       ISymbol)))
 
+
 (set! *warn-on-reflection* true)
+
 
 (deftest modify-test
   (testing "substitute"
@@ -36,38 +38,44 @@
   (testing "modify-leafs"
     (let [x (F/Dummy "x")]
       (is (= (str (.plus (F/num 1.0) ^IExpr (F/Sin x)))
-             (str (:expr (ops/modify
-                           {:op               :modify-leafs
-                            :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                (if (and (= (.toString ie) "x"))
-                                                  (F/Sin ie)
-                                                  ie))}
-                           {:sym  x
-                            :expr (.plus (F/num 1.0) x)})))))))
+             (str
+               (:expr
+                 (ops/modify
+                   {:op               :modify-leafs
+                    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                        (if (and (= (.toString ie) "x"))
+                                          (F/Sin ie)
+                                          ie))}
+                   {:sym  x
+                    :expr (.plus (F/num 1.0) x)})))))))
 
   (testing "modify-branches"
     (let [x (F/Dummy "x")]
       (is (= (str (F/Cos (.plus (F/num 1.0) x)))
-             (str (:expr (ops/modify
-                           {:op               :modify-branches
-                            :label            "branch cos"
-                            :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                (F/Cos ie))}
-                           {:sym  x
-                            :expr (.plus (F/num 1.0) x)})))))))
+             (str
+               (:expr
+                 (ops/modify
+                   {:op               :modify-branches
+                    :label            "branch cos"
+                    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                        (F/Cos ie))}
+                   {:sym  x
+                    :expr (.plus (F/num 1.0) x)})))))))
 
   (testing "modify-ast-head"
     (let [x (F/Dummy "x")]
       (is (= (str (.plus (F/num 1.0) ^IExpr (F/Cos x)))
-             (str (:expr (ops/modify
-                           {:op               :modify-ast-head
-                            :label            "sin->cos"
-                            :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                (if (= F/Sin ie)
-                                                  F/Cos
-                                                  ie))}
-                           {:sym  x
-                            :expr (.plus (F/num 1.0) ^IExpr (F/Sin x))}))))))))
+             (str
+               (:expr
+                 (ops/modify
+                   {:op               :modify-ast-head
+                    :label            "sin->cos"
+                    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                        (if (= F/Sin ie)
+                                          F/Cos
+                                          ie))}
+                   {:sym  x
+                    :expr (.plus (F/num 1.0) ^IExpr (F/Sin x))}))))))))
 
 
 (deftest mutations-test
@@ -473,11 +481,14 @@
       (is (= [2.218281828459045]
              (ops/eval-vec-pheno
                (ops/->phenotype x (F/Subtract F/E F/C1D2) nil)
-                                 {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
-                                  :input-exprs-count 1})))
+               {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
+                :input-exprs-count 1})))
 
       (is (= [0.5]
              (ops/eval-vec-pheno
                (ops/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
-                                 {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
-                                  :input-exprs-count 1}))))))
+               {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
+                :input-exprs-count 1}))))))
+
+
+(comment (run-tests 'clj-symbolic-regression.ops-test))
