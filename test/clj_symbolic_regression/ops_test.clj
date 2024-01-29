@@ -77,192 +77,284 @@
 
       (fn []
         (let [x (F/Dummy "x")]
-          (is (= [["Derivative"
+          (is (= [[:modify-fn
+                   "Derivative"
                    "1+x*Cos(1/2-x)-Sin(1/2-x)-Sin(x)"]
-                  ["+1/2"
+                  [:modify-fn
+                   "+1/2"
                    "-1/2+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["-1/2"
+                  [:modify-fn
+                   "-1/2"
                    "-3/2+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["+1/10"
+                  [:modify-fn
+                   "+1/10"
                    "-9/10+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["-1/10"
+                  [:modify-fn
+                   "-1/10"
                    "-11/10+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["+1/100"
+                  [:modify-fn
+                   "+1/100"
                    "-99/100+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["-1/100"
+                  [:modify-fn
+                   "-1/100"
                    "-101/100+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["+Sin"
+                  [:modify-fn
+                   "+Sin"
                    "-1+x+Cos(x)-x*Sin(1/2-x)+Sin(x)"]
-                  ["-Sin"
+                  [:modify-fn
+                   "-Sin"
                    "-1+x+Cos(x)-x*Sin(1/2-x)-Sin(x)"]
-                  ["+Log"
+                  [:modify-fn
+                   "+Log"
                    "-1+x+Cos(x)+Log(x)-x*Sin(1/2-x)"]
-                  ["-Log"
+                  [:modify-fn
+                   "-Log"
                    "-1+x+Cos(x)-Log(x)-x*Sin(1/2-x)"]
-                  ["+Exp"
+                  [:modify-fn
+                   "+Exp"
                    "-1+E^x+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["-Exp"
+                  [:modify-fn
+                   "-Exp"
                    "-1-E^x+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["+Cos"
+                  [:modify-fn
+                   "+Cos"
                    "-1+x+2*Cos(x)-x*Sin(1/2-x)"]
-                  ["-Cos"
+                  [:modify-fn
+                   "-Cos"
                    "-1+x-x*Sin(1/2-x)"]
-                  ["*Sin"
+                  [:modify-fn
+                   "*Sin"
                    "(-1+x+Cos(x)-x*Sin(1/2-x))*Sin(x)"]
-                  ["/Sin"
+                  [:modify-fn
+                   "/Sin"
                    "Csc(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["*Cos"
+                  [:modify-fn
+                   "*Cos"
                    "Cos(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["/Cos"
+                  [:modify-fn
+                   "/Cos"
                    "Sec(x)*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["+x"
+                  [:modify-fn
+                   "+x"
                    "-1+2*x+Cos(x)-x*Sin(1/2-x)"]
-                  ["-x"
+                  [:modify-fn
+                   "-x"
                    "-1+Cos(x)-x*Sin(1/2-x)"]
-                  ["+x^2"
+                  [:modify-fn
+                   "+x^2"
                    "-1+x+x^2+Cos(x)-x*Sin(1/2-x)"]
-                  ["-x^2"
+                  [:modify-fn
+                   "-x^2"
                    "-1+x-x^2+Cos(x)-x*Sin(1/2-x)"]
-                  ["+x^1/2"
+                  [:modify-fn
+                   "+x^1/2"
                    "-1+Sqrt(x)+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["-x^1/2"
+                  [:modify-fn
+                   "-x^1/2"
                    "-1-Sqrt(x)+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["*x"
+                  [:modify-fn
+                   "*x"
                    "x*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["/x"
+                  [:modify-fn
+                   "/x"
                    "(-1+x+Cos(x)-x*Sin(1/2-x))/x"]
-                  ["1/f"
+                  [:modify-fn
+                   "1/f"
                    "1/(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["*-1"
+                  [:modify-fn
+                   "*-1"
                    "1-x-Cos(x)+x*Sin(1/2-x)"]
-                  ["/2"
+                  [:modify-fn
+                   "/2"
                    "1/2*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["*2"
+                  [:modify-fn
+                   "*2"
                    "2*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["/10"
+                  [:modify-fn
+                   "/10"
                    "1/10*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["*10"
+                  [:modify-fn
+                   "*10"
                    "10*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["/100"
+                  [:modify-fn
+                   "/100"
                    "1/100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["*100"
+                  [:modify-fn
+                   "*100"
                    "100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["*1.1"
+                  [:modify-fn
+                   "*1.1"
                    "1.1*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["*0.9"
+                  [:modify-fn
+                   "*0.9"
                    "0.9*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-                  ["x+1/2"
+                  [:modify-leafs
+                   "x+1/2"
                    "-1/2+x+Cos(1/2+x)+(1/2+x)*Sin(x)"]
-                  ["x-1/2"
+                  [:modify-leafs
+                   "x-1/2"
                    "-3/2+x+Cos(1/2-x)+(1/2-x)*Sin(1-x)"]
-                  ["x/10"
+                  [:modify-leafs
+                   "x/10"
                    "-1+x/10+Cos(x/10)-1/10*x*Sin(1/2-x/10)"]
-                  ["10*x"
+                  [:modify-leafs
+                   "10*x"
                    "-1+10*x+Cos(10*x)-10*x*Sin(1/2-10*x)"]
-                  ["1/x"
+                  [:modify-leafs
+                   "1/x"
                    "-1+1/x+Cos(1/x)-Sin(1/2-1/x)/x"]
-                  ["x/100"
+                  [:modify-leafs
+                   "x/100"
                    "-1+x/100+Cos(x/100)-1/100*x*Sin(1/2-x/100)"]
-                  ["100*x"
+                  [:modify-leafs
+                   "100*x"
                    "-1+100*x+Cos(100*x)-100*x*Sin(1/2-100*x)"]
-                  ["-1*x"
+                  [:modify-leafs
+                   "-1*x"
                    "-1-x+Cos(x)+x*Sin(1/2+x)"]
-                  ["1.1*x"
+                  [:modify-leafs
+                   "1.1*x"
                    "-1+1.1*x+Cos(1.1*x)-1.1*x*Sin(1/2-1.1*x)"]
-                  ["0.9*x"
+                  [:modify-leafs
+                   "0.9*x"
                    "-1+0.9*x+Cos(0.9*x)-0.9*x*Sin(1/2-0.9*x)"]
-                  ["sin(x)"
+                  [:modify-leafs
+                   "sin(x)"
                    "-1+Cos(Sin(x))+Sin(x)-Sin(x)*Sin(1/2-Sin(x))"]
-                  ["cos(x)"
+                  [:modify-leafs
+                   "cos(x)"
                    "-1+Cos(x)+Cos(Cos(x))-Cos(x)*Sin(1/2-Cos(x))"]
-                  ["log(x)"
+                  [:modify-leafs
+                   "log(x)"
                    "-1+Cos(Log(x))+Log(x)-Log(x)*Sin(1/2-Log(x))"]
-                  ["exp(x)"
+                  [:modify-leafs
+                   "exp(x)"
                    "-1+E^x+Cos(E^x)-E^x*Sin(1/2-E^x)"]
-                  ["x^1/2"
+                  [:modify-leafs
+                   "x^1/2"
                    "-1+Sqrt(x)+Cos(Sqrt(x))-Sqrt(x)*Sin(1/2-Sqrt(x))"]
-                  ["x^2"
+                  [:modify-leafs
+                   "x^2"
                    "-1+x^2+Cos(x^2)-x^2*Sin(1/2-x^2)"]
-                  ["x+1/10"
+                  [:modify-leafs
+                   "x+1/10"
                    "-9/10+x+Cos(1/10+x)-(1/10+x)*Sin(2/5-x)"]
-                  ["x-1/10"
+                  [:modify-leafs
+                   "x-1/10"
                    "-11/10+x+Cos(1/10-x)+(1/10-x)*Sin(3/5-x)"]
-                  ["x+1/100"
+                  [:modify-leafs
+                   "x+1/100"
                    "-99/100+x+Cos(1/100+x)-(1/100+x)*Sin(49/100-x)"]
-                  ["x-1/100"
+                  [:modify-leafs
+                   "x-1/100"
                    "-101/100+x+Cos(1/100-x)+(1/100-x)*Sin(51/100-x)"]
-                  ["c/2"
+                  [:modify-leafs
+                   "c/2"
                    "-1/2+x+Cos(x)-1/2*x*Sin(1/4-x/2)"]
-                  ["c*2"
+                  [:modify-leafs
+                   "c*2"
                    "-2+x+Cos(x)-2*x*Sin(1-2*x)"]
-                  ["c*-1"
+                  [:modify-leafs
+                   "c*-1"
                    "1+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["c/10"
+                  [:modify-leafs
+                   "c/10"
                    "-1/10+x+Cos(x)-1/10*x*Sin(1/20-x/10)"]
-                  ["c*10"
+                  [:modify-leafs
+                   "c*10"
                    "-10+x+Cos(x)-10*x*Sin(5-10*x)"]
-                  ["c+1/10"
+                  [:modify-leafs
+                   "c+1/10"
                    "-9/10+x+Cos(x)-9/10*x*Sin(3/5-9/10*x)"]
-                  ["c-1/10"
+                  [:modify-leafs
+                   "c-1/10"
                    "-11/10+x+Cos(x)-11/10*x*Sin(2/5-11/10*x)"]
-                  ["c+1/100"
+                  [:modify-leafs
+                   "c+1/100"
                    "-99/100+x+Cos(x)-99/100*x*Sin(51/100-99/100*x)"]
-                  ["c-1/100"
+                  [:modify-leafs
+                   "c-1/100"
                    "-101/100+x+Cos(x)-101/100*x*Sin(49/100-101/100*x)"]
-                  ["c+1/2"
+                  [:modify-leafs
+                   "c+1/2"
                    "-1/2+x+Cos(x)-1/2*x*Sin(1-x/2)"]
-                  ["c-1/2"
+                  [:modify-leafs
+                   "c-1/2"
                    "-3/2+x+Cos(x)+3/2*x*Sin(3/2*x)"]
-                  ["Sin->Cos"
+                  [:modify-substitute
+                   "Sin->Cos"
                    "-1+x-x*Cos(1/2-x)+Cos(x)"]
-                  ["Cos->Sin"
+                  [:modify-substitute
+                   "Cos->Sin"
                    "-1+x-x*Sin(1/2-x)+Sin(x)"]
-                  ["sin->cos"
+                  [:modify-ast-head
+                   "sin->cos"
                    "-1+x-x*Cos(1/2-x)+Cos(x)"]
-                  ["cos->sin"
+                  [:modify-ast-head
+                   "cos->sin"
                    "-1+x-x*Sin(1/2-x)+Sin(x)"]
-                  ["+->*"
+                  [:modify-ast-head
+                   "+->*"
                    "-x^2*Cos(x)*Sin(x/2)"]
-                  ["*->+"
+                  [:modify-ast-head
+                   "*->+"
                    "-2+2*x+Cos(x)-Sin(1/2-x)"]
-                  ["^->*"
+                  [:modify-ast-head
+                   "^->*"
                    "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["/->*"
+                  [:modify-ast-head
+                   "/->*"
                    "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["/->+"
+                  [:modify-ast-head
+                   "/->+"
                    "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["b derivative"
+                  [:modify-branches
+                   "b derivative"
                    "1-Cos(x)"]
-                  ["b sin"
+                  [:modify-branches
+                   "b sin"
                    "-Sin(1-x-Sin(Cos(x))+Sin(x*Sin(Sin(Sin(1/2-Sin(x))))))"]
-                  ["b cos"
+                  [:modify-branches
+                   "b cos"
                    "Cos(1-x-Cos(Cos(x))-Cos(x*Cos(Sin(Cos(1/2+Cos(x))))))"]
-                  ["b exp"
+                  [:modify-branches
+                   "b exp"
                    "E^(-1+E^(-E^Sin(E^(1/2+E^(-x)))*x)+E^Cos(x)+x)"]
-                  ["b log"
+                  [:modify-branches
+                   "b log"
                    "Log(-1+x+Log(Cos(x))+Log(-x*Log(Sin(Log(1/2+Log(-x))))))"]
-                  ["b*b"
+                  [:modify-branches
+                   "b*b"
                    "(1-x-Cos(x)^2-x^2*Sin((1/2+x^2)^2)^4)^2"]
-                  ["b^1/2"
+                  [:modify-branches
+                   "b^1/2"
                    "Sqrt(-1+x+Sqrt(Cos(x))+Sqrt(-x*Sqrt(Sin(Sqrt(1/2+Sqrt(-x))))))"]
-                  ["b^-2"
+                  [:modify-branches
+                   "b^-2"
                    "1/(1-x-Sec(x)^2-Sin(1/(1/2+1/x^2)^2)^4/x^2)^2"]
-                  ["b^-1"
+                  [:modify-branches
+                   "b^-1"
                    "1/(-1+x+Sec(x)-Sin(1/(1/2-1/x))/x)"]
-                  ["b*-1"
+                  [:modify-branches
+                   "b*-1"
                    "1-x+Cos(x)-x*Sin(1/2+x)"]
-                  ["b*1.1"
+                  [:modify-branches
+                   "b*1.1"
                    "1.1*(-1+x+1.1*Cos(x)-1.2100000000000002*x*Sin(1.1*(1/2-1.1*x)))"]
-                  ["b*0.9"
+                  [:modify-branches
+                   "b*0.9"
                    "0.9*(-1+x+0.9*Cos(x)-0.81*x*Sin(0.9*(1/2-0.9*x)))"]
-                  ["b+0.1"
+                  [:modify-branches
+                   "b+0.1"
                    "-0.7000000000000001+x+Cos(x)-x*(0.1+Sin(0.7-x))"]
-                  ["b-0.1"
+                  [:modify-branches
+                   "b-0.1"
                    "-1.3000000000000003+x+Cos(x)+x*(0.1-Sin(0.3-x))"]]
                  (vec
                    (map
                      (fn [m]
-                       [(:label m)
+                       [(:op m)
+                        (:label m)
                         (str
                           (:expr
                             (ops/modify
