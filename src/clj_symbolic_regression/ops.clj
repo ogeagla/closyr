@@ -56,7 +56,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -141,6 +141,7 @@
                        (F/ast (->iexprs (.map ie (tree-branch-modifier modifier))) (.head ie))))
                    ie))))
 
+
 (defn ^java.util.function.Function tree-ast-head-modifier
   [modifier]
   (as-function (fn ^IExpr [^IExpr ie]
@@ -196,6 +197,7 @@
     (->phenotype (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
     (with-last-op modif)))
 
+
 (defmethod modify :modify-ast-head
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
@@ -223,29 +225,27 @@
 (defn crossover
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p} p-discard]
   (try
-    (let [^IExpr e1       (:expr p)
-          ^IExpr e2       (:expr p-discard)
+    (let [^IExpr e1        (:expr p)
+          ^IExpr e2        (:expr p-discard)
 
           [e1-is-fn e2-is-fn] [(is-expr-function? e1) (is-expr-function? e2)]
 
-          e1-part         (if e1-is-fn
-                            (.getArg e1 (inc (rand-int (dec (.size e1)))) nil)
-                            e1)
+          e1-part          (if e1-is-fn
+                             (.getArg e1 (inc (rand-int (dec (.size e1)))) nil)
+                             e1)
 
-          e2-part         (if e2-is-fn
-                            (.getArg e2 (inc (rand-int (dec (.size e2)))) nil)
-                            e2)
-          ^IExpr new-expr (case (rand-nth crossover-sampler)
-                            :divide12 (F/Divide e1-part e2-part)
-                            :divide21 (F/Divide e2-part e1-part)
-                            :plus (F/Plus e1-part e2-part)
-                            :times (F/Times e1-part e2-part))]
-
-      ;; (println "Cross over on: 1: sz:"
-      ;;   (.size e1) "fn: " (str e1) "2: sz: " (.size e2) "fn: " (str e2) " --->>> " (str new-expr))
+          e2-part          (if e2-is-fn
+                             (.getArg e2 (inc (rand-int (dec (.size e2)))) nil)
+                             e2)
+          crossover-flavor (rand-nth crossover-sampler)
+          ^IExpr new-expr  (case crossover-flavor
+                             :divide12 (F/Divide e1-part e2-part)
+                             :divide21 (F/Divide e2-part e1-part)
+                             :plus (F/Plus e1-part e2-part)
+                             :times (F/Times e1-part e2-part))]
 
       (-> (->phenotype x-sym new-expr (:util p-discard))
-          (with-last-op {:label ""
+          (with-last-op {:label (name crossover-flavor)
                          :op    :modify-crossover})))
     (catch Exception e
       (println "Error in ops/crossover: " (.getMessage e))
@@ -591,19 +591,19 @@
                           (F/Cos x-sym)
                           ie))}
 
-   ;{:op               :modify-leafs
-   ; :label            "asin(x)"
-   ; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
-   ;                       (F/ArcSin x-sym)
-   ;                       ie))}
-   ;
-   ;{:op               :modify-leafs
-   ; :label            "acos(x)"
-   ; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;                     (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
-   ;                       (F/ArcCos x-sym)
-   ;                       ie))}
+   ;; {:op               :modify-leafs
+   ;; :label            "asin(x)"
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
+   ;;                       (F/ArcSin x-sym)
+   ;;                       ie))}
+   ;;
+   ;; {:op               :modify-leafs
+   ;; :label            "acos(x)"
+   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+   ;;                     (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
+   ;;                       (F/ArcCos x-sym)
+   ;;                       ie))}
 
    {:op               :modify-leafs
     :label            "log(x)"
