@@ -803,7 +803,7 @@
 
 
    {:op               :modify-ast-head
-    :label            "ast-h sin->cos"
+    :label            "sin->cos"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (should-modify-ast-head leaf-count pheno)
                                  (= F/Sin ie))
@@ -811,7 +811,7 @@
                           ie))}
 
    {:op               :modify-ast-head
-    :label            "ast-h cos->sin"
+    :label            "cos->sin"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (should-modify-ast-head leaf-count pheno)
                                  (= F/Cos ie))
@@ -820,7 +820,7 @@
 
 
    {:op               :modify-ast-head
-    :label            "ast-h +->*"
+    :label            "+->*"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (should-modify-ast-head leaf-count pheno)
                                  (= F/Plus ie))
@@ -828,7 +828,7 @@
                           ie))}
 
    {:op               :modify-ast-head
-    :label            "ast-h *->+"
+    :label            "*->+"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (should-modify-ast-head leaf-count pheno)
                                  (= F/Times ie))
@@ -836,7 +836,7 @@
                           ie))}
 
    {:op               :modify-ast-head
-    :label            "ast-h ^->*"
+    :label            "^->*"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (should-modify-ast-head leaf-count pheno)
                                  (= F/Power ie))
@@ -844,7 +844,7 @@
                           ie))}
 
    {:op               :modify-ast-head
-    :label            "ast-h /->*"
+    :label            "/->*"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (should-modify-ast-head leaf-count pheno)
                                  (= F/Divide ie))
@@ -853,7 +853,7 @@
 
 
    {:op               :modify-ast-head
-    :label            "ast-h /->+"
+    :label            "/->+"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (should-modify-ast-head leaf-count pheno)
                                  (= F/Divide ie))
@@ -897,62 +897,62 @@
 
 
    {:op               :modify-branches
-    :label            "b * b"
+    :label            "b*b"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.times ie ie)
                           ie))}
 
    {:op               :modify-branches
-    :label            "b ^1/2"
+    :label            "b^1/2"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.pow ie F/C1D2)
                           ie))}
 
    {:op               :modify-branches
-    :label            "b ^-2"
+    :label            "b^-2"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.pow ie F/CN2)
                           ie))}
 
    {:op               :modify-branches
-    :label            "b ^-1"
+    :label            "b^-1"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.pow ie F/CN1)
                           ie))}
 
    {:op               :modify-branches
-    :label            "b *-1"
+    :label            "b*-1"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.times ie F/CN1)
                           ie))}
 
    {:op               :modify-branches
-    :label            "b *1.1"
+    :label            "b*1.1"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.times ie (F/num 1.1))
                           ie))}
 
    {:op               :modify-branches
-    :label            "b *0.9"
+    :label            "b*0.9"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.times ie (F/num 0.9))
                           ie))}
    {:op               :modify-branches
-    :label            "b +0.1"
+    :label            "b+0.1"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.plus ie (F/num 0.1))
                           ie))}
 
    {:op               :modify-branches
-    :label            "b -0.1"
+    :label            "b-0.1"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (.minus ie (F/num 0.1))

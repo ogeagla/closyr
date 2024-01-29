@@ -203,19 +203,19 @@
                    "-1+x-x*Cos(1/2-x)+Cos(x)"]
                   ["Cos->Sin"
                    "-1+x-x*Sin(1/2-x)+Sin(x)"]
-                  ["ast-h sin->cos"
+                  ["sin->cos"
                    "-1+x-x*Cos(1/2-x)+Cos(x)"]
-                  ["ast-h cos->sin"
+                  ["cos->sin"
                    "-1+x-x*Sin(1/2-x)+Sin(x)"]
-                  ["ast-h +->*"
+                  ["+->*"
                    "-x^2*Cos(x)*Sin(x/2)"]
-                  ["ast-h *->+"
+                  ["*->+"
                    "-2+2*x+Cos(x)-Sin(1/2-x)"]
-                  ["ast-h ^->*"
+                  ["^->*"
                    "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["ast-h /->*"
+                  ["/->*"
                    "-1+x+Cos(x)-x*Sin(1/2-x)"]
-                  ["ast-h /->+"
+                  ["/->+"
                    "-1+x+Cos(x)-x*Sin(1/2-x)"]
                   ["b derivative"
                    "1-Cos(x)"]
@@ -227,23 +227,23 @@
                    "E^(-1+E^(-E^Sin(E^(1/2+E^(-x)))*x)+E^Cos(x)+x)"]
                   ["b log"
                    "Log(-1+x+Log(Cos(x))+Log(-x*Log(Sin(Log(1/2+Log(-x))))))"]
-                  ["b * b"
+                  ["b*b"
                    "(1-x-Cos(x)^2-x^2*Sin((1/2+x^2)^2)^4)^2"]
-                  ["b ^1/2"
+                  ["b^1/2"
                    "Sqrt(-1+x+Sqrt(Cos(x))+Sqrt(-x*Sqrt(Sin(Sqrt(1/2+Sqrt(-x))))))"]
-                  ["b ^-2"
+                  ["b^-2"
                    "1/(1-x-Sec(x)^2-Sin(1/(1/2+1/x^2)^2)^4/x^2)^2"]
-                  ["b ^-1"
+                  ["b^-1"
                    "1/(-1+x+Sec(x)-Sin(1/(1/2-1/x))/x)"]
-                  ["b *-1"
+                  ["b*-1"
                    "1-x+Cos(x)-x*Sin(1/2+x)"]
-                  ["b *1.1"
+                  ["b*1.1"
                    "1.1*(-1+x+1.1*Cos(x)-1.2100000000000002*x*Sin(1.1*(1/2-1.1*x)))"]
-                  ["b *0.9"
+                  ["b*0.9"
                    "0.9*(-1+x+0.9*Cos(x)-0.81*x*Sin(0.9*(1/2-0.9*x)))"]
-                  ["b +0.1"
+                  ["b+0.1"
                    "-0.7000000000000001+x+Cos(x)-x*(0.1+Sin(0.7-x))"]
-                  ["b -0.1"
+                  ["b-0.1"
                    "-1.3000000000000003+x+Cos(x)+x*(0.1-Sin(0.3-x))"]]
                  (vec
                    (map
@@ -344,8 +344,9 @@
       (is (= [0.0]
              (mapv
                ops/expr->double
-               (ops/eval-phenotype-on-expr-args (ops/->phenotype x (F/Subtract x F/C1D2) nil)
-                                                (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))))))
+               (ops/eval-phenotype-on-expr-args
+                 (ops/->phenotype x (F/Subtract x F/C1D2) nil)
+                 (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))))))
 
       (is (instance? IExpr (F/Subtract F/E F/C1D2)))
       (is (instance? IAST (F/Subtract F/E F/C1D2)))
@@ -364,11 +365,13 @@
                   (catch Exception e nil))))
 
       (is (= [2.218281828459045]
-               (ops/eval-vec-pheno (ops/->phenotype x (F/Subtract F/E F/C1D2) nil)
-                                   {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
-                                    :input-exprs-count 1})))
+             (ops/eval-vec-pheno
+               (ops/->phenotype x (F/Subtract F/E F/C1D2) nil)
+                                 {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
+                                  :input-exprs-count 1})))
 
       (is (= [0.5]
-             (ops/eval-vec-pheno (ops/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
+             (ops/eval-vec-pheno
+               (ops/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
                                  {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
                                   :input-exprs-count 1}))))))
