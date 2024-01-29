@@ -1,6 +1,7 @@
 (ns clj-symbolic-regression.ops-test
   (:require
     [clj-symbolic-regression.ops :as ops]
+    [clj-symbolic-regression.prng :as prng]
     [clojure.test :refer :all])
   (:import
     (org.matheclipse.core.expression
@@ -81,7 +82,7 @@
 (deftest mutations-test
 
   (testing "all mutations results on a function"
-    (with-redefs-fn {#'rand (fn [] 0.0)}
+    (with-redefs-fn {#'prng/rand (fn [] 0.0)}
 
       (fn []
         (let [x (F/Dummy "x")]
@@ -382,8 +383,8 @@
 
 
 (deftest crossover-test
-  (with-redefs-fn {#'rand-int (fn [maxv] (dec maxv))
-                   #'rand-nth (fn [coll] (first coll))}
+  (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
+                   #'prng/rand-nth (fn [coll] (first coll))}
     (fn []
       (with-redefs [ops/crossover-sampler [:plus]]
         (let [x (F/Dummy "x")]
@@ -423,8 +424,8 @@
                              :expr F/C1D2}
                             {:sym  x
                              :expr F/E}))))))))))
-  (with-redefs-fn {#'rand-int (fn [maxv] (dec maxv))
-                   #'rand-nth (fn [coll] (last coll))}
+  (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
+                   #'prng/rand-nth (fn [coll] (last coll))}
     (fn []
       (with-redefs [ops/crossover-sampler [:times]]
         (let [x (F/Dummy "x")]
@@ -437,8 +438,8 @@
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))}))))))))))
 
-  (with-redefs-fn {#'rand-int (fn [maxv] (dec maxv))
-                   #'rand-nth (fn [coll] (last coll))}
+  (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
+                   #'prng/rand-nth (fn [coll] (last coll))}
     (fn []
       (with-redefs [ops/crossover-sampler [:divide12]]
         (let [x (F/Dummy "x")]

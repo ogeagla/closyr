@@ -3,10 +3,12 @@
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.gui :as gui]
     [clj-symbolic-regression.ops :as ops]
+    [clj-symbolic-regression.prng :refer :all]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
     [flames.core :as flames]
     [seesaw.core :as ss])
+  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:import
     (java.text
       DecimalFormat)

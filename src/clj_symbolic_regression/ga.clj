@@ -1,4 +1,7 @@
-(ns clj-symbolic-regression.ga)
+(ns clj-symbolic-regression.ga
+  (:require
+    [clj-symbolic-regression.prng :refer :all])
+  (:refer-clojure :exclude [rand rand-int rand-nth shuffle]))
 
 (set! *warn-on-reflection* true)
 

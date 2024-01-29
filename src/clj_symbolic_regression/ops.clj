@@ -1,6 +1,8 @@
 (ns clj-symbolic-regression.ops
   (:require
-    [clojure.string :as str])
+    [clojure.string :as str]
+    [clj-symbolic-regression.prng :refer :all])
+  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:import
     (java.util
       Date
