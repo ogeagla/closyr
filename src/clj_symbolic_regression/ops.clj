@@ -1070,20 +1070,18 @@
     x-head-list :x-head-list
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
-  (concat
+  (let [middle-section (eval-vec-pheno p run-args)
+        max-y          (apply max middle-section)
+        min-y          (apply min middle-section)]
+    (concat
 
-    (let [res   (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head)))
-          max-y (apply max res)
-          min-y (apply min res)]
       (mapv #(clamp-oversampled-ys max-y min-y %)
-            res))
-    (eval-vec-pheno p run-args)
+            (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head))))
 
-    (let [res   (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))
-          max-y (apply max res)
-          min-y (apply min res)]
+      middle-section
+
       (mapv #(clamp-oversampled-ys max-y min-y %)
-            res))))
+            (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))))))
 
 
 (defn eval-vec-pheno-oversample-from-orig-xs

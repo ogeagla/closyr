@@ -123,9 +123,6 @@
 (defn sketchpad-on-click:skinny-brush
   [items x-scale ^MouseEvent e]
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
-
-
-
     (doall
       (map-indexed
         (fn [i getter]
