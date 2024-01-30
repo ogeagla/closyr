@@ -7,7 +7,8 @@
     (java.util
       Date
       UUID)
-    (java.util.function Function)
+    (java.util.function
+      Function)
     (org.matheclipse.core.eval
       EvalEngine
       ExprEvaluator)
@@ -1007,28 +1008,30 @@
   (loop [iters      0
          c          mods-count
          pheno      p-winner
-         first-run? true]
+         first-run? true
+         mods       []]
     (if (zero? c)
-      [pheno iters]
-      (let [v     (if first-run? (assoc pheno :util (:util p-discard)) pheno)
-            m     (rand-nth initial-muts)
-            new-v (try
-                    (modify m v)
-                    (catch Exception e
-                      (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
-                        (println "Warning, mutation failed: " (:label m)
-                                 " on: " (str (:expr v))
-                                 " due to: " (.getMessage e)))
-                      v))]
+      [pheno iters mods]
+      (let [pheno        (if first-run? (assoc pheno :util (:util p-discard)) pheno)
+            mod-to-apply (rand-nth initial-muts)
+            new-pheno    (try
+                           (modify mod-to-apply pheno)
+                           (catch Exception e
+                             (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
+                               (println "Warning, mutation failed: " (:label mod-to-apply)
+                                        " on: " (str (:expr pheno))
+                                        " due to: " (.getMessage e)))
+                             pheno))]
         (recur
           (inc iters)
-          (if (> (.leafCount ^IExpr (:expr new-v)) max-leafs)
+          (if (> (.leafCount ^IExpr (:expr new-pheno)) max-leafs)
             0
-            (dec c)) #_(if (fn-size-growing-too-fast? v new-v)
+            (dec c)) #_(if (fn-size-growing-too-fast? pheno new-v)
                          0
                          (dec c))
-          new-v
-          false)))))
+          new-pheno
+          false
+          (into mods [(select-keys mod-to-apply [:label :op])]))))))
 
 
 (defn eval-vec-pheno
