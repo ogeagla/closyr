@@ -47,7 +47,7 @@
 (def log-steps 1)
 
 (def min-score -100000000)
-(def max-leafs 80)
+(def max-leafs 70)
 (def max-resid 1000000)
 
 
