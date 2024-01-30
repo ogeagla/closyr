@@ -71,7 +71,7 @@
 
 (def sketchpad-size* (atom {}))
 
-(def color:very-light-gray (Color. 210 210 210))
+(def color:very-light-gray (Color. 204 204 204))
 (def color:light-gray Color/LIGHT_GRAY)
 (def color:very-light-pink (Color. 250 210 210))
 
@@ -299,7 +299,7 @@
 (defn draw-grid
   [c ^Graphics2D g]
   (let [w (ss/width c) h (ss/height c)]
-    (.setColor g Color/GRAY)
+    (.setColor g color:light-gray)
     (doseq [x (range 0 w 10)]
       (.drawLine g x 0 x h))
     (doseq [y (range 0 h 10)]
@@ -378,7 +378,7 @@
         ^JPanel drawing-widget (ss/xyz-panel
                                  :paint (comp reposition-labels draw-grid)
                                  :id :xyz
-                                 :background color:light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
+                                 :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
@@ -428,38 +428,46 @@
 
         btn-group-iters                      (ss/button-group)
         ^JRadioButtonMenuItem iter-radio-1   (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :text "20"
                                                :group btn-group-iters
                                                :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-2   (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :selected? true
                                                :text "200"
                                                :group btn-group-iters
                                                :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-3   (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :text "1000"
                                                :group btn-group-iters
                                                :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-4   (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :text "10000"
                                                :group btn-group-iters
                                                :listen [:mouse-clicked settings-iters-on-change])
 
         btn-group-pcounts                    (ss/button-group)
         ^JRadioButtonMenuItem pcount-radio-4 (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :text "1000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-1 (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :text "5000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-2 (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :selected? true
                                                :text "50000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-3 (ss/radio-menu-item
+                                               :background color:very-light-gray
                                                :text "100000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])]
@@ -559,19 +567,23 @@
 
         btn-group-brush                 (ss/button-group)
         ^JRadioButtonMenuItem b-radio-0 (ss/radio-menu-item
+                                          :background color:very-light-gray
                                           :selected? true
                                           :text brush-label:skinny
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
+                                          :background color:very-light-gray
                                           :text brush-label:broad
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-2 (ss/radio-menu-item
+                                          :background color:very-light-gray
                                           :text brush-label:huge
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-3 (ss/radio-menu-item
+                                          :background color:very-light-gray
                                           :text brush-label:line
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])]
@@ -591,15 +603,18 @@
 
         btn-group-xs                     (ss/button-group)
         ^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
+                                           :background color:very-light-gray
                                            :text "20"
                                            :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])
         ^JRadioButtonMenuItem xs-radio-2 (ss/radio-menu-item
+                                           :background color:very-light-gray
                                            :selected? true
                                            :text "50"
                                            :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])
         ^JRadioButtonMenuItem xs-radio-3 (ss/radio-menu-item
+                                           :background color:very-light-gray
                                            :text "100"
                                            :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])]
@@ -656,11 +671,13 @@
             {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
 
             ^JButton ctl-start-stop-btn (ss/button
+                                          :background color:very-light-gray
                                           :text "Start"
                                           :listen [:mouse-clicked
                                                    (partial start-stop-on-click
                                                             sim-stop-start-chan)])
             ^JButton ctl-reset-btn      (ss/button
+                                          :background color:very-light-gray
                                           :text "Restart"
                                           :listen [:mouse-clicked
                                                    (partial reset-on-click
@@ -670,6 +687,7 @@
             xs-container                (xs-panel)
             settings-panel              (experiment-settings-panel)
             ^JComboBox input-fn-picker  (ss/combobox
+                                          :background color:very-light-gray
                                           :model dataset-fns
                                           :listen [:action input-dataset-change])]
 
