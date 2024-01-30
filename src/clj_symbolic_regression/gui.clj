@@ -41,11 +41,13 @@
       JPanel
       JRadioButton
       JRadioButtonMenuItem
-      SwingUtilities)
+      SwingUtilities UIManager UnsupportedLookAndFeelException)
     (javax.swing.border
       Border)
     (javax.swing.text
       AbstractDocument$DefaultDocumentEvent)
+    (mdlaf MaterialLookAndFeel)
+    (mdlaf.themes JMarsDarkTheme MaterialLiteTheme)
     (org.knowm.xchart
       XChartPanel
       XYChart)))
@@ -82,8 +84,21 @@
 
 (defn setup-theme
   []
-  (LafManager/install (DarculaTheme.))
+  ;(LafManager/install (DarculaTheme.))
   ;; (LafManager/install (SolarizedDarkTheme.))
+
+  (try
+
+    (UIManager/setLookAndFeel
+      (MaterialLookAndFeel.
+        ;(MaterialLiteTheme.)
+        (JMarsDarkTheme.)
+        )
+      )
+
+    (catch UnsupportedLookAndFeelException e
+      (println "Theme error: " e)))
+
   )
 
 
