@@ -39,7 +39,7 @@
 
 
 (def sim-stats* (atom {}))
-(def reset?* (atom false))
+(def gui-requested-reset?* (atom false))
 (def test-timer* (atom nil))
 (def sim-input-args* (atom nil))
 
@@ -52,8 +52,9 @@
 
 
 (defn tally-min-score
-  []
-  (swap! sim-stats* update-in [:scoring :min-scores] #(inc (or % 0))))
+  [min-score]
+  (swap! sim-stats* update-in [:scoring :min-scores] #(inc (or % 0)))
+  min-score)
 
 
 (defn not-finite?
@@ -77,20 +78,14 @@
   (try
     (let [leafs (.leafCount ^IExpr (:expr v))]
       (if (> leafs max-leafs)
-        (do
-          (tally-min-score)
-          min-score)
+        (tally-min-score min-score)
         (let [f-of-xs (ops/eval-vec-pheno v run-args)]
           (if f-of-xs
             (let [abs-resids       (map
                                      (fn [expected actual]
-                                       (let [bad-actual (when (not-finite? actual)
-                                                          #_(println "warning, actual not a number: "
-                                                                     actual " from " (str (:expr v)))
-                                                          true)
-                                             res        (if bad-actual
-                                                          max-resid
-                                                          (- expected actual))]
+                                       (let [res (if (not-finite? actual)
+                                                   max-resid
+                                                   (- expected actual))]
                                          (if (not-finite? res)
                                            (do
                                              (println "warning, res not a number: " res
@@ -107,18 +102,15 @@
 
 
               (when (or (neg? length-deduction) (Double/isNaN length-deduction))
-                (println "warning: bad/negative deduction increases score: " leafs length-deduction (str (:expr v))))
+                (println "warning: bad/negative deduction increases score: "
+                         leafs length-deduction (str (:expr v))))
               (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
               overall-score)
-            (do
-              (tally-min-score)
-              min-score)))))
+            (tally-min-score min-score)))))
     (catch Exception e
       (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr v)) ", from: " (:expr v))
-      (do
-        (tally-min-score)
-        min-score))))
+      (tally-min-score min-score))))
 
 
 (defn fn-size-growing-too-fast?
@@ -415,7 +407,7 @@
   [msg]
   (println "Restarting experiment! ")
   (update-plot-input-data msg)
-  (<!! (timeout 1000))
+  (<!! (timeout 500))
   true)
 
 
@@ -496,23 +488,22 @@
            i   iters]
       (if (zero? i)
         pop
-        (let [restart? (reset! reset?* (check-start-stop-state run-args))]
-          (if restart?
-            pop
-            (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-              (report-iteration i iters ga-result run-args)
-              (recur ga-result
-                     (if (some #(> % -1e-3) scores)
-                       (near-exact-solution i scores)
-                       (dec i))))))))
+        (if (reset! gui-requested-reset?* (check-start-stop-state run-args))
+          pop
+          (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
+            (report-iteration i iters ga-result run-args)
+            (recur ga-result
+                   (if (some #(> % -1e-3) scores)
+                     (near-exact-solution i scores)
+                     (dec i)))))))
 
     (println "Took " (/ (start-date->diff-ms start) 1000.0) " seconds")
 
-    (if @reset?*
+    (if @gui-requested-reset?*
       (do
-        (reset! reset?* false)
+        (reset! gui-requested-reset?* false)
         (println "Restarting...")
-        (<!! (timeout 1000))
+        (<!! (timeout 500))
         (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))
       (do
         (println "Experiment complete, waiting for GUI to start another")

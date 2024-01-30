@@ -409,7 +409,7 @@
 
         btn-group-iters                      (ss/button-group)
         ^JRadioButtonMenuItem iter-radio-1   (ss/radio-menu-item
-                                               :text "10"
+                                               :text "20"
                                                :group btn-group-iters
                                                :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-2   (ss/radio-menu-item
@@ -432,12 +432,12 @@
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-1 (ss/radio-menu-item
-                                               :text "4000"
+                                               :text "5000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-2 (ss/radio-menu-item
                                                :selected? true
-                                               :text "40000"
+                                               :text "50000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-3 (ss/radio-menu-item
