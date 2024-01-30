@@ -7,6 +7,7 @@
     (java.util
       Date
       UUID)
+    (java.util.function Function)
     (org.matheclipse.core.eval
       EvalEngine
       ExprEvaluator)
@@ -81,9 +82,9 @@
     0))
 
 
-(defn ^java.util.function.Function as-function
+(defn ^Function as-function
   [f]
-  (reify java.util.function.Function
+  (reify Function
     (apply [this arg] (f arg))))
 
 
@@ -126,7 +127,7 @@
     (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
 
 
-(defn ^java.util.function.Function tree-leaf-modifier
+(defn ^Function tree-leaf-modifier
   [modifier]
   (as-function (fn ^IExpr [^IExpr ie]
                  (if (instance? IAST ie)
@@ -134,7 +135,7 @@
                    (modifier ie)))))
 
 
-(defn ^java.util.function.Function tree-branch-modifier
+(defn ^Function tree-branch-modifier
   [modifier]
   (as-function (fn ^IExpr [^IExpr ie]
                  (if (instance? IAST ie)
@@ -144,7 +145,7 @@
                    ie))))
 
 
-(defn ^java.util.function.Function tree-ast-head-modifier
+(defn ^Function tree-ast-head-modifier
   [modifier]
   (as-function (fn ^IExpr [^IExpr ie]
                  (if (instance? IAST ie)
