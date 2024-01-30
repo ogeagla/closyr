@@ -221,7 +221,10 @@
   (instance? IAST ie))
 
 
-(def crossover-sampler [:plus :times :divide12 :divide21 :minus12 :minus21 :exp12 :exp21])
+(def crossover-sampler
+  [:plus :times :divide12 :divide21 :minus12 :minus21
+   ;; :exp12 :exp21
+   ])
 
 
 (defn crossover
@@ -241,14 +244,14 @@
                              e2)
           crossover-flavor (rand-nth crossover-sampler)
           ^IExpr new-expr  (case crossover-flavor
-                             :exp12 (F/Power e1-part e2-part)
-                             :exp21 (F/Power e2-part e1-part)
                              :minus12 (F/Subtract e1-part e2-part)
                              :minus21 (F/Subtract e2-part e1-part)
                              :divide12 (F/Divide e1-part e2-part)
                              :divide21 (F/Divide e2-part e1-part)
                              :plus (F/Plus e1-part e2-part)
-                             :times (F/Times e1-part e2-part))]
+                             :times (F/Times e1-part e2-part)
+                             :exp12 (F/Power e1-part e2-part)
+                             :exp21 (F/Power e2-part e1-part))]
 
       (-> (->phenotype x-sym new-expr (:util p-discard))
           (with-recent-mod-metadata {:label (name crossover-flavor)
