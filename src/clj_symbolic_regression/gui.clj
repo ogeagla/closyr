@@ -378,7 +378,7 @@
         ^JPanel drawing-widget (ss/xyz-panel
                                  :paint (comp reposition-labels draw-grid)
                                  :id :xyz
-                                 :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
+                                 :background color:light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
