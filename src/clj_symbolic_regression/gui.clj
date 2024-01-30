@@ -14,6 +14,7 @@
     (com.github.weisj.darklaf.theme
       DarculaTheme
       SolarizedDarkTheme)
+    (io.materialtheme.darkstackoverflow DarkStackOverflowTheme)
     (java.awt
       BorderLayout
       Color
@@ -92,7 +93,8 @@
     (UIManager/setLookAndFeel
       (MaterialLookAndFeel.
         ;(MaterialLiteTheme.)
-        (JMarsDarkTheme.)
+        ;(JMarsDarkTheme.)
+        (DarkStackOverflowTheme.)
         )
       )
 
