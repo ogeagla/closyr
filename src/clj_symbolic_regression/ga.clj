@@ -60,18 +60,16 @@
                          (mapcat identity))
 
           pop-scores   (pmap first new-pop-data)
-          pop-score    (reduce + 0.0 pop-scores)
           new-pop      (->> (pmap second new-pop-data)
                             (mapcat identity)
                             (vec))]
 
       (merge config
-             {:pop            new-pop
-              :score-fn       score-fn
-              :pop-old-score  pop-score
-              :pop-old-scores pop-scores
-              :mutation-fn    mutation-fn
-              :crossover-fn   crossover-fn}))
+             {:pop          new-pop
+              :score-fn     score-fn
+              :pop-scores   pop-scores
+              :mutation-fn  mutation-fn
+              :crossover-fn crossover-fn}))
     (catch Exception e
       (println "Err in evolve: " e))))
 
@@ -110,7 +108,7 @@
         (if (zero? i)
           pop
           (let [new-pop (evolve pop)
-                s       (:pop-old-score new-pop)]
+                s       (reduce + 0.0 (:pop-scores new-pop))]
             (println i " pop score: " s)
             (recur new-pop
                    (if (zero? s)

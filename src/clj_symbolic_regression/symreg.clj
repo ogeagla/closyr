@@ -260,8 +260,8 @@
 
 
 (defn near-exact-solution
-  [i old-score old-scores]
-  (println "Perfect score! " i old-score " all scores: " old-scores)
+  [i old-scores]
+  (println "Perfect score! " i " all scores: " (sort old-scores))
   0)
 
 
@@ -499,11 +499,11 @@
         (let [restart? (reset! reset?* (check-start-stop-state run-args))]
           (if restart?
             pop
-            (let [{old-scores :pop-old-scores old-score :pop-old-score :as ga-result} (ga/evolve pop)]
+            (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
               (report-iteration i iters ga-result run-args)
               (recur ga-result
-                     (if (or (zero? old-score) (some #(> % -1e-3) old-scores))
-                       (near-exact-solution i old-score old-scores)
+                     (if (some #(> % -1e-3) scores)
+                       (near-exact-solution i scores)
                        (dec i))))))))
 
     (println "Took " (/ (start-date->diff-ms start) 1000.0) " seconds")
@@ -515,6 +515,7 @@
         (<!! (timeout 1000))
         (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))
       (do
+        (println "Experiment complete, waiting for GUI to start another")
         (run-from-inputs run-config (merge run-args (wait-and-get-gui-args sim-stop-start-chan)))))))
 
 
