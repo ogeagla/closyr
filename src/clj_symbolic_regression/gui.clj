@@ -403,7 +403,7 @@
 
 (def experiment-settings*
   (atom {:input-iters        200
-         :input-phenos-count 40000}))
+         :input-phenos-count 20000}))
 
 
 (defn settings-iters-on-change
@@ -463,7 +463,7 @@
         ^JRadioButtonMenuItem pcount-radio-2 (ss/radio-menu-item
                                                :background color:very-light-gray
                                                :selected? true
-                                               :text "50000"
+                                               :text "20000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-3 (ss/radio-menu-item

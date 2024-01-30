@@ -37,6 +37,8 @@
 (defn apply-style
   [^XYChart chart]
   (doto (.getStyler chart)
+    (.setLegendBorderColor Color/GRAY)
+    (.setLegendBackgroundColor Color/LIGHT_GRAY)
     (.setChartTitleBoxBackgroundColor Color/LIGHT_GRAY)
     (.setChartBackgroundColor Color/LIGHT_GRAY)
     (.setPlotBackgroundColor Color/LIGHT_GRAY)))
