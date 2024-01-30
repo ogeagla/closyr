@@ -131,18 +131,18 @@
       (swap! sim-stats* update-in [:mutations :counts iters] #(inc (or % 0)))
       (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [old-leafs]))
       (swap! sim-stats* update-in [:mutations :size-out] #(into (or % []) [new-leafs]))
-      new-pheno)
+      (assoc new-pheno :mods-applied iters))
     (catch Exception e
       (println "Err in mutation: " e))))
 
 
 (defn crossover-fn
   [initial-muts p p-discard pop]
-  (let [x-over-res (ops/crossover p p-discard)]
-    (when x-over-res
+  (let [crossover-result (ops/crossover p p-discard)]
+    (when crossover-result
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or
-      x-over-res
+      crossover-result
       (mutation-fn initial-muts p p-discard pop))))
 
 
@@ -159,9 +159,10 @@
 
 
 (defn reportable-phen-str
-  [{:keys [^IExpr expr ^double score last-op] p-id :id :as p}]
+  [{:keys [^IExpr expr ^double score last-op mods-applied] p-id :id :as p}]
   (str
     " id: " (str/join (take 3 (str p-id)))
+    " last mod #: " (or mods-applied "-")
     " last op: " (format "%17s" (str last-op)) #_(str/join (take 8 (str last-op)))
     " score: " (.format score-format score)
     " leafs: " (.leafCount expr)
