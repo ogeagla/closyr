@@ -1,4 +1,5 @@
 (ns clj-symbolic-regression.symreg
+  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clj-symbolic-regression.ga :as ga]
     [clj-symbolic-regression.gui :as gui]
@@ -8,7 +9,6 @@
     [clojure.string :as str]
     [flames.core :as flames]
     [seesaw.core :as ss])
-  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:import
     (java.text
       DecimalFormat)
@@ -60,6 +60,13 @@
   [n]
   (or (not (number? n))
       (and (number? n) (Double/isNaN n))))
+
+
+(defn start-date->diff-ms
+  [^Date start]
+  (let [end  (Date.)
+        diff (- (.getTime end) (.getTime start))]
+    diff))
 
 
 (defn score-fn
@@ -223,17 +230,15 @@
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
-    (let [end      (Date.)
-          diff     (- (.getTime end) (.getTime ^Date @test-timer*))
-          bests    (sort-population ga-result)
-          took-s   (/ diff 1000.0)
+    (let [bests    (sort-population ga-result)
+          took-s   (/ (start-date->diff-ms @test-timer*) 1000.0)
           pop-size (count (:pop ga-result))
           best-v   (first bests)
           evaled   (ops/eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (ops/eval-vec-pheno-oversample
                                                   best-v run-args extended-domain-args)]
 
-      (reset! test-timer* end)
+      (reset! test-timer* (Date.))
       (println i "-step pop size: " pop-size
                " took secs: " took-s
                " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
@@ -501,10 +506,7 @@
                        (near-exact-solution i old-score old-scores)
                        (dec i))))))))
 
-    (let [end  (Date.)
-          diff (- (.getTime end) (.getTime start))]
-
-      (println "Took " (/ diff 1000.0) " seconds"))
+    (println "Took " (/ (start-date->diff-ms start) 1000.0) " seconds")
 
     (if @reset?*
       (do
