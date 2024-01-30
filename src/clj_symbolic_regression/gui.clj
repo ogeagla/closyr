@@ -71,12 +71,15 @@
 
 (def sketchpad-size* (atom {}))
 
+(def color:very-light-gray (Color. 210 210 210))
+(def color:light-gray Color/LIGHT_GRAY)
+(def color:very-light-pink (Color. 250 210 210))
 
 (defn ^JPanel panel-grid
   [{:keys [rows cols]}]
   (doto (JPanel. (BorderLayout.))
     ;; (.setSize 1200 100)
-    (.setBackground Color/LIGHT_GRAY)
+    (.setBackground color:very-light-gray)
     (.setLayout (GridLayout. rows cols))))
 
 
@@ -307,6 +310,7 @@
 (defn draw-grid
   [c ^Graphics2D g]
   (let [w (ss/width c) h (ss/height c)]
+    (.setColor g Color/GRAY)
     (doseq [x (range 0 w 10)]
       (.drawLine g x 0 x h))
     (doseq [y (range 0 h 10)]
@@ -387,7 +391,7 @@
                                  (ss/xyz-panel
                                    :paint (comp reposition-labels draw-grid)
                                    :id :xyz
-                                   :background "#222222"
+                                   :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
                                    :items items #_(conj items bp)
                                    :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])
                                  #_(.setSize 800 300))]
@@ -632,8 +636,7 @@
   (SwingUtilities/invokeLater
     (fn []
       (let [my-frame                    (doto (JFrame. "CLJ Symbolic Regression")
-                                          (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-                                          #_(.setSize 1600 1400))
+                                          (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE))
 
             bottom-container            (panel-grid {:rows 2 :cols 1})
             info-container              (panel-grid {:rows 2 :cols 1})
@@ -723,6 +726,7 @@
 
         (.pack my-frame)
         (.setVisible my-frame true)
+        (.setSize my-frame 1500 800)
 
         (update-loop
           {:best-fn-chart       best-fn-chart

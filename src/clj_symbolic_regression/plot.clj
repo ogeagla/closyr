@@ -9,6 +9,7 @@
       SwingWrapper
       XYChart
       XYSeries)
+    (org.knowm.xchart.style Styler$ChartTheme)
     (org.knowm.xchart.style.markers
       SeriesMarkers)))
 
@@ -34,7 +35,7 @@
   []
   (let [x-data           (double-array [0.0 1.0 2.0])
         y-data           (double-array [2.0 1.0 0.0])
-        ^XYChart chart   (doto (XYChart. 600 400)
+        ^XYChart chart   (doto (XYChart. 600 400 Styler$ChartTheme/GGPlot2)
                            (.setTitle "Sample")
                            (.setXAxisTitle "X")
                            (.setYAxisTitle "Y"))
@@ -44,6 +45,7 @@
         .displayChart)))
 
 
+
 (defn make-plot:2-series
   ^XYChart [^String series-1-label
             ^String series-2-label
@@ -51,7 +53,7 @@
             ^List x-data-2
             ^List y-data-1
             ^List y-data-2]
-  (let [^XYChart chart (doto (XYChart. 400 200)
+  (let [^XYChart chart (doto (XYChart. 400 200 Styler$ChartTheme/GGPlot2)
                          (.setTitle "")
                          (.setXAxisTitle "X")
                          (.setYAxisTitle "Y"))]
@@ -68,7 +70,7 @@
             ^String y-axis-title
             ^List x-data-1
             ^List y-data-1]
-  (let [^XYChart chart     (doto (XYChart. 400 200)
+  (let [^XYChart chart     (doto (XYChart. 400 200 Styler$ChartTheme/GGPlot2)
                              (.setTitle "")
                              (.setXAxisTitle x-axis-title)
                              (.setYAxisTitle y-axis-title))
