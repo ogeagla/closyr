@@ -9,7 +9,8 @@
       SwingWrapper
       XYChart
       XYSeries)
-    (org.knowm.xchart.style Styler$ChartTheme)
+    (org.knowm.xchart.style
+      Styler$ChartTheme)
     (org.knowm.xchart.style.markers
       SeriesMarkers)))
 
@@ -43,7 +44,6 @@
                            (.setMarker SeriesMarkers/CIRCLE))]
     (-> (SwingWrapper. chart)
         .displayChart)))
-
 
 
 (defn make-plot:2-series

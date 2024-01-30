@@ -1,8 +1,8 @@
 (ns clj-symbolic-regression.ops
-  (:require
-    [clojure.string :as str]
-    [clj-symbolic-regression.prng :refer :all])
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
+  (:require
+    [clj-symbolic-regression.prng :refer :all]
+    [clojure.string :as str])
   (:import
     (java.util
       Date
@@ -58,7 +58,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -167,7 +167,7 @@
 (def op-short-str (memoize op-short-str_unmemo))
 
 
-(defn with-last-op
+(defn with-recent-mod-metadata
   [p {:keys [op label] :as modif}]
   (assoc p :last-op (op-short-str (select-keys modif [:op :label]))))
 
@@ -179,7 +179,7 @@
   [{:keys [label ^IExpr find-expr ^IExpr replace-expr] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
   (-> (->phenotype x-sym (.subs expr find-expr replace-expr) util)
-      (with-last-op modif)))
+      (with-recent-mod-metadata modif)))
 
 
 (defmethod modify :modify-leafs
@@ -188,7 +188,7 @@
   (->
     x-sym
     (->phenotype (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-last-op modif)))
+    (with-recent-mod-metadata modif)))
 
 
 (defmethod modify :modify-branches
@@ -197,7 +197,7 @@
   (->
     x-sym
     (->phenotype (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-last-op modif)))
+    (with-recent-mod-metadata modif)))
 
 
 (defmethod modify :modify-ast-head
@@ -206,14 +206,14 @@
   (->
     x-sym
     (->phenotype (.replaceAll expr (tree-ast-head-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-last-op modif)))
+    (with-recent-mod-metadata modif)))
 
 
 (defmethod modify :modify-fn
   [{:keys [label modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
   (-> (->phenotype x-sym (modifier-fn pheno) util)
-      (with-last-op modif)))
+      (with-recent-mod-metadata modif)))
 
 
 (defn is-expr-function?
@@ -221,7 +221,7 @@
   (instance? IAST ie))
 
 
-(def crossover-sampler [:plus :times :divide12 :divide21])
+(def crossover-sampler [:plus :times :divide12 :divide21 :minus12 :minus21 :exp12 :exp21])
 
 
 (defn crossover
@@ -241,14 +241,18 @@
                              e2)
           crossover-flavor (rand-nth crossover-sampler)
           ^IExpr new-expr  (case crossover-flavor
+                             :exp12 (F/Power e1-part e2-part)
+                             :exp21 (F/Power e2-part e1-part)
+                             :minus12 (F/Subtract e1-part e2-part)
+                             :minus21 (F/Subtract e2-part e1-part)
                              :divide12 (F/Divide e1-part e2-part)
                              :divide21 (F/Divide e2-part e1-part)
                              :plus (F/Plus e1-part e2-part)
                              :times (F/Times e1-part e2-part))]
 
       (-> (->phenotype x-sym new-expr (:util p-discard))
-          (with-last-op {:label (name crossover-flavor)
-                         :op    :modify-crossover})))
+          (with-recent-mod-metadata {:label (name crossover-flavor)
+                                     :op    :modify-crossover})))
     (catch Exception e
       (println "Error in ops/crossover: " (.getMessage e))
       nil)))

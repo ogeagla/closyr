@@ -75,6 +75,7 @@
 (def color:light-gray Color/LIGHT_GRAY)
 (def color:very-light-pink (Color. 250 210 210))
 
+
 (defn ^JPanel panel-grid
   [{:keys [rows cols]}]
   (doto (JPanel. (BorderLayout.))
@@ -147,6 +148,7 @@
         items-point-getters)))
 
   #_(ss/repaint! e))
+
 
 (defn sketchpad-on-click:broad-brush
   [items x-scale ^MouseEvent e]
@@ -231,13 +233,6 @@
      (* -1 y)))
 
 
-(defn gui-coord-y->y
-  [y]
-  (* -1 (- y (/ (or (:h @sketchpad-size*)
-                    170)
-                2))))
-
-
 (def input-y-fns-data
   {"sin+cos"
    {:idx 0
@@ -255,30 +250,25 @@
     :fn  (fn [i]
            (y->gui-coord-y
              (* 50 (Math/sin (/ i 4.0)))))}
-
    "log"
    {:idx 30
     :fn  (fn [i]
            (y->gui-coord-y
              (* 50 (Math/log (+ 0.01 (/ i 4.0))))))}
-
    "hline"
    {:idx 40
-    :fn  (fn [i]
-           (y->gui-coord-y 0.0))}
+    :fn  (fn [i] (y->gui-coord-y 0.0))}
 
    "prime count"
    {:idx 50
     :fn  (fn [i]
            (let [xys (data-prime-counting/get-data @sketch-input-x-count*)]
              (y->gui-coord-y (second (nth xys i)))))}
-
    "primes"
    {:idx 60
     :fn  (fn [i]
            (let [xys (data-primes/get-data @sketch-input-x-count*)]
              (y->gui-coord-y (second (nth xys i)))))}
-
    "gaussian"
    {:idx 70
     :fn  (fn [i]
@@ -286,8 +276,7 @@
              (* 50
                 (Math/sqrt (* 2.0 Math/PI))
                 (Math/exp (- (* (/ (/ (- i (/ @sketch-input-x-count* 2)) 5.0) 2.0)
-                                (/ (- i (/ @sketch-input-x-count* 2)) 5.0)
-                                ))))))}})
+                                (/ (- i (/ @sketch-input-x-count* 2)) 5.0)))))))}})
 
 
 (def input-y-fns
@@ -327,8 +316,8 @@
         old-h (or (:h @sketchpad-size*) h)]
 
     (reset! sketchpad-size* {:h h :w w})
-    ;; only on resize:
 
+    ;; only on resize:
     (when-not (and (= w old-w)
                    (= h old-h))
 
@@ -386,15 +375,12 @@
                                      (set-widget-location widget x y)))
                                  items)
 
-        ^JPanel drawing-widget (doto
-                                 ^JPanel
-                                 (ss/xyz-panel
-                                   :paint (comp reposition-labels draw-grid)
-                                   :id :xyz
-                                   :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
-                                   :items items #_(conj items bp)
-                                   :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])
-                                 #_(.setSize 800 300))]
+        ^JPanel drawing-widget (ss/xyz-panel
+                                 :paint (comp reposition-labels draw-grid)
+                                 :id :xyz
+                                 :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
+                                 :items items #_(conj items bp)
+                                 :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
     (reset! items-points-accessors* {:drawing-widget      drawing-widget
                                      :items-point-getters items-point-getters
@@ -738,7 +724,7 @@
           gui-data)))))
 
 
-(defn gui-1
+(defn test-gui-1
   []
   (let [sim-stop-start-chan (chan)]
     (create-and-show-gui
@@ -789,7 +775,7 @@
                                         (recur))))})))
 
 
-(defn gui-2
+(defn test-gui-2
   []
   (ss/invoke-later
     (-> (ss/frame :title "Hello",
@@ -801,5 +787,5 @@
         ss/show!)))
 
 
-(comment (gui-2))
-(comment (gui-1))
+(comment (test-gui-2))
+(comment (test-gui-1))
