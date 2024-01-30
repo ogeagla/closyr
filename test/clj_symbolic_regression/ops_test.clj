@@ -234,6 +234,12 @@
                    "cos(x)"
                    "-1+Cos(x)+Cos(Cos(x))-Cos(x)*Sin(1/2-Cos(x))"]
                   [:modify-leafs
+                   "asin(x)"
+                   "-1+Sqrt(1-x^2)+ArcSin(x)-ArcSin(x)*Sin(1/2-ArcSin(x))"]
+                  [:modify-leafs
+                   "acos(x)"
+                   "-1+x+ArcCos(x)-ArcCos(x)*Sin(1/2-ArcCos(x))"]
+                  [:modify-leafs
                    "log(x)"
                    "-1+Cos(Log(x))+Log(x)-Log(x)*Sin(1/2-Log(x))"]
                   [:modify-leafs
@@ -303,6 +309,12 @@
                    "cos->sin"
                    "-1+x-x*Sin(1/2-x)+Sin(x)"]
                   [:modify-ast-head
+                   "sin->asin"
+                   "-1+x-x*ArcSin(1/2-x)+Cos(x)"]
+                  [:modify-ast-head
+                   "cos->acos"
+                   "-1+x+ArcCos(x)-x*Sin(1/2-x)"]
+                  [:modify-ast-head
                    "+->*"
                    "-x^2*Cos(x)*Sin(x/2)"]
                   [:modify-ast-head
@@ -326,6 +338,12 @@
                   [:modify-branches
                    "b cos"
                    "Cos(1-x-Cos(Cos(x))-Cos(x*Cos(Sin(Cos(1/2+Cos(x))))))"]
+                  [:modify-branches
+                   "b asin"
+                   "-ArcSin(1-x+ArcSin(x*ArcSin(1/2-ArcSin(x)))-ArcSin(Cos(x)))"]
+                  [:modify-branches
+                   "b acos"
+                   "ArcCos(-1+x+ArcCos(-x*ArcCos(Sqrt(1-(1/2+ArcCos(-x))^2)))+ArcCos(Cos(x)))"]
                   [:modify-branches
                    "b exp"
                    "E^(-1+E^(-E^Sin(E^(1/2+E^(-x)))*x)+E^Cos(x)+x)"]

@@ -58,7 +58,7 @@
   [^ISymbol variable ^IAST expr]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+            (into-array ISymbol [variable])) expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -593,19 +593,19 @@
                           (F/Cos x-sym)
                           ie))}
 
-   ;; {:op               :modify-leafs
-   ;; :label            "asin(x)"
-   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
-   ;;                       (F/ArcSin x-sym)
-   ;;                       ie))}
-   ;;
-   ;; {:op               :modify-leafs
-   ;; :label            "acos(x)"
-   ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-   ;;                     (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
-   ;;                       (F/ArcCos x-sym)
-   ;;                       ie))}
+   {:op               :modify-leafs
+    :label            "asin(x)"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
+                          (F/ArcSin x-sym)
+                          ie))}
+
+   {:op               :modify-leafs
+    :label            "acos(x)"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (.isSymbol ie) (should-modify-leaf leaf-count pheno))
+                          (F/ArcCos x-sym)
+                          ie))}
 
    {:op               :modify-leafs
     :label            "log(x)"
@@ -821,6 +821,25 @@
                           ie))}
 
 
+
+
+   {:op               :modify-ast-head
+    :label            "sin->asin"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (should-modify-ast-head leaf-count pheno)
+                                 (= F/Sin ie))
+                          F/ArcSin
+                          ie))}
+
+   {:op               :modify-ast-head
+    :label            "cos->acos"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (should-modify-ast-head leaf-count pheno)
+                                 (= F/Cos ie))
+                          F/ArcCos
+                          ie))}
+
+
    {:op               :modify-ast-head
     :label            "+->*"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
@@ -881,6 +900,20 @@
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
                           (F/Cos ie)
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "b asin"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-branch leaf-count pheno)
+                          (F/ArcSin ie)
+                          ie))}
+
+   {:op               :modify-branches
+    :label            "b acos"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (should-modify-branch leaf-count pheno)
+                          (F/ArcCos ie)
                           ie))}
 
    {:op               :modify-branches
@@ -965,11 +998,11 @@
   [max-leafs mods-count initial-muts p-winner p-discard]
   (loop [iters      0
          c          mods-count
-         v          p-winner
+         pheno      p-winner
          first-run? true]
     (if (zero? c)
-      [v iters]
-      (let [v     (if first-run? (assoc v :util (:util p-discard)) v)
+      [pheno iters]
+      (let [v     (if first-run? (assoc pheno :util (:util p-discard)) pheno)
             m     (rand-nth initial-muts)
             new-v (try
                     (modify m v)
