@@ -116,7 +116,11 @@
       :text text
       :location (location-fn)
       :paint {:before (fn [c g]
-                        (sg/draw g (sg/rounded-rect 3 3 (- (ss/width c) 6) (- (ss/height c) 6) 9)
+                        (sg/draw g (sg/rounded-rect 3
+                                                    3
+                                                    (- (ss/width c) 6)
+                                                    (- (ss/height c) 6)
+                                                    9)
                                  (sg/style :foreground "#FFFFaa"
                                            :background "#aaFFFF"
                                            :stroke 2)))})
