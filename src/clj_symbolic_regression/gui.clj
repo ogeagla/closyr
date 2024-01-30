@@ -49,17 +49,18 @@
 (set! *warn-on-reflection* true)
 
 
-(def brush-label:skinny "Skinny Brush")
-(def brush-label:broad "Broad Brush")
-(def brush-label:line "Line Brush")
+(def brush-label:skinny "Skinny")
+(def brush-label:broad "Broad")
+(def brush-label:huge "Huge")
+(def brush-label:line "Line")
 
 (def sketch-input-x-count* (atom 50))
 
 
 (def xs->gap
-  {100 5
-   50  11
-   20  27})
+  {100 6
+   50  12
+   20  28})
 
 
 (def sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
@@ -138,6 +139,30 @@
 
             (setter
               pt-x
+              (+ (* (min 1 (+ 0.95 diff)) pt-y)
+                 (* (max 0 (- 0.05 diff)) (.getY (.getPoint e)))))))
+        items-point-getters)))
+
+  #_(ss/repaint! e))
+
+(defn sketchpad-on-click:broad-brush
+  [items x-scale ^MouseEvent e]
+  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
+    (doall
+      (map-indexed
+        (fn [i getter]
+          (let [^Point pt (getter)
+                setter    (nth items-point-setters i)
+                pt-x      (.getX pt)
+                pt-y      (.getY pt)
+                diff      (/ (abs
+                               (- pt-x
+                                  (.getX (.getPoint e))))
+                             500.0)]
+
+
+            (setter
+              pt-x
               (+ (* (min 1 (+ 0.85 diff)) pt-y)
                  (* (max 0 (- 0.15 diff)) (.getY (.getPoint e)))))))
         items-point-getters)))
@@ -145,7 +170,7 @@
   #_(ss/repaint! e))
 
 
-(defn sketchpad-on-click:broad-brush
+(defn sketchpad-on-click:huge-brush
   [items x-scale ^MouseEvent e]
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
     (doall
@@ -191,6 +216,7 @@
 (def brushes-map
   {brush-label:skinny sketchpad-on-click:skinny-brush
    brush-label:broad  sketchpad-on-click:broad-brush
+   brush-label:huge   sketchpad-on-click:huge-brush
    brush-label:line   sketchpad-on-click:line-brush})
 
 
@@ -256,9 +282,9 @@
            (y->gui-coord-y
              (* 50
                 (Math/sqrt (* 2.0 Math/PI))
-                (Math/exp (- (* (/(/ (- i (/ @sketch-input-x-count* 2)) 5.0) 2.0)
-                                  (/ (- i (/ @sketch-input-x-count* 2)) 5.0)
-                                   ))))))}})
+                (Math/exp (- (* (/ (/ (- i (/ @sketch-input-x-count* 2)) 5.0) 2.0)
+                                (/ (- i (/ @sketch-input-x-count* 2)) 5.0)
+                                ))))))}})
 
 
 (def input-y-fns
@@ -356,12 +382,15 @@
                                      (set-widget-location widget x y)))
                                  items)
 
-        ^JPanel drawing-widget (ss/xyz-panel
-                                 :paint (comp reposition-labels draw-grid)
-                                 :id :xyz
-                                 :background "#222222"
-                                 :items items #_(conj items bp)
-                                 :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
+        ^JPanel drawing-widget (doto
+                                 ^JPanel
+                                 (ss/xyz-panel
+                                   :paint (comp reposition-labels draw-grid)
+                                   :id :xyz
+                                   :background "#222222"
+                                   :items items #_(conj items bp)
+                                   :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])
+                                 #_(.setSize 800 300))]
 
     (reset! items-points-accessors* {:drawing-widget      drawing-widget
                                      :items-point-getters items-point-getters
@@ -535,23 +564,29 @@
 
 (defn ^JPanel brush-panel
   []
-  (let [brush-config-container          (panel-grid {:rows 1 :cols 3})
+  (let [brush-config-container          (panel-grid {:rows 1 :cols 5})
         ^JPanel brush-container         (panel-grid {:rows 2 :cols 1})
 
         btn-group-brush                 (ss/button-group)
-        ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
+        ^JRadioButtonMenuItem b-radio-0 (ss/radio-menu-item
                                           :selected? true
                                           :text brush-label:skinny
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem b-radio-2 (ss/radio-menu-item
+        ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
                                           :text brush-label:broad
+                                          :group btn-group-brush
+                                          :listen [:mouse-clicked brush-on-change])
+        ^JRadioButtonMenuItem b-radio-2 (ss/radio-menu-item
+                                          :text brush-label:huge
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-3 (ss/radio-menu-item
                                           :text brush-label:line
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])]
+    (.add brush-config-container (JLabel. "Brush: "))
+    (.add brush-config-container b-radio-0)
     (.add brush-config-container b-radio-1)
     (.add brush-config-container b-radio-2)
     (.add brush-config-container b-radio-3)
