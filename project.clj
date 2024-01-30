@@ -8,6 +8,7 @@
                  [seesaw/seesaw "1.5.0"]
                  [flames "0.5.0"]
                  [org.knowm.xchart/xchart "3.8.7"]
+                 [com.github.weisj/darklaf-core "3.0.2"]
                  [org.slf4j/slf4j-api "2.0.11"]
                  [org.apache.logging.log4j/log4j-api "2.22.1"]
                  [org.apache.logging.log4j/log4j-core "2.22.1"]
