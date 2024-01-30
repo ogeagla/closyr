@@ -50,9 +50,6 @@
 
 (set! *warn-on-reflection* true)
 
-(LafManager/install (DarculaTheme.))
-;(LafManager/install (SolarizedDarkTheme.))
-
 
 (def brush-label:skinny "Skinny")
 (def brush-label:broad "Broad")
@@ -645,6 +642,10 @@
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
+
+      (LafManager/install (DarculaTheme.))
+      ;(LafManager/install (SolarizedDarkTheme.))
+
       (let [my-frame                    (doto (JFrame. "CLJ Symbolic Regression")
                                           (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE))
 
@@ -805,6 +806,10 @@
 (defn test-gui-2
   []
   (ss/invoke-later
+
+    (LafManager/install (DarculaTheme.))
+    ;(LafManager/install (SolarizedDarkTheme.))
+
     (-> (ss/frame :title "Hello",
                   :width 1600
                   :height 1400
