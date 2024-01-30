@@ -316,7 +316,7 @@
                            (max 0.005
                                 (/ 1.0 leaf-count)))
         r             (rand)
-        do?           (< r (* 1.25 branch-scalar))]
+        do?           (< r (* 1.0 branch-scalar))]
     do?))
 
 
@@ -326,7 +326,7 @@
                            (max 0.005
                                 (/ 1.0 leaf-count)))
         r             (rand)
-        do?           (< r (* 0.75 branch-scalar))]
+        do?           (< r (* 0.5 branch-scalar))]
     do?))
 
 

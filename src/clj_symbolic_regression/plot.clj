@@ -37,12 +37,15 @@
 (defn apply-style
   [^XYChart chart]
   (doto (.getStyler chart)
+    (.setChartFontColor Color/WHITE)
     (.setChartTitleBoxBorderColor Color/GRAY)
     (.setLegendBorderColor Color/GRAY)
-    (.setLegendBackgroundColor Color/LIGHT_GRAY)
-    (.setChartTitleBoxBackgroundColor Color/LIGHT_GRAY)
-    (.setChartBackgroundColor Color/LIGHT_GRAY)
-    (.setPlotBackgroundColor Color/LIGHT_GRAY)))
+    (.setLegendBackgroundColor (Color.  90 90 90))
+    (.setChartTitleBoxBackgroundColor (Color.  90 90 90))
+    (.setXAxisTitleColor Color/WHITE)
+    (.setYAxisTitleColor Color/WHITE)
+    (.setChartBackgroundColor (Color.  90 90 90))
+    (.setPlotBackgroundColor (Color.  90 90 90))))
 
 
 (defn test-plots-2
