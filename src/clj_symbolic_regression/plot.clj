@@ -2,6 +2,7 @@
   (:require
     [clojure.string :as str])
   (:import
+    (java.awt Color)
     (java.util
       List)
     (org.knowm.xchart
@@ -42,6 +43,8 @@
                            (.setYAxisTitle "Y"))
         ^XYSeries series (doto (.addSeries chart "y(x)" x-data y-data)
                            (.setMarker SeriesMarkers/CIRCLE))]
+    (doto (.getStyler chart)
+      (.setPlotBackgroundColor Color/LIGHT_GRAY))
     (-> (SwingWrapper. chart)
         .displayChart)))
 
@@ -57,6 +60,10 @@
                          (.setTitle "")
                          (.setXAxisTitle "X")
                          (.setYAxisTitle "Y"))]
+    (doto (.getStyler chart)
+      (.setChartBackgroundColor Color/LIGHT_GRAY)
+      (.setPlotBackgroundColor Color/LIGHT_GRAY))
+
     (doto (.addSeries chart (str/join (take 30 series-2-label)) x-data-2 y-data-2)
       (.setMarker SeriesMarkers/CROSS))
     (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
@@ -76,6 +83,10 @@
                              (.setYAxisTitle y-axis-title))
         ^XYSeries series-1 (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
                              (.setMarker SeriesMarkers/CIRCLE))]
+    (doto (.getStyler chart)
+      (.setChartBackgroundColor Color/LIGHT_GRAY)
+      (.setPlotBackgroundColor Color/LIGHT_GRAY))
+
     chart))
 
 

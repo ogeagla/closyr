@@ -80,7 +80,7 @@
   [{:keys [rows cols]}]
   (doto (JPanel. (BorderLayout.))
     ;; (.setSize 1200 100)
-    (.setBackground color:very-light-gray)
+    (.setBackground color:light-gray)
     (.setLayout (GridLayout. rows cols))))
 
 
