@@ -9,8 +9,11 @@
     [seesaw.core :as ss]
     [seesaw.graphics :as sg])
   (:import
-    (com.github.weisj.darklaf LafManager)
-    (com.github.weisj.darklaf.theme DarculaTheme SolarizedDarkTheme)
+    (com.github.weisj.darklaf
+      LafManager)
+    (com.github.weisj.darklaf.theme
+      DarculaTheme
+      SolarizedDarkTheme)
     (java.awt
       BorderLayout
       Color
@@ -77,12 +80,18 @@
 (def color:light-gray Color/LIGHT_GRAY)
 (def color:very-light-pink (Color. 250 210 210))
 
+(defn setup-theme
+  []
+  (LafManager/install (DarculaTheme.))
+  ;; (LafManager/install (SolarizedDarkTheme.))
+  )
+
 
 (defn ^JPanel panel-grid
   [{:keys [rows cols]}]
   (doto (JPanel. (BorderLayout.))
     ;; (.setSize 1200 100)
-    ;(.setBackground color:light-gray)
+    ;; (.setBackground color:light-gray)
     (.setLayout (GridLayout. rows cols))))
 
 
@@ -312,7 +321,9 @@
       (.drawLine g 0 y w y)))
   [c g])
 
+
 (def new-xs?* (atom true))
+
 
 (defn reposition-labels
   [[c ^Graphics2D g]]
@@ -387,7 +398,7 @@
         ^JPanel drawing-widget (ss/xyz-panel
                                  :paint (comp reposition-labels draw-grid)
                                  :id :xyz
-                                 ;;; :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
+                                 ;; :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
@@ -635,6 +646,9 @@
     xs-container))
 
 
+
+
+
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
@@ -646,8 +660,7 @@
   (SwingUtilities/invokeLater
     (fn []
 
-      (LafManager/install (DarculaTheme.))
-      ;(LafManager/install (SolarizedDarkTheme.))
+      (setup-theme)
 
       (let [my-frame                    (doto (JFrame. "CLJ Symbolic Regression")
                                           (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE))
@@ -814,8 +827,7 @@
   []
   (ss/invoke-later
 
-    (LafManager/install (DarculaTheme.))
-    ;(LafManager/install (SolarizedDarkTheme.))
+    (setup-theme)
 
     (-> (ss/frame :title "Hello",
                   :width 1600
