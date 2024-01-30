@@ -9,7 +9,7 @@
     [seesaw.core :as ss]
     [seesaw.graphics :as sg])
   (:import
-    (com.github.weisj.darklaf LafManager )
+    (com.github.weisj.darklaf LafManager)
     (com.github.weisj.darklaf.theme DarculaTheme SolarizedDarkTheme)
     (java.awt
       BorderLayout
@@ -312,6 +312,7 @@
       (.drawLine g 0 y w y)))
   [c g])
 
+(def new-xs?* (atom true))
 
 (defn reposition-labels
   [[c ^Graphics2D g]]
@@ -324,8 +325,10 @@
     (reset! sketchpad-size* {:h h :w w})
 
     ;; only on resize:
-    (when-not (and (= w old-w)
-                   (= h old-h))
+    (when (or (true? @new-xs?*)
+              (not= w old-w)
+              (not= h old-h))
+      (reset! new-xs?* false)
 
       (mapv
         (fn [i]
@@ -703,12 +706,16 @@
 
         (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
                                            (println "REPLACE DRAWING WIDGET!")
-                                           (ss/replace!
-                                             draw-container
-                                             drawing-widget
-                                             (:drawing-widget
-                                               (input-data-items-widget
-                                                 (input-y-fns @input-y-fn*))))))
+                                           (reset! new-xs?* true)
+                                           (let [new-widget (:drawing-widget
+                                                              (input-data-items-widget
+                                                                (input-y-fns @input-y-fn*)))]
+
+                                             (ss/replace!
+                                               draw-container
+                                               drawing-widget
+                                               new-widget)
+                                             #_(ss/repaint! new-widget))))
 
 
         (.add input-fn-container input-fn-picker)
