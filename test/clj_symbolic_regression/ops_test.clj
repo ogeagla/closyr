@@ -1,7 +1,7 @@
 (ns clj-symbolic-regression.ops-test
   (:require
     [clj-symbolic-regression.ops :as ops]
-    [clj-symbolic-regression.prng :as prng]
+    [clj-symbolic-regression.dataset.prng :as prng]
     [clojure.test :refer :all])
   (:import
     (org.matheclipse.core.expression

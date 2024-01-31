@@ -1,4 +1,4 @@
-(ns clj-symbolic-regression.plot
+(ns clj-symbolic-regression.ui.plot
   (:require
     [clojure.string :as str])
   (:import

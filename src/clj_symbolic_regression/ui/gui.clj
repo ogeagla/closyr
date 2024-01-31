@@ -1,8 +1,8 @@
-(ns clj-symbolic-regression.gui
+(ns clj-symbolic-regression.ui.gui
   (:require
     [clj-symbolic-regression.dataset.prime-10000 :as data-primes]
     [clj-symbolic-regression.dataset.prime-counting :as data-prime-counting]
-    [clj-symbolic-regression.plot :as plot]
+    [clj-symbolic-regression.ui.plot :as plot]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
@@ -31,7 +31,7 @@
     (javax.swing
       BoxLayout
       ComboBoxModel
-      JButton
+      Icon JButton
       JComboBox
       JFrame
       JLabel
@@ -523,12 +523,17 @@
     settings-container))
 
 
+(def ctl:start "Start")
+(def ctl:stop "Stop")
+(def ctl:restart "Restart")
+
+
 (defn start-stop-on-click
   [sim-stop-start-chan ^MouseEvent e]
   (let [{:keys [items-point-getters]} @items-points-accessors*]
     (if-not sim-stop-start-chan
       (println "warning: no sim-stop-start-chan provided")
-      (let [is-start   (= "Start" (ss/get-text* e))
+      (let [is-start   (= ctl:start (ss/get-text* e))
             input-data (getters->input-data items-point-getters)
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
@@ -540,8 +545,8 @@
                                           :input-data-x input-x
                                           :input-data-y input-y}))
         (ss/set-text* e (if is-start
-                          "Stop"
-                          "Start"))))))
+                          ctl:stop
+                          ctl:start))))))
 
 
 (defn reset-on-click
@@ -559,7 +564,7 @@
 
                                           :input-data-x input-x
                                           :input-data-y input-y}))
-        (ss/set-text* start-top-label "Stop")))))
+        (ss/set-text* start-top-label ctl:stop)))))
 
 
 (defn input-dataset-change
@@ -714,13 +719,13 @@
 
             ^JButton ctl-start-stop-btn     (ss/button
                                               ;; :background color:very-light-gray
-                                              :text "Start"
+                                              :text ctl:start
                                               :listen [:mouse-clicked
                                                        (partial start-stop-on-click
                                                                 sim-stop-start-chan)])
             ^JButton ctl-reset-btn          (ss/button
                                               ;; :background color:very-light-gray
-                                              :text "Restart"
+                                              :text ctl:restart
                                               :listen [:mouse-clicked
                                                        (partial reset-on-click
                                                                 ctl-start-stop-btn
@@ -731,7 +736,10 @@
             ^JComboBox input-fn-picker      (ss/combobox
                                               ;; :background color:very-light-gray
                                               :model dataset-fns
-                                              :listen [:action input-dataset-change])]
+                                              :listen [:action input-dataset-change])
+
+            icon-test (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
+            ]
 
         (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
                                            (println "REPLACE DRAWING WIDGET!")
@@ -752,7 +760,7 @@
         (.add input-fn-container brush-container)
         (.add inputs-container input-fn-container)
         (.add inputs-container settings-panel)
-        (.add inputs-container (JLabel. "" #_"Placeholder 1a"))
+        (.add inputs-container icon-test #_(JLabel. "" #_"Placeholder 1a"))
         (.add inputs-container (JLabel. "" #_"Placeholder 1b"))
 
         (.add info-container sim-info-label)

@@ -2,9 +2,9 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clj-symbolic-regression.ga :as ga]
-    [clj-symbolic-regression.gui :as gui]
+    [clj-symbolic-regression.ui.gui :as gui]
     [clj-symbolic-regression.ops :as ops]
-    [clj-symbolic-regression.prng :refer :all]
+    [clj-symbolic-regression.dataset.prng :refer :all]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
     [flames.core :as flames]
@@ -338,7 +338,7 @@
           (.clear ys-scores))
 
         (when (= iters i)
-          (ss/set-text* ctl-start-stop-btn "Start"))
+          (ss/set-text* ctl-start-stop-btn gui/ctl:start))
 
         (.add xs-scores i)
         (.add ys-scores best-score)
@@ -399,7 +399,7 @@
   (println "Got state req: "
            (if reset?
              "Reset"
-             (if new-state "Start" "Stop")))
+             (if new-state gui/ctl:start gui/ctl:stop)))
 
   (let [input-exprs      (if input-data-x
                            (ops/doubles->exprs input-data-x)
