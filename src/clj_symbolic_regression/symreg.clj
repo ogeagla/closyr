@@ -345,10 +345,11 @@
         (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
         (.setTitle scores-chart "Best Score")
 
-
-        (.setText sim-selectable-text (str "y = " best-f-str))
-        (.revalidate sim-selectable-text)
-        (.repaint sim-selectable-text)
+        (let [fn-str (str "y = " best-f-str)]
+          (when (not= fn-str (.getText sim-selectable-text))
+            (.setText sim-selectable-text fn-str)
+            (.revalidate sim-selectable-text)
+            (.repaint sim-selectable-text)))
 
         (.setText info-label (str
                                ;"<html>"
