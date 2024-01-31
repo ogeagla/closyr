@@ -1021,14 +1021,13 @@
                                (println "Warning, mutation failed: " (:label mod-to-apply)
                                         " on: " (str (:expr pheno))
                                         " due to: " (.getMessage e)))
-                             pheno))]
+                             pheno))
+            count-to-go  (if (> (.leafCount ^IExpr (:expr new-pheno)) max-leafs)
+                           0
+                           (dec c))]
         (recur
           (inc iters)
-          (if (> (.leafCount ^IExpr (:expr new-pheno)) max-leafs)
-            0
-            (dec c)) #_(if (fn-size-growing-too-fast? pheno new-v)
-                         0
-                         (dec c))
+          count-to-go
           new-pheno
           false
           (into mods [(select-keys mod-to-apply [:label :op])]))))))
