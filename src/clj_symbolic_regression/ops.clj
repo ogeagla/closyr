@@ -195,9 +195,9 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
-    (when-not util (throw (Exception. "No util provided to evaluation engine!")))
+    (when-not util (println "*** Warning: No util provided to evaluation engine! ***"))
     (let [^IAST ast  (F/ast expr-args (expr->fn pheno))
-          ^IExpr res (.eval util ast)]
+          ^IExpr res (.eval (or util (new-util)) ast)]
       res)
     (catch NullPointerException npe (println "Warning: NPE error in eval: " (str expr) " : " npe))
     (catch ArgumentTypeException se (println "Warning: argument type error in eval: " (str expr) " : " se))
@@ -976,9 +976,9 @@
    {:op               :modify-branches
     :label            "b simplify"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (> 11 (.leafCount ie) 6)
+                        (if (and (> 8 (.leafCount ie) 4)
                                  #_(should-modify-branch leaf-count pheno))
-                          (binding [*simplify-max-leafs* 10]
+                          (binding [*simplify-max-leafs* 7]
                             #_(println "b simplify: " (.leafCount ie) " : " (str ie))
                             (try (:expr (maybe-simplify (assoc pheno :expr ie)))
                                  (catch Exception e
