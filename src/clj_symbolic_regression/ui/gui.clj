@@ -534,8 +534,11 @@
 
 
 (def ctl:start "Start")
-(def ctl:stop "Stop")
-(def ctl:restart "Restart")
+(def ctl:stop "Pause")
+(def ctl:restart "Restart With New Inputs")
+
+(def experiment-is-running?* (atom false))
+(def ctl-reset-btn* (atom nil))
 
 
 (defn start-stop-on-click
@@ -547,11 +550,13 @@
             input-data (getters->input-data items-point-getters)
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
+
         (println "clicked Start/Stop: " is-start)
+
+        (reset! experiment-is-running?* is-start)
+        (.setEnabled ^JButton @ctl-reset-btn* true)
         (put! sim-stop-start-chan (merge @experiment-settings*
                                          {:new-state    is-start
-
-
                                           :input-data-x input-x
                                           :input-data-y input-y}))
         (ss/set-text* e (if is-start
@@ -567,11 +572,11 @@
       (let [input-data (getters->input-data items-point-getters)
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
+        (reset! experiment-is-running?* true)
         (println "clicked Reset")
         (put! sim-stop-start-chan (merge @experiment-settings*
                                          {:new-state    true
                                           :reset        true
-
                                           :input-data-x input-x
                                           :input-data-y input-y}))
         (ss/set-text* start-top-label ctl:stop)))))
@@ -733,13 +738,16 @@
                                               :listen [:mouse-clicked
                                                        (partial start-stop-on-click
                                                                 sim-stop-start-chan)])
-            ^JButton ctl-reset-btn          (ss/button
-                                              ;; :background color:very-light-gray
-                                              :text ctl:restart
-                                              :listen [:mouse-clicked
-                                                       (partial reset-on-click
-                                                                ctl-start-stop-btn
-                                                                sim-stop-start-chan)])
+            ^JButton ctl-reset-btn          (reset! ctl-reset-btn*
+                                                    (doto
+                                                      ^JButton (ss/button
+                                                                 ;; :background color:very-light-gray
+                                                                 :text ctl:restart
+                                                                 :listen [:mouse-clicked
+                                                                          (partial reset-on-click
+                                                                                   ctl-start-stop-btn
+                                                                                   sim-stop-start-chan)])
+                                                      (.setEnabled false)))
             brush-container                 (brush-panel)
             xs-container                    (xs-panel)
             settings-panel                  (experiment-settings-panel)
