@@ -18,6 +18,7 @@
 (set! *warn-on-reflection* true)
 
 (alter-var-root #'ops/*simplify-probability-sampler* (constantly 2.0))
+(alter-var-root #'ops/*simplify-max-leafs* (constantly 100))
 
 
 (deftest simplify-test
@@ -505,6 +506,9 @@
                   [:modify-branches
                    "b derivative"
                    "1-Cos(x)"]
+                  [:modify-branches
+                   "b simplify"
+                   "-1+x+Cos(x)-x*Sin(1/2-x)"]
                   [:modify-branches
                    "b sin"
                    "-Sin(1-x-Sin(Cos(x))+Sin(x*Sin(Sin(Sin(1/2-Sin(x))))))"]

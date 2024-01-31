@@ -77,7 +77,7 @@
 
 
 (def ^:dynamic *simplify-probability-sampler*
-  0.5)
+  0.65)
 
 
 (def ^:dynamic *simplify-timeout*
@@ -95,62 +95,49 @@
     diff))
 
 
+(defn check-simplify-timing
+  [^IAST expr done?*]
+  (go-loop [c 0]
+    (when (not @done?*)
+      (do (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
+          (when (> c 2) (println "Warning: simplify taking a long time: " c " " (.leafCount expr) " : " (str expr)))
+          (recur (inc c))))))
+
+
 (defn ^IAST maybe-simplify
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
 
   (if (and (< (.leafCount expr) *simplify-max-leafs*)
            (not simple?)
            (< (rand) *simplify-probability-sampler*))
-    (assoc pheno
-           :simple? true
-           :expr (let [start  (Date.)
-                       done?* (atom false)
-                       ^IAST new-expr #_(F/Simplify
-                                     expr
-                                     assume-x-gt-zero)
-                       (F/Simplify expr)
-                       #_(F/FullSimplify
-                      (F/Simplify
-                        expr
-                        assume-x-gt-zero))]
-                   (when-not util (println "Warning creating new util during simplify"))
-                   (try
-                     ;; (.eval (or util (new-util)) new-expr)
-                     #_(let [res (.evaluateWithTimeout
-                              (new-util) #_(or util (new-util))
-                              (str new-expr)
-                              *simplify-timeout*
-                              TimeUnit/MILLISECONDS
-                              true
-                              nil)]
-                    (println (type expr) (str expr) " -->> " (type res) (str res))
-                    (if (or (= F/$Aborted res) (= F/Null res) (not (instance? IExpr res)))
-                      (do
-                        (println "Warning, simplify failed on: " (str expr) " got result: " (str res))
-                        expr)
-                      res))
-                     (go-loop [c 0]
-                       (when (not @done?*)
-                         (do (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
-                             (when (> c 2) (println "Warning: simplify taking a long time: " c " " (str expr)))
-                             (recur (inc c)))))
+    (let [start              (Date.)
+          done?*             (atom false)
+          ^IAST new-expr     (F/Simplify expr)
+          #_(F/FullSimplify
+              (F/Simplify
+                expr
+                assume-x-gt-zero))
+          ^IAST simpled-expr (try
+                               (check-simplify-timing expr done?*)
+                               (let [res     (.eval (or util (new-util)) new-expr)
+                                     diff-ms (start-date->diff-ms start)]
+                                 (reset! done?* true)
+                                 (when (> diff-ms 2000)
+                                   (println "Long simplify: "
+                                            (.leafCount expr) (str expr) " -->> "
+                                            (.leafCount res) (str res)))
+                                 res)
 
-                     ;; (println "simplify " (str expr))
-                     (let [res     (.eval (or util (new-util)) new-expr)
-                           diff-ms (start-date->diff-ms start)]
-                       (reset! done?* true)
-                       (when (> diff-ms 2000)
-                         (println "Long simplify: "
-                                  (.leafCount expr) (str expr) " -->> "
-                                  (.leafCount res) (str res)))
-                       res)
-
-                     (catch TimeoutException te
-                       (println "Simplify timed out: " (str expr))
-                       expr)
-                     (catch Exception e
-                       (println "Err in eval simplify for fn: " (str expr) " : " e)
-                       expr))))
+                               (catch TimeoutException te
+                                 (println "Simplify timed out: " (str expr))
+                                 expr)
+                               (catch Exception e
+                                 (println "Err in eval simplify for fn: " (str expr) " : " e)
+                                 expr))]
+      (when-not util (println "Warning creating new util during simplify"))
+      (assoc pheno
+             :simple? true
+             :expr simpled-expr))
     pheno))
 
 
@@ -986,6 +973,18 @@
                           ie))}
 
    {:op               :modify-branches
+    :label            "b simplify"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (> 13 (.leafCount ie) 8)
+                                 #_(should-modify-branch leaf-count pheno))
+                          (binding [*simplify-max-leafs* 13]
+                            #_(println "b simplify: " (.leafCount ie) " : " (str ie))
+                            (try (:expr (maybe-simplify (assoc pheno :expr ie)))
+                                 (catch Exception e
+                                   (println "Excep simplify branch: " e))))
+                          ie))}
+
+   {:op               :modify-branches
     :label            "b sin"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (should-modify-branch leaf-count pheno)
@@ -1099,7 +1098,7 @@
          first-run? true
          mods       []]
     (if (zero? c)
-      [(maybe-simplify pheno)
+      [pheno #_(maybe-simplify pheno)
        iters
        mods]
       (let [pheno        (if first-run? (assoc pheno :util (:util p-discard)) pheno)

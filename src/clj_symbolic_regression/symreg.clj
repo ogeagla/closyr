@@ -48,7 +48,7 @@
 (def log-steps 1)
 
 (def min-score -100000000)
-(def max-leafs 70)
+(def max-leafs 80)
 (def max-resid 1000000)
 
 
@@ -64,11 +64,7 @@
       (and (number? n) (Double/isNaN n))))
 
 
-(defn start-date->diff-ms
-  [^Date start]
-  (let [end  (Date.)
-        diff (- (.getTime end) (.getTime start))]
-    diff))
+
 
 
 (defn score-fn
@@ -128,7 +124,7 @@
     (let [start     (Date.)
           c         (rand-nth ops/mutations-sampler)
           [new-pheno iters mods] (ops/apply-modifications max-leafs c initial-muts p-winner p-discard)
-          diff-ms   (start-date->diff-ms start)
+          diff-ms   (ops/start-date->diff-ms start)
           old-leafs (.leafCount ^IExpr (:expr p-winner))
           new-leafs (.leafCount ^IExpr (:expr new-pheno))]
 
@@ -241,7 +237,7 @@
     :as   run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [bests    (sort-population ga-result)
-          took-s   (/ (start-date->diff-ms @test-timer*) 1000.0)
+          took-s   (/ (ops/start-date->diff-ms @test-timer*) 1000.0)
           pop-size (count (:pop ga-result))
           best-v   (first bests)
           evaled   (ops/eval-vec-pheno best-v run-args)
@@ -526,7 +522,7 @@
                      (near-exact-solution i scores)
                      (dec i)))))))
 
-    (println "Took " (/ (start-date->diff-ms start) 1000.0) " seconds")
+    (println "Took " (/ (ops/start-date->diff-ms start) 1000.0) " seconds")
 
     (if @gui-requested-reset?*
       (do
