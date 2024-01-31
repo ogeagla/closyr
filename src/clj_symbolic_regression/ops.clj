@@ -121,12 +121,12 @@
     (let [^IAST ast  (F/ast expr-args (expr->fn x-sym expr))
           ^IExpr res (.eval util ast)]
       res)
-    (catch NullPointerException npe (println "Warning: NPE error in eval: " npe))
-    (catch ArgumentTypeException se (println "Warning: argument type error in eval: " se))
-    (catch SyntaxError se (println "Warning: syntax error in eval: " se))
-    (catch MathException me (println "Warning: math error in eval: " me))
-    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
-    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
+    (catch NullPointerException npe (println "Warning: NPE error in eval: " (str expr) " : " npe))
+    (catch ArgumentTypeException se (println "Warning: argument type error in eval: " (str expr) " : "  se))
+    (catch SyntaxError se (println "Warning: syntax error in eval: "  (str expr) " : " se))
+    (catch MathException me (println "Warning: math error in eval: "  (str expr) " : " me))
+    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " (str expr) " : "  soe))
+    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: "  (str expr) " : " oome))))
 
 
 (defn ^Function tree-leaf-modifier
@@ -1040,7 +1040,7 @@
     :as   run-args}]
   (let [^IExpr new-expr (:expr p)
         ^IExpr eval-p   (eval-phenotype-on-expr-args p input-exprs-list)]
-    (if (= "Indeterminate" (str eval-p))
+    (if (or (nil? eval-p) (= "Indeterminate" (str eval-p)))
       nil
       (let [vs (mapv
                  (fn [i]

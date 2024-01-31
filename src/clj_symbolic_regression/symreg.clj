@@ -252,8 +252,8 @@
       (println i "-step pop size: " pop-size
                " took secs: " took-s
                " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
-               (str "\n top best:\n"
-                    (->> (take 10 bests)
+               (str "\n top 20 best:\n"
+                    (->> (take 20 bests)
                          (map reportable-phen-str)
                          (str/join "\n")))
                "\n"
