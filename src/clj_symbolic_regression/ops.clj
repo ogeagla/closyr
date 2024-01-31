@@ -107,7 +107,7 @@
 (defn ^IAST maybe-simplify
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
 
-  (if (and (< (.leafCount expr) *simplify-max-leafs*)
+  (if (and (<= (.leafCount expr) *simplify-max-leafs*)
            (not simple?)
            (< (rand) *simplify-probability-sampler*))
     (let [start              (Date.)
@@ -976,9 +976,9 @@
    {:op               :modify-branches
     :label            "b simplify"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (> 13 (.leafCount ie) 8)
+                        (if (and (> 11 (.leafCount ie) 6)
                                  #_(should-modify-branch leaf-count pheno))
-                          (binding [*simplify-max-leafs* 13]
+                          (binding [*simplify-max-leafs* 10]
                             #_(println "b simplify: " (.leafCount ie) " : " (str ie))
                             (try (:expr (maybe-simplify (assoc pheno :expr ie)))
                                  (catch Exception e
