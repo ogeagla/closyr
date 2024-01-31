@@ -29,6 +29,7 @@
     (java.util.concurrent
       CopyOnWriteArrayList)
     (javax.swing
+      BorderFactory
       BoxLayout
       ComboBoxModel
       Icon
@@ -105,11 +106,19 @@
 
 
 (defn ^JPanel panel-grid
-  [{:keys [rows cols]}]
-  (doto (JPanel. (BorderLayout.))
-    ;; (.setSize 1200 100)
-    ;; (.setBackground color:light-gray)
-    (.setLayout (GridLayout. rows cols))))
+  [{:keys [rows cols ^Border border]}]
+  (let [panel (doto (JPanel. (BorderLayout.))
+                ;; (.setSize 1200 100)
+                ;; (.setBackground color:light-gray)
+                (.setLayout (GridLayout. rows cols)))]
+    (cond-> panel
+      (not (nil? border)) (.setBorder border))
+    panel))
+
+
+(defn radio-controls-border
+  []
+  (BorderFactory/createLineBorder (Color. 80 80 80) 1))
 
 
 (defn movable
@@ -459,8 +468,8 @@
 
 (defn ^JPanel experiment-settings-panel
   []
-  (let [iters-settings-container             (panel-grid {:rows 1 :cols 4})
-        pcount-settings-container            (panel-grid {:rows 1 :cols 4})
+  (let [iters-settings-container             (panel-grid {:rows 1 :cols 4 :border (radio-controls-border)})
+        pcount-settings-container            (panel-grid {:rows 1 :cols 4 :border (radio-controls-border)})
         ^JPanel settings-container           (panel-grid {:rows 2 :cols 1})
 
         btn-group-iters                      (ss/button-group)
@@ -604,7 +613,7 @@
 
 (defn ^JPanel brush-panel
   []
-  (let [brush-config-container          (panel-grid {:rows 1 :cols 5})
+  (let [brush-config-container          (panel-grid {:rows 1 :cols 5 :border (radio-controls-border)})
         ^JPanel brush-container         (panel-grid {:rows 2 :cols 1})
 
         btn-group-brush                 (ss/button-group)
@@ -640,7 +649,7 @@
 
 (defn ^JPanel xs-panel
   []
-  (let [xs-config-container              (panel-grid {:rows 1 :cols 4})
+  (let [xs-config-container              (panel-grid {:rows 1 :cols 4 :border (radio-controls-border)})
         ^JPanel xs-container             (panel-grid {:rows 1 :cols 1})
 
         btn-group-xs                     (ss/button-group)
@@ -688,7 +697,7 @@
             inputs-and-info-container       (panel-grid {:rows 2 :cols 1})
             info-container                  (panel-grid {:rows 2 :cols 1})
             ctls-container                  (panel-grid {:rows 3 :cols 1})
-            inputs-container                (panel-grid {:rows 2 :cols 2})
+            inputs-container                (panel-grid {:rows 1 :cols 2})
             draw-container                  (panel-grid {:rows 1 :cols 2})
             top-container                   (panel-grid {:rows 1 :cols 2})
             input-fn-container              (panel-grid {:rows 1 :cols 2})
@@ -760,8 +769,8 @@
         (.add input-fn-container brush-container)
         (.add inputs-container input-fn-container)
         (.add inputs-container settings-panel)
-        (.add inputs-container (JLabel. "" #_"Placeholder 1a"))
-        (.add inputs-container (JLabel. "" #_"Placeholder 1b"))
+        ;; (.add inputs-container (JLabel. "" #_"Placeholder 1a"))
+        ;; (.add inputs-container (JLabel. "" #_"Placeholder 1b"))
 
         (.add info-container sim-info-label)
         (.add info-container sim-selectable-text)
