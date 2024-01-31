@@ -117,8 +117,10 @@
 
 
 (defn radio-controls-border
-  []
-  (BorderFactory/createLineBorder (Color. 80 80 80) 1))
+  [title]
+  ;(BorderFactory/createLineBorder (Color. 80 80 80) 1)
+  (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title)
+  )
 
 
 (defn movable
@@ -468,8 +470,8 @@
 
 (defn ^JPanel experiment-settings-panel
   []
-  (let [iters-settings-container             (panel-grid {:rows 1 :cols 4 :border (radio-controls-border)})
-        pcount-settings-container            (panel-grid {:rows 1 :cols 4 :border (radio-controls-border)})
+  (let [iters-settings-container             (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
+        pcount-settings-container            (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Population Size")})
         ^JPanel settings-container           (panel-grid {:rows 2 :cols 1})
 
         btn-group-iters                      (ss/button-group)
@@ -517,13 +519,13 @@
                                                :text "100000"
                                                :group btn-group-pcounts
                                                :listen [:mouse-clicked settings-pheno-count-on-change])]
-    (.add pcount-settings-container (JLabel. "Pop Count:"))
+    ;(.add pcount-settings-container (JLabel. "Pop Count:"))
     (.add pcount-settings-container pcount-radio-4)
     (.add pcount-settings-container pcount-radio-1)
     (.add pcount-settings-container pcount-radio-2)
     (.add pcount-settings-container pcount-radio-3)
 
-    (.add iters-settings-container (JLabel. "Iterations:"))
+    ;(.add iters-settings-container (JLabel. "Iterations:"))
     (.add iters-settings-container iter-radio-1)
     (.add iters-settings-container iter-radio-2)
     (.add iters-settings-container iter-radio-3)
@@ -618,7 +620,7 @@
 
 (defn ^JPanel brush-panel
   []
-  (let [brush-config-container          (panel-grid {:rows 1 :cols 5 :border (radio-controls-border)})
+  (let [brush-config-container          (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Brush")})
         ^JPanel brush-container         (panel-grid {:rows 2 :cols 1})
 
         btn-group-brush                 (ss/button-group)
@@ -643,7 +645,7 @@
                                           :text brush-label:line
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])]
-    (.add brush-config-container (JLabel. "Brush: "))
+    ;(.add brush-config-container (JLabel. "Brush: "))
     (.add brush-config-container b-radio-0)
     (.add brush-config-container b-radio-1)
     (.add brush-config-container b-radio-2)
@@ -654,7 +656,7 @@
 
 (defn ^JPanel xs-panel
   []
-  (let [xs-config-container              (panel-grid {:rows 1 :cols 4 :border (radio-controls-border)})
+  (let [xs-config-container              (panel-grid {:rows 1 :cols 3 :border (radio-controls-border "Points Count")})
         ^JPanel xs-container             (panel-grid {:rows 1 :cols 1})
 
         btn-group-xs                     (ss/button-group)
@@ -674,7 +676,7 @@
                                            :text "100"
                                            :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])]
-    (.add xs-config-container (JLabel. "Points: "))
+    ;(.add xs-config-container (JLabel. "Points: "))
     (.add xs-config-container xs-radio-1)
     (.add xs-config-container xs-radio-2)
     (.add xs-config-container xs-radio-3)
