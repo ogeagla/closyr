@@ -121,6 +121,7 @@
     (let [^IAST ast  (F/ast expr-args (expr->fn x-sym expr))
           ^IExpr res (.eval util ast)]
       res)
+    (catch NullPointerException npe (println "Warning: NPE error in eval: " npe))
     (catch ArgumentTypeException se (println "Warning: argument type error in eval: " se))
     (catch SyntaxError se (println "Warning: syntax error in eval: " se))
     (catch MathException me (println "Warning: math error in eval: " me))
@@ -307,7 +308,7 @@
                          (max 0.005
                               (/ 1.0 leaf-count)))
         r           (rand)
-        do?         (< r (* 3.0 leaf-scalar))]
+        do?         (< r (* 2.5 leaf-scalar))]
     do?))
 
 
@@ -317,7 +318,7 @@
                            (max 0.005
                                 (/ 1.0 leaf-count)))
         r             (rand)
-        do?           (< r (* 1.0 branch-scalar))]
+        do?           (< r (* 0.5 branch-scalar))]
     do?))
 
 
@@ -327,7 +328,7 @@
                            (max 0.005
                                 (/ 1.0 leaf-count)))
         r             (rand)
-        do?           (< r (* 0.5 branch-scalar))]
+        do?           (< r (* 0.25 branch-scalar))]
     do?))
 
 

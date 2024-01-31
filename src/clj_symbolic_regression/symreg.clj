@@ -1,10 +1,10 @@
 (ns clj-symbolic-regression.symreg
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
-    [clj-symbolic-regression.ga :as ga]
-    [clj-symbolic-regression.ui.gui :as gui]
-    [clj-symbolic-regression.ops :as ops]
     [clj-symbolic-regression.dataset.prng :refer :all]
+    [clj-symbolic-regression.ga :as ga]
+    [clj-symbolic-regression.ops :as ops]
+    [clj-symbolic-regression.ui.gui :as gui]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
     [flames.core :as flames]
@@ -19,7 +19,8 @@
       CopyOnWriteArrayList)
     (javax.swing
       JButton
-      JLabel JTextField)
+      JLabel
+      JTextField)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -168,6 +169,11 @@
 (def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
 
 
+(defn format-fn-str
+  [fn-str]
+  (str/replace (str/trim-newline (str fn-str)) #"\n|\r" ""))
+
+
 (defn reportable-phen-str
   [{:keys [^IExpr expr ^double score last-op mods-applied] p-id :id :as p}]
   (str
@@ -176,7 +182,8 @@
     " last op: " (format "%17s" (str last-op)) #_(str/join (take 8 (str last-op)))
     " score: " (.format score-format score)
     " leafs: " (.leafCount expr)
-    " fn: " (str/trim-newline (str expr))))
+    ;; strip newlines from here also:
+    " fn: " (format-fn-str expr)))
 
 
 (defn summarize-sim-stats
@@ -345,19 +352,20 @@
         (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
         (.setTitle scores-chart "Best Score")
 
-        (let [fn-str (str "y = " best-f-str)]
+        (let [fn-str (str "y = " (format-fn-str best-f-str))]
           (when (not= fn-str (.getText sim-selectable-text))
+            (println "New Best Function: " fn-str)
             (.setText sim-selectable-text fn-str)
             (.revalidate sim-selectable-text)
             (.repaint sim-selectable-text)))
 
         (.setText info-label (str
-                               ;"<html>"
+                               ;; "<html>"
                                "Iteration: " i "/" iters
-                               ;"<br>Best Function: "
-                               ;"<br><code> y = " best-f-str "</code>"
+                               ;; "<br>Best Function: "
+                               ;; "<br><code> y = " best-f-str "</code>"
                                " Score: " best-score
-                               ;"</html>"
+                               ;; "</html>"
                                ))
         (.revalidate info-label)
         (.repaint info-label)
