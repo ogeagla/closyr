@@ -195,6 +195,7 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
+    (when-not util (throw (Exception. "No util provided to evaluation engine!")))
     (let [^IAST ast  (F/ast expr-args (expr->fn pheno))
           ^IExpr res (.eval util ast)]
       res)
