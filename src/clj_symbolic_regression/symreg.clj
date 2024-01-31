@@ -75,12 +75,12 @@
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}
-   v]
+   pheno]
   (try
-    (let [leafs (.leafCount ^IExpr (:expr v))]
+    (let [leafs (.leafCount ^IExpr (:expr pheno))]
       (if (> leafs max-leafs)
         (tally-min-score min-score)
-        (let [f-of-xs (ops/eval-vec-pheno v run-args)]
+        (let [f-of-xs (ops/eval-vec-pheno pheno run-args)]
           (if f-of-xs
             (let [abs-resids       (map
                                      (fn [expected actual]
@@ -104,13 +104,13 @@
 
               (when (or (neg? length-deduction) (Double/isNaN length-deduction))
                 (println "warning: bad/negative deduction increases score: "
-                         leafs length-deduction (str (:expr v))))
+                         leafs length-deduction (str (:expr pheno))))
               (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
               overall-score)
             (tally-min-score min-score)))))
     (catch Exception e
-      (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr v)) ", from: " (:expr v))
+      (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
 
@@ -132,7 +132,7 @@
           old-leafs (.leafCount ^IExpr (:expr p-winner))
           new-leafs (.leafCount ^IExpr (:expr new-pheno))]
 
-      (when (> diff-ms 1000)
+      (when (> diff-ms 5000)
         (println "Warning, this modification sequence took a long time: "
                  diff-ms " ms for mods: " (count mods)
                  "\n mods: " mods

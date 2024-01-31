@@ -2,18 +2,23 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clj-symbolic-regression.dataset.prng :refer :all]
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str])
   (:import
     (java.util
       Date
       UUID)
+    (java.util.concurrent
+      TimeUnit)
     (java.util.function
       Function)
     (org.matheclipse.core.eval
+      EvalControlledCallable
       EvalEngine
       ExprEvaluator)
     (org.matheclipse.core.eval.exception
-      ArgumentTypeException)
+      ArgumentTypeException
+      TimeoutException)
     (org.matheclipse.core.expression
       AST
       F)
@@ -47,6 +52,18 @@
   (mapv expr->double exprs))
 
 
+(def ^ISymbol sym-x (F/Dummy "x"))
+
+
+(defn ^ExprEvaluator new-util
+  []
+  (ExprEvaluator.
+    (doto (EvalEngine. true)
+      (.setQuietMode true))
+    true
+    0))
+
+
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
   [exprs]
   (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
@@ -56,11 +73,93 @@
     exprs-list))
 
 
+(def ^IExpr assume-x-gt-zero (F/Greater sym-x 0))
+
+
+(def ^:dynamic *simplify-probability-sampler*
+  0.5)
+
+
+(def ^:dynamic *simplify-timeout*
+  500)
+
+
+(def ^:dynamic *simplify-max-leafs*
+  5)
+
+
+(defn start-date->diff-ms
+  [^Date start]
+  (let [end  (Date.)
+        diff (- (.getTime end) (.getTime start))]
+    diff))
+
+
+(defn ^IAST maybe-simplify
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
+
+  (if (and (< (.leafCount expr) *simplify-max-leafs*)
+           (not simple?)
+           (< (rand) *simplify-probability-sampler*))
+    (assoc pheno
+           :simple? true
+           :expr (let [start  (Date.)
+                       done?* (atom false)
+                       ^IAST new-expr #_(F/Simplify
+                                     expr
+                                     assume-x-gt-zero)
+                       (F/Simplify expr)
+                       #_(F/FullSimplify
+                      (F/Simplify
+                        expr
+                        assume-x-gt-zero))]
+                   (when-not util (println "Warning creating new util during simplify"))
+                   (try
+                     ;; (.eval (or util (new-util)) new-expr)
+                     #_(let [res (.evaluateWithTimeout
+                              (new-util) #_(or util (new-util))
+                              (str new-expr)
+                              *simplify-timeout*
+                              TimeUnit/MILLISECONDS
+                              true
+                              nil)]
+                    (println (type expr) (str expr) " -->> " (type res) (str res))
+                    (if (or (= F/$Aborted res) (= F/Null res) (not (instance? IExpr res)))
+                      (do
+                        (println "Warning, simplify failed on: " (str expr) " got result: " (str res))
+                        expr)
+                      res))
+                     (go-loop [c 0]
+                       (when (not @done?*)
+                         (do (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
+                             (when (> c 2) (println "Warning: simplify taking a long time: " c " " (str expr)))
+                             (recur (inc c)))))
+
+                     ;; (println "simplify " (str expr))
+                     (let [res     (.eval (or util (new-util)) new-expr)
+                           diff-ms (start-date->diff-ms start)]
+                       (reset! done?* true)
+                       (when (> diff-ms 2000)
+                         (println "Long simplify: "
+                                  (.leafCount expr) (str expr) " -->> "
+                                  (.leafCount res) (str res)))
+                       res)
+
+                     (catch TimeoutException te
+                       (println "Simplify timed out: " (str expr))
+                       expr)
+                     (catch Exception e
+                       (println "Err in eval simplify for fn: " (str expr) " : " e)
+                       expr))))
+    pheno))
+
+
 (defn ^IAST expr->fn
-  [^ISymbol variable ^IAST expr]
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [variable])) expr))
+     (into-array ISymbol [x-sym]))
+    expr))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -72,15 +171,6 @@
 (defn ^"[Ljava.lang.String;" ->strings
   [coll]
   (into-array String coll))
-
-
-(defn ^ExprEvaluator new-util
-  []
-  (ExprEvaluator.
-    (doto (EvalEngine. true)
-      (.setQuietMode true))
-    true
-    0))
 
 
 (defn ^Function as-function
@@ -105,9 +195,9 @@
 
 
 (defn ^IExpr eval-phenotype-on-string-args
-  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id} string-args]
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno} string-args]
   (try
-    (.evalFunction util (expr->fn x-sym expr) string-args)
+    (.evalFunction util (expr->fn pheno) string-args)
     (catch SyntaxError se (println "Warning: syntax error in eval: " se))
     (catch MathException me (println "Warning: math error in eval: " me))
     (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
@@ -115,18 +205,18 @@
 
 
 (defn ^IExpr eval-phenotype-on-expr-args
-  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id}
+  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
-    (let [^IAST ast  (F/ast expr-args (expr->fn x-sym expr))
+    (let [^IAST ast  (F/ast expr-args (expr->fn pheno))
           ^IExpr res (.eval util ast)]
       res)
     (catch NullPointerException npe (println "Warning: NPE error in eval: " (str expr) " : " npe))
-    (catch ArgumentTypeException se (println "Warning: argument type error in eval: " (str expr) " : "  se))
-    (catch SyntaxError se (println "Warning: syntax error in eval: "  (str expr) " : " se))
-    (catch MathException me (println "Warning: math error in eval: "  (str expr) " : " me))
-    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " (str expr) " : "  soe))
-    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: "  (str expr) " : " oome))))
+    (catch ArgumentTypeException se (println "Warning: argument type error in eval: " (str expr) " : " se))
+    (catch SyntaxError se (println "Warning: syntax error in eval: " (str expr) " : " se))
+    (catch MathException me (println "Warning: math error in eval: " (str expr) " : " me))
+    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " (str expr) " : " soe))
+    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " (str expr) " : " oome))))
 
 
 (defn ^Function tree-leaf-modifier
@@ -262,9 +352,6 @@
     (catch Exception e
       (println "Error in ops/crossover: " (.getMessage e))
       nil)))
-
-
-(def ^ISymbol sym-x (F/Dummy "x"))
 
 
 (def initial-exprs
@@ -1012,7 +1099,9 @@
          first-run? true
          mods       []]
     (if (zero? c)
-      [pheno iters mods]
+      [(maybe-simplify pheno)
+       iters
+       mods]
       (let [pheno        (if first-run? (assoc pheno :util (:util p-discard)) pheno)
             mod-to-apply (rand-nth initial-muts)
             new-pheno    (try
@@ -1021,7 +1110,7 @@
                              (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
                                (println "Warning, mutation failed: " (:label mod-to-apply)
                                         " on: " (str (:expr pheno))
-                                        " due to: " (.getMessage e)))
+                                        " due to: " e))
                              pheno))
             count-to-go  (if (> (.leafCount ^IExpr (:expr new-pheno)) max-leafs)
                            0
@@ -1199,13 +1288,13 @@
    9
    10 10
    10
-   11 11
-   11
-   12 12
-   13 13
-   14
-   15
-   16
+   ;; 11 11
+   ;; 11
+   ;; 12 12
+   ;; 13 13
+   ;; 14
+   ;; 15
+   ;; 16
    ;; 17
    ;; 18
    ;; 19

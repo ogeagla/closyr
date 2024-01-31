@@ -1,9 +1,12 @@
 (ns clj-symbolic-regression.ops-test
   (:require
-    [clj-symbolic-regression.ops :as ops]
     [clj-symbolic-regression.dataset.prng :as prng]
+    [clj-symbolic-regression.ops :as ops]
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.test :refer :all])
   (:import
+    (org.matheclipse.core.eval
+      EvalEngine)
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
@@ -13,6 +16,155 @@
 
 
 (set! *warn-on-reflection* true)
+
+(alter-var-root #'ops/*simplify-probability-sampler* (constantly 2.0))
+
+
+(deftest simplify-test
+  (testing "simplify trig compose"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (update (ops/maybe-simplify {:expr (F/Sin (F/ArcSin x))})
+                    :expr str)
+            {:expr    "x"
+             :simple? true}))))
+
+  (testing "simplify sum"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (binding [ops/*simplify-max-leafs* 100]
+              (update (ops/maybe-simplify {:expr (F/Plus (F/Cos x) (F/Cos x))})
+                      :expr str))
+            {:expr    "2*Cos(x)"
+             :simple? true}))))
+
+  (testing "simplify deep 1"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (binding [ops/*simplify-max-leafs* 100]
+              (update (ops/maybe-simplify
+                        {:expr (F/Plus
+                                 (F/Plus
+                                   (F/Times
+                                     x
+                                     (F/Sin x))
+
+                                   (F/Times
+                                     x
+                                     (F/Cos x)))
+                                 (F/Plus
+                                   (F/Times
+                                     x
+                                     x)
+
+                                   (F/Times
+                                     x
+                                     (F/Times
+                                       (F/Cos (F/ArcCos x))
+                                       (F/Sin (F/ArcSin x))))))})
+                      :expr str))
+            {:expr    "x*(x+x^2+Cos(x)+Sin(x))"
+             :simple? true}))))
+
+  (testing "simplify deep 2"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (binding [ops/*simplify-max-leafs* 100]
+              (update (ops/maybe-simplify
+                        {:expr (F/Sin
+                                 (F/Times
+                                   (F/Plus (F/Cos x) (F/Cos x))
+                                   (F/Sqrt
+                                     (F/Times
+                                       (F/Sin (F/Plus (F/Exp x) (F/Cos x)))
+                                       (F/Times
+                                         (F/Sqrt (F/ArcCos (F/Exp x)))
+                                         (F/Times
+                                           (F/Cos (F/ArcCos x))
+                                           (F/Sin (F/ArcSin x))))))))})
+                      :expr str))
+            {:expr    "Sin(2*Cos(x)*Sqrt(x^2*Sqrt(ArcCos(E^x))*Sin(E^x+Cos(x))))"
+             :simple? true}))))
+
+  (testing "simplify deep 3"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (binding [ops/*simplify-max-leafs* 100]
+              (update (ops/maybe-simplify
+                        {:expr
+                         (F/Times
+                           (F/Subtract (F/Power (F/Times F/CN1 F/E) x)
+                                       (F/Sqrt x))
+                           (F/Csc x))})
+                      :expr str))
+            {:expr    "((-E)^x-Sqrt(x))*Csc(x)"
+             :simple? true}))))
+
+  (testing "simplify deep 4"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (binding [ops/*simplify-max-leafs* 100]
+              (update (ops/maybe-simplify
+                        {:expr
+                         (F/Times
+                           (F/Times F/CN1 F/C1D5)
+                           (F/Times (F/Cos (F/Sqrt x))
+                                    (F/Sin (F/Plus F/C1D2 (F/Sin x)))))})
+                      :expr str))
+            {:expr    "-1/5*Cos(Sqrt(x))*Sin(1/2+Sin(x))"
+             :simple? true}))))
+
+  #_(testing "simplify deep 5 goes on for almost 2 minutes"
+      (let [x (F/Dummy "x")]
+        (is (=
+              (binding [ops/*simplify-max-leafs* 100]
+                (update (ops/maybe-simplify
+                          {:expr
+                           (F/Divide
+                             (F/Times (F/Cos x) (F/num 0.605))
+                             (F/Plus (F/Divide F/C1 F/C100)
+                                     (F/Power (F/Cos x)
+                                              (F/Times F/C100 (F/Cos x)))))})
+                        :expr str))
+              {:expr    "(0.605*Cos(x))/(1/100+Cos(x)^(100*Cos(x)))"
+               :simple? true}))))
+
+  (testing "simplify no-op"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (update (ops/maybe-simplify {:simple? true
+                                         :expr    (F/Plus (F/Cos x) (F/Cos x))})
+                    :expr str)
+            {:expr    "Cos(x)+Cos(x)"
+             :simple? true}))))
+
+  #_(testing "simplify timeout"
+      (let [x (F/Dummy "x")]
+        (is (=
+              (binding [ops/*simplify-timeout* 1]
+                (update (ops/maybe-simplify {:expr (F/Plus (F/Cos x) (F/Cos x))})
+                        :expr str))
+              {:expr    "Cos(x)+Cos(x)"
+               :simple? true})))))
+
+
+(deftest apply-modifications-test
+  (testing "modify-branches"
+    (let [x (F/Dummy "x")
+          [pheno iters mods] (ops/apply-modifications
+                               100
+                               1
+                               [{:op               :modify-branches
+                                 :label            "branch cos"
+                                 :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                     (F/Cos ie))}]
+                               {:sym  x
+                                :expr (.plus (F/num 1.0) x)}
+                               {:sym  x
+                                :expr (.plus (F/num 1.0) x)})]
+      (is (= iters 1))
+      (is (= (str (:expr pheno))
+             (str (F/Cos (.plus (F/num 1.0) x))))))))
 
 
 (deftest modify-test
