@@ -34,18 +34,20 @@
         .displayChart)))
 
 
+(def color:plot-bg (Color. 60 60 60))
+
 (defn apply-style
   [^XYChart chart]
   (doto (.getStyler chart)
     (.setChartFontColor Color/WHITE)
-    (.setChartTitleBoxBorderColor Color/GRAY)
-    (.setLegendBorderColor Color/GRAY)
-    (.setLegendBackgroundColor (Color.  90 90 90))
-    (.setChartTitleBoxBackgroundColor (Color.  90 90 90))
+    (.setChartTitleBoxBorderColor color:plot-bg)
+    (.setLegendBorderColor color:plot-bg)
+    (.setLegendBackgroundColor color:plot-bg)
+    (.setChartTitleBoxBackgroundColor color:plot-bg)
     (.setXAxisTitleColor Color/WHITE)
     (.setYAxisTitleColor Color/WHITE)
-    (.setChartBackgroundColor (Color.  90 90 90))
-    (.setPlotBackgroundColor (Color.  90 90 90))))
+    (.setChartBackgroundColor color:plot-bg)
+    (.setPlotBackgroundColor color:plot-bg)))
 
 
 (defn test-plots-2

@@ -31,7 +31,8 @@
     (javax.swing
       BoxLayout
       ComboBoxModel
-      Icon JButton
+      Icon
+      JButton
       JComboBox
       JFrame
       JLabel
@@ -738,8 +739,7 @@
                                               :model dataset-fns
                                               :listen [:action input-dataset-change])
 
-            icon-test (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
-            ]
+            icon-test                       (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))]
 
         (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
                                            (println "REPLACE DRAWING WIDGET!")
@@ -760,7 +760,7 @@
         (.add input-fn-container brush-container)
         (.add inputs-container input-fn-container)
         (.add inputs-container settings-panel)
-        (.add inputs-container icon-test #_(JLabel. "" #_"Placeholder 1a"))
+        (.add inputs-container (JLabel. "" #_"Placeholder 1a"))
         (.add inputs-container (JLabel. "" #_"Placeholder 1b"))
 
         (.add info-container sim-info-label)
