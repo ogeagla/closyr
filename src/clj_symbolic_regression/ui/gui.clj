@@ -60,8 +60,8 @@
 (set! *warn-on-reflection* true)
 
 
-(def brush-label:skinny "Skinny")
-(def brush-label:broad "Broad")
+(def brush-label:skinny "Thin")
+(def brush-label:broad "Big")
 (def brush-label:huge "Huge")
 (def brush-label:line "Line")
 
