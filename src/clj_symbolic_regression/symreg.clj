@@ -19,7 +19,7 @@
       CopyOnWriteArrayList)
     (javax.swing
       JButton
-      JLabel)
+      JLabel JTextField)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -298,6 +298,7 @@
            ^XYChart scores-chart
            ^XChartPanel best-fn-chart-panel
            ^XChartPanel scores-chart-panel
+           ^JTextField sim-selectable-text
            ^JLabel info-label
            ^JButton ctl-start-stop-btn]}
    {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
@@ -344,10 +345,15 @@
         (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
         (.setTitle scores-chart "Best Score")
 
+
+        (.setText sim-selectable-text (str "y = " best-f-str))
+        (.revalidate sim-selectable-text)
+        (.repaint sim-selectable-text)
+
         (.setText info-label (str "<html>Iteration: " i "/" iters
-                                  "<br>Best Function: "
-                                  "<br><code> y = " best-f-str "</code>"
-                                  "<br>Score: " best-score
+                                  ;"<br>Best Function: "
+                                  ;"<br><code> y = " best-f-str "</code>"
+                                  " Score: " best-score
                                   "</html>"))
         (.revalidate info-label)
         (.repaint info-label)

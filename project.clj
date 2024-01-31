@@ -8,7 +8,7 @@
                  [seesaw/seesaw "1.5.0"]
                  [flames "0.5.0"]
                  [org.knowm.xchart/xchart "3.8.7"]
-                 [com.github.weisj/darklaf-core "3.0.2"]
+                 ;[com.github.weisj/darklaf-core "3.0.2"]
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
                  [org.slf4j/slf4j-api "2.0.11"]

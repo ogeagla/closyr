@@ -9,12 +9,8 @@
     [seesaw.core :as ss]
     [seesaw.graphics :as sg])
   (:import
-    (com.github.weisj.darklaf
-      LafManager)
-    (com.github.weisj.darklaf.theme
-      DarculaTheme
-      SolarizedDarkTheme)
-    (io.materialtheme.darkstackoverflow DarkStackOverflowTheme)
+    (io.materialtheme.darkstackoverflow
+      DarkStackOverflowTheme)
     (java.awt
       BorderLayout
       Color
@@ -42,13 +38,19 @@
       JPanel
       JRadioButton
       JRadioButtonMenuItem
-      SwingUtilities UIManager UnsupportedLookAndFeelException)
+      JTextField
+      SwingUtilities
+      UIManager
+      UnsupportedLookAndFeelException)
     (javax.swing.border
       Border)
     (javax.swing.text
       AbstractDocument$DefaultDocumentEvent)
-    (mdlaf MaterialLookAndFeel)
-    (mdlaf.themes JMarsDarkTheme MaterialLiteTheme)
+    (mdlaf
+      MaterialLookAndFeel)
+    (mdlaf.themes
+      JMarsDarkTheme
+      MaterialLiteTheme)
     (org.knowm.xchart
       XChartPanel
       XYChart)))
@@ -83,25 +85,22 @@
 (def color:light-gray Color/LIGHT_GRAY)
 (def color:very-light-pink (Color. 250 210 210))
 
+
 (defn setup-theme
   []
-  ;(LafManager/install (DarculaTheme.))
+  ;; (LafManager/install (DarculaTheme.))
   ;; (LafManager/install (SolarizedDarkTheme.))
 
   (try
 
     (UIManager/setLookAndFeel
       (MaterialLookAndFeel.
-        ;(MaterialLiteTheme.)
-        ;(JMarsDarkTheme.)
-        (DarkStackOverflowTheme.)
-        )
-      )
+        ;; (MaterialLiteTheme.)
+        ;; (JMarsDarkTheme.)
+        (DarkStackOverflowTheme.)))
 
     (catch UnsupportedLookAndFeelException e
-      (println "Theme error: " e)))
-
-  )
+      (println "Theme error: " e))))
 
 
 (defn ^JPanel panel-grid
@@ -663,9 +662,6 @@
     xs-container))
 
 
-
-
-
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
@@ -679,60 +675,63 @@
 
       (setup-theme)
 
-      (let [my-frame                    (doto (JFrame. "CLJ Symbolic Regression")
-                                          (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE))
+      (let [my-frame                        (doto (JFrame. "CLJ Symbolic Regression")
+                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE))
 
-            bottom-container            (panel-grid {:rows 2 :cols 1})
-            info-container              (panel-grid {:rows 2 :cols 1})
-            ctls-container              (panel-grid {:rows 3 :cols 1})
-            inputs-container            (panel-grid {:rows 2 :cols 2})
-            draw-container              (panel-grid {:rows 1 :cols 2})
-            top-container               (panel-grid {:rows 1 :cols 2})
-            input-fn-container          (panel-grid {:rows 1 :cols 2})
+            bottom-container                (panel-grid {:rows 2 :cols 1})
+            inputs-and-info-container       (panel-grid {:rows 2 :cols 1})
+            info-container                  (panel-grid {:rows 2 :cols 1})
+            ctls-container                  (panel-grid {:rows 3 :cols 1})
+            inputs-container                (panel-grid {:rows 2 :cols 2})
+            draw-container                  (panel-grid {:rows 1 :cols 2})
+            top-container                   (panel-grid {:rows 1 :cols 2})
+            input-fn-container              (panel-grid {:rows 1 :cols 2})
 
-            content-pane                (doto (.getContentPane my-frame)
-                                          (.setLayout (GridLayout. 2 1)))
+            content-pane                    (doto (.getContentPane my-frame)
+                                              (.setLayout (GridLayout. 2 1)))
 
-            my-label                    (JLabel. "Press Start To Begin Function Search")
+            sim-info-label                  (JLabel. "Press Start To Begin Function Search")
+            ^JTextField sim-selectable-text (doto (JTextField. "")
+                                              (.setEditable false))
 
-            ^XYChart best-fn-chart      (plot/make-plot:2-series series-best-fn-label
-                                                                 series-objective-fn-label
-                                                                 xs-best-fn
-                                                                 xs-objective-fn
-                                                                 ys-best-fn
-                                                                 ys-objective-fn)
-            best-fn-chart-panel         (XChartPanel. best-fn-chart)
+            ^XYChart best-fn-chart          (plot/make-plot:2-series series-best-fn-label
+                                                                     series-objective-fn-label
+                                                                     xs-best-fn
+                                                                     xs-objective-fn
+                                                                     ys-best-fn
+                                                                     ys-objective-fn)
+            best-fn-chart-panel             (XChartPanel. best-fn-chart)
 
-            ^XYChart scores-chart       (plot/make-plot:1-series series-scores-label
-                                                                 "Iteration"
-                                                                 "Score"
-                                                                 xs-scores
-                                                                 ys-scores)
-            scores-chart-panel          (XChartPanel. scores-chart)
+            ^XYChart scores-chart           (plot/make-plot:1-series series-scores-label
+                                                                     "Iteration"
+                                                                     "Score"
+                                                                     xs-scores
+                                                                     ys-scores)
+            scores-chart-panel              (XChartPanel. scores-chart)
 
 
             {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
 
-            ^JButton ctl-start-stop-btn (ss/button
-                                          ;; :background color:very-light-gray
-                                          :text "Start"
-                                          :listen [:mouse-clicked
-                                                   (partial start-stop-on-click
-                                                            sim-stop-start-chan)])
-            ^JButton ctl-reset-btn      (ss/button
-                                          ;; :background color:very-light-gray
-                                          :text "Restart"
-                                          :listen [:mouse-clicked
-                                                   (partial reset-on-click
-                                                            ctl-start-stop-btn
-                                                            sim-stop-start-chan)])
-            brush-container             (brush-panel)
-            xs-container                (xs-panel)
-            settings-panel              (experiment-settings-panel)
-            ^JComboBox input-fn-picker  (ss/combobox
-                                          ;; :background color:very-light-gray
-                                          :model dataset-fns
-                                          :listen [:action input-dataset-change])]
+            ^JButton ctl-start-stop-btn     (ss/button
+                                              ;; :background color:very-light-gray
+                                              :text "Start"
+                                              :listen [:mouse-clicked
+                                                       (partial start-stop-on-click
+                                                                sim-stop-start-chan)])
+            ^JButton ctl-reset-btn          (ss/button
+                                              ;; :background color:very-light-gray
+                                              :text "Restart"
+                                              :listen [:mouse-clicked
+                                                       (partial reset-on-click
+                                                                ctl-start-stop-btn
+                                                                sim-stop-start-chan)])
+            brush-container                 (brush-panel)
+            xs-container                    (xs-panel)
+            settings-panel                  (experiment-settings-panel)
+            ^JComboBox input-fn-picker      (ss/combobox
+                                              ;; :background color:very-light-gray
+                                              :model dataset-fns
+                                              :listen [:action input-dataset-change])]
 
         (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
                                            (println "REPLACE DRAWING WIDGET!")
@@ -747,27 +746,30 @@
                                                new-widget)
                                              #_(ss/repaint! new-widget))))
 
+        (.add brush-container xs-container)
 
         (.add input-fn-container input-fn-picker)
         (.add input-fn-container brush-container)
         (.add inputs-container input-fn-container)
-
         (.add inputs-container settings-panel)
-        (.add brush-container xs-container)
-        (.add inputs-container (JLabel. ""))
-        (.add info-container inputs-container)
-        (.add info-container my-label)
+        (.add inputs-container (JLabel. "" #_"Placeholder 1a"))
+        (.add inputs-container (JLabel. "" #_"Placeholder 1b"))
+
+        (.add info-container sim-info-label)
+        (.add info-container sim-selectable-text)
+        (.add inputs-and-info-container inputs-container)
+        (.add inputs-and-info-container info-container)
+
 
         (.add draw-container drawing-widget)
         (.add draw-container scores-chart-panel)
 
         (.add bottom-container draw-container)
-        (.add bottom-container info-container)
+        (.add bottom-container inputs-and-info-container)
 
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
-
-        (.add ctls-container (JLabel. ""))
+        (.add ctls-container (JLabel. "" #_"Placeholder 2"))
 
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
@@ -782,7 +784,8 @@
         (update-loop
           {:best-fn-chart       best-fn-chart
            :best-fn-chart-panel best-fn-chart-panel
-           :info-label          my-label
+           :info-label          sim-info-label
+           :sim-selectable-text sim-selectable-text
            :scores-chart-panel  scores-chart-panel
            :scores-chart        scores-chart
            :ctl-start-stop-btn  ctl-start-stop-btn}
