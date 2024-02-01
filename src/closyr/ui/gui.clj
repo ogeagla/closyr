@@ -1,9 +1,11 @@
 (ns closyr.ui.gui
+  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [closyr.dataset.prime-10000 :as data-primes]
     [closyr.dataset.prime-counting :as data-prime-counting]
     [closyr.ui.plot :as plot]
+    [closyr.dataset.prng :refer :all]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
     [seesaw.core :as ss]
@@ -320,7 +322,13 @@
              (* 50
                 (Math/sqrt (* 2.0 Math/PI))
                 (Math/exp (- (* (/ (/ (- i (/ @sketch-input-x-count* 2)) 5.0) 2.0)
-                                (/ (- i (/ @sketch-input-x-count* 2)) 5.0)))))))}})
+                                (/ (- i (/ @sketch-input-x-count* 2)) 5.0)))))))}
+   "random"
+   {:idx 80
+    :fn  (fn [i]
+           (y->gui-coord-y
+             (* 60
+                (rand))))}})
 
 
 (def input-y-fns
