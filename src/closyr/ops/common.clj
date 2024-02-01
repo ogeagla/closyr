@@ -142,17 +142,17 @@
 
 (defn should-modify-leaf
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (inversely-proportional-to-leaf-size leaf-count 2.0))
+  (inversely-proportional-to-leaf-size leaf-count 1.5))
 
 
 (defn should-modify-branch
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (inversely-proportional-to-leaf-size leaf-count 0.25))
+  (inversely-proportional-to-leaf-size leaf-count 0.5))
 
 
 (defn should-modify-ast-head
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (inversely-proportional-to-leaf-size leaf-count 0.125))
+  (inversely-proportional-to-leaf-size leaf-count 0.25))
 
 
 (def do-not-simplify-fns* (atom {}))
@@ -169,6 +169,34 @@
           (recur (inc c))))))
 
 
+(defn ^IAST do-simplify
+  [start
+   done?*
+   {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
+  (if (@do-not-simplify-fns* (str expr))
+    (do
+      (println "Skip fn which we cannot simplify: " (str expr))
+      expr)
+    (try
+      (check-simplify-timing expr done?*)
+      (let [^IAST new-expr (F/Simplify expr)
+            #_(F/FullSimplify
+                (F/Simplify
+                  expr
+                  assume-x-gt-zero))
+            res            (.eval (or util (new-util)) new-expr)
+            diff-ms        (start-date->diff-ms start)]
+        (reset! done?* true)
+        (when (> diff-ms 2000)
+          (println "Long simplify: "
+                   (.leafCount expr) (str expr) " -->> "
+                   (.leafCount res) (str res)))
+        res)
+
+      (catch Exception e
+        (println "Err in eval simplify for fn: " (str expr) " : " e)
+        expr))))
+
 (defn ^IAST maybe-simplify
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
 
@@ -177,29 +205,7 @@
            (< (rand) *simplify-probability-sampler*))
     (let [start              (Date.)
           done?*             (atom false)
-          ^IAST simpled-expr (if (@do-not-simplify-fns* (str expr))
-                               (do
-                                 (println "Skip fn which we cannot simplify: " (str expr))
-                                 expr)
-                               (try
-                                 (check-simplify-timing expr done?*)
-                                 (let [^IAST new-expr (F/Simplify expr)
-                                       #_(F/FullSimplify
-                                           (F/Simplify
-                                             expr
-                                             assume-x-gt-zero))
-                                       res            (.eval (or util (new-util)) new-expr)
-                                       diff-ms        (start-date->diff-ms start)]
-                                   (reset! done?* true)
-                                   (when (> diff-ms 2000)
-                                     (println "Long simplify: "
-                                              (.leafCount expr) (str expr) " -->> "
-                                              (.leafCount res) (str res)))
-                                   res)
-
-                                 (catch Exception e
-                                   (println "Err in eval simplify for fn: " (str expr) " : " e)
-                                   expr)))]
+          ^IAST simpled-expr (do-simplify start done?* pheno)]
       (when-not util (println "Warning creating new util during simplify"))
       (assoc pheno
         :simple? true
