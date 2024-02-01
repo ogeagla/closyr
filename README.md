@@ -1,5 +1,7 @@
 # closyr
 
+![icon_half.png](resources%2Ficon_half.png)
+
 A Symbolic Regression tool, written in Clojure.
 
 - Draw an objective function or select a built-in dataset
