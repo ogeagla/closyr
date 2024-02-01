@@ -435,6 +435,7 @@
 
 
 (defn check-start-stop-state
+  "If no message from GUI is available, no-op, otherwise process stop/restart requests"
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
@@ -469,6 +470,7 @@
 
 
 (defn wait-and-get-gui-args
+  "Park and wait on GUI input, return the inputs as args to GA run"
   [sim-stop-start-chan]
   ;; wait for GUI to press Start, which submits the new xs/ys data:
   (let [msg (<!! sim-stop-start-chan)]
@@ -476,6 +478,7 @@
 
 
 (defn start-gui-and-get-input-data
+  "Initialize and show GUI, then park and wait on user input to start"
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
 
   ;; these are the data shown in the plots before the expriement is started:
@@ -490,6 +493,7 @@
 
 
 (defn run-from-inputs
+  "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{:keys [iters initial-phenos initial-muts] :as run-config}
    {:keys [input-iters input-phenos-count input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
