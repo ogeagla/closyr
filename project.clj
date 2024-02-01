@@ -39,7 +39,8 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
-  :plugins [[lein-ring "0.12.6"]
+  :plugins [[lein-cloverage "1.2.2"]
+            [lein-ring "0.12.6"]
             [lein-garden "0.3.0"]
             [lein-vanity "0.2.0"]
             [lein-nomis-ns-graph "0.14.6"]

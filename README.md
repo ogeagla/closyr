@@ -1,36 +1,56 @@
 # closyr
 
-FIXME: description
+A Symbolic Regression tool, written in Clojure.
+
+- Draw an objective function or select a built-in dataset
+- Select number of points, iterations
+- See progress 
+  - Chart of best fitting function
+  - Chart of loss over time
+  - A selectable text version of the function
 
 ## Installation
 
-Download from http://example.com/FIXME.
+Currently this application is not packed, so you have to run it from source, using Clojure development tools (`leiningen`)
+
+    $ lein deps
 
 ## Usage
 
-FIXME: explanation
+1. Lein Run
 
-    $ java -jar closyr-0.1.0-standalone.jar [args]
 
-## Options
+    $ lein run
 
-FIXME: listing of options this app accepts.
+2. JAR
+
+
+    $ lein uberjar #this path does not work, there are problems with logging libraries in dependency symja
+    $ java -jar closyr-0.1.0-standalone.jar
+
 
 ## Examples
 
-...
+On successful application start, you should see this:
 
-### Bugs
+![gui_after_startup_2024-02-01_09-27.png](screenshots%2Fgui_after_startup_2024-02-01_09-27.png)
 
-...
+While a function search is running:
 
-### Any Other Sections
-### That You Think
-### Might be Useful
+![gui_running_2024-02-01_09-29.png](screenshots%2Fgui_running_2024-02-01_09-29.png)
+
+### Tests
+
+    $ lein test
+
+Coverage looks like this:
+![test_coverage_2024-02-01_09-25.png](screenshots%2Ftest_coverage_2024-02-01_09-25.png)
+
+
 
 ## License
 
-Copyright © 2024 FIXME
+Copyright © 2024 Octavian Geagla
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
