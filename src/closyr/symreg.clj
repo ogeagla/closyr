@@ -93,7 +93,7 @@
                                      f-of-xs)
                   resid-sum        (sum abs-resids)
                   score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
-                                              (last (sort abs-resids))))
+                                              (reduce max abs-resids)))
                   length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
                   overall-score    (- score length-deduction)]
 

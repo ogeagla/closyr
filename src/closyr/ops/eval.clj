@@ -139,8 +139,8 @@
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
   (let [middle-section (eval-vec-pheno p run-args)
-        max-y          (apply max middle-section)
-        min-y          (apply min middle-section)]
+        max-y          (reduce max middle-section)
+        min-y          (reduce min middle-section)]
     (concat
 
       (mapv #(clamp-oversampled-ys max-y min-y %)
