@@ -170,7 +170,7 @@
 
 
 (deftest apply-modifications-test
-  (testing "modify-branches"
+  (testing "single mod: modify-branches"
     (let [x (F/Dummy "x")
           [pheno iters mods] (ops-modify/apply-modifications
                                100
@@ -185,7 +185,92 @@
                                 :expr (.plus (F/num 1.0) x)})]
       (is (= iters 1))
       (is (= (str (:expr pheno))
-             (str (F/Cos (.plus (F/num 1.0) x))))))))
+             (str (F/Cos (.plus (F/num 1.0) x)))))))
+
+  (testing "multiple mods 1"
+    (let [x (F/Dummy "x")
+          [pheno iters mods] (ops-modify/apply-modifications
+                               100
+                               2
+                               [{:op               :modify-branches
+                                 :label            "branch cos"
+                                 :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                     (F/Cos ie))}]
+                               {:sym  x
+                                :expr (.plus (F/num 1.0) x)}
+                               {:sym  x
+                                :expr (.plus (F/num 1.0) x)})]
+      (is (= iters 2))
+      (is (= (str (:expr pheno))
+             "Cos(Cos(Cos(1.0+x)))"))))
+
+
+  (testing "multiple mods 2"
+    (let [rand* (atom -1)]
+      (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
+                       #'prng/rand-nth (fn [coll] (nth coll (swap! rand* inc)))}
+        (fn []
+          (let [x (F/Dummy "x")
+                [pheno iters mods] (ops-modify/apply-modifications
+                                     100
+                                     2
+                                     [{:op               :modify-branches
+                                       :label            "branch cos"
+                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                           (F/Cos ie))}
+                                      {:op               :modify-branches
+                                       :label            "branch sin"
+                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                           (F/Sin ie))}]
+                                     {:sym  x
+                                      :expr (.plus (F/num 1.0) x)}
+                                     {:sym  x
+                                      :expr (.plus (F/num 1.0) x)})]
+            (is (= iters 2))
+            (is (= (str (:expr pheno))
+                   "Sin(Cos(Sin(1.0+x)))")))))))
+
+
+  (testing "multiple mods 3"
+    (let [rand* (atom -1)]
+      (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
+                       #'prng/rand-nth (fn [coll] (nth coll (swap! rand* inc)))}
+        (fn []
+          (let [x (F/Dummy "x")
+                [pheno iters mods] (ops-modify/apply-modifications
+                                     100
+                                     5
+                                     [{:op               :modify-branches
+                                       :label            "branch cos"
+                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                           (F/Cos ie))}
+                                      {:op               :modify-branches
+                                       :label            "b*1.1"
+                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                           (F/Times ie (F/num 1.1)))}
+                                      {:op               :modify-ast-head
+                                       :label            "cos->acos"
+                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                           (if (= F/Cos ie)
+                                                             F/ArcCos
+                                                             ie))}
+                                      {:op               :modify-leafs
+                                       :label            "c+1/2"
+                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                                                           (if (and (.isNumber ie) (ops-common/should-modify-leaf leaf-count pheno))
+                                                             (F/Plus ie (F/Divide 1 F/C2))
+                                                             ie))}
+                                      {:op          :modify-fn
+                                       :label       "-x^1/2"
+                                       :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                      (F/Subtract expr (F/Sqrt x-sym)))}]
+                                     {:sym  x
+                                      :expr (.plus (F/num 1.0) x)}
+                                     {:sym  x
+                                      :expr (.plus (F/num 1.0) x)})]
+            (is (= iters 5))
+            (is (= (str (:expr pheno))
+                   "-Sqrt(x)+1.1*ArcCos(1.1*(1.0+x))"))))))))
 
 
 (deftest modify-test
@@ -268,12 +353,12 @@
    [:modify-fn
     "-1/10"
     "-11/10+x+Cos(x)-x*Sin(1/2-x)"]
-   ;[:modify-fn
-   ; "+1/100"
-   ; "-99/100+x+Cos(x)-x*Sin(1/2-x)"]
-   ;[:modify-fn
-   ; "-1/100"
-   ; "-101/100+x+Cos(x)-x*Sin(1/2-x)"]
+   ;; [:modify-fn
+   ;; "+1/100"
+   ;; "-99/100+x+Cos(x)-x*Sin(1/2-x)"]
+   ;; [:modify-fn
+   ;; "-1/100"
+   ;; "-101/100+x+Cos(x)-x*Sin(1/2-x)"]
    [:modify-fn
     "+Sin"
     "-1+x+Cos(x)-x*Sin(1/2-x)+Sin(x)"]
@@ -352,12 +437,12 @@
    [:modify-fn
     "*10"
     "10*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-   ;[:modify-fn
-   ; "/100"
-   ; "1/100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
-   ;[:modify-fn
-   ; "*100"
-   ; "100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+   ;; [:modify-fn
+   ;; "/100"
+   ;; "1/100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
+   ;; [:modify-fn
+   ;; "*100"
+   ;; "100*(-1+x+Cos(x)-x*Sin(1/2-x))"]
    [:modify-fn
     "*1.1"
     "1.1*(-1+x+Cos(x)-x*Sin(1/2-x))"]
@@ -379,12 +464,12 @@
    [:modify-leafs
     "1/x"
     "-1+1/x+Cos(1/x)-Sin(1/2-1/x)/x"]
-   ;[:modify-leafs
-   ; "x/100"
-   ; "-1+x/100+Cos(x/100)-1/100*x*Sin(1/2-x/100)"]
-   ;[:modify-leafs
-   ; "100*x"
-   ; "-1+100*x+Cos(100*x)-100*x*Sin(1/2-100*x)"]
+   ;; [:modify-leafs
+   ;; "x/100"
+   ;; "-1+x/100+Cos(x/100)-1/100*x*Sin(1/2-x/100)"]
+   ;; [:modify-leafs
+   ;; "100*x"
+   ;; "-1+100*x+Cos(100*x)-100*x*Sin(1/2-100*x)"]
    [:modify-leafs
     "-1*x"
     "-1-x+Cos(x)+x*Sin(1/2+x)"]
@@ -424,12 +509,12 @@
    [:modify-leafs
     "x-1/10"
     "-11/10+x+Cos(1/10-x)+(1/10-x)*Sin(3/5-x)"]
-   ;[:modify-leafs
-   ; "x+1/100"
-   ; "-99/100+x+Cos(1/100+x)-(1/100+x)*Sin(49/100-x)"]
-   ;[:modify-leafs
-   ; "x-1/100"
-   ; "-101/100+x+Cos(1/100-x)+(1/100-x)*Sin(51/100-x)"]
+   ;; [:modify-leafs
+   ;; "x+1/100"
+   ;; "-99/100+x+Cos(1/100+x)-(1/100+x)*Sin(49/100-x)"]
+   ;; [:modify-leafs
+   ;; "x-1/100"
+   ;; "-101/100+x+Cos(1/100-x)+(1/100-x)*Sin(51/100-x)"]
    [:modify-leafs
     "c/2"
     "-1/2+x+Cos(x)-1/2*x*Sin(1/4-x/2)"]
@@ -451,12 +536,12 @@
    [:modify-leafs
     "c-1/10"
     "-11/10+x+Cos(x)-11/10*x*Sin(2/5-11/10*x)"]
-   ;[:modify-leafs
-   ; "c+1/100"
-   ; "-99/100+x+Cos(x)-99/100*x*Sin(51/100-99/100*x)"]
-   ;[:modify-leafs
-   ; "c-1/100"
-   ; "-101/100+x+Cos(x)-101/100*x*Sin(49/100-101/100*x)"]
+   ;; [:modify-leafs
+   ;; "c+1/100"
+   ;; "-99/100+x+Cos(x)-99/100*x*Sin(51/100-99/100*x)"]
+   ;; [:modify-leafs
+   ;; "c-1/100"
+   ;; "-101/100+x+Cos(x)-101/100*x*Sin(49/100-101/100*x)"]
    [:modify-leafs
     "c+1/2"
     "-1/2+x+Cos(x)-1/2*x*Sin(1-x/2)"]
@@ -550,13 +635,9 @@
 
 
 (deftest mutations-test
-
-
   (with-redefs-fn {#'prng/rand (fn [] 0.0)}
-
     (fn []
       (let [x                      (F/Dummy "x")
-
             ;; x + cos(x) + x*sin(x-0.5) - 1
             test-expr              (.minus
                                      (.plus x (.plus
@@ -564,12 +645,10 @@
                                                 (.times x (F/Sin (.minus x F/C1D2)))))
                                      F/C1)
             all-mods-applied-on-fn (vec (map (fn [m]
-                                               [(:op m) (:label m) (str
-                                                                     (:expr
-                                                                       (ops-modify/modify
-                                                                         m
-                                                                         {:sym  x
-                                                                          :expr test-expr})))])
+                                               [(:op m) (:label m) (str (:expr (ops-modify/modify
+                                                                                 m
+                                                                                 {:sym  x
+                                                                                  :expr test-expr})))])
                                              (ops-init/initial-mutations)))]
         (is (= (count all-mods-applied-on-fn)
                (count all-mods-applied-on-fn-expected)))
