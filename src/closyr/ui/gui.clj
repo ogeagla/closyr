@@ -158,10 +158,11 @@
                         (sg/draw g (sg/rounded-rect 3
                                                     3
                                                     (- (ss/width c) 6)
-                                                    (- (ss/height c) 6)
+                                                    (- (ss/width c) 6)
+                                                    ;(- (ss/height c) 6)
                                                     9)
-                                 (sg/style :foreground "#FFFFaa"
-                                           :background "#aaFFFF"
+                                 (sg/style :foreground "salmon"
+                                           :background "#666"
                                            :stroke 2)))})
     ;; Set the bounds to its preferred size. Note that this has to be
     ;; done after the label is fully constructed.
@@ -342,7 +343,7 @@
 (defn draw-grid
   [c ^Graphics2D g]
   (let [w (ss/width c) h (ss/height c)]
-    (.setColor g color:light-gray)
+    (.setColor g Color/GRAY)
     (doseq [x (range 0 w 10)]
       (.drawLine g x 0 x h))
     (doseq [y (range 0 h 10)]
@@ -408,7 +409,7 @@
                                  (range @sketch-input-x-count*))
 
         items                  (map
-                                 (fn [pt] (movable (make-label #(do pt) (str "x")) {:disable-x? true}))
+                                 (fn [pt] (movable (make-label #(do pt) (str " ")) {:disable-x? true}))
                                  pts)
 
         items-point-getters    (map
