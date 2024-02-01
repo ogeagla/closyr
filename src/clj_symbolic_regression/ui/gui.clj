@@ -471,7 +471,7 @@
   []
   (let [iters-settings-container             (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
         pcount-settings-container            (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Population Size")})
-        ^JPanel settings-container           (panel-grid {:rows 1 :cols 2})
+        ^JPanel settings-container           (panel-grid {:rows 2 :cols 1})
 
         btn-group-iters                      (ss/button-group)
         ^JRadioButtonMenuItem iter-radio-1   (ss/radio-menu-item
@@ -701,7 +701,7 @@
 
             bottom-container                (panel-grid {:rows 2 :cols 1})
             inputs-and-info-container       (panel-grid {:rows 3 :cols 1})
-            ctls-container                  (panel-grid {:rows 3 :cols 1})
+            ctls-container                  (panel-grid {:rows 4 :cols 1})
             draw-container                  (panel-grid {:rows 1 :cols 2})
             top-container                   (panel-grid {:rows 1 :cols 2})
             input-fn-container              (panel-grid {:rows 1 :cols 2})
@@ -775,7 +775,7 @@
         (.add input-fn-container input-fn-picker)
         (.add input-fn-container brush-container)
 
-        (.add inputs-and-info-container settings-panel)
+        ;(.add inputs-and-info-container settings-panel)
         (.add inputs-and-info-container sim-info-label)
         (.add inputs-and-info-container sim-selectable-text)
 
@@ -787,6 +787,7 @@
 
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
+        (.add ctls-container settings-panel)
         (.add ctls-container input-fn-container)
 
         (.add top-container ctls-container)
