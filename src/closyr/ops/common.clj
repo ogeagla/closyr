@@ -2,34 +2,24 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
-    [clojure.string :as str]
     [closyr.dataset.prng :refer :all])
   (:import
     (java.util
       Date
       UUID)
-    (java.util.concurrent
-      TimeUnit)
     (java.util.function
       Function)
     (org.matheclipse.core.eval
       EvalControlledCallable
       EvalEngine
       ExprEvaluator)
-    (org.matheclipse.core.eval.exception
-      ArgumentTypeException
-      TimeoutException)
     (org.matheclipse.core.expression
       AST
       F)
     (org.matheclipse.core.interfaces
       IAST
       IExpr
-      ISymbol)
-    (org.matheclipse.parser.client
-      SyntaxError)
-    (org.matheclipse.parser.client.math
-      MathException)))
+      ISymbol)))
 
 
 (set! *warn-on-reflection* true)
@@ -79,7 +69,7 @@
 
 
 (def ^:dynamic *simplify-probability-sampler*
-  0.65)
+  0.5)
 
 
 (def ^:dynamic *simplify-timeout*
@@ -101,7 +91,7 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [x-sym]))
+            (into-array ISymbol [x-sym]))
     expr))
 
 
@@ -140,34 +130,29 @@
 (def modify-leafs-sampler [true false false false])
 
 
-(defn should-modify-leaf
-  [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+(defn inversely-proportional-to-leaf-size
+  [leaf-count scalar]
   (let [leaf-scalar (min 1.0
                          (max 0.005
                               (/ 1.0 leaf-count)))
         r           (rand)
-        do?         (< r (* 2.5 leaf-scalar))]
+        do?         (< r (* scalar leaf-scalar))]
     do?))
+
+
+(defn should-modify-leaf
+  [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+  (inversely-proportional-to-leaf-size leaf-count 2.0))
 
 
 (defn should-modify-branch
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (let [branch-scalar (min 1.0
-                           (max 0.005
-                                (/ 1.0 leaf-count)))
-        r             (rand)
-        do?           (< r (* 0.5 branch-scalar))]
-    do?))
+  (inversely-proportional-to-leaf-size leaf-count 0.25))
 
 
 (defn should-modify-ast-head
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (let [branch-scalar (min 1.0
-                           (max 0.005
-                                (/ 1.0 leaf-count)))
-        r             (rand)
-        do?           (< r (* 0.25 branch-scalar))]
-    do?))
+  (inversely-proportional-to-leaf-size leaf-count 0.125))
 
 
 (def do-not-simplify-fns* (atom {}))
@@ -194,7 +179,7 @@
           done?*             (atom false)
           ^IAST simpled-expr (if (@do-not-simplify-fns* (str expr))
                                (do
-                                 (println "Skip not fn which cannot simplify: " (str expr))
+                                 (println "Skip fn which we cannot simplify: " (str expr))
                                  expr)
                                (try
                                  (check-simplify-timing expr done?*)
@@ -212,14 +197,11 @@
                                               (.leafCount res) (str res)))
                                    res)
 
-                                 (catch TimeoutException te
-                                   (println "Simplify timed out: " (str expr))
-                                   expr)
                                  (catch Exception e
                                    (println "Err in eval simplify for fn: " (str expr) " : " e)
                                    expr)))]
       (when-not util (println "Warning creating new util during simplify"))
       (assoc pheno
-             :simple? true
-             :expr simpled-expr))
+        :simple? true
+        :expr simpled-expr))
     pheno))
