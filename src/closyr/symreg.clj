@@ -27,8 +27,6 @@
     (org.knowm.xchart
       XChartPanel
       XYChart)
-    (org.matheclipse.core.expression
-      F)
     (org.matheclipse.core.interfaces
       IExpr
       ISymbol)))
