@@ -11,10 +11,11 @@
         2)
      (* -1 y)))
 
+(def initial-fn "sin+cos 1")
 
 (defn input-y-fns-data
   [sketchpad-size* sketch-input-x-count*]
-  {"sin+cos 1"
+  {initial-fn
    {:idx 0
     :fn  (fn [i]
            (y->gui-coord-y
