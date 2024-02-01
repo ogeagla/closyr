@@ -2,10 +2,9 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
-    [closyr.dataset.prime-10000 :as data-primes]
-    [closyr.dataset.prime-counting :as data-prime-counting]
-    [closyr.ui.plot :as plot]
+    [closyr.dataset.inputs :as input-data]
     [closyr.dataset.prng :refer :all]
+    [closyr.ui.plot :as plot]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
     [seesaw.core :as ss]
@@ -271,76 +270,20 @@
    brush-label:line   sketchpad-on-click:line-brush})
 
 
-(defn y->gui-coord-y
-  [y]
-  (+ (/ (or (:h @sketchpad-size*)
-            170)
-        2)
-     (* -1 y)))
-
-
-(def input-y-fns-data
-  {"sin+cos"
-   {:idx 0
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (+ (* 50 (Math/sin (/ i 4.0)))
-                (* 30 (Math/cos (/ i 3.0))))))}
-   "cos"
-   {:idx 10
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 30 (Math/cos (/ i 3.0)))))}
-   "sin"
-   {:idx 20
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 50 (Math/sin (/ i 4.0)))))}
-   "log"
-   {:idx 30
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 50 (Math/log (+ 0.01 (/ i 4.0))))))}
-   "hline"
-   {:idx 40
-    :fn  (fn [i] (y->gui-coord-y 0.0))}
-
-   "prime count"
-   {:idx 50
-    :fn  (fn [i]
-           (let [xys (data-prime-counting/get-data @sketch-input-x-count*)]
-             (y->gui-coord-y (second (nth xys i)))))}
-   "primes"
-   {:idx 60
-    :fn  (fn [i]
-           (let [xys (data-primes/get-data @sketch-input-x-count*)]
-             (y->gui-coord-y (second (nth xys i)))))}
-   "gaussian"
-   {:idx 70
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 50
-                (Math/sqrt (* 2.0 Math/PI))
-                (Math/exp (- (* (/ (/ (- i (/ @sketch-input-x-count* 2)) 5.0) 2.0)
-                                (/ (- i (/ @sketch-input-x-count* 2)) 5.0)))))))}
-   "random"
-   {:idx 80
-    :fn  (fn [i]
-           (y->gui-coord-y
-             (* 60
-                (rand))))}})
+(def selectable-input-fns
+  (input-data/input-y-fns-data sketchpad-size* sketch-input-x-count*))
 
 
 (def input-y-fns
   (into {}
         (map
           (fn [[k v]] [k (:fn v)])
-          input-y-fns-data)))
+          selectable-input-fns)))
 
 
 (def dataset-fns
   (->>
-    input-y-fns-data
+    selectable-input-fns
     (sort-by #(:idx (second %)))
     (mapv #(first %))))
 
@@ -351,7 +294,7 @@
 (defn draw-grid
   [c ^Graphics2D g]
   (let [w (ss/width c) h (ss/height c)]
-    (.setColor g (Color. 98 98 98 ))
+    (.setColor g (Color. 98 98 98))
     (doseq [x (range 0 w 10)]
       (.drawLine g x 0 x h))
     (doseq [y (range 0 h 10)]
@@ -818,7 +761,7 @@
         (.add brush-container xs-container)
         (.add brush-container input-fn-picker)
 
-        ;(.add input-fn-container input-fn-picker)
+        ;; (.add input-fn-container input-fn-picker)
         (.add input-fn-container brush-container)
 
         (.add inputs-and-info-container sim-info-label)
