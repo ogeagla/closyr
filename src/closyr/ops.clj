@@ -836,68 +836,16 @@
                         (if (and (.isNumber ie) (should-modify-leaf leaf-count pheno))
                           (F/Subtract ie (F/Divide 1 F/C2))
                           ie))}
-   ;;
-   ;; {:op           :modify-substitute
-   ;; :label        "Divide->Times"
-   ;; :find-expr    F/Divide
-   ;; :replace-expr F/Times}
-   ;;
-   ;; {:op           :modify-substitute
-   ;; :label        "Minus->Plus"
-   ;; :find-expr    F/Minus
-   ;; :replace-expr F/Plus}
 
    {:op           :modify-substitute
     :label        "Sin->Cos"
     :find-expr    F/Sin
     :replace-expr F/Cos}
 
-   #_{:op           :modify-substitute
-      :label        "Sin->Plus"
-      :find-expr    F/Sin
-      :replace-expr F/Plus}
-
    {:op           :modify-substitute
     :label        "Cos->Sin"
     :find-expr    F/Cos
     :replace-expr F/Sin}
-
-   #_{:op           :modify-substitute
-      :label        "Cos->Plus"
-      :find-expr    F/Cos
-      :replace-expr F/Plus}
-
-
-
-   #_{:op           :modify-substitute
-      :label        "Sqrt->Plus"
-      :find-expr    F/Sqrt
-      :replace-expr F/Plus}
-
-   #_{:op           :modify-substitute
-      :label        "Log->Plus"
-      :find-expr    F/Log
-      :replace-expr F/Plus}
-
-   #_{:op           :modify-substitute
-      :label        "Exp->Plus"
-      :find-expr    F/Exp
-      :replace-expr F/Plus}
-
-   #_{:op           :modify-substitute
-      :label        "Power->Plus"
-      :find-expr    F/Power
-      :replace-expr F/Plus}
-
-   #_{:op           :modify-substitute
-      :label        "Power->Times"
-      :find-expr    F/Power
-      :replace-expr F/Times}
-
-
-
-
-
 
    {:op               :modify-ast-head
     :label            "sin->cos"
@@ -915,9 +863,6 @@
                           F/Sin
                           ie))}
 
-
-
-
    {:op               :modify-ast-head
     :label            "sin->asin"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
@@ -933,7 +878,6 @@
                                  (= F/Cos ie))
                           F/ArcCos
                           ie))}
-
 
    {:op               :modify-ast-head
     :label            "+->*"
@@ -966,7 +910,6 @@
                                  (= F/Divide ie))
                           F/Times
                           ie))}
-
 
    {:op               :modify-ast-head
     :label            "/->+"
