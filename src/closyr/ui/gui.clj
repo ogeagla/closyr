@@ -1,9 +1,9 @@
 (ns closyr.ui.gui
   (:require
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [closyr.dataset.prime-10000 :as data-primes]
     [closyr.dataset.prime-counting :as data-prime-counting]
     [closyr.ui.plot :as plot]
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
     [seesaw.core :as ss]
@@ -40,6 +40,7 @@
       JPanel
       JRadioButton
       JRadioButtonMenuItem
+      JTabbedPane
       JTextField
       SwingUtilities
       UIManager
@@ -61,10 +62,10 @@
 (set! *warn-on-reflection* true)
 
 
-(def brush-label:skinny "Thin")
-(def brush-label:broad "Big")
-(def brush-label:huge "Huge")
-(def brush-label:line "Line")
+(def brush-label:skinny "S")
+(def brush-label:broad "M")
+(def brush-label:huge "L")
+(def brush-label:line "Y")
 
 (def sketch-input-x-count* (atom 50))
 
@@ -118,9 +119,8 @@
 
 (defn radio-controls-border
   [title]
-  ;(BorderFactory/createLineBorder (Color. 80 80 80) 1)
-  (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title)
-  )
+  ;; (BorderFactory/createLineBorder (Color. 80 80 80) 1)
+  (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title))
 
 
 (defn movable
@@ -159,7 +159,7 @@
                                                     3
                                                     (- (ss/width c) 6)
                                                     (- (ss/width c) 6)
-                                                    ;(- (ss/height c) 6)
+                                                    ;; (- (ss/height c) 6)
                                                     9)
                                  (sg/style :foreground "salmon"
                                            :background "#666"
@@ -343,7 +343,7 @@
 (defn draw-grid
   [c ^Graphics2D g]
   (let [w (ss/width c) h (ss/height c)]
-    (.setColor g Color/GRAY)
+    (.setColor g (Color. 98 98 98 ))
     (doseq [x (range 0 w 10)]
       (.drawLine g x 0 x h))
     (doseq [y (range 0 h 10)]
@@ -384,7 +384,8 @@
 
 
 (defn set-widget-location
-  [^JLabel widget ^double x ^double y] (.setLocation widget x y))
+  [^JLabel widget ^double x ^double y]
+  (.setLocation widget x y))
 
 
 (defn input-data-items-widget
@@ -470,68 +471,68 @@
 
 (defn ^JPanel experiment-settings-panel
   []
-  (let [iters-settings-container             (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
-        pcount-settings-container            (panel-grid {:rows 1 :cols 5 :border (radio-controls-border "Population Size")})
-        ^JPanel settings-container           (panel-grid {:rows 2 :cols 1})
+  (let [iters-settings-container               (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
+        pcount-settings-container              (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Population Size")})
+        ^JPanel settings-container             (panel-grid {:rows 1 :cols 2})
 
-        btn-group-iters                      (ss/button-group)
-        ^JRadioButtonMenuItem iter-radio-20   (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :text "20"
-                                               :group btn-group-iters
-                                               :listen [:mouse-clicked settings-iters-on-change])
+        btn-group-iters                        (ss/button-group)
+        ^JRadioButtonMenuItem iter-radio-20    (ss/radio-menu-item
+                                                 ;; :background color:very-light-gray
+                                                 :text "20"
+                                                 :group btn-group-iters
+                                                 :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-200   (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :selected? true
-                                               :text "200"
-                                               :group btn-group-iters
-                                               :listen [:mouse-clicked settings-iters-on-change])
-        ^JRadioButtonMenuItem iter-radio-1k   (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :text "1000"
-                                               :group btn-group-iters
-                                               :listen [:mouse-clicked settings-iters-on-change])
+                                                 ;; :background color:very-light-gray
+                                                 :selected? true
+                                                 :text "200"
+                                                 :group btn-group-iters
+                                                 :listen [:mouse-clicked settings-iters-on-change])
+        ^JRadioButtonMenuItem iter-radio-1k    (ss/radio-menu-item
+                                                 ;; :background color:very-light-gray
+                                                 :text "1000"
+                                                 :group btn-group-iters
+                                                 :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-10k   (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :text "10000"
-                                               :group btn-group-iters
-                                               :listen [:mouse-clicked settings-iters-on-change])
+                                                 ;; :background color:very-light-gray
+                                                 :text "10000"
+                                                 :group btn-group-iters
+                                                 :listen [:mouse-clicked settings-iters-on-change])
 
-        btn-group-pcounts                    (ss/button-group)
-        ^JRadioButtonMenuItem pcount-radio-1k (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :text "1000"
-                                               :group btn-group-pcounts
-                                               :listen [:mouse-clicked settings-pheno-count-on-change])
-        ^JRadioButtonMenuItem pcount-radio-2k (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :text "2000"
-                                               :group btn-group-pcounts
-                                               :listen [:mouse-clicked settings-pheno-count-on-change])
-        ^JRadioButtonMenuItem pcount-radio-5k (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :text "5000"
-                                               :group btn-group-pcounts
-                                               :listen [:mouse-clicked settings-pheno-count-on-change])
+        btn-group-pcounts                      (ss/button-group)
+        ^JRadioButtonMenuItem pcount-radio-1k  (ss/radio-menu-item
+                                                 ;; :background color:very-light-gray
+                                                 :text "1000"
+                                                 :group btn-group-pcounts
+                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
+        ^JRadioButtonMenuItem pcount-radio-2k  (ss/radio-menu-item
+                                                 ;; :background color:very-light-gray
+                                                 :text "2000"
+                                                 :group btn-group-pcounts
+                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
+        ^JRadioButtonMenuItem pcount-radio-5k  (ss/radio-menu-item
+                                                 ;; :background color:very-light-gray
+                                                 :text "5000"
+                                                 :group btn-group-pcounts
+                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-20k (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :selected? true
-                                               :text "20000"
-                                               :group btn-group-pcounts
-                                               :listen [:mouse-clicked settings-pheno-count-on-change])
+                                                 ;; :background color:very-light-gray
+                                                 :selected? true
+                                                 :text "20000"
+                                                 :group btn-group-pcounts
+                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-50k (ss/radio-menu-item
-                                               ;; :background color:very-light-gray
-                                               :text "50000"
-                                               :group btn-group-pcounts
-                                               :listen [:mouse-clicked settings-pheno-count-on-change])]
-    ;(.add pcount-settings-container (JLabel. "Pop Count:"))
+                                                 ;; :background color:very-light-gray
+                                                 :text "50000"
+                                                 :group btn-group-pcounts
+                                                 :listen [:mouse-clicked settings-pheno-count-on-change])]
+    ;; (.add pcount-settings-container (JLabel. "Pop Count:"))
     (.add pcount-settings-container pcount-radio-1k)
     (.add pcount-settings-container pcount-radio-2k)
     (.add pcount-settings-container pcount-radio-5k)
     (.add pcount-settings-container pcount-radio-20k)
-    (.add pcount-settings-container pcount-radio-50k)
+    ;; (.add pcount-settings-container pcount-radio-50k)
 
-    ;(.add iters-settings-container (JLabel. "Iterations:"))
+    ;; (.add iters-settings-container (JLabel. "Iterations:"))
     (.add iters-settings-container iter-radio-20)
     (.add iters-settings-container iter-radio-200)
     (.add iters-settings-container iter-radio-1k)
@@ -627,7 +628,7 @@
 (defn ^JPanel brush-panel
   []
   (let [brush-config-container          (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Brush")})
-        ^JPanel brush-container         (panel-grid {:rows 2 :cols 1})
+        ^JPanel brush-container         (panel-grid {:rows 1 :cols 3})
 
         btn-group-brush                 (ss/button-group)
         ^JRadioButtonMenuItem b-radio-0 (ss/radio-menu-item
@@ -651,7 +652,7 @@
                                           :text brush-label:line
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])]
-    ;(.add brush-config-container (JLabel. "Brush: "))
+    ;; (.add brush-config-container (JLabel. "Brush: "))
     (.add brush-config-container b-radio-0)
     (.add brush-config-container b-radio-1)
     (.add brush-config-container b-radio-2)
@@ -682,12 +683,29 @@
                                            :text "100"
                                            :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])]
-    ;(.add xs-config-container (JLabel. "Points: "))
+    ;; (.add xs-config-container (JLabel. "Points: "))
     (.add xs-config-container xs-radio-1)
     (.add xs-config-container xs-radio-2)
     (.add xs-config-container xs-radio-3)
     (.add xs-container xs-config-container)
     xs-container))
+
+
+(defn update-replace-drawing-widget
+  [draw-container]
+  (reset! replace-drawing-widget!*
+          (fn [^JPanel drawing-widget]
+            (println "REPLACE DRAWING WIDGET!")
+            (reset! new-xs?* true)
+            (let [new-widget (:drawing-widget
+                               (input-data-items-widget
+                                 (input-y-fns @input-y-fn*)))]
+
+              (ss/replace!
+                draw-container
+                drawing-widget
+                new-widget)
+              #_(ss/repaint! new-widget)))))
 
 
 (defn create-and-show-gui
@@ -708,31 +726,35 @@
 
             bottom-container                (panel-grid {:rows 2 :cols 1})
             inputs-and-info-container       (panel-grid {:rows 3 :cols 1})
-            ctls-container                  (panel-grid {:rows 3 :cols 1})
-            draw-container                  (panel-grid {:rows 1 :cols 2})
+            ctls-container                  (panel-grid {:rows 2 :cols 1})
+            row-3-container                 (panel-grid {:rows 1 :cols 2})
+            draw-parent                     (panel-grid {:rows 1 :cols 1})
             top-container                   (panel-grid {:rows 1 :cols 2})
-            input-fn-container              (panel-grid {:rows 1 :cols 2})
+            input-fn-container              (panel-grid {:rows 1 :cols 1})
 
+            page-pane                       (panel-grid {:rows 2 :cols 1})
             content-pane                    (doto (.getContentPane my-frame)
-                                              (.setLayout (GridLayout. 2 1)))
+                                              (.setLayout (GridLayout. 1 1)))
 
             sim-info-label                  (JLabel. "Press Start To Begin Function Search")
             ^JTextField sim-selectable-text (doto (JTextField. "")
                                               (.setEditable false))
 
-            ^XYChart best-fn-chart          (plot/make-plot:2-series series-best-fn-label
-                                                                     series-objective-fn-label
-                                                                     xs-best-fn
-                                                                     xs-objective-fn
-                                                                     ys-best-fn
-                                                                     ys-objective-fn)
+            ^XYChart best-fn-chart          (plot/make-plot:2-series
+                                              series-best-fn-label
+                                              series-objective-fn-label
+                                              xs-best-fn
+                                              xs-objective-fn
+                                              ys-best-fn
+                                              ys-objective-fn)
             best-fn-chart-panel             (XChartPanel. best-fn-chart)
 
-            ^XYChart scores-chart           (plot/make-plot:1-series series-scores-label
-                                                                     "Iteration"
-                                                                     "Score"
-                                                                     xs-scores
-                                                                     ys-scores)
+            ^XYChart scores-chart           (plot/make-plot:1-series
+                                              series-scores-label
+                                              "Iteration"
+                                              "Score"
+                                              xs-scores
+                                              ys-scores)
             scores-chart-panel              (XChartPanel. scores-chart)
 
 
@@ -762,46 +784,54 @@
                                               :model dataset-fns
                                               :listen [:action input-dataset-change])
 
-            icon-test                       (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))]
+            icon-test                       (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
 
-        (reset! replace-drawing-widget!* (fn [^JPanel drawing-widget]
-                                           (println "REPLACE DRAWING WIDGET!")
-                                           (reset! new-xs?* true)
-                                           (let [new-widget (:drawing-widget
-                                                              (input-data-items-widget
-                                                                (input-y-fns @input-y-fn*)))]
+            btns-container                  (doto (panel-grid {:rows 2 :cols 2})
 
-                                             (ss/replace!
-                                               draw-container
-                                               drawing-widget
-                                               new-widget)
-                                             #_(ss/repaint! new-widget))))
+                                              (.add (JLabel. ""))
+                                              (.add (JLabel. ""))
+                                              (.add ctl-start-stop-btn)
+                                              (.add ctl-reset-btn))
+
+            settings-container              (doto (panel-grid {:rows 2 :cols 1})
+                                              (.add settings-panel)
+                                              (.add input-fn-container))
+
+            history-container               (doto (panel-grid {:rows 1 :cols 1})
+                                              (.add (JLabel. "Hello")))
+
+            page-pane-tabbed                (doto (JTabbedPane.)
+                                              (.setBounds 50 50 200 200)
+                                              (.add "Main" ctls-container)
+                                              (.add "Info" history-container))]
+
+        (update-replace-drawing-widget draw-parent)
 
         (.add brush-container xs-container)
+        (.add brush-container input-fn-picker)
 
-        (.add input-fn-container input-fn-picker)
+        ;(.add input-fn-container input-fn-picker)
         (.add input-fn-container brush-container)
 
         (.add inputs-and-info-container sim-info-label)
         (.add inputs-and-info-container sim-selectable-text)
 
-        (.add draw-container drawing-widget)
-        (.add draw-container scores-chart-panel)
+        (.add draw-parent drawing-widget)
+        (.add row-3-container btns-container)
+        (.add row-3-container scores-chart-panel)
 
-        (.add bottom-container draw-container)
+        (.add bottom-container row-3-container)
         (.add bottom-container inputs-and-info-container)
 
-        (.add ctls-container  (doto (panel-grid {:rows 2 :cols 1})
-                                (.add ctl-start-stop-btn)
-                                (.add ctl-reset-btn)))
-        (.add ctls-container settings-panel)
-        (.add ctls-container input-fn-container)
+        (.add ctls-container settings-container)
+        (.add ctls-container draw-parent)
 
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
 
-        (.add content-pane top-container)
-        (.add content-pane bottom-container)
+        (.add page-pane top-container)
+        (.add page-pane bottom-container)
+        (.add content-pane page-pane)
 
         (.pack my-frame)
         (.setVisible my-frame true)
