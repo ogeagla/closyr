@@ -1,6 +1,6 @@
-(ns clj-symbolic-regression.ga
+(ns closyr.ga
   (:require
-    [clj-symbolic-regression.dataset.prng :refer :all])
+    [closyr.dataset.prng :refer :all])
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle]))
 
 (set! *warn-on-reflection* true)

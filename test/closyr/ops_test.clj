@@ -1,7 +1,7 @@
-(ns clj-symbolic-regression.ops-test
+(ns closyr.ops-test
   (:require
-    [clj-symbolic-regression.dataset.prng :as prng]
-    [clj-symbolic-regression.ops :as ops]
+    [closyr.dataset.prng :as prng]
+    [closyr.ops :as ops]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.test :refer :all])
   (:import
@@ -710,4 +710,4 @@
              [0.5])))))
 
 
-(comment (run-tests 'clj-symbolic-regression.ops-test))
+(comment (run-tests 'closyr.ops-test))

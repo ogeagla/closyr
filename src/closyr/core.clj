@@ -1,6 +1,6 @@
-(ns clj-symbolic-regression.core
+(ns closyr.core
   (:gen-class)
-  (:require [clj-symbolic-regression.symreg :as symreg]))
+  (:require [closyr.symreg :as symreg]))
 
 (set! *warn-on-reflection* true)
 

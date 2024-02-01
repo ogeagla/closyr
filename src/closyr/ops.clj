@@ -1,7 +1,7 @@
-(ns clj-symbolic-regression.ops
+(ns closyr.ops
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
-    [clj-symbolic-regression.dataset.prng :refer :all]
+    [closyr.dataset.prng :refer :all]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str])
   (:import

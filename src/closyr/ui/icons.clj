@@ -1,4 +1,4 @@
-(ns clj-symbolic-regression.ui.icons
+(ns closyr.ui.icons
   (:require
     [clojure.string :as str])
   (:import

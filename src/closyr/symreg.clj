@@ -1,10 +1,10 @@
-(ns clj-symbolic-regression.symreg
+(ns closyr.symreg
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
-    [clj-symbolic-regression.dataset.prng :refer :all]
-    [clj-symbolic-regression.ga :as ga]
-    [clj-symbolic-regression.ops :as ops]
-    [clj-symbolic-regression.ui.gui :as gui]
+    [closyr.dataset.prng :refer :all]
+    [closyr.ga :as ga]
+    [closyr.ops :as ops]
+    [closyr.ui.gui :as gui]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
     [flames.core :as flames]
@@ -571,5 +571,8 @@
       ;; plain experiment:
       (experiment-fn))))
 
+
+;; todo: rename to Closyr?
+;; todo: fix can run uberjar: classload error on LogManager
 
 (comment (run-test))

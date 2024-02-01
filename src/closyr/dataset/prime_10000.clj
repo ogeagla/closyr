@@ -1,4 +1,4 @@
-(ns clj-symbolic-regression.dataset.prime-10000)
+(ns closyr.dataset.prime-10000)
 
 (set! *warn-on-reflection* true)
 

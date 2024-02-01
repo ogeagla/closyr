@@ -1,8 +1,8 @@
-(ns clj-symbolic-regression.ui.gui
+(ns closyr.ui.gui
   (:require
-    [clj-symbolic-regression.dataset.prime-10000 :as data-primes]
-    [clj-symbolic-regression.dataset.prime-counting :as data-prime-counting]
-    [clj-symbolic-regression.ui.plot :as plot]
+    [closyr.dataset.prime-10000 :as data-primes]
+    [closyr.dataset.prime-counting :as data-prime-counting]
+    [closyr.ui.plot :as plot]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
@@ -696,7 +696,7 @@
 
       (setup-theme)
 
-      (let [my-frame                        (doto (JFrame. "CLJ Symbolic Regression")
+      (let [my-frame                        (doto (JFrame. "CLOSYR")
                                               (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE))
 
             bottom-container                (panel-grid {:rows 2 :cols 1})

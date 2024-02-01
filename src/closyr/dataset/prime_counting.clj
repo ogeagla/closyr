@@ -1,4 +1,4 @@
-(ns clj-symbolic-regression.dataset.prime-counting)
+(ns closyr.dataset.prime-counting)
 
 (set! *warn-on-reflection* true)
 

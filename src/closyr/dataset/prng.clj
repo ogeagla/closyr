@@ -1,4 +1,4 @@
-(ns clj-symbolic-regression.dataset.prng
+(ns closyr.dataset.prng
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:import
     (clojure.lang
