@@ -701,9 +701,7 @@
 
             bottom-container                (panel-grid {:rows 2 :cols 1})
             inputs-and-info-container       (panel-grid {:rows 3 :cols 1})
-            ;info-container                  (panel-grid {:rows 2 :cols 1})
             ctls-container                  (panel-grid {:rows 3 :cols 1})
-            ;inputs-container                (panel-grid {:rows 1 :cols 2})
             draw-container                  (panel-grid {:rows 1 :cols 2})
             top-container                   (panel-grid {:rows 1 :cols 2})
             input-fn-container              (panel-grid {:rows 1 :cols 2})
@@ -776,18 +774,10 @@
 
         (.add input-fn-container input-fn-picker)
         (.add input-fn-container brush-container)
-        ;(.add inputs-container input-fn-container)
-        ;(.add inputs-container settings-panel)
-        ;; (.add inputs-container (JLabel. "" #_"Placeholder 1a"))
-        ;; (.add inputs-container (JLabel. "" #_"Placeholder 1b"))
 
-        ;(.add info-container sim-info-label)
-        ;(.add info-container sim-selectable-text)
         (.add inputs-and-info-container settings-panel)
-        ;(.add inputs-and-info-container info-container)
         (.add inputs-and-info-container sim-info-label)
         (.add inputs-and-info-container sim-selectable-text)
-
 
         (.add draw-container drawing-widget)
         (.add draw-container scores-chart-panel)
@@ -797,7 +787,7 @@
 
         (.add ctls-container ctl-start-stop-btn)
         (.add ctls-container ctl-reset-btn)
-        (.add ctls-container input-fn-container #_(JLabel. "" #_"Placeholder 2"))
+        (.add ctls-container input-fn-container)
 
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
