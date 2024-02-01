@@ -94,13 +94,17 @@
         diff (- (.getTime end) (.getTime start))]
     diff))
 
+(def do-not-simplify-fns* (atom {}))
 
 (defn check-simplify-timing
   [^IAST expr done?*]
   (go-loop [c 0]
     (when (not @done?*)
       (do (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
-          (when (> c 2) (println "Warning: simplify taking a long time: " c " " (.leafCount expr) " : " (str expr)))
+          (when (> c 2)
+            (println "Warning: simplify taking a long time: " c " " (.leafCount expr) " : " (str expr))
+            (swap! do-not-simplify-fns* assoc (str expr) true)
+            )
           (recur (inc c))))))
 
 
@@ -112,32 +116,36 @@
            (< (rand) *simplify-probability-sampler*))
     (let [start              (Date.)
           done?*             (atom false)
-          ^IAST new-expr     (F/Simplify expr)
-          #_(F/FullSimplify
-              (F/Simplify
-                expr
-                assume-x-gt-zero))
-          ^IAST simpled-expr (try
-                               (check-simplify-timing expr done?*)
-                               (let [res     (.eval (or util (new-util)) new-expr)
-                                     diff-ms (start-date->diff-ms start)]
-                                 (reset! done?* true)
-                                 (when (> diff-ms 2000)
-                                   (println "Long simplify: "
-                                            (.leafCount expr) (str expr) " -->> "
-                                            (.leafCount res) (str res)))
-                                 res)
-
-                               (catch TimeoutException te
-                                 (println "Simplify timed out: " (str expr))
+          ^IAST simpled-expr (if (@do-not-simplify-fns* (str expr))
+                               (do
+                                 (println "Skip not fn which cannot simplify: " (str expr))
                                  expr)
-                               (catch Exception e
-                                 (println "Err in eval simplify for fn: " (str expr) " : " e)
-                                 expr))]
+                               (try
+                                 (check-simplify-timing expr done?*)
+                                 (let [^IAST new-expr     (F/Simplify expr)
+                                       #_(F/FullSimplify
+                                           (F/Simplify
+                                             expr
+                                             assume-x-gt-zero))
+                                       res     (.eval (or util (new-util)) new-expr)
+                                       diff-ms (start-date->diff-ms start)]
+                                   (reset! done?* true)
+                                   (when (> diff-ms 2000)
+                                     (println "Long simplify: "
+                                              (.leafCount expr) (str expr) " -->> "
+                                              (.leafCount res) (str res)))
+                                   res)
+
+                                 (catch TimeoutException te
+                                   (println "Simplify timed out: " (str expr))
+                                   expr)
+                                 (catch Exception e
+                                   (println "Err in eval simplify for fn: " (str expr) " : " e)
+                                   expr)))]
       (when-not util (println "Warning creating new util during simplify"))
       (assoc pheno
-             :simple? true
-             :expr simpled-expr))
+        :simple? true
+        :expr simpled-expr))
     pheno))
 
 
@@ -145,7 +153,7 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [x-sym]))
+            (into-array ISymbol [x-sym]))
     expr))
 
 
@@ -196,9 +204,11 @@
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
     (when-not util (println "*** Warning: No util provided to evaluation engine! ***"))
-    (let [^IAST ast  (F/ast expr-args (expr->fn pheno))
-          ^IExpr res (.eval (or util (new-util)) ast)]
-      res)
+    (if (and expr expr-args)
+      (let [^IAST ast  (F/ast expr-args (expr->fn pheno))
+            ^IExpr res (.eval (or util (new-util)) ast)]
+        res)
+      (println "Warning: eval needs both expr and args"))
     (catch NullPointerException npe (println "Warning: NPE error in eval: " (str expr) " : " npe))
     (catch ArgumentTypeException se (println "Warning: argument type error in eval: " (str expr) " : " se))
     (catch SyntaxError se (println "Warning: syntax error in eval: " (str expr) " : " se))
