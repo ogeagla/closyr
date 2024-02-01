@@ -288,7 +288,7 @@
     (mapv #(first %))))
 
 
-(def input-y-fn* (atom "sin+cos"))
+(def input-y-fn* (atom "sin+cos 1"))
 
 
 (defn draw-grid

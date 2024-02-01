@@ -14,25 +14,33 @@
 
 (defn input-y-fns-data
   [sketchpad-size* sketch-input-x-count*]
-  {"sin+cos"
+  {"sin+cos 1"
    {:idx 0
     :fn  (fn [i]
            (y->gui-coord-y
              sketchpad-size*
              (+ (* 50 (Math/sin (/ i 4.0)))
                 (* 30 (Math/cos (/ i 3.0))))))}
+
+   "sin+cos 2"
+   {:idx 5
+    :fn  (fn [i]
+           (y->gui-coord-y
+             sketchpad-size*
+             (+ (* 10 (Math/sin (/ i 1.125)))
+                (* 50 (Math/cos (/ i 5.0))))))}
    "cos"
    {:idx 10
     :fn  (fn [i]
            (y->gui-coord-y
              sketchpad-size*
-             (* 30 (Math/cos (/ i 3.0)))))}
+             (* 80 (Math/cos (/ i 3.0)))))}
    "sin"
    {:idx 20
     :fn  (fn [i]
            (y->gui-coord-y
              sketchpad-size*
-             (* 50 (Math/sin (/ i 4.0)))))}
+             (* 80 (Math/sin (/ i 3.0)))))}
    "log"
    {:idx 30
     :fn  (fn [i]
@@ -58,7 +66,7 @@
     :fn  (fn [i]
            (y->gui-coord-y
              sketchpad-size*
-             (* 50
+             (* 40
                 (Math/sqrt (* 2.0 Math/PI))
                 (Math/exp (- (* (/ (/ (- i (/ @sketch-input-x-count* 2)) 5.0) 2.0)
                                 (/ (- i (/ @sketch-input-x-count* 2)) 5.0)))))))}
