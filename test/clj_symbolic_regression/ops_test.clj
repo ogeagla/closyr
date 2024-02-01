@@ -21,6 +21,22 @@
 (alter-var-root #'ops/*simplify-max-leafs* (constantly 100))
 
 
+(deftest parse-expr-str-test
+  (testing "can parse simple fn str"
+    (let [x (F/Dummy "x")
+          parsed (.parse (ops/new-eval-engine) "Cos(x)")]
+      (is (instance? IAST parsed))
+      (is (=
+            (str parsed)
+            (str (F/Cos x))))))
+  (testing "can parse simple fn str 2"
+    (let [x (F/Dummy "x")
+          parsed (.parse (ops/new-eval-engine) "x+Cos(x^2)")]
+      (is (instance? IAST parsed))
+      (is (=
+            (str parsed)
+            "x+Cos(x^2)")))))
+
 (deftest simplify-test
   (testing "simplify trig compose"
     (let [x (F/Dummy "x")]

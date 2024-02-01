@@ -54,14 +54,14 @@
 
 (def ^ISymbol sym-x (F/Dummy "x"))
 
+(defn ^EvalEngine new-eval-engine
+  []
+  (doto (EvalEngine. true)
+    (.setQuietMode true)))
 
 (defn ^ExprEvaluator new-util
   []
-  (ExprEvaluator.
-    (doto (EvalEngine. true)
-      (.setQuietMode true))
-    true
-    0))
+  (ExprEvaluator. (new-eval-engine) true 0))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
@@ -986,9 +986,9 @@
    {:op               :modify-branches
     :label            "b simplify"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (> 8 (.leafCount ie) 4)
+                        (if (and (> 9 (.leafCount ie) 4)
                                  #_(should-modify-branch leaf-count pheno))
-                          (binding [*simplify-max-leafs* 7]
+                          (binding [*simplify-max-leafs* 8]
                             #_(println "b simplify: " (.leafCount ie) " : " (str ie))
                             (try (:expr (maybe-simplify (assoc pheno :expr ie)))
                                  (catch Exception e
