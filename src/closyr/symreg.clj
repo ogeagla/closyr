@@ -1,12 +1,15 @@
 (ns closyr.symreg
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
-    [closyr.dataset.prng :refer :all]
-    [closyr.ga :as ga]
-    [closyr.ops :as ops]
-    [closyr.ui.gui :as gui]
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.string :as str]
+    [closyr.dataset.prng :refer :all]
+    [closyr.ga :as ga]
+    [closyr.ops.common :as ops-common]
+    [closyr.ops.eval :as ops-eval]
+    [closyr.ops.initialize :as ops-init]
+    [closyr.ops.modify :as ops-modify]
+    [closyr.ui.gui :as gui]
     [flames.core :as flames]
     [seesaw.core :as ss])
   (:import
@@ -64,9 +67,6 @@
       (and (number? n) (Double/isNaN n))))
 
 
-
-
-
 (defn score-fn
   [{:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
@@ -76,7 +76,7 @@
     (let [leafs (.leafCount ^IExpr (:expr pheno))]
       (if (> leafs max-leafs)
         (tally-min-score min-score)
-        (let [f-of-xs (ops/eval-vec-pheno pheno run-args)]
+        (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
           (if f-of-xs
             (let [abs-resids       (map
                                      (fn [expected actual]
@@ -122,9 +122,9 @@
   [initial-muts p-winner p-discard pop]
   (try
     (let [start     (Date.)
-          c         (rand-nth ops/mutations-sampler)
-          [new-pheno iters mods] (ops/apply-modifications max-leafs c initial-muts p-winner p-discard)
-          diff-ms   (ops/start-date->diff-ms start)
+          c         (rand-nth ops-modify/mutations-sampler)
+          [new-pheno iters mods] (ops-modify/apply-modifications max-leafs c initial-muts p-winner p-discard)
+          diff-ms   (ops-common/start-date->diff-ms start)
           old-leafs (.leafCount ^IExpr (:expr p-winner))
           new-leafs (.leafCount ^IExpr (:expr new-pheno))]
 
@@ -145,7 +145,7 @@
 
 (defn crossover-fn
   [initial-muts p p-discard pop]
-  (let [crossover-result (ops/crossover p p-discard)]
+  (let [crossover-result (ops-modify/crossover p p-discard)]
     (when crossover-result
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or
@@ -237,11 +237,11 @@
     :as   run-args}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [bests    (sort-population ga-result)
-          took-s   (/ (ops/start-date->diff-ms @test-timer*) 1000.0)
+          took-s   (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
           pop-size (count (:pop ga-result))
           best-v   (first bests)
-          evaled   (ops/eval-vec-pheno best-v run-args)
-          {evaled-extended :ys xs-extended :xs} (ops/eval-vec-pheno-oversample
+          evaled   (ops-eval/eval-vec-pheno best-v run-args)
+          {evaled-extended :ys xs-extended :xs} (ops-eval/eval-vec-pheno-oversample
                                                   best-v run-args extended-domain-args)]
 
       (reset! test-timer* (Date.))
@@ -275,14 +275,14 @@
   (->>
     (range 50)
     (map (fn [i] (* Math/PI (/ i 15.0))))
-    ops/doubles->exprs))
+    ops-common/doubles->exprs))
 
 
 (def output-exprs
   (->>
     (range 50)
     (map (fn [i] 0.0))
-    ops/doubles->exprs))
+    ops-common/doubles->exprs))
 
 
 (defn clamp-infinites
@@ -410,14 +410,14 @@
              (if new-state gui/ctl:start gui/ctl:stop)))
 
   (let [input-exprs      (if input-data-x
-                           (ops/doubles->exprs input-data-x)
+                           (ops-common/doubles->exprs input-data-x)
                            input-exprs)
         output-exprs     (if input-data-y
-                           (ops/doubles->exprs input-data-y)
+                           (ops-common/doubles->exprs input-data-y)
                            output-exprs)
 
-        output-exprs-vec (ops/exprs->doubles output-exprs)
-        input-exprs-vec  (ops/exprs->doubles input-exprs)]
+        output-exprs-vec (ops-common/exprs->doubles output-exprs)
+        input-exprs-vec  (ops-common/exprs->doubles input-exprs)]
 
     (reset! sim-input-args* {:input-exprs        input-exprs
                              :input-exprs-vec    input-exprs-vec
@@ -461,8 +461,8 @@
     output-exprs-vec   :output-exprs-vec
     input-iters        :input-iters
     input-phenos-count :input-phenos-count}]
-  {:extended-domain-args (ops/extend-xs input-exprs-vec)
-   :input-exprs-list     (ops/exprs->input-exprs-list input-exprs)
+  {:extended-domain-args (ops-eval/extend-xs input-exprs-vec)
+   :input-exprs-list     (ops-common/exprs->input-exprs-list input-exprs)
    :input-exprs-count    (count input-exprs)
    :input-exprs-vec      input-exprs-vec
    :output-exprs-vec     output-exprs-vec
@@ -481,8 +481,8 @@
   [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
 
   ;; these are the data shown in the plots before the expriement is started:
-  (reset! sim-input-args* {:input-exprs-vec  (ops/exprs->doubles input-exprs)
-                           :output-exprs-vec (ops/exprs->doubles output-exprs)})
+  (reset! sim-input-args* {:input-exprs-vec  (ops-common/exprs->doubles input-exprs)
+                           :output-exprs-vec (ops-common/exprs->doubles output-exprs)})
 
   (let [{sim->gui-chan       :sim->gui-chan
          sim-stop-start-chan :sim-stop-start-chan
@@ -498,7 +498,7 @@
     :as   run-args}]
   (let [iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
-                         (ops/initial-phenotypes (/ input-phenos-count (count ops/initial-exprs)))
+                         (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         start          (Date.)
         pop1           (ga/initialize
@@ -522,7 +522,7 @@
                      (near-exact-solution i scores)
                      (dec i)))))))
 
-    (println "Took " (/ (ops/start-date->diff-ms start) 1000.0) " seconds")
+    (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
 
     (if @gui-requested-reset?*
       (do
@@ -560,8 +560,8 @@
   []
   (let [experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops/initial-phenotypes 4000)
-                           :initial-muts   (ops/initial-mutations)
+                          {:initial-phenos (ops-init/initial-phenotypes 4000)
+                           :initial-muts   (ops-init/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
                            :iters          200}))]
@@ -572,7 +572,6 @@
       (experiment-fn))))
 
 
-;; todo: rename to Closyr?
-;; todo: fix can run uberjar: classload error on LogManager
+;; todo: fix can run uberjar: classload error on LogManager: turn off AOT?
 
 (comment (run-test))

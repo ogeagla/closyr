@@ -3,7 +3,10 @@
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.test :refer :all]
     [closyr.dataset.prng :as prng]
-    [closyr.ops :as ops])
+    [closyr.ops.common :as ops-common]
+    [closyr.ops.eval :as ops-eval]
+    [closyr.ops.initialize :as ops-init]
+    [closyr.ops.modify :as ops-modify])
   (:import
     (org.matheclipse.core.eval
       EvalEngine)
@@ -17,21 +20,21 @@
 
 (set! *warn-on-reflection* true)
 
-(alter-var-root #'ops/*simplify-probability-sampler* (constantly 2.0))
-(alter-var-root #'ops/*simplify-max-leafs* (constantly 100))
+(alter-var-root #'ops-common/*simplify-probability-sampler* (constantly 2.0))
+(alter-var-root #'ops-common/*simplify-max-leafs* (constantly 100))
 
 
 (deftest parse-expr-str-test
   (testing "can parse simple fn str"
     (let [x      (F/Dummy "x")
-          parsed (.parse (ops/new-eval-engine) "Cos(x)")]
+          parsed (.parse (ops-common/new-eval-engine) "Cos(x)")]
       (is (instance? IAST parsed))
       (is (=
             (str parsed)
             (str (F/Cos x))))))
   (testing "can parse simple fn str 2"
     (let [x      (F/Dummy "x")
-          parsed (.parse (ops/new-eval-engine) "x+Cos(x^2)")]
+          parsed (.parse (ops-common/new-eval-engine) "x+Cos(x^2)")]
       (is (instance? IAST parsed))
       (is (=
             (str parsed)
@@ -42,7 +45,7 @@
   (testing "simplify trig compose"
     (let [x (F/Dummy "x")]
       (is (=
-            (update (ops/maybe-simplify {:expr (F/Sin (F/ArcSin x))})
+            (update (ops-common/maybe-simplify {:expr (F/Sin (F/ArcSin x))})
                     :expr str)
             {:expr    "x"
              :simple? true}))))
@@ -50,8 +53,8 @@
   (testing "simplify sum"
     (let [x (F/Dummy "x")]
       (is (=
-            (binding [ops/*simplify-max-leafs* 100]
-              (update (ops/maybe-simplify {:expr (F/Plus (F/Cos x) (F/Cos x))})
+            (binding [ops-common/*simplify-max-leafs* 100]
+              (update (ops-common/maybe-simplify {:expr (F/Plus (F/Cos x) (F/Cos x))})
                       :expr str))
             {:expr    "2*Cos(x)"
              :simple? true}))))
@@ -59,8 +62,8 @@
   (testing "simplify deep 1"
     (let [x (F/Dummy "x")]
       (is (=
-            (binding [ops/*simplify-max-leafs* 100]
-              (update (ops/maybe-simplify
+            (binding [ops-common/*simplify-max-leafs* 100]
+              (update (ops-common/maybe-simplify
                         {:expr (F/Plus
                                  (F/Plus
                                    (F/Times
@@ -87,8 +90,8 @@
   (testing "simplify deep 2"
     (let [x (F/Dummy "x")]
       (is (=
-            (binding [ops/*simplify-max-leafs* 100]
-              (update (ops/maybe-simplify
+            (binding [ops-common/*simplify-max-leafs* 100]
+              (update (ops-common/maybe-simplify
                         {:expr (F/Sin
                                  (F/Times
                                    (F/Plus (F/Cos x) (F/Cos x))
@@ -107,8 +110,8 @@
   (testing "simplify deep 3"
     (let [x (F/Dummy "x")]
       (is (=
-            (binding [ops/*simplify-max-leafs* 100]
-              (update (ops/maybe-simplify
+            (binding [ops-common/*simplify-max-leafs* 100]
+              (update (ops-common/maybe-simplify
                         {:expr
                          (F/Times
                            (F/Subtract (F/Power (F/Times F/CN1 F/E) x)
@@ -121,8 +124,8 @@
   (testing "simplify deep 4"
     (let [x (F/Dummy "x")]
       (is (=
-            (binding [ops/*simplify-max-leafs* 100]
-              (update (ops/maybe-simplify
+            (binding [ops-common/*simplify-max-leafs* 100]
+              (update (ops-common/maybe-simplify
                         {:expr
                          (F/Times
                            (F/Times F/CN1 F/C1D5)
@@ -135,8 +138,8 @@
   #_(testing "simplify deep 5 goes on for almost 2 minutes"
       (let [x (F/Dummy "x")]
         (is (=
-              (binding [ops/*simplify-max-leafs* 100]
-                (update (ops/maybe-simplify
+              (binding [ops-common/*simplify-max-leafs* 100]
+                (update (ops-common/maybe-simplify
                           {:expr
                            (F/Divide
                              (F/Times (F/Cos x) (F/num 0.605))
@@ -150,8 +153,8 @@
   (testing "simplify no-op"
     (let [x (F/Dummy "x")]
       (is (=
-            (update (ops/maybe-simplify {:simple? true
-                                         :expr    (F/Plus (F/Cos x) (F/Cos x))})
+            (update (ops-common/maybe-simplify {:simple? true
+                                                :expr    (F/Plus (F/Cos x) (F/Cos x))})
                     :expr str)
             {:expr    "Cos(x)+Cos(x)"
              :simple? true}))))
@@ -159,8 +162,8 @@
   #_(testing "simplify timeout"
       (let [x (F/Dummy "x")]
         (is (=
-              (binding [ops/*simplify-timeout* 1]
-                (update (ops/maybe-simplify {:expr (F/Plus (F/Cos x) (F/Cos x))})
+              (binding [ops-common/*simplify-timeout* 1]
+                (update (ops-common/maybe-simplify {:expr (F/Plus (F/Cos x) (F/Cos x))})
                         :expr str))
               {:expr    "Cos(x)+Cos(x)"
                :simple? true})))))
@@ -169,7 +172,7 @@
 (deftest apply-modifications-test
   (testing "modify-branches"
     (let [x (F/Dummy "x")
-          [pheno iters mods] (ops/apply-modifications
+          [pheno iters mods] (ops-modify/apply-modifications
                                100
                                1
                                [{:op               :modify-branches
@@ -188,7 +191,7 @@
 (deftest modify-test
   (testing "substitute"
     (let [x (F/Dummy "x")]
-      (is (= (str (:expr (ops/modify
+      (is (= (str (:expr (ops-modify/modify
                            {:op           :modify-substitute
                             :find-expr    F/Cos
                             :replace-expr F/Sin}
@@ -198,7 +201,7 @@
 
   (testing "fn"
     (let [x (F/Dummy "x")]
-      (is (= (str (:expr (ops/modify
+      (is (= (str (:expr (ops-modify/modify
                            {:op          :modify-fn
                             :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                                            (F/Plus expr (F/Sin expr)))}
@@ -210,7 +213,7 @@
     (let [x (F/Dummy "x")]
       (is (= (str
                (:expr
-                 (ops/modify
+                 (ops-modify/modify
                    {:op               :modify-leafs
                     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                                         (if (and (= (.toString ie) "x"))
@@ -224,7 +227,7 @@
     (let [x (F/Dummy "x")]
       (is (= (str
                (:expr
-                 (ops/modify
+                 (ops-modify/modify
                    {:op               :modify-branches
                     :label            "branch cos"
                     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
@@ -237,7 +240,7 @@
     (let [x (F/Dummy "x")]
       (is (= (str
                (:expr
-                 (ops/modify
+                 (ops-modify/modify
                    {:op               :modify-ast-head
                     :label            "sin->cos"
                     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
@@ -266,11 +269,11 @@
             all-mods-applied-on-fn (vec (map (fn [m]
                                                [(:op m) (:label m) (str
                                                                      (:expr
-                                                                       (ops/modify
+                                                                       (ops-modify/modify
                                                                          m
                                                                          {:sym  x
                                                                           :expr test-expr})))])
-                                             (ops/initial-mutations)))]
+                                             (ops-init/initial-mutations)))]
         (doall
           (map
             (fn [[actual-op actual-label actual-fn-str] [expected-op expected-label expected-fn-str]]
@@ -579,39 +582,39 @@
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (first coll))}
     (fn []
-      (with-redefs [ops/crossover-sampler [:plus]]
+      (with-redefs [ops-modify/crossover-sampler [:plus]]
         (let [x (F/Dummy "x")]
           (testing "Can crossover mix of IExpr and IAST"
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr (F/Cos x)}
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
                    (str (F/Plus x (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr (F/Plus F/C1 F/C1D3)}
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
                    (str (F/Plus F/C1 (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))}
                             {:sym  x
                              :expr F/E})))
                    (str (F/Plus F/E (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr F/C1D2}
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C2))))})))
                    (str (F/Plus F/C1D2 (F/Times x (F/Cos (F/Subtract F/C2 x)))))))
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr F/C1D2}
                             {:sym  x
@@ -620,11 +623,11 @@
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
     (fn []
-      (with-redefs [ops/crossover-sampler [:times]]
+      (with-redefs [ops-modify/crossover-sampler [:times]]
         (let [x (F/Dummy "x")]
           (testing "Can crossover mix of IExpr and IAST with Times"
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
@@ -634,11 +637,11 @@
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
     (fn []
-      (with-redefs [ops/crossover-sampler [:divide12]]
+      (with-redefs [ops-modify/crossover-sampler [:divide12]]
         (let [x (F/Dummy "x")]
           (testing "Can crossover mix of IExpr and IAST with Divide12"
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
@@ -648,11 +651,11 @@
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
     (fn []
-      (with-redefs [ops/crossover-sampler [:minus12]]
+      (with-redefs [ops-modify/crossover-sampler [:minus12]]
         (let [x (F/Dummy "x")]
           (testing "Can crossover mix of IExpr and IAST with Minus12"
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
@@ -662,11 +665,11 @@
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
     (fn []
-      (with-redefs [ops/crossover-sampler [:exp12]]
+      (with-redefs [ops-modify/crossover-sampler [:exp12]]
         (let [x (F/Dummy "x")]
           (testing "Can crossover mix of IExpr and IAST with Exp12"
             (is (= (str (:expr
-                          (ops/crossover
+                          (ops-modify/crossover
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
@@ -678,10 +681,10 @@
   (let [x (F/Dummy "x")]
     (testing "can eval various fns for simple inputs"
       (is (= (mapv
-               ops/expr->double
-               (ops/eval-phenotype-on-expr-args
-                 (ops/->phenotype x (F/Subtract x F/C1D2) nil)
-                 (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))))
+               ops-common/expr->double
+               (ops-eval/eval-phenotype-on-expr-args
+                 (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
+                 (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.5]))))
              [0.0]))
 
       (is (instance? IExpr (F/Subtract F/E F/C1D2)))
@@ -700,15 +703,15 @@
                   (catch Exception e nil))
              nil))
 
-      (is (= (ops/eval-vec-pheno
-               (ops/->phenotype x (F/Subtract F/E F/C1D2) nil)
-               {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x (F/Subtract F/E F/C1D2) nil)
+               {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.5]))
                 :input-exprs-count 1})
              [2.218281828459045]))
 
-      (is (= (ops/eval-vec-pheno
-               (ops/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
-               {:input-exprs-list  (ops/exprs->input-exprs-list (ops/doubles->exprs [0.5]))
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
+               {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.5]))
                 :input-exprs-count 1})
              [0.5])))))
 
