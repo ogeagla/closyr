@@ -2,35 +2,16 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
-    [clojure.string :as str]
     [closyr.dataset.prng :refer :all]
     [closyr.ops.common :as ops-common])
   (:import
-    (java.util
-      Date
-      UUID)
-    (java.util.concurrent
-      TimeUnit)
-    (java.util.function
-      Function)
-    (org.matheclipse.core.eval
-      EvalControlledCallable
-      EvalEngine
-      ExprEvaluator)
-    (org.matheclipse.core.eval.exception
-      ArgumentTypeException
-      TimeoutException)
     (org.matheclipse.core.expression
       AST
       F)
     (org.matheclipse.core.interfaces
       IAST
       IExpr
-      ISymbol)
-    (org.matheclipse.parser.client
-      SyntaxError)
-    (org.matheclipse.parser.client.math
-      MathException)))
+      ISymbol)))
 
 
 (def initial-exprs
