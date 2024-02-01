@@ -383,8 +383,7 @@
 
 
 (defn set-widget-location
-  ([^JLabel widget ^double y] (.setLocation widget (.getX (.getLocation widget)) y))
-  ([^JLabel widget ^double x ^double y] (.setLocation widget x y)))
+  [^JLabel widget ^double x ^double y] (.setLocation widget x y))
 
 
 (defn input-data-items-widget
