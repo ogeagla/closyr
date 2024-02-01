@@ -122,13 +122,13 @@
                                  expr)
                                (try
                                  (check-simplify-timing expr done?*)
-                                 (let [^IAST new-expr     (F/Simplify expr)
+                                 (let [^IAST new-expr (F/Simplify expr)
                                        #_(F/FullSimplify
                                            (F/Simplify
                                              expr
                                              assume-x-gt-zero))
-                                       res     (.eval (or util (new-util)) new-expr)
-                                       diff-ms (start-date->diff-ms start)]
+                                       res            (.eval (or util (new-util)) new-expr)
+                                       diff-ms        (start-date->diff-ms start)]
                                    (reset! done?* true)
                                    (when (> diff-ms 2000)
                                      (println "Long simplify: "
@@ -1122,13 +1122,20 @@
                                         " on: " (str (:expr pheno))
                                         " due to: " e))
                              pheno))
-            count-to-go  (if (> (.leafCount ^IExpr (:expr new-pheno)) max-leafs)
+
+            new-leafs    (some->
+                           ^IExpr (:expr new-pheno)
+                           (.leafCount))
+
+            ;; stop modification loop if too big or something went wrong:
+            count-to-go  (if (or (nil? new-leafs)
+                                 (> new-leafs max-leafs))
                            0
                            (dec c))]
         (recur
           (inc iters)
           count-to-go
-          new-pheno
+          (if new-leafs new-pheno pheno)
           false
           (into mods [(select-keys mod-to-apply [:label :op])]))))))
 
