@@ -702,7 +702,7 @@
 
             bottom-container                (panel-grid {:rows 2 :cols 1})
             inputs-and-info-container       (panel-grid {:rows 3 :cols 1})
-            info-container                  (panel-grid {:rows 2 :cols 1})
+            ;info-container                  (panel-grid {:rows 2 :cols 1})
             ctls-container                  (panel-grid {:rows 3 :cols 1})
             ;inputs-container                (panel-grid {:rows 1 :cols 2})
             draw-container                  (panel-grid {:rows 1 :cols 2})
@@ -782,8 +782,8 @@
         ;; (.add inputs-container (JLabel. "" #_"Placeholder 1a"))
         ;; (.add inputs-container (JLabel. "" #_"Placeholder 1b"))
 
-        (.add info-container sim-info-label)
-        (.add info-container sim-selectable-text)
+        ;(.add info-container sim-info-label)
+        ;(.add info-container sim-selectable-text)
         (.add inputs-and-info-container settings-panel)
         ;(.add inputs-and-info-container info-container)
         (.add inputs-and-info-container sim-info-label)
