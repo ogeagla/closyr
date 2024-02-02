@@ -631,10 +631,5 @@
          :use-gui?       true}))))
 
 
-;; todo: [/] symreg ns needs clearer divisions between experiment and GUI
-;;           - works without gui but the code is a little ugly
-;; todo: [ ] fix can run uberjar: classload error on LogManager: turn off AOT?
-
-
 (comment (run-app-without-gui))
 (comment (run-app-with-gui))

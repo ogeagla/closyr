@@ -12,45 +12,25 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
-                 [commons-logging "1.3.0"]
                  [org.slf4j/slf4j-api "2.0.11"]
-                 [org.slf4j/slf4j-simple "2.0.11"]
-                 [log4j/log4j "1.2.17"]
-                 [org.apache.logging.log4j/log4j-api "2.22.1"]
-                 [org.apache.logging.log4j/log4j-1.2-api "2.22.1"]
                  [org.apache.logging.log4j/log4j-core "2.22.1"]
-                 [org.apache.logging.log4j/log4j-slf4j-impl "2.22.1"]
 
                  [org.matheclipse/matheclipse-core "3.1.0-SNAPSHOT"
-                  :exclusions [
-                               org.slf4j/slf4j-api
-                  ;             org.slf4j/slf4j-simple
-                  ;             log4j/log4j
-                  ;             org.apache.logging.log4j/log4j-api
-                  ;             org.apache.logging.log4j/log4j-1.2-api
-                  ;             org.apache.logging.log4j/log4j-core
-                  ;             org.apache.logging.log4j/log4j-slf4j-impl
-                               ]
-                  ]
+                  :exclusions [org.slf4j/slf4j-api]]
                  [org.matheclipse/matheclipse-gpl "3.1.0-SNAPSHOT"
-                  :exclusions [
-                               org.slf4j/slf4j-api
-                  ;             org.slf4j/slf4j-simple
-                  ;             log4j/log4j
-                  ;             org.apache.logging.log4j/log4j-api
-                  ;             org.apache.logging.log4j/log4j-1.2-api
-                  ;             org.apache.logging.log4j/log4j-core
-                  ;             org.apache.logging.log4j/log4j-slf4j-impl
-                               ]
-                  ]]
+                  :exclusions [org.slf4j/slf4j-api]]]
+
   ;; :java-source-paths ["src/main/java"]
+
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
                                    :releases  false
                                    :snapshots true}}
   :main ^:skip-aot closyr.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
+                       :manifest {"Multi-Release" true}
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
+
   :plugins [[lein-cloverage "1.2.4"]
             [lein-ring "0.12.6"]
             [lein-garden "0.3.0"]

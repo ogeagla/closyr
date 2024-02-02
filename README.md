@@ -19,7 +19,7 @@ Currently this application is not packed, so you have to run it from source, usi
 
 ## Usage
 
-There are 3 options right now, but option #3 (running uberjar) does not work at the moment.
+There are 3 options.
 
 
 #### Lein Run
@@ -30,13 +30,13 @@ There are 3 options right now, but option #3 (running uberjar) does not work at 
 ####  In Clojure REPL
 
 
-    $  (require '[closyr.symreg :as symreg]) 
-    $  (symreg/run-app-with-gui)
+    (require '[closyr.symreg :as symreg]) 
+    (symreg/run-app-with-gui)
 
 #### JAR
 
 
-    $ lein uberjar #this path does not work, there are problems with logging libraries in dependency symja
+    $ lein uberjar
     $ java -jar target/uberjar/closyr-0.1.0-standalone.jar
 
 
