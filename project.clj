@@ -12,7 +12,7 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
-                 [commons-logging "1.2"]
+                 [commons-logging "1.3.0"]
                  [org.slf4j/slf4j-api "2.0.11"]
                  [org.slf4j/slf4j-simple "2.0.11"]
                  [log4j/log4j "1.2.17"]
@@ -51,7 +51,7 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
-  :plugins [[lein-cloverage "1.2.2"]
+  :plugins [[lein-cloverage "1.2.4"]
             [lein-ring "0.12.6"]
             [lein-garden "0.3.0"]
             [lein-vanity "0.2.0"]
