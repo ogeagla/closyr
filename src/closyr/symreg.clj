@@ -46,7 +46,7 @@
 (def sim-input-args* (atom nil))
 
 
-(def log-steps 1)
+(def ^:dynamic *log-steps* 1)
 
 (def min-score -100000000)
 (def max-leafs 60)
@@ -234,7 +234,7 @@
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}
    {:keys [use-gui?] :as run-config}]
-  (when (or (= 1 i) (zero? (mod i log-steps)))
+  (when (or (= 1 i) (zero? (mod i *log-steps*)))
     (let [bests    (sort-population ga-result)
           took-s   (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
           pop-size (count (:pop ga-result))
@@ -246,7 +246,7 @@
       (reset! test-timer* (Date.))
       (println i "-step pop size: " pop-size
                " took secs: " took-s
-               " phenos/s: " (Math/round ^double (/ (* pop-size log-steps) took-s))
+               " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
                (str "\n top 20 best:\n"
                     (->> (take 20 bests)
                          (map reportable-phen-str)
@@ -586,50 +586,46 @@
 (def ^:dynamic *use-flamechart* false)
 
 
+(defn run-with-monitoring
+  [experiment-fn]
+  (if *use-flamechart*
+    ;; with flame graph analysis:
+    (in-flames experiment-fn)
+    ;; plain experiment:
+    (experiment-fn)))
+
+
 (defn run-app-without-gui
   []
-  (let [input-exprs   (->> (range 50)
-                           (map (fn [i] (* Math/PI (/ i 15.0))))
-                           ops-common/doubles->exprs)
-
-
-        output-exprs  (->> (range 50)
-                           (map (fn [i]
-                                  (+ 2.0
-                                     (/ i 10.0)
-                                     (Math/sin (* Math/PI (/ i 15.0))))))
-                           ops-common/doubles->exprs)
-
-        experiment-fn (fn []
-                        (run-experiment
-                          {:initial-phenos (ops-init/initial-phenotypes 100)
-                           :initial-muts   (ops-init/initial-mutations)
-                           :input-exprs    input-exprs
-                           :output-exprs   output-exprs
-                           :iters          20
-                           :use-gui?       false}))]
-    (if *use-flamechart*
-      ;; with flame graph analysis:
-      (in-flames experiment-fn)
-      ;; plain experiment:
-      (experiment-fn))))
+  (run-with-monitoring
+    (fn []
+      (run-experiment
+        {:initial-phenos (ops-init/initial-phenotypes 100)
+         :initial-muts   (ops-init/initial-mutations)
+         :iters          20
+         :use-gui?       false
+         :input-exprs    (->> (range 50)
+                              (map (fn [i] (* Math/PI (/ i 15.0))))
+                              ops-common/doubles->exprs)
+         :output-exprs   (->> (range 50)
+                              (map (fn [i]
+                                     (+ 2.0
+                                        (/ i 10.0)
+                                        (Math/sin (* Math/PI (/ i 15.0))))))
+                              ops-common/doubles->exprs)}))))
 
 
 (defn run-app-with-gui
   []
-  (let [experiment-fn (fn []
-                        (run-experiment
-                          {:initial-phenos (ops-init/initial-phenotypes 1000)
-                           :initial-muts   (ops-init/initial-mutations)
-                           :input-exprs    input-exprs
-                           :output-exprs   output-exprs
-                           :iters          200
-                           :use-gui?       true}))]
-    (if *use-flamechart*
-      ;; with flame graph analysis:
-      (in-flames experiment-fn)
-      ;; plain experiment:
-      (experiment-fn))))
+  (run-with-monitoring
+    (fn []
+      (run-experiment
+        {:initial-phenos (ops-init/initial-phenotypes 1000)
+         :initial-muts   (ops-init/initial-mutations)
+         :input-exprs    input-exprs
+         :output-exprs   output-exprs
+         :iters          200
+         :use-gui?       true}))))
 
 
 ;; todo: [/] symreg ns needs clearer divisions between experiment and GUI
