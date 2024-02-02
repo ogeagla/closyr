@@ -21,18 +21,19 @@ Currently this application is not packed, so you have to run it from source, usi
 
 There are 3 options right now, but option #3 (running uberjar) does not work at the moment.
 
-- Lein Run
+
+#### Lein Run
 
     
     $ lein run
 
-- In Clojure REPL
+####  In Clojure REPL
 
 
     $  (require '[closyr.symreg :as symreg]) 
     $  (symreg/run-app-with-gui)
 
-- JAR
+#### JAR
 
 
     $ lein uberjar #this path does not work, there are problems with logging libraries in dependency symja
