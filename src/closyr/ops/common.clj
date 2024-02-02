@@ -161,7 +161,7 @@
 (defn check-simplify-timing
   [^IAST expr done?*]
   (go-loop [c 0]
-    (when (not @done?*)
+    (when-not @done?*
       ;; wait sequence in ms looks like: 100, 316, 1000, ...
       (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
       (when (> c 2)

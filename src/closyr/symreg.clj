@@ -450,8 +450,7 @@
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
   (let [[msg ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
-    (if (= msg :continue)
-      nil
+    (when-not (= msg :continue)
       (if (:reset msg)
         (restart-with-new-inputs msg)
         (do
@@ -570,9 +569,8 @@
            "muts: " (count initial-muts))
 
   (if use-gui?
-    (do
-      (let [run-args (start-gui-and-get-input-data run-config)]
-        (run-from-inputs run-config run-args)))
+    (let [run-args (start-gui-and-get-input-data run-config)]
+      (run-from-inputs run-config run-args))
 
     (do
       (reset! sim-input-args* {:input-exprs      input-exprs

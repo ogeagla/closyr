@@ -285,7 +285,7 @@
   (->>
     selectable-input-fns
     (sort-by #(:idx (second %)))
-    (mapv #(first %))))
+    (mapv first)))
 
 
 (def input-y-fn* (atom input-data/initial-fn))
@@ -361,7 +361,7 @@
                                  (range @sketch-input-x-count*))
 
         items                  (map
-                                 (fn [pt] (movable (make-label #(do pt) (str " ")) {:disable-x? true}))
+                                 (fn [pt] (movable (make-label (constantly pt) (str " ")) {:disable-x? true}))
                                  pts)
 
         items-point-getters    (map
@@ -859,7 +859,7 @@
                   :height 1400
                   :content "Hello, Seesaw",
                   :on-close :exit)
-        ;; ss/pack!
+        ss/pack!
         ss/show!)))
 
 

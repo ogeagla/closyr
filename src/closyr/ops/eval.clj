@@ -62,8 +62,7 @@
     :as   run-args}]
   (let [^IExpr new-expr (:expr p)
         ^IExpr eval-p   (eval-phenotype-on-expr-args p input-exprs-list)]
-    (if (or (nil? eval-p) (= "Indeterminate" (str eval-p)))
-      nil
+    (when-not (or (nil? eval-p) (= "Indeterminate" (str eval-p)))
       (let [vs (mapv
                  (fn [i]
                    (try

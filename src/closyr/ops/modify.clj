@@ -56,8 +56,7 @@
   (let [op-str    (name op)
         ops-short (->> (str/split op-str #"-")
                        (rest)
-                       (map #(-> (take 4 %)
-                                 (str/join)))
+                       (map #(str/join (take 4 %)))
                        (str/join "-"))]
     (str ops-short ":" label)))
 
@@ -76,7 +75,8 @@
 (defmethod modify :modify-substitute
   [{:keys [label ^IExpr find-expr ^IExpr replace-expr] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (-> (ops-common/->phenotype x-sym (.subs expr find-expr replace-expr) util)
+  (-> x-sym
+      (ops-common/->phenotype (.subs expr find-expr replace-expr) util)
       (with-recent-mod-metadata modif)))
 
 
@@ -113,7 +113,8 @@
 (defmethod modify :modify-fn
   [{:keys [label modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (-> (ops-common/->phenotype x-sym (modifier-fn pheno) util)
+  (-> x-sym
+      (ops-common/->phenotype (modifier-fn pheno) util)
       (with-recent-mod-metadata modif)))
 
 
@@ -152,7 +153,8 @@
                              :exp12 (F/Power e1-part e2-part)
                              :exp21 (F/Power e2-part e1-part))]
 
-      (-> (ops-common/->phenotype x-sym new-expr (:util p-discard))
+      (-> x-sym
+          (ops-common/->phenotype new-expr (:util p-discard))
           (with-recent-mod-metadata {:label (name crossover-flavor)
                                      :op    :modify-crossover})))
     (catch Exception e

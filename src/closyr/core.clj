@@ -13,7 +13,8 @@
   [numbers-str]
   (try
     (let [ns (->>
-               (str/split numbers-str #"\,")
+               #"\,"
+               (str/split numbers-str)
                (mapv #(Double/parseDouble %)))]
       ns)
     (catch Exception e
@@ -28,12 +29,12 @@
 
    ["-y" "--ys YS" "Y values to fit against. Without xs, will use 0,...,N"
     :default nil
-    :parse-fn #(str->doubles-vec %)
+    :parse-fn str->doubles-vec
     :validate [#(< 4 (count %) 101) "Y values count must be between 4 and 101, separated by ,"]]
 
    ["-x" "--xs XS" "X values to fit against. Must provide ys if providing xs"
     :default nil
-    :parse-fn #(str->doubles-vec %)
+    :parse-fn str->doubles-vec
     :validate [#(< 4 (count %) 101) "X values count must be between 4 and 101, separated by ,"]]
 
    ["-p" "--population POPULATION" "Population size"
@@ -68,8 +69,8 @@
   [{:keys [ys xs]
     :as   opts}]
   (cond
-    (and ys xs (not= (count ys) (count xs))) (do (println "Error: XS and YS count mismatch"))
-    (and xs (nil? ys)) (do (println "Error: only XS provided, please provide YS"))
+    (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch")
+    (and xs (nil? ys)) (println "Error: only XS provided, please provide YS")
     :else opts))
 
 

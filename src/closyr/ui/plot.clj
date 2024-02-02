@@ -30,8 +30,7 @@
   (let [x-data         (double-array [0.0 1.0 2.0])
         y-data         (double-array [2.0 1.0 0.0])
         ^XYChart chart (QuickChart/getChart "Sample" "X" "Y" "y(x)" x-data y-data)]
-    (-> (SwingWrapper. chart)
-        .displayChart)))
+    (.displayChart (SwingWrapper. chart))))
 
 
 (def color:plot-bg (Color. 60 60 60))
@@ -61,8 +60,7 @@
         ^XYSeries series (doto (.addSeries chart "y(x)" x-data y-data)
                            (.setMarker SeriesMarkers/CIRCLE))]
     (apply-style chart)
-    (-> (SwingWrapper. chart)
-        .displayChart)))
+    (.displayChart (SwingWrapper. chart))))
 
 
 (defn make-plot:2-series
@@ -104,7 +102,8 @@
 
 (defn show-plot
   [^String best-fn-label x-data y-data-1 y-data-2]
-  (-> (SwingWrapper. (make-plot:2-series best-fn-label "objective(x)" x-data x-data y-data-1 y-data-2))
+  (-> (make-plot:2-series best-fn-label "objective(x)" x-data x-data y-data-1 y-data-2)
+      (SwingWrapper.)
       .displayChart))
 
 

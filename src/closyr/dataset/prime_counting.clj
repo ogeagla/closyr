@@ -1008,9 +1008,9 @@
 
 
 (def all
-  (->> all-maps
-       (mapv (fn [{x :x pi-of-x :pi_x}]
-               [x pi-of-x]))))
+  (mapv (fn [{x :x pi-of-x :pi_x}]
+          [x pi-of-x])
+        all-maps))
 
 
 (defn get-data

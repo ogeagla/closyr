@@ -1008,9 +1008,7 @@
 
 
 (def all
-  (->> prime-10000
-       (map-indexed (fn [i p] [i p]))
-       #_(into {})))
+  (map-indexed (fn [i p] [i p]) prime-10000))
 
 
 (defn get-data
