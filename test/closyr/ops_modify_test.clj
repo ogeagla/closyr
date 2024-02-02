@@ -14,6 +14,7 @@
       IExpr
       ISymbol)))
 
+
 (deftest modify-test
   (testing "substitute"
     (let [x (F/Dummy "x")]
@@ -181,6 +182,7 @@
             (is (= (str (:expr pheno))
                    "-Sqrt(x)+1.1*ArcCos(1.1*(1.0+x))"))))))))
 
+
 (deftest crossover-test
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (first coll))}
@@ -278,6 +280,7 @@
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
                    (str (F/Power F/C4 (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))))))))
+
 
 (def all-mods-applied-on-fn-expected
   [[:modify-fn

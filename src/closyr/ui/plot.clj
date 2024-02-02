@@ -35,6 +35,7 @@
 
 (def color:plot-bg (Color. 60 60 60))
 
+
 (defn apply-style
   [^XYChart chart]
   (doto (.getStyler chart)

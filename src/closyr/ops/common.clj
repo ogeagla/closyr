@@ -91,7 +91,7 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-            (into-array ISymbol [x-sym]))
+     (into-array ISymbol [x-sym]))
     expr))
 
 
@@ -198,6 +198,7 @@
         (println "Err in eval simplify for fn: " (str expr) " : " e)
         expr))))
 
+
 (defn ^IAST maybe-simplify
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
 
@@ -209,6 +210,6 @@
           ^IAST simpled-expr (do-simplify start done?* pheno)]
       (when-not util (println "Warning creating new util during simplify"))
       (assoc pheno
-        :simple? true
-        :expr simpled-expr))
+             :simple? true
+             :expr simpled-expr))
     pheno))

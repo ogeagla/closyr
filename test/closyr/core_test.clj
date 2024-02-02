@@ -1,6 +1,8 @@
 (ns closyr.core-test
-  (:require [clojure.test :refer :all]
-            [closyr.core :refer :all]))
+  (:require
+    [clojure.test :refer :all]
+    [closyr.core :refer :all]))
+
 
 (deftest a-test
   (testing "FIXME"

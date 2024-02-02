@@ -11,7 +11,9 @@
         2)
      (* -1 y)))
 
+
 (def initial-fn "sin+cos 1")
+
 
 (defn input-y-fns-data
   [sketchpad-size* sketch-input-x-count*]

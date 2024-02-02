@@ -16,8 +16,6 @@
 (set! *warn-on-reflection* true)
 
 
-
-
 (deftest eval-f-test
   (let [x (F/Dummy "x")]
     (testing "can eval various fns for simple inputs"
@@ -127,8 +125,6 @@
                (mapv
                  #(- (* % %) 0.5)
                  (range 320))))))))
-
-
 
 
 (comment (run-tests 'closyr.ops-eval-test))

@@ -481,7 +481,7 @@
     (.add pcount-settings-container pcount-radio-2k)
     (.add pcount-settings-container pcount-radio-5k)
     (.add pcount-settings-container pcount-radio-10k)
-    ;(.add pcount-settings-container pcount-radio-50k)
+    ;; (.add pcount-settings-container pcount-radio-50k)
 
     ;; (.add iters-settings-container (JLabel. "Iterations:"))
     (.add iters-settings-container iter-radio-10)

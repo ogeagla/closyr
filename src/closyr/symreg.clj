@@ -282,13 +282,13 @@
                (summarize-sim-stats))
 
       (when use-gui?
-        (put! sim->gui-chan {:iters                    iters
-                             :i                        (inc (- iters i))
-                             :best-eval                evaled
+        (put! sim->gui-chan {:iters                 iters
+                             :i                     (inc (- iters i))
+                             :best-eval             evaled
                              :input-xs-vec-extended xs-extended
-                             :best-eval-extended       evaled-extended
-                             :best-f-str               (str (:expr best-v))
-                             :best-score               (:score best-v)}))))
+                             :best-eval-extended    evaled-extended
+                             :best-f-str            (str (:expr best-v))
+                             :best-score            (:score best-v)}))))
   (reset! sim-stats* {}))
 
 
@@ -417,19 +417,19 @@
              "Reset"
              (if new-state gui/ctl:start gui/ctl:stop)))
 
-  (let [input-xs-exprs      (if input-data-x
-                           (ops-common/doubles->exprs input-data-x)
-                           input-xs-exprs)
-        input-ys-exprs     (if input-data-y
-                           (ops-common/doubles->exprs input-data-y)
-                           input-ys-exprs)
+  (let [input-xs-exprs (if input-data-x
+                         (ops-common/doubles->exprs input-data-x)
+                         input-xs-exprs)
+        input-ys-exprs (if input-data-y
+                         (ops-common/doubles->exprs input-data-y)
+                         input-ys-exprs)
 
-        input-ys-vec (ops-common/exprs->doubles input-ys-exprs)
-        input-xs-vec  (ops-common/exprs->doubles input-xs-exprs)]
+        input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)
+        input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)]
 
-    (reset! sim-input-args* {:input-xs-exprs        input-xs-exprs
-                             :input-xs-vec    input-xs-vec
-                             :input-ys-vec   input-ys-vec
+    (reset! sim-input-args* {:input-xs-exprs     input-xs-exprs
+                             :input-xs-vec       input-xs-vec
+                             :input-ys-vec       input-ys-vec
                              :input-iters        input-iters
                              :input-phenos-count input-phenos-count})
 
@@ -464,9 +464,9 @@
 
 
 (defn ->run-args
-  [{input-xs-exprs        :input-xs-exprs
-    input-xs-vec    :input-xs-vec
-    input-ys-vec   :input-ys-vec
+  [{input-xs-exprs     :input-xs-exprs
+    input-xs-vec       :input-xs-vec
+    input-ys-vec       :input-ys-vec
     input-iters        :input-iters
     iters              :iters
     input-phenos-count :input-phenos-count
@@ -481,8 +481,8 @@
     (throw (Exception. "Run args needs all params!")))
 
   {:extended-domain-args (ops-eval/extend-xs input-xs-vec)
-   :input-xs-list     (ops-common/exprs->exprs-list input-xs-exprs)
-   :input-xs-count    (count input-xs-exprs)
+   :input-xs-list        (ops-common/exprs->exprs-list input-xs-exprs)
+   :input-xs-count       (count input-xs-exprs)
    :input-xs-vec         input-xs-vec
    :input-ys-vec         input-ys-vec
    :input-iters          (or input-iters iters)
@@ -504,7 +504,7 @@
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs] :as run-config}]
 
   ;; these are the data shown in the plots before the expriement is started:
-  (reset! sim-input-args* {:input-xs-vec  (ops-common/exprs->doubles input-xs-exprs)
+  (reset! sim-input-args* {:input-xs-vec (ops-common/exprs->doubles input-xs-exprs)
                            :input-ys-vec (ops-common/exprs->doubles input-ys-exprs)})
 
   (let [{sim->gui-chan       :sim->gui-chan
@@ -573,9 +573,9 @@
       (run-from-inputs run-config run-args))
 
     (do
-      (reset! sim-input-args* {:input-xs-exprs      input-xs-exprs
-                               :input-xs-vec  (ops-common/exprs->doubles input-xs-exprs)
-                               :input-ys-vec (ops-common/exprs->doubles input-ys-exprs)})
+      (reset! sim-input-args* {:input-xs-exprs input-xs-exprs
+                               :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
+                               :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
 
       (run-from-inputs run-config (->run-args (merge @sim-input-args* run-config))))))
 
@@ -609,10 +609,10 @@
          :initial-muts   (ops-init/initial-mutations)
          :iters          20
          :use-gui?       false
-         :input-xs-exprs    (->> (range 50)
+         :input-xs-exprs (->> (range 50)
                               (map (fn [i] (* Math/PI (/ i 15.0))))
                               ops-common/doubles->exprs)
-         :input-ys-exprs   (->> (range 50)
+         :input-ys-exprs (->> (range 50)
                               (map (fn [i]
                                      (+ 2.0
                                         (/ i 10.0)
@@ -627,8 +627,8 @@
       (run-experiment
         {:initial-phenos (ops-init/initial-phenotypes 1000)
          :initial-muts   (ops-init/initial-mutations)
-         :input-xs-exprs    input-xs-exprs
-         :input-ys-exprs   input-ys-exprs
+         :input-xs-exprs input-xs-exprs
+         :input-ys-exprs input-ys-exprs
          :iters          200
          :use-gui?       true}))))
 
@@ -643,10 +643,10 @@
          :initial-muts   (ops-init/initial-mutations)
          :iters          iterations
          :use-gui?       (not headless)
-         :input-xs-exprs    (if xs
+         :input-xs-exprs (if xs
                            (ops-common/doubles->exprs xs)
                            input-xs-exprs)
-         :input-ys-exprs   (if ys
+         :input-ys-exprs (if ys
                            (ops-common/doubles->exprs ys)
                            input-ys-exprs)})))
   (println "CLI: Done!")

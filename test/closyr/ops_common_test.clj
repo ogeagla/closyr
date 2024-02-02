@@ -166,12 +166,4 @@
                :simple? true})))))
 
 
-
-
-
-
-
-
-
-
 (comment (run-tests 'closyr.ops-common-test))
