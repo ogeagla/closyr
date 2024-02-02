@@ -10,29 +10,31 @@
 (deftest can-run-experiment
 
   (testing "with built-in sample data"
-    (is (= (binding [symreg/*log-steps* 10]
-             (symreg/run-app-without-gui))
-           nil)))
+    (is (= (count (:pop (binding [symreg/*log-steps* 10]
+                          (symreg/run-app-without-gui))))
+           1000)))
 
   (testing "with provided data"
     (is (= (binding [symreg/*log-steps* 5]
-             (symreg/run-with-monitoring
-               (fn []
-                 (symreg/run-experiment
-                   {:initial-phenos (ops-init/initial-phenotypes 10)
-                    :initial-muts   (ops-init/initial-mutations)
-                    :iters          5
-                    :use-gui?       false
-                    :input-xs-exprs (->> (range 50)
-                                         (map (fn [i] (* Math/PI (/ i 15.0))))
-                                         ops-common/doubles->exprs)
-                    :input-ys-exprs (->> (range 50)
-                                         (map (fn [i]
-                                                (+ 2.0
-                                                   (/ i 10.0)
-                                                   (Math/cos (* Math/PI (/ i 15.0))))))
-                                         ops-common/doubles->exprs)}))))
-           nil))))
+             (count
+               (:pop
+                 (symreg/run-with-monitoring
+                   (fn []
+                     (symreg/run-experiment
+                       {:initial-phenos (ops-init/initial-phenotypes 10)
+                        :initial-muts   (ops-init/initial-mutations)
+                        :iters          5
+                        :use-gui?       false
+                        :input-xs-exprs (->> (range 50)
+                                             (map (fn [i] (* Math/PI (/ i 15.0))))
+                                             ops-common/doubles->exprs)
+                        :input-ys-exprs (->> (range 50)
+                                             (map (fn [i]
+                                                    (+ 2.0
+                                                       (/ i 10.0)
+                                                       (Math/cos (* Math/PI (/ i 15.0))))))
+                                             ops-common/doubles->exprs)}))))))
+           100))))
 
 
 (deftest can-run-experiment-gui

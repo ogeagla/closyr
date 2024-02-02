@@ -5,10 +5,10 @@
     [clojure.string :as str]
     [closyr.dataset.prng :refer :all]
     [closyr.ga :as ga]
+    [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.initialize :as ops-init]
-    [closyr.ops :as ops]
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
     [seesaw.core :as ss])
@@ -40,11 +40,6 @@
 (def ^:dynamic *gui-close-chan* (chan))
 
 
-
-
-
-
-(def gui-requested-reset?* (atom false))
 (def test-timer* (atom nil))
 (def sim-input-args* (atom nil))
 
@@ -90,12 +85,6 @@
         doubles))
 
 
-
-
-
-
-
-
 (defn sort-population
   [pops]
   (->>
@@ -103,7 +92,6 @@
     (remove #(nil? (:score %)))
     (sort-by :score)
     (reverse)))
-
 
 
 (defn reportable-phen-str
@@ -355,7 +343,7 @@
   true)
 
 
-(defn check-start-stop-state
+(defn park-if-gui-pause-and-return-if-should-restart
   "If no message from GUI is available, no-op, otherwise process stop/restart requests"
   [{:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
@@ -444,33 +432,35 @@
     (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
     (reset! test-timer* start)
 
-    (loop [pop pop1
-           i   iters]
-      (if (zero? i)
-        pop
-        (if (and use-gui? (reset! gui-requested-reset?* (check-start-stop-state run-args)))
-          pop
-          (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-            (report-iteration i iters ga-result run-args run-config)
-            (recur ga-result
-                   (if (some #(> % -1e-3) scores)
-                     (near-exact-solution i scores)
-                     (dec i)))))))
-
-    (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
-
-    (if @gui-requested-reset?*
-      (do
-        (reset! gui-requested-reset?* false)
-        (println "Restarting...")
-        (<!! (timeout 500))
-        (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))
-      (if use-gui?
-        (do
-          (println "Experiment complete, waiting for GUI to start another")
-          (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
-            (run-from-inputs run-config (merge run-args new-gui-args))))
-        (println "Done.")))))
+    (let [{:keys [final-population next-step]
+           :as   res} (loop [pop pop1
+                             i   iters]
+                        (if (zero? i)
+                          {:final-population pop
+                           :next-step        :wait}
+                          (if (and use-gui?
+                                   (park-if-gui-pause-and-return-if-should-restart run-args))
+                            {:final-population pop
+                             :next-step        :restart}
+                            (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
+                              (report-iteration i iters ga-result run-args run-config)
+                              (recur ga-result
+                                     (if (some #(> % -1e-3) scores)
+                                       (near-exact-solution i scores)
+                                       (dec i)))))))]
+      (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
+      (case next-step
+        :wait (if use-gui?
+                (do
+                  (println "Experiment complete, waiting for GUI to start another")
+                  (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
+                    (run-from-inputs run-config (merge run-args new-gui-args))))
+                (do (println "Done.")
+                    final-population))
+        :restart (do
+                   (println "Restarting...")
+                   (<!! (timeout 500))
+                   (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))))))
 
 
 (defn run-experiment
