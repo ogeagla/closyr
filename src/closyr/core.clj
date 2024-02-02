@@ -8,7 +8,7 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (symreg/run-test))
+  (symreg/run-app-with-gui))
 
 
 

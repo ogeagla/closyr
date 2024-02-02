@@ -232,7 +232,8 @@
    ga-result
    {:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan extended-domain-args]
-    :as   run-args}]
+    :as   run-args}
+   {:keys [iters initial-phenos initial-muts use-gui?] :as run-config}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [bests    (sort-population ga-result)
           took-s   (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
@@ -253,19 +254,20 @@
                "\n"
                (summarize-sim-stats))
 
-      (put! sim->gui-chan {:iters                    iters
-                           :i                        (inc (- iters i))
-                           :best-eval                evaled
-                           :input-exprs-vec-extended xs-extended
-                           :best-eval-extended       evaled-extended
-                           :best-f-str               (str (:expr best-v))
-                           :best-score               (:score best-v)})))
+      (when use-gui?
+        (put! sim->gui-chan {:iters                    iters
+                             :i                        (inc (- iters i))
+                             :best-eval                evaled
+                             :input-exprs-vec-extended xs-extended
+                             :best-eval-extended       evaled-extended
+                             :best-f-str               (str (:expr best-v))
+                             :best-score               (:score best-v)}))))
   (reset! sim-stats* {}))
 
 
 (defn near-exact-solution
   [i old-scores]
-  (println "Perfect score! " i " all scores: " (sort old-scores))
+  (println "Perfect score! " i " top scores: " (take 10 (sort old-scores)))
   0)
 
 
@@ -462,6 +464,14 @@
     output-exprs-vec   :output-exprs-vec
     input-iters        :input-iters
     input-phenos-count :input-phenos-count}]
+
+  (when-not (and input-exprs
+                 input-exprs-vec
+                 output-exprs-vec
+                 input-iters
+                 input-phenos-count)
+    (throw (Exception. "Run args needs all params!")))
+
   {:extended-domain-args (ops-eval/extend-xs input-exprs-vec)
    :input-exprs-list     (ops-common/exprs->input-exprs-list input-exprs)
    :input-exprs-count    (count input-exprs)
@@ -496,7 +506,7 @@
 
 (defn run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
-  [{:keys [iters initial-phenos initial-muts] :as run-config}
+  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
@@ -517,10 +527,10 @@
            i   iters]
       (if (zero? i)
         pop
-        (if (reset! gui-requested-reset?* (check-start-stop-state run-args))
+        (if (and use-gui? (reset! gui-requested-reset?* (check-start-stop-state run-args)))
           pop
           (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-            (report-iteration i iters ga-result run-args)
+            (report-iteration i iters ga-result run-args run-config)
             (recur ga-result
                    (if (some #(> % -1e-3) scores)
                      (near-exact-solution i scores)
@@ -540,13 +550,23 @@
 
 
 (defn run-experiment
-  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs] :as run-config}]
+  [{:keys [iters initial-phenos initial-muts input-exprs output-exprs use-gui?] :as run-config}]
   (println "initial data: iters: " iters
            "pop: " (count initial-phenos)
            "muts: " (count initial-muts))
 
-  (let [run-args (start-gui-and-get-input-data run-config)]
-    (run-from-inputs run-config run-args)))
+  (if use-gui?
+    (do
+      (let [run-args (start-gui-and-get-input-data run-config)]
+        (run-from-inputs run-config run-args)))
+
+    (do
+      (reset! sim-input-args* {:input-exprs      input-exprs
+                               :input-exprs-vec  (ops-common/exprs->doubles input-exprs)
+                               :output-exprs-vec (ops-common/exprs->doubles output-exprs)})
+      (run-from-inputs run-config (->run-args (merge @sim-input-args*
+                                                     {:input-iters        iters
+                                                      :input-phenos-count (count initial-phenos)}))))))
 
 
 (defn in-flames
@@ -560,22 +580,58 @@
 (def ^:dynamic *use-flamechart* false)
 
 
-(defn run-test
+(defn run-app-without-gui
   []
-  (let [experiment-fn (fn []
+  (let [input-exprs   (->>
+                        (range 50)
+                        (map (fn [i] (* Math/PI (/ i 15.0))))
+                        ops-common/doubles->exprs)
+
+
+        output-exprs  (->>
+                        (range 50)
+                        (map (fn [i]
+                               (+ 2.0
+                                  (/ i 10.0)
+                                  (Math/sin (* Math/PI (/ i 15.0))))))
+                        ops-common/doubles->exprs)
+
+        experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops-init/initial-phenotypes 4000)
+                          {:initial-phenos (ops-init/initial-phenotypes 1000)
                            :initial-muts   (ops-init/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          200}))]
+                           :iters          200
+                           :use-gui?       false}))]
     (if *use-flamechart*
       ;; with flame graph analysis:
       (in-flames experiment-fn)
       ;; plain experiment:
       (experiment-fn))))
 
-;; todo: symreg ns needs clearer divisions between experiment and GUI
-;; todo: fix can run uberjar: classload error on LogManager: turn off AOT?
 
-(comment (run-test))
+(defn run-app-with-gui
+  []
+  (let [experiment-fn (fn []
+                        (run-experiment
+                          {:initial-phenos (ops-init/initial-phenotypes 1000)
+                           :initial-muts   (ops-init/initial-mutations)
+                           :input-exprs    input-exprs
+                           :output-exprs   output-exprs
+                           :iters          200
+                           :use-gui?       true}))]
+    (if *use-flamechart*
+      ;; with flame graph analysis:
+      (in-flames experiment-fn)
+      ;; plain experiment:
+      (experiment-fn))))
+
+
+;; todo: [/] symreg ns needs clearer divisions between experiment and GUI
+;;       - works without gui but the code is a little ugly
+;; todo: [ ] fix can run uberjar: classload error on LogManager: turn off AOT?
+
+
+(comment (run-app-without-gui))
+(comment (run-app-with-gui))
