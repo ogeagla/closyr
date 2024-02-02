@@ -42,7 +42,7 @@
                  (ops-modify/modify
                    {:op               :modify-leafs
                     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                        (if (and (= (.toString ie) "x"))
+                                        (if (= (.toString ie) "x")
                                           (F/Sin ie)
                                           ie))}
                    {:sym  x

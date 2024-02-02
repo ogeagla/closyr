@@ -549,12 +549,10 @@
         selection      (-> jcb .getSelectedItem str)
         new-fn         (input-y-fns selection)]
     (reset! input-y-fn* selection)
-    (mapv
-      (fn [i]
-        ((nth items-point-setters i)
-         (.getX ^Point ((nth items-point-getters i)))
-         (new-fn i)))
-      (range @sketch-input-x-count*))
+    (doseq [i (range @sketch-input-x-count*)]
+      ((nth items-point-setters i)
+       (.getX ^Point ((nth items-point-getters i)))
+       (new-fn i)))
     (ss/repaint! drawing-widget)
     (println "Selected: " selection)))
 

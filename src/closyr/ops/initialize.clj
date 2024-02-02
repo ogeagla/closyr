@@ -558,8 +558,7 @@
    {:op               :modify-branches
     :label            "b simplify"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (> 9 (.leafCount ie) 4)
-                                 #_(ops-common/should-modify-branch leaf-count pheno))
+                        (if (> 9 (.leafCount ie) 4)
                           (binding [ops-common/*simplify-max-leafs* 8]
                             #_(println "b simplify: " (.leafCount ie) " : " (str ie))
                             (try (:expr (ops-common/maybe-simplify (assoc pheno :expr ie)))

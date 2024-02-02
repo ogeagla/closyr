@@ -299,6 +299,7 @@
   (close! *sim-stop-start-chan*)
   (close! *gui-close-chan*))
 
+
 (defn chart-update-loop
   "In the GUI thread, loops over data sent from the experiement to be rendered onto the GUI. Parks waiting on new data,
   and ends the loop when a command in the close chan is sent"
@@ -633,6 +634,7 @@
          :iters          200
          :use-gui?       true}))))
 
+
 (defn run-app-from-cli-args
   [{:keys [iterations population headless xs ys] :as cli-opts}]
   (println "Running from CLI opts: " cli-opts)
@@ -650,9 +652,7 @@
                            (ops-common/doubles->exprs ys)
                            output-exprs)})))
   (println "CLI: Done!")
-  (System/exit 0)
-
-  )
+  (System/exit 0))
 
 
 (comment (run-app-without-gui))
