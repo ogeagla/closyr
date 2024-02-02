@@ -108,16 +108,6 @@
       (and (number? n) (Double/isNaN n))))
 
 
-(defn crossover-fn
-  [initial-muts p p-discard pop]
-  (let [crossover-result (ops-modify/crossover p p-discard)]
-    (when crossover-result
-      (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
-    (or
-      crossover-result
-      (mutation-fn initial-muts p p-discard pop))))
-
-
 (defn sort-population
   [pops]
   (->>
@@ -193,6 +183,16 @@
       (assoc new-pheno :mods-applied iters))
     (catch Exception e
       (println "Err in mutation: " e))))
+
+
+(defn crossover-fn
+  [initial-muts p p-discard pop]
+  (let [crossover-result (ops-modify/crossover p p-discard)]
+    (when crossover-result
+      (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
+    (or
+      crossover-result
+      (mutation-fn initial-muts p p-discard pop))))
 
 
 (defn reportable-phen-str
