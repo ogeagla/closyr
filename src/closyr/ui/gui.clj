@@ -673,7 +673,7 @@
       (setup-theme)
 
       (let [my-frame                        (doto (JFrame. "CLOSYR")
-                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE))
+                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE))
 
             bottom-container                (panel-grid {:rows 2 :cols 1})
             inputs-and-info-container       (panel-grid {:rows 3 :cols 1})
@@ -796,7 +796,9 @@
            :scores-chart-panel  scores-chart-panel
            :scores-chart        scores-chart
            :ctl-start-stop-btn  ctl-start-stop-btn}
-          gui-data)))))
+          gui-data)
+
+        (println "GUI process complete")))))
 
 
 (defn test-gui-1

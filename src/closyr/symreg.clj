@@ -1,7 +1,7 @@
 (ns closyr.symreg
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
+    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
     [closyr.dataset.prng :refer :all]
     [closyr.ga :as ga]
@@ -295,6 +295,11 @@
         doubles))
 
 
+(def ^:dynamic *sim->gui-chan* (chan))
+(def ^:dynamic *sim-stop-start-chan* (chan))
+(def ^:dynamic *gui-close-chan* (chan))
+
+
 (defn chart-update-loop
   [sim->gui-chan
    {:keys [^XYChart best-fn-chart
@@ -318,69 +323,79 @@
                 :as   sim-msg} (<! sim->gui-chan)]
 
       (let [{:keys [input-exprs-vec output-exprs-vec]} @sim-input-args*]
-        (.clear ys-best-fn)
-        (.addAll ys-best-fn (if best-eval-extended
-                              (clamp-infinites best-eval-extended)
-                              best-eval))
+        (try
+          (.clear ys-best-fn)
+          (.addAll ys-best-fn (if best-eval-extended
+                                (clamp-infinites best-eval-extended)
+                                best-eval))
 
-        (.clear ys-objective-fn)
-        (.addAll ys-objective-fn output-exprs-vec)
+          (.clear ys-objective-fn)
+          (.addAll ys-objective-fn output-exprs-vec)
 
-        (.clear xs-best-fn)
-        (.addAll xs-best-fn (or input-exprs-vec-extended input-exprs-vec))
+          (.clear xs-best-fn)
+          (.addAll xs-best-fn (or input-exprs-vec-extended input-exprs-vec))
 
-        (.clear xs-objective-fn)
-        (.addAll xs-objective-fn input-exprs-vec)
+          (.clear xs-objective-fn)
+          (.addAll xs-objective-fn input-exprs-vec)
 
-        (.setTitle best-fn-chart "Best vs Objective Functions")
-        (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
-        (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
+          (.setTitle best-fn-chart "Best vs Objective Functions")
+          (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
+          (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
 
-        (when (= 1 i)
-          (.clear xs-scores)
-          (.clear ys-scores))
+          (when (= 1 i)
+            (.clear xs-scores)
+            (.clear ys-scores))
 
-        (when (= iters i)
-          (let [^JButton reset-btn @gui/ctl-reset-btn*]
-            (ss/set-text* ctl-start-stop-btn gui/ctl:start)
-            (.setEnabled reset-btn false)))
+          (when (= iters i)
+            (let [^JButton reset-btn @gui/ctl-reset-btn*]
+              (ss/set-text* ctl-start-stop-btn gui/ctl:start)
+              (.setEnabled reset-btn false)))
 
-        (.add xs-scores i)
-        (.add ys-scores best-score)
-        (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
-        (.setTitle scores-chart "Best Score")
+          (.add xs-scores i)
+          (.add ys-scores best-score)
+          (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
+          (.setTitle scores-chart "Best Score")
 
-        (let [fn-str (str "y = " (format-fn-str best-f-str))]
-          (when (not= fn-str (.getText sim-selectable-text))
-            (println "New Best Function: " fn-str)
-            (.setText sim-selectable-text fn-str)
-            (.revalidate sim-selectable-text)
-            (.repaint sim-selectable-text)))
+          (let [fn-str (str "y = " (format-fn-str best-f-str))]
+            (when (not= fn-str (.getText sim-selectable-text))
+              (println "New Best Function: " fn-str)
+              (.setText sim-selectable-text fn-str)
+              (.revalidate sim-selectable-text)
+              (.repaint sim-selectable-text)))
 
-        (.setText info-label (str
-                               ;; "<html>"
-                               "Iteration: " i "/" iters
-                               ;; "<br>Best Function: "
-                               ;; "<br><code> y = " best-f-str "</code>"
-                               " Score: " best-score
-                               ;; "</html>"
-                               ))
-        (.revalidate info-label)
-        (.repaint info-label)
+          (.setText info-label (str
+                                 ;; "<html>"
+                                 "Iteration: " i "/" iters
+                                 ;; "<br>Best Function: "
+                                 ;; "<br><code> y = " best-f-str "</code>"
+                                 " Score: " best-score
+                                 ;; "</html>"
+                                 ))
+          (.revalidate info-label)
+          (.repaint info-label)
 
-        (.revalidate best-fn-chart-panel)
-        (.repaint best-fn-chart-panel)
+          (.revalidate best-fn-chart-panel)
+          (.repaint best-fn-chart-panel)
 
-        (.revalidate scores-chart-panel)
-        (.repaint scores-chart-panel)
+          (.revalidate scores-chart-panel)
+          (.repaint scores-chart-panel)
+          (catch Exception e (println "Err in redrawing GUI: " (.getMessage e))))
 
-        (recur)))))
+
+        (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
+          (if-not (= msg :continue)
+            (do
+              (println "!! Got GUI exit command, see you later !!")
+              (close! *sim->gui-chan*)
+              (close! *sim-stop-start-chan*)
+              (close! *gui-close-chan*))
+            (recur)))))))
 
 
 (defn setup-gui
   []
-  (let [sim->gui-chan       (chan)
-        sim-stop-start-chan (chan)
+  (let [sim->gui-chan       *sim->gui-chan*
+        sim-stop-start-chan *sim-stop-start-chan*
         {:keys [input-exprs-vec output-exprs-vec]} @sim-input-args*]
     (gui/create-and-show-gui
       {:sim-stop-start-chan       sim-stop-start-chan
@@ -491,7 +506,9 @@
   [sim-stop-start-chan]
   ;; wait for GUI to press Start, which submits the new xs/ys data:
   (let [msg (<!! sim-stop-start-chan)]
-    (->run-args (update-plot-input-data msg))))
+    (println "Got GUI control msg: " msg)
+    (when msg
+      (->run-args (update-plot-input-data msg)))))
 
 
 (defn start-gui-and-get-input-data
@@ -552,7 +569,8 @@
       (if use-gui?
         (do
           (println "Experiment complete, waiting for GUI to start another")
-          (run-from-inputs run-config (merge run-args (wait-and-get-gui-args sim-stop-start-chan))))
+          (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
+            (run-from-inputs run-config (merge run-args new-gui-args))))
         (println "Done.")))))
 
 

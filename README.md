@@ -48,7 +48,7 @@ While a function search is running:
     $ lein test
 
 Coverage looks like this:
-![test_coverage_2024-02-01_09-25.png](screenshots%2Ftest_coverage_2024-02-01_09-25.png)
+![test_coverage_2024-02-02_09-32.png](screenshots%2Ftest_coverage_2024-02-02_09-32.png)
 
 
 
