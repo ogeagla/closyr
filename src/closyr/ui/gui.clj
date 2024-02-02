@@ -796,9 +796,7 @@
            :scores-chart-panel  scores-chart-panel
            :scores-chart        scores-chart
            :ctl-start-stop-btn  ctl-start-stop-btn}
-          gui-data)
-
-        (println "GUI process complete")))))
+          gui-data)))))
 
 
 (defn test-gui-1

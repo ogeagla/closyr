@@ -22,23 +22,34 @@ Currently this application is not packed, so you have to run it from source, usi
 There are 3 options.
 
 
-#### Lein Run
+### Lein Run
 
     
     $ lein run
 
-####  In Clojure REPL
+Or headless with input data:
+
+    $ lein run -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
+
+Same as:
+
+    $ lein run --headless --population 1000 --iterations 200 --xs 0,1,2,3,4,5,6 --ys 1,2,30,4,5,6,10 
+
+###  In Clojure REPL
 
 
     (require '[closyr.symreg :as symreg]) 
     (symreg/run-app-with-gui)
 
-#### JAR
+### Build and run JAR
 
 
     $ lein uberjar
     $ java -jar target/uberjar/closyr-0.1.0-standalone.jar
 
+You can also provide the same command-line options to `java` command, like:
+
+    $ java -jar target/uberjar/closyr-0.1.0-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
 
 ## Examples
 

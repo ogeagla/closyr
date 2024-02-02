@@ -5,6 +5,9 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/core.async "1.6.681"]
+
+                 [org.clojure/tools.cli "1.0.219"]
+
                  [seesaw/seesaw "1.5.0"]
                  [flames "0.5.0"]
                  [org.knowm.xchart/xchart "3.8.7"]

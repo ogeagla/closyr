@@ -68,7 +68,7 @@
 
 (defn near-exact-solution
   [i old-scores]
-  (println "Perfect score! " i " top scores: " (take 10 (sort old-scores)))
+  (println "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
   0)
 
 
@@ -292,6 +292,13 @@
   (reset! sim-stats* {}))
 
 
+(defn close-chans!
+  []
+  (println "!! Got GUI exit command, see you later !!")
+  (close! *sim->gui-chan*)
+  (close! *sim-stop-start-chan*)
+  (close! *gui-close-chan*))
+
 (defn chart-update-loop
   "In the GUI thread, loops over data sent from the experiement to be rendered onto the GUI. Parks waiting on new data,
   and ends the loop when a command in the close chan is sent"
@@ -371,11 +378,7 @@
 
         (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
           (if-not (= msg :continue)
-            (do
-              (println "!! Got GUI exit command, see you later !!")
-              (close! *sim->gui-chan*)
-              (close! *sim-stop-start-chan*)
-              (close! *gui-close-chan*))
+            (close-chans!)
             (recur)))))))
 
 
@@ -629,6 +632,34 @@
          :output-exprs   output-exprs
          :iters          200
          :use-gui?       true}))))
+
+(defn run-app-from-cli-args
+  [{:keys [iterations population headless xs ys] :as cli-opts}]
+  (println "Running from CLI opts: " cli-opts)
+  (run-with-monitoring
+    (fn []
+      (run-experiment
+        {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
+         :initial-muts   (ops-init/initial-mutations)
+         :iters          iterations
+         :use-gui?       (not headless)
+         :input-exprs    (if xs
+                           (ops-common/doubles->exprs xs)
+                           (->> (range 50)
+                                (map (fn [i] (* Math/PI (/ i 15.0))))
+                                ops-common/doubles->exprs))
+         :output-exprs   (if ys
+                           (ops-common/doubles->exprs ys)
+                           (->> (range 50)
+                                (map (fn [i]
+                                       (+ 2.0
+                                          (/ i 10.0)
+                                          (Math/sin (* Math/PI (/ i 15.0))))))
+                                ops-common/doubles->exprs))})))
+  (println "CLI: Done!")
+  (System/exit 0)
+
+  )
 
 
 (comment (run-app-without-gui))
