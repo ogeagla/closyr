@@ -9,7 +9,7 @@
    id="svg1"
    inkscape:version="1.3.2 (091e20ef0f, 2023-11-25)"
    sodipodi:docname="icon_full.svg"
-   inkscape:export-filename="icon_v3_qtr.png"
+   inkscape:export-filename="icon_v4_qtr.png"
    inkscape:export-xdpi="24.01408"
    inkscape:export-ydpi="24.01408"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -26,13 +26,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.3462721"
-     inkscape:cx="218.38081"
-     inkscape:cy="238.06479"
-     inkscape:window-width="1914"
-     inkscape:window-height="1037"
-     inkscape:window-x="97"
-     inkscape:window-y="708"
+     inkscape:zoom="2.1795265"
+     inkscape:cx="163.79704"
+     inkscape:cy="197.74937"
+     inkscape:window-width="2446"
+     inkscape:window-height="1504"
+     inkscape:window-x="408"
+     inkscape:window-y="434"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1"
      showguides="true">
@@ -68,7 +68,7 @@
      inkscape:groupmode="layer"
      id="layer1">
     <circle
-       style="fill:#ffffff;stroke:#64b133;stroke-width:2.463;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#d5d5d5;stroke:#64b133;stroke-width:2.463;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1"
        id="path1"
        cx="61.323895"
        cy="61.492786"
@@ -80,7 +80,7 @@
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:110.007px;line-height:1.25;font-family:Aegean;-inkscape-font-specification:'Aegean, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;shape-inside:url(#rect1);display:inline;fill:#91b4ff;fill-opacity:1;stroke:#91b4ff;stroke-opacity:1"><tspan
          x="238.64453"
          y="291.9966"
-         id="tspan1">Y</tspan></text>
+         id="tspan3">Y</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.94682838,0,0,0.88058492,-201.39008,-160.08426)"
@@ -88,7 +88,7 @@
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:110.007px;line-height:1.25;font-family:Aegean;-inkscape-font-specification:'Aegean, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;shape-inside:url(#rect1-2);display:inline;fill:#91dc48;fill-opacity:1;stroke:#91dc48;stroke-opacity:1"><tspan
          x="238.64453"
          y="291.9966"
-         id="tspan2">Y</tspan></text>
+         id="tspan4">Y</tspan></text>
     <circle
        style="fill:#ffffff;fill-opacity:0;stroke:#5981d8;stroke-width:2.35535;stroke-dasharray:none;stroke-opacity:1"
        id="circle1"
