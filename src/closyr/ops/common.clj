@@ -162,11 +162,12 @@
   [^IAST expr done?*]
   (go-loop [c 0]
     (when (not @done?*)
-      (do (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
-          (when (> c 2)
-            (println "Warning: simplify taking a long time: " c " " (.leafCount expr) " : " (str expr))
-            (swap! do-not-simplify-fns* assoc (str expr) true))
-          (recur (inc c))))))
+      ;; wait sequence in ms looks like: 100, 316, 1000, ...
+      (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
+      (when (> c 2)
+        (println "Warning: simplify taking a long time: " c " " (.leafCount expr) " : " (str expr))
+        (swap! do-not-simplify-fns* assoc (str expr) true))
+      (recur (inc c)))))
 
 
 (defn ^IAST do-simplify

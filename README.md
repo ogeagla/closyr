@@ -19,6 +19,8 @@ Currently this application is not packed, so you have to run it from source, usi
 
 ## Usage
 
+There are 2 options right now, but only option #1 works at the moment.
+
 1. Lein Run
 
 
