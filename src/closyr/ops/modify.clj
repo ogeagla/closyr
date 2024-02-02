@@ -85,7 +85,8 @@
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
   (->
     x-sym
-    (ops-common/->phenotype (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
+    (ops-common/->phenotype
+      (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
     (with-recent-mod-metadata modif)))
 
 
@@ -94,7 +95,8 @@
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
   (->
     x-sym
-    (ops-common/->phenotype (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
+    (ops-common/->phenotype
+      (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
     (with-recent-mod-metadata modif)))
 
 
@@ -103,7 +105,8 @@
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
   (->
     x-sym
-    (ops-common/->phenotype (.replaceAll expr (tree-ast-head-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
+    (ops-common/->phenotype
+      (.replaceAll expr (tree-ast-head-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
     (with-recent-mod-metadata modif)))
 
 
@@ -120,9 +123,7 @@
 
 
 (def crossover-sampler
-  [:plus :times :divide12 :divide21 :minus12 :minus21
-   ;; :exp12 :exp21
-   ])
+  [:plus :times :divide12 :divide21 :minus12 :minus21])
 
 
 (defn crossover
@@ -199,51 +200,75 @@
 
 
 (def mutations-sampler
-  [1 1 1 1 1 1 1 1 1
-   1 1 1 1 1 1 1 1 1
-   1 1 1 1 1 1 1 1 1
-   1 1 1 1 1 1 1 1 1
-   2 2 2 2 2 2
-   2 2 2 2 2 2
-   2 2 2 2 2 2
-   2 2 2 2 2 2
-   3 3 3 3
-   3 3 3 3
-   3 3 3 3
-   3 3 3 3
-   4 4 4
-   4 4 4
-   4 4 4
-   4 4 4
-   5 5 5
-   5 5 5
-   5 5 5
-   5 5
-   6 6
-   6 6
-   6 6
-   6 6
-   7 7
-   7 7
-   7 7
-   7
-   8 8
-   8 8
-   8 8
-   9 9
-   9 9
-   9
-   10 10
-   10
-   11 11
-   11
-   12 12
-   13 13
-   14
-   15
-   16
-   17
-   18
-   19
-   20
-   ])
+  (->>
+    []
+    (concat (repeat 50 1))
+    (concat (repeat 30 2))
+    (concat (repeat 20 3))
+    (concat (repeat 15 4))
+    (concat (repeat 9 5))
+    (concat (repeat 8 6))
+    (concat (repeat 7 7))
+    (concat (repeat 6 8))
+    (concat (repeat 6 9))
+    (concat (repeat 5 10))
+    (concat (repeat 5 11))
+    (concat (repeat 4 12))
+    (concat (repeat 4 13))
+    (concat (repeat 3 14))
+    (concat (repeat 3 15))
+    (concat (repeat 2 16))
+    (concat (repeat 2 17))
+    (concat (repeat 1 18))
+    (concat (repeat 1 19))
+    (concat (repeat 1 20))
+
+    vec)
+  #_[1 1 1 1 1 1 1 1 1
+     1 1 1 1 1 1 1 1 1
+     1 1 1 1 1 1 1 1 1
+     1 1 1 1 1 1 1 1 1
+     2 2 2 2 2 2
+     2 2 2 2 2 2
+     2 2 2 2 2 2
+     2 2 2 2 2 2
+     3 3 3 3
+     3 3 3 3
+     3 3 3 3
+     3 3 3 3
+     4 4 4
+     4 4 4
+     4 4 4
+     4 4 4
+     5 5 5
+     5 5 5
+     5 5 5
+     5 5
+     6 6
+     6 6
+     6 6
+     6 6
+     7 7
+     7 7
+     7 7
+     7
+     8 8
+     8 8
+     8 8
+     9 9
+     9 9
+     9
+     10 10
+     10
+     11 11
+     11
+     12 12
+     13 13
+     14
+     15
+     16
+     17
+     18
+     19
+     20
+     ])

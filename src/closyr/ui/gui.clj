@@ -495,7 +495,7 @@
 
 (def ctl:start "Start")
 (def ctl:stop "Pause")
-(def ctl:restart "Restart With New Inputs")
+(def ctl:restart "Restart")
 
 (def experiment-is-running?* (atom false))
 (def ctl-reset-btn* (atom nil))

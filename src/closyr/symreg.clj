@@ -339,7 +339,9 @@
           (.clear ys-scores))
 
         (when (= iters i)
-          (ss/set-text* ctl-start-stop-btn gui/ctl:start))
+          (let [^JButton reset-btn @gui/ctl-reset-btn*]
+            (ss/set-text* ctl-start-stop-btn gui/ctl:start)
+            (.setEnabled reset-btn false)))
 
         (.add xs-scores i)
         (.add ys-scores best-score)
@@ -573,7 +575,7 @@
       ;; plain experiment:
       (experiment-fn))))
 
-
+;; todo: symreg ns needs clearer divisions between experiment and GUI
 ;; todo: fix can run uberjar: classload error on LogManager: turn off AOT?
 
 (comment (run-test))
