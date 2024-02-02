@@ -27,11 +27,11 @@ There are 3 options.
     
     $ lein run
 
-Or headless with input data:
+Or headless (just in the terminal), where you can specify options and input data:
 
     $ lein run -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
 
-Same as:
+Which is the same as:
 
     $ lein run --headless --population 1000 --iterations 200 --xs 0,1,2,3,4,5,6 --ys 1,2,30,4,5,6,10 
 
