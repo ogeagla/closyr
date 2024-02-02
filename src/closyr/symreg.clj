@@ -35,6 +35,11 @@
 (set! *warn-on-reflection* true)
 
 
+(def ^:dynamic *sim->gui-chan* (chan))
+(def ^:dynamic *sim-stop-start-chan* (chan))
+(def ^:dynamic *gui-close-chan* (chan))
+
+
 (defn sum
   [coll]
   (reduce + 0.0 coll))
@@ -53,6 +58,44 @@
 (def max-resid 1000000)
 
 
+(def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
+
+
+(defn format-fn-str
+  [fn-str]
+  (str/replace (str/trim-newline (str fn-str)) #"\n|\r" ""))
+
+
+(defn near-exact-solution
+  [i old-scores]
+  (println "Perfect score! " i " top scores: " (take 10 (sort old-scores)))
+  0)
+
+
+(def input-exprs
+  (->>
+    (range 50)
+    (map (fn [i] (* Math/PI (/ i 15.0))))
+    ops-common/doubles->exprs))
+
+
+(def output-exprs
+  (->>
+    (range 50)
+    (map (fn [i] 0.0))
+    ops-common/doubles->exprs))
+
+
+(defn clamp-infinites
+  [doubles]
+  (mapv (fn [v]
+          (cond
+            (infinite? v) 0.0
+            (> (abs v) 10e9) 0.0
+            :else v))
+        doubles))
+
+
 (defn tally-min-score
   [min-score]
   (swap! sim-stats* update-in [:scoring :min-scores] #(inc (or % 0)))
@@ -63,6 +106,25 @@
   [n]
   (or (not (number? n))
       (and (number? n) (Double/isNaN n))))
+
+
+(defn crossover-fn
+  [initial-muts p p-discard pop]
+  (let [crossover-result (ops-modify/crossover p p-discard)]
+    (when crossover-result
+      (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
+    (or
+      crossover-result
+      (mutation-fn initial-muts p p-discard pop))))
+
+
+(defn sort-population
+  [pops]
+  (->>
+    (:pop pops)
+    (remove #(nil? (:score %)))
+    (sort-by :score)
+    (reverse)))
 
 
 (defn score-fn
@@ -108,14 +170,6 @@
       (tally-min-score min-score))))
 
 
-(defn fn-size-growing-too-fast?
-  [v new-v]
-  (let [old-count (count (str (:expr v)))
-        new-count (count (str (:expr new-v)))]
-    (and (< 250 old-count)
-         (< old-count new-count))))
-
-
 (defn mutation-fn
   [initial-muts p-winner p-discard pop]
   (try
@@ -139,33 +193,6 @@
       (assoc new-pheno :mods-applied iters))
     (catch Exception e
       (println "Err in mutation: " e))))
-
-
-(defn crossover-fn
-  [initial-muts p p-discard pop]
-  (let [crossover-result (ops-modify/crossover p p-discard)]
-    (when crossover-result
-      (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
-    (or
-      crossover-result
-      (mutation-fn initial-muts p p-discard pop))))
-
-
-(defn sort-population
-  [pops]
-  (->>
-    (:pop pops)
-    (remove #(nil? (:score %)))
-    (sort-by :score)
-    (reverse)))
-
-
-(def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
-
-
-(defn format-fn-str
-  [fn-str]
-  (str/replace (str/trim-newline (str fn-str)) #"\n|\r" ""))
 
 
 (defn reportable-phen-str
@@ -265,42 +292,9 @@
   (reset! sim-stats* {}))
 
 
-(defn near-exact-solution
-  [i old-scores]
-  (println "Perfect score! " i " top scores: " (take 10 (sort old-scores)))
-  0)
-
-
-(def input-exprs
-  (->>
-    (range 50)
-    (map (fn [i] (* Math/PI (/ i 15.0))))
-    ops-common/doubles->exprs))
-
-
-(def output-exprs
-  (->>
-    (range 50)
-    (map (fn [i] 0.0))
-    ops-common/doubles->exprs))
-
-
-(defn clamp-infinites
-  [doubles]
-  (mapv (fn [v]
-          (cond
-            (infinite? v) 0.0
-            (> (abs v) 10e9) 0.0
-            :else v))
-        doubles))
-
-
-(def ^:dynamic *sim->gui-chan* (chan))
-(def ^:dynamic *sim-stop-start-chan* (chan))
-(def ^:dynamic *gui-close-chan* (chan))
-
-
 (defn chart-update-loop
+  "In the GUI thread, loops over data sent from the experiement to be rendered onto the GUI. Parks waiting on new data,
+  and ends the loop when a command in the close chan is sent"
   [sim->gui-chan
    {:keys [^XYChart best-fn-chart
            ^XYChart scores-chart
