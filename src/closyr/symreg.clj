@@ -505,10 +505,8 @@
   "Park and wait on GUI input, return the inputs as args to GA run"
   [sim-stop-start-chan]
   ;; wait for GUI to press Start, which submits the new xs/ys data:
-  (let [msg (<!! sim-stop-start-chan)]
-    (println "Got GUI control msg: " msg)
-    (when msg
-      (->run-args (update-plot-input-data msg)))))
+  (when-let [msg (<!! sim-stop-start-chan)]
+    (->run-args (update-plot-input-data msg))))
 
 
 (defn start-gui-and-get-input-data
