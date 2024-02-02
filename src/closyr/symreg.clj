@@ -544,9 +544,11 @@
         (println "Restarting...")
         (<!! (timeout 500))
         (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))
-      (do
-        (println "Experiment complete, waiting for GUI to start another")
-        (run-from-inputs run-config (merge run-args (wait-and-get-gui-args sim-stop-start-chan)))))))
+      (if use-gui?
+        (do
+          (println "Experiment complete, waiting for GUI to start another")
+          (run-from-inputs run-config (merge run-args (wait-and-get-gui-args sim-stop-start-chan))))
+        (println "Done.")))))
 
 
 (defn run-experiment
@@ -582,27 +584,24 @@
 
 (defn run-app-without-gui
   []
-  (let [input-exprs   (->>
-                        (range 50)
-                        (map (fn [i] (* Math/PI (/ i 15.0))))
-                        ops-common/doubles->exprs)
+  (let [input-exprs   (->> (range 50)
+                           (map (fn [i] (* Math/PI (/ i 15.0))))
+                           ops-common/doubles->exprs)
 
 
-        output-exprs  (->>
-                        (range 50)
-                        (map (fn [i]
-                               (+ 2.0
-                                  (/ i 10.0)
-                                  (Math/sin (* Math/PI (/ i 15.0))))))
-                        ops-common/doubles->exprs)
+        output-exprs  (->> (range 50)
+                           (map (fn [i] (+ 2.0
+                                           (/ i 10.0)
+                                           (Math/sin (* Math/PI (/ i 15.0))))))
+                           ops-common/doubles->exprs)
 
         experiment-fn (fn []
                         (run-experiment
-                          {:initial-phenos (ops-init/initial-phenotypes 1000)
+                          {:initial-phenos (ops-init/initial-phenotypes 100)
                            :initial-muts   (ops-init/initial-mutations)
                            :input-exprs    input-exprs
                            :output-exprs   output-exprs
-                           :iters          200
+                           :iters          20
                            :use-gui?       false}))]
     (if *use-flamechart*
       ;; with flame graph analysis:
@@ -629,7 +628,7 @@
 
 
 ;; todo: [/] symreg ns needs clearer divisions between experiment and GUI
-;;       - works without gui but the code is a little ugly
+;;           - works without gui but the code is a little ugly
 ;; todo: [ ] fix can run uberjar: classload error on LogManager: turn off AOT?
 
 
