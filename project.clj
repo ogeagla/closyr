@@ -35,8 +35,6 @@
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
 
   :plugins [[lein-cloverage "1.2.4"]
-            [lein-ring "0.12.6"]
-            [lein-garden "0.3.0"]
             [lein-vanity "0.2.0"]
             [lein-nomis-ns-graph "0.14.6"]
             [lein-ancient "0.7.0"]
