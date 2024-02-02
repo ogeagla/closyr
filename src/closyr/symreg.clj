@@ -645,17 +645,10 @@
          :use-gui?       (not headless)
          :input-exprs    (if xs
                            (ops-common/doubles->exprs xs)
-                           (->> (range 50)
-                                (map (fn [i] (* Math/PI (/ i 15.0))))
-                                ops-common/doubles->exprs))
+                           input-exprs)
          :output-exprs   (if ys
                            (ops-common/doubles->exprs ys)
-                           (->> (range 50)
-                                (map (fn [i]
-                                       (+ 2.0
-                                          (/ i 10.0)
-                                          (Math/sin (* Math/PI (/ i 15.0))))))
-                                ops-common/doubles->exprs))})))
+                           output-exprs)})))
   (println "CLI: Done!")
   (System/exit 0)
 
