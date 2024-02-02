@@ -51,7 +51,7 @@
                                            :input-data-y       [1 3 6 8 8]
                                            :input-iters        5
                                            :input-phenos-count 10})
-                                    (<! (timeout 1500))
+                                    (<! (timeout 2000))
                                     (is true)
                                     (put! symreg/*gui-close-chan* :close-please)
                                     (put! symreg/*sim->gui-chan* :next))]

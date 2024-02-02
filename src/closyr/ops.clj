@@ -41,6 +41,42 @@
       (and (number? n) (Double/isNaN n))))
 
 
+(defn compute-residual
+  [expected actual]
+  (let [res (if (not-finite? actual)
+              max-resid
+              (- expected actual))]
+    (if (not-finite? res)
+      (do
+        (println "warning, res not a number: " res
+                 " exp: " expected " actual: " actual)
+        max-resid)
+      (min max-resid (abs res)))))
+
+
+(defn compute-score-from-actuals-and-expecteds
+  [pheno f-of-xs input-ys-vec leafs]
+  (try
+    (let [abs-resids       (map compute-residual input-ys-vec f-of-xs)
+          resid-sum        (sum abs-resids)
+          score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
+                                      (reduce max abs-resids)))
+          length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
+          overall-score    (- score length-deduction)]
+
+
+      (when (or (neg? length-deduction) (Double/isNaN length-deduction))
+        (println "warning: bad/negative deduction increases score: "
+                 leafs length-deduction (str (:expr pheno))))
+      (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
+
+      overall-score)
+    (catch Exception e
+      (println "Err in computing score from residuals: "
+               (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
+      (tally-min-score min-score))))
+
+
 (defn score-fn
   [{:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
@@ -52,32 +88,7 @@
         (tally-min-score min-score)
         (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
           (if f-of-xs
-            (let [abs-resids       (map
-                                     (fn [expected actual]
-                                       (let [res (if (not-finite? actual)
-                                                   max-resid
-                                                   (- expected actual))]
-                                         (if (not-finite? res)
-                                           (do
-                                             (println "warning, res not a number: " res
-                                                      " exp: " expected " actual: " actual)
-                                             max-resid)
-                                           (min max-resid (abs res)))))
-                                     input-ys-vec
-                                     f-of-xs)
-                  resid-sum        (sum abs-resids)
-                  score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
-                                              (reduce max abs-resids)))
-                  length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
-                  overall-score    (- score length-deduction)]
-
-
-              (when (or (neg? length-deduction) (Double/isNaN length-deduction))
-                (println "warning: bad/negative deduction increases score: "
-                         leafs length-deduction (str (:expr pheno))))
-              (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
-
-              overall-score)
+            (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs)
             (tally-min-score min-score)))))
     (catch Exception e
       (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))

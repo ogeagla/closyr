@@ -77,8 +77,6 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-
-
   (some->
     (parse-main-opts args)
     (validate-symreg-opts)
