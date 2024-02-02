@@ -9,6 +9,9 @@
    id="svg1"
    inkscape:version="1.3.2 (091e20ef0f, 2023-11-25)"
    sodipodi:docname="icon_full.svg"
+   inkscape:export-filename="icon_v2_qtr.png"
+   inkscape:export-xdpi="24.01408"
+   inkscape:export-ydpi="24.01408"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -23,15 +26,22 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.4690327"
-     inkscape:cx="337.63714"
-     inkscape:cy="218.8515"
+     inkscape:zoom="1.1413366"
+     inkscape:cx="241.82174"
+     inkscape:cy="210.71785"
      inkscape:window-width="1914"
      inkscape:window-height="1037"
-     inkscape:window-x="0"
-     inkscape:window-y="1096"
+     inkscape:window-x="97"
+     inkscape:window-y="708"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer1"
+     showguides="true">
+    <sodipodi:guide
+       position="18.731146,131.82525"
+       orientation="0,-1"
+       id="guide1"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
   <defs
      id="defs1">
     <rect
@@ -40,26 +50,48 @@
        width="413.70566"
        height="268.47269"
        id="rect1" />
+    <rect
+       x="238.64384"
+       y="191.98132"
+       width="413.70566"
+       height="268.47269"
+       id="rect1-2" />
   </defs>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
     <circle
-       style="fill:#ffffff;stroke:#000000;stroke-width:2.463;stroke-dasharray:none"
+       style="fill:#ffffff;stroke:#64b133;stroke-width:2.463;stroke-dasharray:none;stroke-opacity:1"
        id="path1"
        cx="61.323895"
        cy="61.492786"
        r="59.058128" />
     <text
        xml:space="preserve"
-       transform="matrix(0.46179044,0,0,0.46179044,-75.152464,-70.304122)"
+       transform="matrix(0.46179044,0,0,0.46179044,-73.359934,-69.844708)"
        id="text1"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect1);fill:#000000;fill-opacity:1;stroke:none"><tspan
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect1);display:inline;fill:#91b4ff;fill-opacity:1;stroke:#91b4ff;stroke-opacity:1"><tspan
          x="238.64453"
          y="361.85547"
-         id="tspan3"><tspan
+         id="tspan6"><tspan
            style="font-weight:bold;font-size:192px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono, Bold'"
-           id="tspan2">Y</tspan></tspan></text>
+           id="tspan5">Y</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       transform="matrix(0.46179044,0,0,0.46179044,-76.867378,-68.61675)"
+       id="text1-2"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect1-2);display:inline;fill:#91dc48;fill-opacity:1;stroke:#91dc48;stroke-opacity:1"><tspan
+         x="238.64453"
+         y="361.85547"
+         id="tspan8"><tspan
+           style="font-weight:bold;font-size:192px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono, Bold'"
+           id="tspan7">Y</tspan></tspan></text>
+    <circle
+       style="fill:#ffffff;fill-opacity:0;stroke:#5981d8;stroke-width:2.35535;stroke-dasharray:none;stroke-opacity:1"
+       id="circle1"
+       cx="61.323895"
+       cy="61.492786"
+       r="56.476864" />
   </g>
 </svg>
