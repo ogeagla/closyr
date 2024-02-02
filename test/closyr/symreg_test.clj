@@ -36,7 +36,7 @@
 
 
 (deftest can-run-experiment-gui
-  (testing "gui can start and run experiments"
+  (testing "gui can start and run experiments; NOTE: do not run this while in headless mode, eg on CI"
     (is (=
           (binding [symreg/*log-steps* 5]
             (let [control-process (go
@@ -66,9 +66,4 @@
 
               (<!! control-process)))
 
-          true)))
-
-  ;; running this hangs the test with the GUI open:
-  #_(testing "gui can start from default launcher"
-      (is (= nil
-             (symreg/run-app-with-gui)))))
+          true))))
