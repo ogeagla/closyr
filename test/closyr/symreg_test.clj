@@ -23,10 +23,10 @@
                     :initial-muts   (ops-init/initial-mutations)
                     :iters          5
                     :use-gui?       false
-                    :input-exprs    (->> (range 50)
+                    :input-xs-exprs    (->> (range 50)
                                          (map (fn [i] (* Math/PI (/ i 15.0))))
                                          ops-common/doubles->exprs)
-                    :output-exprs   (->> (range 50)
+                    :input-ys-exprs   (->> (range 50)
                                          (map (fn [i]
                                                 (+ 2.0
                                                    (/ i 10.0)
@@ -59,8 +59,8 @@
                   (symreg/run-experiment
                     {:initial-phenos (ops-init/initial-phenotypes 20)
                      :initial-muts   (ops-init/initial-mutations)
-                     :input-exprs    symreg/input-exprs
-                     :output-exprs   symreg/output-exprs
+                     :input-xs-exprs    symreg/input-xs-exprs
+                     :input-ys-exprs   symreg/input-ys-exprs
                      :iters          20
                      :use-gui?       true})))
 

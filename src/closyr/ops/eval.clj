@@ -58,10 +58,10 @@
 
 (defn eval-vec-pheno
   [p
-   {:keys [input-exprs-list input-exprs-count output-exprs-vec]
+   {:keys [input-xs-list input-xs-count input-ys-vec]
     :as   run-args}]
   (let [^IExpr new-expr (:expr p)
-        ^IExpr eval-p   (eval-phenotype-on-expr-args p input-exprs-list)]
+        ^IExpr eval-p   (eval-phenotype-on-expr-args p input-xs-list)]
     (when-not (or (nil? eval-p) (= "Indeterminate" (str eval-p)))
       (let [vs (mapv
                  (fn [i]
@@ -71,7 +71,7 @@
                      (catch Exception e
                        Double/POSITIVE_INFINITY)))
                  (range (dec (.size eval-p))))
-            vs (if (= input-exprs-count (count vs))
+            vs (if (= input-xs-count (count vs))
                  vs
                  (mapv
                    (fn [i]
@@ -88,7 +88,7 @@
                          (println "Error in evaling function on const xs vector: "
                                   (str eval-p) " : " (.getMessage e))
                          (throw e))))
-                   (range input-exprs-count)))]
+                   (range input-xs-count)))]
         vs))))
 
 
@@ -101,12 +101,12 @@
 
 
 (defn extend-xs
-  [input-exprs-vec]
-  (let [x-min                (first input-exprs-vec)
-        x-max                (last input-exprs-vec)
+  [input-xs-vec]
+  (let [x-min                (first input-xs-vec)
+        x-max                (last input-xs-vec)
         x-range-sz           (- x-max x-min)
         x-range-pct-extend   0.35
-        extra-pts            (* x-range-pct-extend (count input-exprs-vec))
+        extra-pts            (* x-range-pct-extend (count input-xs-vec))
         x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
 
         x-head               (reverse
@@ -120,9 +120,9 @@
                                  (+ x-max (* (inc i) x-range-extend-pt-sz)))
                                (range extra-pts))
 
-        x-tail-list          (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs x-tail))
-        x-head-list          (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs x-head))
-        xs                   (concat x-head input-exprs-vec x-tail)]
+        x-tail-list          (ops-common/exprs->exprs-list (ops-common/doubles->exprs x-tail))
+        x-head-list          (ops-common/exprs->exprs-list (ops-common/doubles->exprs x-head))
+        xs                   (concat x-head input-xs-vec x-tail)]
     {:xs          xs
      :x-head      x-head
      :x-head-list x-head-list
@@ -143,24 +143,24 @@
     (concat
 
       (mapv #(clamp-oversampled-ys max-y min-y %)
-            (eval-vec-pheno p (assoc run-args :input-exprs-list x-head-list :input-exprs-count (count x-head))))
+            (eval-vec-pheno p (assoc run-args :input-xs-list x-head-list :input-xs-count (count x-head))))
 
       middle-section
 
       (mapv #(clamp-oversampled-ys max-y min-y %)
-            (eval-vec-pheno p (assoc run-args :input-exprs-list x-tail-list :input-exprs-count (count x-tail)))))))
+            (eval-vec-pheno p (assoc run-args :input-xs-list x-tail-list :input-xs-count (count x-tail)))))))
 
 
 (defn eval-vec-pheno-oversample-from-orig-xs
   [p
-   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
+   {:keys [input-xs-list input-xs-count input-xs-vec input-ys-vec]
     :as   run-args}]
   (let [{x-head      :x-head
          x-head-list :x-head-list
          x-tail      :x-tail
          x-tail-list :x-tail-list
-         :as         ext-info} (extend-xs input-exprs-vec)
-        xs           (concat x-head (:input-exprs-vec run-args) x-tail)
+         :as         ext-info} (extend-xs input-xs-vec)
+        xs           (concat x-head (:input-xs-vec run-args) x-tail)
         evaluated-ys (eval-extended p run-args ext-info)]
 
     {:xs xs
@@ -169,7 +169,7 @@
 
 (defn eval-vec-pheno-oversample
   [p
-   {:keys [input-exprs-list input-exprs-count input-exprs-vec output-exprs-vec]
+   {:keys [input-xs-list input-xs-count input-xs-vec input-ys-vec]
     :as   run-args}
    {xs          :xs
     x-head      :x-head

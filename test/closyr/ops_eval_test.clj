@@ -25,7 +25,7 @@
                ops-common/expr->double
                (ops-eval/eval-phenotype-on-expr-args
                  (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
-                 (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.5]))))
+                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))))
              [0.0]))
 
       (is (instance? IExpr (F/Subtract F/E F/C1D2)))
@@ -46,27 +46,27 @@
 
       (is (= (ops-eval/eval-vec-pheno
                (ops-common/->phenotype x (F/Subtract F/E F/C1D2) nil)
-               {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.5]))
-                :input-exprs-count 1})
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                :input-xs-count 1})
              [2.218281828459045]))
 
       (is (= (ops-eval/eval-vec-pheno
                (ops-common/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
-               {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.5]))
-                :input-exprs-count 1})
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                :input-xs-count 1})
              [0.5]))
 
 
       (is (= (ops-eval/eval-vec-pheno
                (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
-               {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.5]))
-                :input-exprs-count 1})
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                :input-xs-count 1})
              [0.0]))
 
       (is (= (ops-eval/eval-vec-pheno
                (ops-common/->phenotype x (F/Subtract (F/Times x (F/Sin x)) F/C1D2) nil)
-               {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
-                :input-exprs-count 3})
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
              [-0.5 -0.2602872306978985 0.3414709848078965])))))
 
 
@@ -77,8 +77,8 @@
       (testing "vector size 20"
         (is (= (ops-eval/eval-vec-pheno
                  (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)
-                 {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs (vec (range 20))))
-                  :input-exprs-count 20})
+                 {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs (vec (range 20))))
+                  :input-xs-count 20})
                (mapv
                  #(- (* % %) 0.5)
                  (range 20))))))
@@ -87,8 +87,8 @@
       (testing "vector size 40"
         (is (= (ops-eval/eval-vec-pheno
                  (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)
-                 {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs (vec (range 40))))
-                  :input-exprs-count 40})
+                 {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs (vec (range 40))))
+                  :input-xs-count 40})
                (mapv
                  #(- (* % %) 0.5)
                  (range 40))))))
@@ -98,8 +98,8 @@
       (testing "vector size 80"
         (is (= (ops-eval/eval-vec-pheno
                  (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)
-                 {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs (vec (range 80))))
-                  :input-exprs-count 80})
+                 {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs (vec (range 80))))
+                  :input-xs-count 80})
                (mapv
                  #(- (* % %) 0.5)
                  (range 80))))))
@@ -110,8 +110,8 @@
       (testing "vector size 160"
         (is (= (ops-eval/eval-vec-pheno
                  (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)
-                 {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs (vec (range 160))))
-                  :input-exprs-count 160})
+                 {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs (vec (range 160))))
+                  :input-xs-count 160})
                (mapv
                  #(- (* % %) 0.5)
                  (range 160))))))
@@ -122,8 +122,8 @@
       (testing "vector size 320"
         (is (= (ops-eval/eval-vec-pheno
                  (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)
-                 {:input-exprs-list  (ops-common/exprs->input-exprs-list (ops-common/doubles->exprs (vec (range 320))))
-                  :input-exprs-count 320})
+                 {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs (vec (range 320))))
+                  :input-xs-count 320})
                (mapv
                  #(- (* % %) 0.5)
                  (range 320))))))))

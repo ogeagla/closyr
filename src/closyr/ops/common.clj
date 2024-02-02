@@ -56,7 +56,7 @@
   (ExprEvaluator. (new-eval-engine) true 0))
 
 
-(defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->input-exprs-list
+(defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->exprs-list
   [exprs]
   (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
         (into-array IExpr exprs)
