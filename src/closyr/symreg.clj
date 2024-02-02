@@ -357,14 +357,7 @@
               (.revalidate sim-selectable-text)
               (.repaint sim-selectable-text)))
 
-          (.setText info-label (str
-                                 ;; "<html>"
-                                 "Iteration: " i "/" iters
-                                 ;; "<br>Best Function: "
-                                 ;; "<br><code> y = " best-f-str "</code>"
-                                 " Score: " best-score
-                                 ;; "</html>"
-                                 ))
+          (.setText info-label (str "Iteration: " i "/" iters " Score: " best-score))
           (.revalidate info-label)
           (.repaint info-label)
 

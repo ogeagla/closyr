@@ -26,9 +26,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.1413366"
-     inkscape:cx="241.82174"
-     inkscape:cy="210.71785"
+     inkscape:zoom="1.3462721"
+     inkscape:cx="218.38081"
+     inkscape:cy="238.06479"
      inkscape:window-width="1914"
      inkscape:window-height="1037"
      inkscape:window-x="97"
@@ -56,6 +56,12 @@
        width="413.70566"
        height="268.47269"
        id="rect1-2" />
+    <rect
+       x="238.64384"
+       y="191.98132"
+       width="413.70566"
+       height="268.47269"
+       id="rect2" />
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -69,24 +75,20 @@
        r="59.058128" />
     <text
        xml:space="preserve"
-       transform="matrix(0.46179044,0,0,0.46179044,-73.359934,-69.844708)"
+       transform="matrix(0.94682838,0,0,0.88058492,-198.63706,-160.62971)"
        id="text1"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect1);display:inline;fill:#91b4ff;fill-opacity:1;stroke:#91b4ff;stroke-opacity:1"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:110.007px;line-height:1.25;font-family:Aegean;-inkscape-font-specification:'Aegean, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;shape-inside:url(#rect1);display:inline;fill:#91b4ff;fill-opacity:1;stroke:#91b4ff;stroke-opacity:1"><tspan
          x="238.64453"
-         y="361.85547"
-         id="tspan6"><tspan
-           style="font-weight:bold;font-size:192px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono, Bold'"
-           id="tspan5">Y</tspan></tspan></text>
+         y="291.9966"
+         id="tspan1">Y</tspan></text>
     <text
        xml:space="preserve"
-       transform="matrix(0.46179044,0,0,0.46179044,-76.867378,-68.61675)"
+       transform="matrix(0.94682838,0,0,0.88058492,-201.39008,-160.08426)"
        id="text1-2"
-       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect1-2);display:inline;fill:#91dc48;fill-opacity:1;stroke:#91dc48;stroke-opacity:1"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:110.007px;line-height:1.25;font-family:Aegean;-inkscape-font-specification:'Aegean, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;shape-inside:url(#rect1-2);display:inline;fill:#91dc48;fill-opacity:1;stroke:#91dc48;stroke-opacity:1"><tspan
          x="238.64453"
-         y="361.85547"
-         id="tspan8"><tspan
-           style="font-weight:bold;font-size:192px;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono, Bold'"
-           id="tspan7">Y</tspan></tspan></text>
+         y="291.9966"
+         id="tspan2">Y</tspan></text>
     <circle
        style="fill:#ffffff;fill-opacity:0;stroke:#5981d8;stroke-width:2.35535;stroke-dasharray:none;stroke-opacity:1"
        id="circle1"
