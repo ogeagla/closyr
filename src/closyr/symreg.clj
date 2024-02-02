@@ -8,7 +8,7 @@
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.initialize :as ops-init]
-    [closyr.ops.modify :as ops-modify]
+    [closyr.ops :as ops]
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
     [seesaw.core :as ss])
@@ -40,22 +40,16 @@
 (def ^:dynamic *gui-close-chan* (chan))
 
 
-(defn sum
-  [coll]
-  (reduce + 0.0 coll))
 
 
-(def sim-stats* (atom {}))
+
+
 (def gui-requested-reset?* (atom false))
 (def test-timer* (atom nil))
 (def sim-input-args* (atom nil))
 
 
 (def ^:dynamic *log-steps* 1)
-
-(def min-score -100000000)
-(def max-leafs 60)
-(def max-resid 1000000)
 
 
 (def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
@@ -96,16 +90,10 @@
         doubles))
 
 
-(defn tally-min-score
-  [min-score]
-  (swap! sim-stats* update-in [:scoring :min-scores] #(inc (or % 0)))
-  min-score)
 
 
-(defn not-finite?
-  [n]
-  (or (not (number? n))
-      (and (number? n) (Double/isNaN n))))
+
+
 
 
 (defn sort-population
@@ -116,83 +104,6 @@
     (sort-by :score)
     (reverse)))
 
-
-(defn score-fn
-  [{:keys [input-xs-list input-xs-count input-ys-vec
-           sim-stop-start-chan sim->gui-chan]
-    :as   run-args}
-   pheno]
-  (try
-    (let [leafs (.leafCount ^IExpr (:expr pheno))]
-      (if (> leafs max-leafs)
-        (tally-min-score min-score)
-        (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
-          (if f-of-xs
-            (let [abs-resids       (map
-                                     (fn [expected actual]
-                                       (let [res (if (not-finite? actual)
-                                                   max-resid
-                                                   (- expected actual))]
-                                         (if (not-finite? res)
-                                           (do
-                                             (println "warning, res not a number: " res
-                                                      " exp: " expected " actual: " actual)
-                                             max-resid)
-                                           (min max-resid (abs res)))))
-                                     input-ys-vec
-                                     f-of-xs)
-                  resid-sum        (sum abs-resids)
-                  score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
-                                              (reduce max abs-resids)))
-                  length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
-                  overall-score    (- score length-deduction)]
-
-
-              (when (or (neg? length-deduction) (Double/isNaN length-deduction))
-                (println "warning: bad/negative deduction increases score: "
-                         leafs length-deduction (str (:expr pheno))))
-              (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
-
-              overall-score)
-            (tally-min-score min-score)))))
-    (catch Exception e
-      (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
-      (tally-min-score min-score))))
-
-
-(defn mutation-fn
-  [initial-muts p-winner p-discard pop]
-  (try
-    (let [start     (Date.)
-          c         (rand-nth ops-modify/mutations-sampler)
-          [new-pheno iters mods] (ops-modify/apply-modifications max-leafs c initial-muts p-winner p-discard)
-          diff-ms   (ops-common/start-date->diff-ms start)
-          old-leafs (.leafCount ^IExpr (:expr p-winner))
-          new-leafs (.leafCount ^IExpr (:expr new-pheno))]
-
-      (when (> diff-ms 5000)
-        (println "Warning, this modification sequence took a long time: "
-                 diff-ms " ms for mods: " (count mods)
-                 "\n mods: " mods
-                 "\n for old expr: " (:expr p-winner)
-                 "\n and new expr: " (:expr new-pheno)))
-
-      (swap! sim-stats* update-in [:mutations :counts iters] #(inc (or % 0)))
-      (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [old-leafs]))
-      (swap! sim-stats* update-in [:mutations :size-out] #(into (or % []) [new-leafs]))
-      (assoc new-pheno :mods-applied iters))
-    (catch Exception e
-      (println "Err in mutation: " e))))
-
-
-(defn crossover-fn
-  [initial-muts p p-discard pop]
-  (let [crossover-result (ops-modify/crossover p p-discard)]
-    (when crossover-result
-      (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
-    (or
-      crossover-result
-      (mutation-fn initial-muts p p-discard pop))))
 
 
 (defn reportable-phen-str
@@ -215,7 +126,7 @@
           sz-out :size-out}           :mutations
          {len-deductions :len-deductions
           min-scores     :min-scores} :scoring
-         :as                          dat} @sim-stats*]
+         :as                          dat} @ops/sim-stats*]
     (let [len-deductions-sorted
           (sort len-deductions)
 
@@ -230,18 +141,18 @@
                      {:crossovers-count xcs})
               (assoc :scoring
                      {:len-deductions (count len-deductions)
-                      :len-ded-mean   (/ (sum len-deductions) (count len-deductions))
+                      :len-ded-mean   (/ (ops/sum len-deductions) (count len-deductions))
                       :len-ded-min    (first len-deductions-sorted)
                       :len-ded-max    (last len-deductions-sorted)
                       :len-ded-med    (nth len-deductions-sorted
                                            (/ (count len-deductions-sorted) 2))})
               (assoc :mutations
                      {:counts              (reverse (sort-by second cs))
-                      :sz-in-mean-max-min  [(Math/round ^double (/ (sum sz-in) (count sz-in)))
+                      :sz-in-mean-max-min  [(Math/round ^double (/ (ops/sum sz-in) (count sz-in)))
                                             (last sz-in-sorted)
                                             (first sz-in-sorted)]
 
-                      :sz-out-mean-max-min [(Math/round ^double (/ (sum sz-out) (count sz-out)))
+                      :sz-out-mean-max-min [(Math/round ^double (/ (ops/sum sz-out) (count sz-out)))
                                             (last sz-out-sorted)
                                             (first sz-out-sorted)]}))]
       (str "muts:" (count sz-in) " min scores: " min-scores
@@ -289,7 +200,7 @@
                              :best-eval-extended    evaled-extended
                              :best-f-str            (str (:expr best-v))
                              :best-score            (:score best-v)}))))
-  (reset! sim-stats* {}))
+  (reset! ops/sim-stats* {}))
 
 
 (defn close-chans!
@@ -527,9 +438,9 @@
         start          (Date.)
         pop1           (ga/initialize
                          initial-phenos
-                         (partial score-fn run-args)
-                         (partial mutation-fn initial-muts)
-                         (partial crossover-fn initial-muts))]
+                         (partial ops/score-fn run-args)
+                         (partial ops/mutation-fn initial-muts)
+                         (partial ops/crossover-fn initial-muts))]
     (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
     (reset! test-timer* start)
 
