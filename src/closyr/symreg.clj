@@ -233,7 +233,7 @@
    {:keys [input-exprs-list input-exprs-count output-exprs-vec
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}
-   {:keys [iters initial-phenos initial-muts use-gui?] :as run-config}]
+   {:keys [use-gui?] :as run-config}]
   (when (or (= 1 i) (zero? (mod i log-steps)))
     (let [bests    (sort-population ga-result)
           took-s   (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
@@ -463,13 +463,16 @@
     input-exprs-vec    :input-exprs-vec
     output-exprs-vec   :output-exprs-vec
     input-iters        :input-iters
-    input-phenos-count :input-phenos-count}]
+    iters              :iters
+    input-phenos-count :input-phenos-count
+    initial-phenos     :initial-phenos}]
 
   (when-not (and input-exprs
                  input-exprs-vec
                  output-exprs-vec
-                 input-iters
-                 input-phenos-count)
+                 (or input-iters iters)
+                 (or input-phenos-count
+                     initial-phenos))
     (throw (Exception. "Run args needs all params!")))
 
   {:extended-domain-args (ops-eval/extend-xs input-exprs-vec)
@@ -477,8 +480,10 @@
    :input-exprs-count    (count input-exprs)
    :input-exprs-vec      input-exprs-vec
    :output-exprs-vec     output-exprs-vec
-   :input-iters          input-iters
-   :input-phenos-count   input-phenos-count})
+   :input-iters          (or input-iters iters)
+   :initial-phenos       initial-phenos
+   :input-phenos-count   (when input-phenos-count
+                           input-phenos-count)})
 
 
 (defn wait-and-get-gui-args
@@ -566,9 +571,8 @@
       (reset! sim-input-args* {:input-exprs      input-exprs
                                :input-exprs-vec  (ops-common/exprs->doubles input-exprs)
                                :output-exprs-vec (ops-common/exprs->doubles output-exprs)})
-      (run-from-inputs run-config (->run-args (merge @sim-input-args*
-                                                     {:input-iters        iters
-                                                      :input-phenos-count (count initial-phenos)}))))))
+
+      (run-from-inputs run-config (->run-args (merge @sim-input-args* run-config))))))
 
 
 (defn in-flames
@@ -590,9 +594,10 @@
 
 
         output-exprs  (->> (range 50)
-                           (map (fn [i] (+ 2.0
-                                           (/ i 10.0)
-                                           (Math/sin (* Math/PI (/ i 15.0))))))
+                           (map (fn [i]
+                                  (+ 2.0
+                                     (/ i 10.0)
+                                     (Math/sin (* Math/PI (/ i 15.0))))))
                            ops-common/doubles->exprs)
 
         experiment-fn (fn []
