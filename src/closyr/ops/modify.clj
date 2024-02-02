@@ -26,29 +26,32 @@
 
 (defn ^Function tree-leaf-modifier
   [modifier]
-  (ops-common/as-function (fn ^IExpr [^IExpr ie]
-                            (if (instance? IAST ie)
-                              (.map ^IAST ie (tree-leaf-modifier modifier))
-                              (modifier ie)))))
+  (ops-common/as-function
+    (fn ^IExpr [^IExpr ie]
+      (if (instance? IAST ie)
+        (.map ^IAST ie (tree-leaf-modifier modifier))
+        (modifier ie)))))
 
 
 (defn ^Function tree-branch-modifier
   [modifier]
-  (ops-common/as-function (fn ^IExpr [^IExpr ie]
-                            (if (instance? IAST ie)
-                              (let [^IAST ie ie]
-                                (modifier
-                                  (F/ast (ops-common/->iexprs (.map ie (tree-branch-modifier modifier))) (.head ie))))
-                              ie))))
+  (ops-common/as-function
+    (fn ^IExpr [^IExpr ie]
+      (if (instance? IAST ie)
+        (let [^IAST ie ie]
+          (modifier
+            (F/ast (ops-common/->iexprs (.map ie (tree-branch-modifier modifier))) (.head ie))))
+        ie))))
 
 
 (defn ^Function tree-ast-head-modifier
   [modifier]
-  (ops-common/as-function (fn ^IExpr [^IExpr ie]
-                            (if (instance? IAST ie)
-                              (let [^IAST ie ie]
-                                (F/ast (ops-common/->iexprs (.map ie (tree-ast-head-modifier modifier))) ^IExpr (modifier (.head ie))))
-                              ie))))
+  (ops-common/as-function
+    (fn ^IExpr [^IExpr ie]
+      (if (instance? IAST ie)
+        (let [^IAST ie ie]
+          (F/ast (ops-common/->iexprs (.map ie (tree-ast-head-modifier modifier))) ^IExpr (modifier (.head ie))))
+        ie))))
 
 
 (defn op-short-str_unmemo
