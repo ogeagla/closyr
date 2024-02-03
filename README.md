@@ -4,6 +4,8 @@
 
 A Symbolic Regression tool, written in Clojure.
 
+Warning: This is experimental software, with an unstable API. Expect breaking changes prior to a major release.
+
 - Draw an objective function or select a built-in dataset
 - Select number of points, iterations
 - See progress 
