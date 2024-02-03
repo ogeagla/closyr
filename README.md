@@ -13,11 +13,13 @@ A Symbolic Regression tool, written in Clojure.
 
 ## Installation
 
-Currently this application is not packed, so you have to run it from source, using Clojure development tools (`leiningen`)
+Currently this application is not packaged, so you have to run it from source, using Clojure development tools (`leiningen`)
 
     $ lein deps
 
 ## Usage
+
+Use the application via GUI or in the terminal. 
 
 There are 3 options.
 
