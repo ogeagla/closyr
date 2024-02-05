@@ -114,7 +114,7 @@
                 ;; (.setBackground color:light-gray)
                 (.setLayout (GridLayout. rows cols)))]
     (cond-> panel
-            (not (nil? border)) (.setBorder border))
+      (not (nil? border)) (.setBorder border))
     panel))
 
 
@@ -744,11 +744,18 @@
                                               :listen [:action input-dataset-change])
 
             icon-test                       (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
-            btns-container                  (doto (panel-grid {:rows 2 :cols 2})
-                                              (.add (JLabel. "Status:"))
-                                              (.add status-label)
+
+            btns-row                        (doto (panel-grid {:rows 1 :cols 2})
                                               (.add ctl-start-stop-btn)
                                               (.add ctl-reset-btn))
+
+            status-row                      (doto (panel-grid {:rows 1 :cols 1})
+                                              ;; (.add (JLabel. "Status:"))
+                                              (.add status-label))
+
+            btns-container                  (doto (panel-grid {:rows 2 :cols 1})
+                                              (.add status-row)
+                                              (.add btns-row))
 
             settings-container              (doto (panel-grid {:rows 2 :cols 1})
                                               (.add settings-panel)
@@ -820,41 +827,43 @@
        :series-best-fn-label      "series 1"
        :series-objective-fn-label "series 2"
        :sim-stop-start-chan       sim-stop-start-chan
-       :update-loop               (fn [{:keys [^XYChart best-fn-chart
-                                               ^XYChart scores-chart
-                                               ^XChartPanel best-fn-chart-panel
-                                               ^XChartPanel scores-chart-panel
-                                               ^JLabel info-label]
-                                        :as   gui-widgets}
-                                       {:keys [^List xs-best-fn ^List ys-best-fn ^List ys-objective-fn ^String series-best-fn-label ^String series-objective-fn-label update-loop]
-                                        :as   gui-data}]
-                                    (go
-                                      (<! sim-stop-start-chan)
-                                      (go-loop []
-                                        (<! (timeout 4000))
-                                        (let [[n ch] (alts! [sim-stop-start-chan] :default :continue :priority true)]
-                                          (if (= n :continue)
-                                            :ok
-                                            (do
-                                              (println "Parking updates to chart due to Stop command")
-                                              (<! sim-stop-start-chan))))
-                                        ;; (println "Draw new points " (.size xs-best-fn))
-                                        (.add xs-best-fn (.size xs-best-fn))
-                                        (.add ys-best-fn (.size xs-best-fn))
-                                        ;; (.remove ys-objective-fn 0)
-                                        (.add ys-objective-fn (* 10.0 (Math/random)))
+       :update-loop
+       (fn [{:keys [^XYChart best-fn-chart
+                    ^XYChart scores-chart
+                    ^XChartPanel best-fn-chart-panel
+                    ^XChartPanel scores-chart-panel
+                    ^JLabel info-label]
+             :as   gui-widgets}
+            {:keys [^List xs-best-fn ^List ys-best-fn ^List ys-objective-fn
+                    ^String series-best-fn-label ^String series-objective-fn-label update-loop]
+             :as   gui-data}]
+         (go
+           (<! sim-stop-start-chan)
+           (go-loop []
+             (<! (timeout 4000))
+             (let [[n ch] (alts! [sim-stop-start-chan] :default :continue :priority true)]
+               (if (= n :continue)
+                 :ok
+                 (do
+                   (println "Parking updates to chart due to Stop command")
+                   (<! sim-stop-start-chan))))
+             ;; (println "Draw new points " (.size xs-best-fn))
+             (.add xs-best-fn (.size xs-best-fn))
+             (.add ys-best-fn (.size xs-best-fn))
+             ;; (.remove ys-objective-fn 0)
+             (.add ys-objective-fn (* 10.0 (Math/random)))
 
-                                        (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
-                                        (.updateXYSeries best-fn-chart series-objective-fn-label xs-best-fn ys-objective-fn nil)
+             (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
+             (.updateXYSeries best-fn-chart series-objective-fn-label xs-best-fn ys-objective-fn nil)
 
-                                        (.revalidate best-fn-chart-panel)
-                                        (.repaint best-fn-chart-panel)
+             (.revalidate best-fn-chart-panel)
+             (.repaint best-fn-chart-panel)
 
-                                        (.setText info-label (str "size: " (.size xs-best-fn)))
-                                        (.revalidate info-label)
-                                        (.repaint info-label)
+             (.setText info-label (str "size: " (.size xs-best-fn)))
+             (.revalidate info-label)
+             (.repaint info-label)
 
-                                        (recur))))})))
+             (recur))))})))
 
 
 (defn test-gui-2
