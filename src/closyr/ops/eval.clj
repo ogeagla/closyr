@@ -66,9 +66,12 @@
       (let [vs (mapv
                  (fn [i]
                    (try
-                     (ops-common/expr->double
-                       (.getArg eval-p (inc i) F/Infinity))
+                     (let [^IExpr res (.getArg eval-p (inc i) F/Infinity)]
+                       (if (or (.isReal res))
+                         (ops-common/expr->double res)
+                         Double/POSITIVE_INFINITY))
                      (catch Exception e
+                       (println "Error in evaling function on input values: " (str eval-p) " : " e)
                        Double/POSITIVE_INFINITY)))
                  (range (dec (.size eval-p))))
             vs (if (= input-xs-count (count vs))
@@ -76,10 +79,9 @@
                  (mapv
                    (fn [i]
                      (try
-                       (let [new-is-const (.isNumber new-expr)
-                             ^IExpr arg0  (.getArg eval-p 0 F/Infinity)]
+                       (let [^IExpr arg0  (.getArg eval-p 0 F/Infinity)]
                          (ops-common/expr->double
-                           (if new-is-const
+                           (if (.isNumber new-expr)
                              new-expr
                              (if (.isBuiltInSymbol arg0)
                                eval-p

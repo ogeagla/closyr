@@ -65,7 +65,14 @@
                (ops-common/->phenotype x (F/Subtract (F/Times x (F/Sin x)) F/C1D2) nil)
                {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
                 :input-xs-count 3})
-             [-0.5 -0.2602872306978985 0.3414709848078965])))))
+             [-0.5 -0.2602872306978985 0.3414709848078965]))
+
+      ;; complex results are considered to have infinite values:
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x (F/Sqrt (F/Subtract x F/C1)) nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
+             [##Inf ##Inf 0.0])))))
 
 
 (deftest eval-f-benchmark-test
