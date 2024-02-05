@@ -433,38 +433,39 @@
                          (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         start          (Date.)
-        pop1           (ga/initialize initial-phenos
-                                      (partial ops/score-fn run-args)
-                                      (partial ops/mutation-fn initial-muts)
-                                      (partial ops/crossover-fn initial-muts))]
-    (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
-    (reset! test-timer* start)
+        _              (do (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
+                           (reset! test-timer* start))
 
-    (let [{:keys [final-population next-step]
-           :as   res} (loop [pop pop1
-                             i   iters]
-                        (if (zero? i)
-                          {:final-population pop
-                           :next-step        :wait}
-                          (if (and use-gui? (park-if-gui-pause-and-return-if-should-restart run-args))
-                            {:final-population pop
-                             :next-step        :restart}
-                            (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-                              (report-iteration i iters ga-result run-args run-config)
-                              (recur ga-result (next-iters i scores))))))]
-      (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
-      (case next-step
-        :wait (if use-gui?
-                (do
-                  (println "Experiment complete, waiting for GUI to start another")
-                  (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
-                    (recur run-config (merge run-args new-gui-args))))
-                (do (println "Done.")
-                    final-population))
-        :restart (do
-                   (println "Restarting...")
-                   (<!! (timeout 200))
-                   (recur run-config (merge run-args (->run-args @sim-input-args*))))))))
+        {:keys [final-population next-step]} (loop [pop (ga/initialize
+                                                          initial-phenos
+                                                          (partial ops/score-fn run-args)
+                                                          (partial ops/mutation-fn initial-muts)
+                                                          (partial ops/crossover-fn initial-muts))
+                                                    i   iters]
+                                               (if (zero? i)
+                                                 {:final-population pop
+                                                  :next-step        :wait}
+                                                 (if (and use-gui?
+                                                          (park-if-gui-pause-and-return-if-should-restart run-args))
+                                                   {:final-population pop
+                                                    :next-step        :restart}
+                                                   (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
+                                                     (report-iteration i iters ga-result run-args run-config)
+                                                     (recur ga-result (next-iters i scores))))))]
+
+    (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
+    (case next-step
+      :wait (if use-gui?
+              (do
+                (println "Experiment complete, waiting for GUI to start another")
+                (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
+                  (recur run-config (merge run-args new-gui-args))))
+              (do (println "Done.")
+                  final-population))
+      :restart (do
+                 (println "Restarting...")
+                 (<!! (timeout 200))
+                 (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
 
 
 (defn run-experiment
