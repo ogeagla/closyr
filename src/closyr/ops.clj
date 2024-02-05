@@ -98,23 +98,22 @@
 (defn mutation-fn
   [initial-muts p-winner p-discard pop]
   (try
-    (let [start     (Date.)
-          c         (rand-nth ops-modify/mutations-sampler)
-          [new-pheno iters mods] (ops-modify/apply-modifications max-leafs c initial-muts p-winner p-discard)
-          diff-ms   (ops-common/start-date->diff-ms start)
-          old-leafs (.leafCount ^IExpr (:expr p-winner))
-          new-leafs (.leafCount ^IExpr (:expr new-pheno))]
+    (let [start        (Date.)
+          [new-pheno iters mods] (ops-modify/apply-modifications
+                                   max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
+          diff-ms      (ops-common/start-date->diff-ms start)]
 
       (when (> diff-ms 5000)
         (println "Warning, this modification sequence took a long time: "
                  diff-ms " ms for mods: " (count mods)
-                 "\n mods: " mods
                  "\n for old expr: " (:expr p-winner)
-                 "\n and new expr: " (:expr new-pheno)))
+                 "\n and new expr: " (:expr new-pheno)
+                 "\n mods: " mods))
 
       (swap! sim-stats* update-in [:mutations :counts iters] #(inc (or % 0)))
-      (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [old-leafs]))
-      (swap! sim-stats* update-in [:mutations :size-out] #(into (or % []) [new-leafs]))
+      (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [(.leafCount ^IExpr (:expr p-winner))]))
+      (swap! sim-stats* update-in [:mutations :size-out] #(into (or % []) [(.leafCount ^IExpr (:expr new-pheno))]))
+
       (assoc new-pheno :mods-applied iters))
     (catch Exception e
       (println "Err in mutation: " e))))

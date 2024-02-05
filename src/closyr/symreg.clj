@@ -108,48 +108,52 @@
 
 (defn summarize-sim-stats
   []
-  (let [{{xcs :counts}                :crossovers
-         {cs     :counts
-          sz-in  :size-in
-          sz-out :size-out}           :mutations
-         {len-deductions :len-deductions
-          min-scores     :min-scores} :scoring
-         :as                          dat} @ops/sim-stats*]
-    (let [len-deductions-sorted
-          (sort len-deductions)
+  (try
+    (let [{{xcs :counts}                :crossovers
+           {cs     :counts
+            sz-in  :size-in
+            sz-out :size-out}           :mutations
+           {len-deductions :len-deductions
+            min-scores     :min-scores} :scoring
+           :as                          dat} @ops/sim-stats*]
+      (let [len-deductions-sorted
+            (sort len-deductions)
 
-          sz-in-sorted
-          (sort sz-in)
+            sz-in-sorted
+            (sort sz-in)
 
-          sz-out-sorted
-          (sort sz-out)
-          summary-data
-          (-> dat
-              (assoc :crossovers
-                     {:crossovers-count xcs})
-              (assoc :scoring
-                     {:len-deductions (count len-deductions)
-                      :len-ded-mean   (/ (ops/sum len-deductions) (count len-deductions))
-                      :len-ded-min    (first len-deductions-sorted)
-                      :len-ded-max    (last len-deductions-sorted)
-                      :len-ded-med    (nth len-deductions-sorted
-                                           (/ (count len-deductions-sorted) 2))})
-              (assoc :mutations
-                     {:counts              (reverse (sort-by second cs))
-                      :sz-in-mean-max-min  [(Math/round ^double (/ (ops/sum sz-in) (count sz-in)))
-                                            (last sz-in-sorted)
-                                            (first sz-in-sorted)]
+            sz-out-sorted
+            (sort sz-out)
+            summary-data
+            (-> dat
+                (assoc :crossovers
+                       {:crossovers-count xcs})
+                (assoc :scoring
+                       {:len-deductions (count len-deductions)
+                        :len-ded-mean   (/ (ops/sum len-deductions) (count len-deductions))
+                        :len-ded-min    (first len-deductions-sorted)
+                        :len-ded-max    (last len-deductions-sorted)
+                        :len-ded-med    (nth len-deductions-sorted
+                                             (/ (count len-deductions-sorted) 2))})
+                (assoc :mutations
+                       {:counts              (reverse (sort-by second cs))
+                        :sz-in-mean-max-min  [(Math/round ^double (/ (ops/sum sz-in) (count sz-in)))
+                                              (last sz-in-sorted)
+                                              (first sz-in-sorted)]
 
-                      :sz-out-mean-max-min [(Math/round ^double (/ (ops/sum sz-out) (count sz-out)))
-                                            (last sz-out-sorted)
-                                            (first sz-out-sorted)]}))]
-      (str "muts:" (count sz-in) " min scores: " min-scores
-           " "
-           (:scoring summary-data)
-           "\n  "
-           (:mutations summary-data)
-           "\n  "
-           (:crossovers summary-data)))))
+                        :sz-out-mean-max-min [(Math/round ^double (/ (ops/sum sz-out) (count sz-out)))
+                                              (last sz-out-sorted)
+                                              (first sz-out-sorted)]}))]
+        (str "muts:" (count sz-in) " min scores: " min-scores
+             " "
+             (:scoring summary-data)
+             "\n  "
+             (:mutations summary-data)
+             "\n  "
+             (:crossovers summary-data))))
+    (catch Exception e
+      (println "Error summarizing stats: " e)
+      (str "Error: " (.getMessage e)))))
 
 
 (defn report-iteration
