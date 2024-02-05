@@ -114,7 +114,7 @@
                 ;; (.setBackground color:light-gray)
                 (.setLayout (GridLayout. rows cols)))]
     (cond-> panel
-      (not (nil? border)) (.setBorder border))
+            (not (nil? border)) (.setBorder border))
     panel))
 
 
@@ -502,7 +502,7 @@
 
 
 (defn start-stop-on-click
-  [sim-stop-start-chan ^MouseEvent e]
+  [sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
   (let [{:keys [items-point-getters]} @items-points-accessors*]
     (if-not sim-stop-start-chan
       (println "warning: no sim-stop-start-chan provided")
@@ -519,13 +519,19 @@
                                          {:new-state    is-start
                                           :input-data-x input-x
                                           :input-data-y input-y}))
-        (ss/set-text* e (if is-start
-                          ctl:stop
-                          ctl:start))))))
+        (ss/set-text* e
+                      (if is-start
+                        ctl:stop
+                        ctl:start))
+
+        (ss/set-text* status-label
+                      (if is-start
+                        "Running"
+                        "Paused"))))))
 
 
 (defn reset-on-click
-  [^JButton start-top-label sim-stop-start-chan ^MouseEvent e]
+  [^JButton start-top-label sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
   (let [{:keys [items-point-getters]} @items-points-accessors*]
     (if-not sim-stop-start-chan
       (println "warning: no sim-stop-start-chan provided")
@@ -539,7 +545,8 @@
                                           :reset        true
                                           :input-data-x input-x
                                           :input-data-y input-y}))
-        (ss/set-text* start-top-label ctl:stop)))))
+        (ss/set-text* start-top-label ctl:stop)
+        (ss/set-text* status-label "Running")))))
 
 
 (defn input-dataset-change
@@ -708,13 +715,15 @@
 
 
             {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
+            status-label                    (JLabel. "Waiting to start...")
 
             ^JButton ctl-start-stop-btn     (ss/button
                                               ;; :background color:very-light-gray
                                               :text ctl:start
                                               :listen [:mouse-clicked
                                                        (partial start-stop-on-click
-                                                                sim-stop-start-chan)])
+                                                                sim-stop-start-chan
+                                                                status-label)])
             ^JButton ctl-reset-btn          (reset! ctl-reset-btn*
                                                     (doto
                                                       ^JButton (ss/button
@@ -723,7 +732,8 @@
                                                                  :listen [:mouse-clicked
                                                                           (partial reset-on-click
                                                                                    ctl-start-stop-btn
-                                                                                   sim-stop-start-chan)])
+                                                                                   sim-stop-start-chan
+                                                                                   status-label)])
                                                       (.setEnabled false)))
             brush-container                 (brush-panel)
             xs-container                    (xs-panel)
@@ -734,11 +744,9 @@
                                               :listen [:action input-dataset-change])
 
             icon-test                       (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
-
             btns-container                  (doto (panel-grid {:rows 2 :cols 2})
-
-                                              (.add (JLabel. ""))
-                                              (.add (JLabel. ""))
+                                              (.add (JLabel. "Status:"))
+                                              (.add status-label)
                                               (.add ctl-start-stop-btn)
                                               (.add ctl-reset-btn))
 
@@ -790,6 +798,7 @@
           {:best-fn-chart       best-fn-chart
            :best-fn-chart-panel best-fn-chart-panel
            :info-label          sim-info-label
+           :status-label        status-label
            :sim-selectable-text sim-selectable-text
            :scores-chart-panel  scores-chart-panel
            :scores-chart        scores-chart

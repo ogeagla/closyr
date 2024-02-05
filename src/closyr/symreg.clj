@@ -209,6 +209,7 @@
            ^XChartPanel scores-chart-panel
            ^JTextField sim-selectable-text
            ^JLabel info-label
+           ^JLabel status-label
            ^JButton ctl-start-stop-btn]}
    {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
            ^String series-best-fn-label ^String series-objective-fn-label
@@ -216,6 +217,7 @@
            ^List ys-scores
            ^String series-scores-label]
     :as   conf}]
+  (ss/set-text* status-label (str "Running"))
   (go-loop []
     (<! (timeout 100))
     (when-let [{:keys [input-xs-vec-extended
@@ -250,7 +252,9 @@
           (when (= iters i)
             (let [^JButton reset-btn @gui/ctl-reset-btn*]
               (ss/set-text* ctl-start-stop-btn gui/ctl:start)
-              (.setEnabled reset-btn false)))
+              (.setEnabled reset-btn false)
+
+              (ss/set-text* status-label (str "Done"))))
 
           (.add xs-scores i)
           (.add ys-scores best-score)
@@ -273,7 +277,9 @@
 
           (.revalidate scores-chart-panel)
           (.repaint scores-chart-panel)
-          (catch Exception e (println "Err in redrawing GUI: " (.getMessage e))))
+          (catch Exception e
+            (println "Err in redrawing GUI: " (.getMessage e))
+            (ss/set-text* status-label (str "Error!"))))
 
 
         (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
@@ -454,13 +460,13 @@
                 (do
                   (println "Experiment complete, waiting for GUI to start another")
                   (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
-                    (run-from-inputs run-config (merge run-args new-gui-args))))
+                    (recur run-config (merge run-args new-gui-args))))
                 (do (println "Done.")
                     final-population))
         :restart (do
                    (println "Restarting...")
                    (<!! (timeout 500))
-                   (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))))))
+                   (recur run-config (merge run-args (->run-args @sim-input-args*))))))))
 
 
 (defn run-experiment
