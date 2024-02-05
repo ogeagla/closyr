@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
+    [clojure.string :as str]
     [closyr.dataset.inputs :as input-data]
     [closyr.dataset.prng :refer :all]
     [closyr.ui.plot :as plot]
@@ -25,6 +26,9 @@
     (java.awt.event
       ActionEvent
       MouseEvent)
+    (java.io
+      File
+      FileFilter)
     (java.util
       List)
     (java.util.concurrent
@@ -36,6 +40,7 @@
       Icon
       JButton
       JComboBox
+      JFileChooser
       JFrame
       JLabel
       JPanel
@@ -48,6 +53,8 @@
       UnsupportedLookAndFeelException)
     (javax.swing.border
       Border)
+    (javax.swing.filechooser
+      FileNameExtensionFilter)
     (javax.swing.text
       AbstractDocument$DefaultDocumentEvent)
     (mdlaf
@@ -664,6 +671,36 @@
               #_(ss/repaint! new-widget)))))
 
 
+(def selected-file* (atom nil))
+
+;;todo wip
+
+
+(defn ^JPanel input-file-picker-widget
+  [parent-widget]
+  (let [file-filter                  (FileNameExtensionFilter. "CSV File" (into-array ["csv"]))
+
+        input-file-picker            (doto (JFileChooser.)
+                                       (.setCurrentDirectory (File. (System/getProperty "user.home")))
+                                       (.setFileFilter file-filter)
+                                       #_(.showOpenDialog status-row))
+        input-file-label             (JLabel. "[WIP] Pick a file...")
+        ^JButton select-file-button  (doto (ss/button
+                                             :text "Input data from file"
+                                             :listen [:mouse-clicked
+                                                      (fn [^MouseEvent e]
+                                                        (let [res      (.showOpenDialog input-file-picker parent-widget)
+                                                              sel-file (.getSelectedFile input-file-picker)]
+                                                          (when (and (= JFileChooser/APPROVE_OPTION res)
+                                                                     sel-file)
+                                                            (println "[WIP] Got file: " (.getAbsolutePath sel-file))
+                                                            (ss/set-text* input-file-label (str "Got file: " (.getName sel-file))))))]))
+        ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
+                                       (.add select-file-button)
+                                       (.add input-file-label))]
+    input-file-container))
+
+
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
@@ -749,9 +786,16 @@
                                               (.add ctl-start-stop-btn)
                                               (.add ctl-reset-btn))
 
-            status-row                      (doto (panel-grid {:rows 1 :cols 1})
+            status-row                      (panel-grid {:rows 1 :cols 2})
+
+            ^JPanel input-file-container    (input-file-picker-widget status-row)
+
+            status-row                      (doto status-row
                                               ;; (.add (JLabel. "Status:"))
-                                              (.add status-label))
+                                              (.add status-label)
+                                              (.add input-file-container)
+
+                                              #_(.add input-file-picker))
 
             btns-container                  (doto (panel-grid {:rows 2 :cols 1})
                                               (.add status-row)
