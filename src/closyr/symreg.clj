@@ -219,7 +219,7 @@
     :as   conf}]
   (ss/set-text* status-label (str "Running"))
   (go-loop []
-    (<! (timeout 100))
+    (<! (timeout 50))
     (when-let [{:keys [input-xs-vec-extended
                        best-eval-extended
                        best-eval best-score best-f-str i iters]
@@ -264,13 +264,9 @@
           (let [fn-str (str "y = " (format-fn-str best-f-str))]
             (when (not= fn-str (.getText sim-selectable-text))
               (println "New Best Function: " fn-str)
-              (.setText sim-selectable-text fn-str)
-              (.revalidate sim-selectable-text)
-              (.repaint sim-selectable-text)))
+              (ss/set-text* sim-selectable-text fn-str)))
 
-          (.setText info-label (str "Iteration: " i "/" iters " Score: " best-score))
-          (.revalidate info-label)
-          (.repaint info-label)
+          (ss/set-text* info-label (str "Iteration: " i "/" iters " Score: " best-score))
 
           (.revalidate best-fn-chart-panel)
           (.repaint best-fn-chart-panel)
@@ -345,7 +341,7 @@
   [msg]
   (println "Restarting experiment! ")
   (update-plot-input-data msg)
-  (<!! (timeout 500))
+  (<!! (timeout 200))
   true)
 
 
@@ -419,6 +415,13 @@
     (merge gui-comms (wait-and-get-gui-args sim-stop-start-chan))))
 
 
+(defn next-iters
+  [i scores]
+  (if (some #(> % -1e-3) scores)
+    (near-exact-solution i scores)
+    (dec i)))
+
+
 (defn run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
@@ -430,11 +433,10 @@
                          (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         start          (Date.)
-        pop1           (ga/initialize
-                         initial-phenos
-                         (partial ops/score-fn run-args)
-                         (partial ops/mutation-fn initial-muts)
-                         (partial ops/crossover-fn initial-muts))]
+        pop1           (ga/initialize initial-phenos
+                                      (partial ops/score-fn run-args)
+                                      (partial ops/mutation-fn initial-muts)
+                                      (partial ops/crossover-fn initial-muts))]
     (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
     (reset! test-timer* start)
 
@@ -444,16 +446,12 @@
                         (if (zero? i)
                           {:final-population pop
                            :next-step        :wait}
-                          (if (and use-gui?
-                                   (park-if-gui-pause-and-return-if-should-restart run-args))
+                          (if (and use-gui? (park-if-gui-pause-and-return-if-should-restart run-args))
                             {:final-population pop
                              :next-step        :restart}
                             (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
                               (report-iteration i iters ga-result run-args run-config)
-                              (recur ga-result
-                                     (if (some #(> % -1e-3) scores)
-                                       (near-exact-solution i scores)
-                                       (dec i)))))))]
+                              (recur ga-result (next-iters i scores))))))]
       (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
       (case next-step
         :wait (if use-gui?
@@ -465,7 +463,7 @@
                     final-population))
         :restart (do
                    (println "Restarting...")
-                   (<!! (timeout 500))
+                   (<!! (timeout 200))
                    (recur run-config (merge run-args (->run-args @sim-input-args*))))))))
 
 
@@ -475,16 +473,14 @@
            "pop: " (count initial-phenos)
            "muts: " (count initial-muts))
 
-  (if use-gui?
-    (let [run-args (start-gui-and-get-input-data run-config)]
-      (run-from-inputs run-config run-args))
-
-    (do
-      (reset! sim-input-args* {:input-xs-exprs input-xs-exprs
-                               :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
-                               :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
-
-      (run-from-inputs run-config (->run-args (merge @sim-input-args* run-config))))))
+  (run-from-inputs run-config
+                   (if use-gui?
+                     (start-gui-and-get-input-data run-config)
+                     (->run-args (merge (reset! sim-input-args*
+                                                {:input-xs-exprs input-xs-exprs
+                                                 :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
+                                                 :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
+                                        run-config)))))
 
 
 (defn in-flames
