@@ -136,13 +136,11 @@
     (let [^IExpr e1        (:expr p)
           ^IExpr e2        (:expr p-discard)
 
-          [e1-is-fn e2-is-fn] [(is-expr-function? e1) (is-expr-function? e2)]
-
-          e1-part          (if e1-is-fn
+          ^IExpr e1-part   (if (is-expr-function? e1)
                              (.getArg e1 (inc (rand-int (dec (.size e1)))) nil)
                              e1)
 
-          e2-part          (if e2-is-fn
+          ^IExpr e2-part   (if (is-expr-function? e2)
                              (.getArg e2 (inc (rand-int (dec (.size e2)))) nil)
                              e2)
           crossover-flavor (rand-nth crossover-sampler)
