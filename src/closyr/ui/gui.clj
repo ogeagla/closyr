@@ -697,26 +697,26 @@
 
         input-file-picker            (doto (JFileChooser.)
                                        (.setCurrentDirectory (File. (System/getProperty "user.home")))
-                                       (.setFileFilter file-filter)
-                                       #_(.showOpenDialog status-row))
-        input-file-label             (JLabel. "[WIP] Pick a file...")
-        ^JButton select-file-button  (doto
-                                       (ss/button
-                                         :text "Input data from file"
-                                         :listen
-                                         [:mouse-clicked
-                                          (fn [^MouseEvent e]
-                                            (let [res      (.showOpenDialog input-file-picker parent-widget)
-                                                  sel-file (.getSelectedFile input-file-picker)]
-                                              (when (and (= JFileChooser/APPROVE_OPTION res)
-                                                         sel-file)
-                                                (println "Got file: " (.getAbsolutePath sel-file))
-                                                (ss/set-text* input-file-label (str "[WIP] Got file: " (.getName sel-file)))
+                                       (.setFileFilter file-filter))
 
-                                                (with-open [reader (io/reader sel-file)]
-                                                  (doall
-                                                    (let [csv-data (csv/read-csv reader)]
-                                                      (csv-content->input-data csv-data)))))))]))
+        input-file-label             (JLabel. "[WIP] Pick a file...")
+
+        ^JButton select-file-button  (ss/button
+                                       :text "Input data from file"
+                                       :listen
+                                       [:mouse-clicked
+                                        (fn [^MouseEvent e]
+                                          (let [res      (.showOpenDialog input-file-picker parent-widget)
+                                                sel-file (.getSelectedFile input-file-picker)]
+                                            (when (and (= JFileChooser/APPROVE_OPTION res)
+                                                       sel-file)
+                                              (println "Got file: " (.getAbsolutePath sel-file))
+                                              (ss/set-text* input-file-label (str "[WIP] Got file: " (.getName sel-file)))
+
+                                              (with-open [reader (io/reader sel-file)]
+                                                (doall
+                                                  (let [csv-data (csv/read-csv reader)]
+                                                    (csv-content->input-data csv-data)))))))])
         ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
                                        (.add select-file-button)
                                        (.add input-file-label))]
