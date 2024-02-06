@@ -319,10 +319,12 @@
 
 (def new-xs?* (atom true))
 
+(def xs* (atom nil))
+
 
 (defn reposition-labels
   [[c ^Graphics2D g]]
-  (println "Reposition sketchpad labels' points")
+  ;; (println "Reposition sketchpad labels' points")
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
         w     (ss/width c)
         h     (ss/height c)
@@ -336,18 +338,31 @@
               (not= w old-w)
               (not= h old-h))
       (reset! new-xs?* false)
+      (if-let [xs @xs*]
+        (mapv
+          (fn [i x]
+            (let [setter (nth items-point-setters i)
+                  getter (nth items-point-getters i)]
+              (setter
+                (* x (/ w 675))
+                (+ (.getY ^Point (getter))
+                   (if (pos? (- h old-h))
+                     (Math/ceil (/ (- h old-h) 2))
+                     (Math/floor (/ (- h old-h) 2)))))))
+          (range @sketch-input-x-count*)
+          xs)
 
-      (mapv
-        (fn [i]
-          (let [setter (nth items-point-setters i)
-                getter (nth items-point-getters i)]
-            (setter
-              (+ 50.0 (* i @sketch-input-x-scale* (/ w 675)))
-              (+ (.getY ^Point (getter))
-                 (if (pos? (- h old-h))
-                   (Math/ceil (/ (- h old-h) 2))
-                   (Math/floor (/ (- h old-h) 2)))))))
-        (range @sketch-input-x-count*)))))
+        (mapv
+          (fn [i]
+            (let [setter (nth items-point-setters i)
+                  getter (nth items-point-getters i)]
+              (setter
+                (+ 50.0 (* i @sketch-input-x-scale* (/ w 675)))
+                (+ (.getY ^Point (getter))
+                   (if (pos? (- h old-h))
+                     (Math/ceil (/ (- h old-h) 2))
+                     (Math/floor (/ (- h old-h) 2)))))))
+          (range @sketch-input-x-count*))))))
 
 
 (defn set-widget-location
@@ -357,16 +372,19 @@
 
 (defn input-data-items-widget
   [points-fn]
-  (let [^JPanel bp             (doto (ss/border-panel
-                                       :border (sbr/line-border :top 15 :color "#AAFFFF")
-                                       :north (ss/label "I'm a draggable label with a text box!")
-                                       :center (ss/text
-                                                 :text "Hey type some stuff here"
-                                                 :listen [:document
-                                                          (fn [^AbstractDocument$DefaultDocumentEvent e]
-                                                            (let [doc     (.getDocument e)
-                                                                  doc-txt (.getText doc 0 (.getLength doc))]
-                                                              (println "New text: " doc-txt)))]))
+  (println "Create input-data-items-widget")
+  (let [^JPanel bp             (doto
+                                 (ss/border-panel
+                                   :border (sbr/line-border :top 15 :color "#AAFFFF")
+                                   :north (ss/label "I'm a draggable label with a text box!")
+                                   :center (ss/text
+                                             :text "Hey type some stuff here"
+                                             :listen
+                                             [:document
+                                              (fn [^AbstractDocument$DefaultDocumentEvent e]
+                                                (let [doc     (.getDocument e)
+                                                      doc-txt (.getText doc 0 (.getLength doc))]
+                                                  (println "New text: " doc-txt)))]))
                                  (ss/config! :bounds :preferred)
                                  (movable))
 
@@ -397,6 +415,8 @@
                                  ;; :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
+
+
 
     (reset! items-points-accessors* {:drawing-widget      drawing-widget
                                      :items-point-getters items-point-getters
@@ -571,6 +591,7 @@
         ^JComboBox jcb (.getSource e)
         selection      (-> jcb .getSelectedItem str)
         new-fn         (input-y-fns selection)]
+    (reset! xs* nil)
     (reset! input-y-fn* selection)
     (doseq [i (range @sketch-input-x-count*)]
       ((nth items-point-setters i)
@@ -591,6 +612,7 @@
   [^MouseEvent e]
   (let [xs-str (.getText ^JRadioButtonMenuItem (.getSource e))
         new-xs (Integer/parseInt xs-str)]
+    (reset! xs* nil)
     (reset! sketch-input-x-count* new-xs)
     (reset! sketch-input-x-scale* (xs->gap new-xs))
     (redraw-sketch-widget!)
@@ -697,7 +719,7 @@
            (->> (first csv-data)                            ; First row is the header
                 (map keyword)                               ; Drop if you want string keys instead
                 repeat)
-           [:x :y])
+           (repeat [:x :y]))
          data-content)))
 
 
@@ -714,8 +736,9 @@
     (reset! sketch-input-x-count* (count input-data-maps))
     (redraw-sketch-widget!)
     (let [{:keys [^JPanel drawing-widget items-point-setters items-point-getters]} @items-points-accessors*]
+      (reset! xs* (mapv :x input-data-maps))
       (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) input-data-maps)]
-        (println "Set " i x y (type x) (type y))
+        (println "Set " i x y)
         ((nth items-point-setters i)
          x
          (input-data/y->gui-coord-y sketchpad-size* y))))))
