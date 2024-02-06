@@ -8,6 +8,8 @@
 
                  [org.clojure/tools.cli "1.0.219"]
 
+                 [org.clojure/data.csv "1.0.1"]
+
                  [seesaw/seesaw "1.5.0"]
                  [flames "0.5.0"]
                  [org.knowm.xchart/xchart "3.8.7"]

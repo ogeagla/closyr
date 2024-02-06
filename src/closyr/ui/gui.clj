@@ -3,6 +3,8 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [clojure.string :as str]
+    [clojure.data.csv :as csv]
+    [clojure.java.io :as io]
     [closyr.dataset.inputs :as input-data]
     [closyr.dataset.prng :refer :all]
     [closyr.ui.plot :as plot]
@@ -670,6 +672,12 @@
                 new-widget)
               #_(ss/repaint! new-widget)))))
 
+(defn csv-data->maps [csv-data]
+  (map zipmap
+       (->> (first csv-data) ;; First row is the header
+            (map keyword) ;; Drop if you want string keys instead
+            repeat)
+       (rest csv-data)))
 
 (def selected-file* (atom nil))
 
@@ -678,7 +686,7 @@
 
 (defn ^JPanel input-file-picker-widget
   [parent-widget]
-  (let [file-filter                  (FileNameExtensionFilter. "CSV File" (into-array ["csv"]))
+  (let [file-filter                  (FileNameExtensionFilter. "CSV Text File" (into-array ["csv"]))
 
         input-file-picker            (doto (JFileChooser.)
                                        (.setCurrentDirectory (File. (System/getProperty "user.home")))
@@ -694,7 +702,17 @@
                                                           (when (and (= JFileChooser/APPROVE_OPTION res)
                                                                      sel-file)
                                                             (println "[WIP] Got file: " (.getAbsolutePath sel-file))
-                                                            (ss/set-text* input-file-label (str "Got file: " (.getName sel-file))))))]))
+                                                            (ss/set-text* input-file-label (str "Got file: " (.getName sel-file)))
+
+                                                            (with-open [reader (io/reader sel-file)]
+                                                              (doall
+                                                                (let [csv-data (csv/read-csv reader)
+                                                                      data-maps (csv-data->maps csv-data)]
+                                                                  (println "Got CSV data: " data-maps)))
+
+                                                              )
+
+                                                            )))]))
         ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
                                        (.add select-file-button)
                                        (.add input-file-label))]
