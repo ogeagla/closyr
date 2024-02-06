@@ -2,9 +2,9 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
-    [clojure.string :as str]
     [clojure.data.csv :as csv]
     [clojure.java.io :as io]
+    [clojure.string :as str]
     [closyr.dataset.inputs :as input-data]
     [closyr.dataset.prng :refer :all]
     [closyr.ui.plot :as plot]
@@ -672,16 +672,23 @@
                 new-widget)
               #_(ss/repaint! new-widget)))))
 
-(defn csv-data->maps [csv-data]
+
+(defn csv-data->maps
+  [csv-data]
   (map zipmap
-       (->> (first csv-data) ;; First row is the header
-            (map keyword) ;; Drop if you want string keys instead
+       (->> (first csv-data)                                ; First row is the header
+            (map keyword)                                   ; Drop if you want string keys instead
             repeat)
        (rest csv-data)))
 
-(def selected-file* (atom nil))
 
-;;todo wip
+;; todo wip
+
+(defn csv-content->input-data
+  [csv-data]
+  (let [data-maps (csv-data->maps csv-data)]
+
+    (println "Got CSV data: " data-maps)))
 
 
 (defn ^JPanel input-file-picker-widget
@@ -693,26 +700,23 @@
                                        (.setFileFilter file-filter)
                                        #_(.showOpenDialog status-row))
         input-file-label             (JLabel. "[WIP] Pick a file...")
-        ^JButton select-file-button  (doto (ss/button
-                                             :text "Input data from file"
-                                             :listen [:mouse-clicked
-                                                      (fn [^MouseEvent e]
-                                                        (let [res      (.showOpenDialog input-file-picker parent-widget)
-                                                              sel-file (.getSelectedFile input-file-picker)]
-                                                          (when (and (= JFileChooser/APPROVE_OPTION res)
-                                                                     sel-file)
-                                                            (println "[WIP] Got file: " (.getAbsolutePath sel-file))
-                                                            (ss/set-text* input-file-label (str "Got file: " (.getName sel-file)))
+        ^JButton select-file-button  (doto
+                                       (ss/button
+                                         :text "Input data from file"
+                                         :listen
+                                         [:mouse-clicked
+                                          (fn [^MouseEvent e]
+                                            (let [res      (.showOpenDialog input-file-picker parent-widget)
+                                                  sel-file (.getSelectedFile input-file-picker)]
+                                              (when (and (= JFileChooser/APPROVE_OPTION res)
+                                                         sel-file)
+                                                (println "Got file: " (.getAbsolutePath sel-file))
+                                                (ss/set-text* input-file-label (str "[WIP] Got file: " (.getName sel-file)))
 
-                                                            (with-open [reader (io/reader sel-file)]
-                                                              (doall
-                                                                (let [csv-data (csv/read-csv reader)
-                                                                      data-maps (csv-data->maps csv-data)]
-                                                                  (println "Got CSV data: " data-maps)))
-
-                                                              )
-
-                                                            )))]))
+                                                (with-open [reader (io/reader sel-file)]
+                                                  (doall
+                                                    (let [csv-data (csv/read-csv reader)]
+                                                      (csv-content->input-data csv-data)))))))]))
         ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
                                        (.add select-file-button)
                                        (.add input-file-label))]
