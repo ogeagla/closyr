@@ -92,6 +92,12 @@
 (def items-points-accessors* (atom {}))
 (def replace-drawing-widget!* (atom nil))
 
+
+(defn redraw-sketch-widget!
+  []
+  (@replace-drawing-widget!* (:drawing-widget @items-points-accessors*)))
+
+
 (def sketchpad-size* (atom {}))
 
 (def color:very-light-gray (Color. 204 204 204))
@@ -316,6 +322,7 @@
 
 (defn reposition-labels
   [[c ^Graphics2D g]]
+  (println "Reposition sketchpad labels' points")
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
         w     (ss/width c)
         h     (ss/height c)
@@ -586,7 +593,7 @@
         new-xs (Integer/parseInt xs-str)]
     (reset! sketch-input-x-count* new-xs)
     (reset! sketch-input-x-scale* (xs->gap new-xs))
-    (@replace-drawing-widget!* (:drawing-widget @items-points-accessors*))
+    (redraw-sketch-widget!)
     (println "brush xs to " xs-str " -> " new-xs)))
 
 
@@ -675,20 +682,52 @@
 
 (defn csv-data->maps
   [csv-data]
-  (map zipmap
-       (->> (first csv-data)                                ; First row is the header
-            (map keyword)                                   ; Drop if you want string keys instead
-            repeat)
-       (rest csv-data)))
+  (let [has-col-names (= "x" (first (first csv-data)))
+        data-content  (->> (if has-col-names
+                             (do
+                               (println "Got CSV with column names " (first csv-data))
+                               (rest csv-data))
+                             (do
+                               (println "Got CSV without column names " (first csv-data))
+                               csv-data))
+                           (map (fn [vs] (map #(Double/parseDouble %) vs))))]
+    (println "Data content:" (count data-content) data-content)
+    (map zipmap
+         (if has-col-names
+           (->> (first csv-data)                            ; First row is the header
+                (map keyword)                               ; Drop if you want string keys instead
+                repeat)
+           [:x :y])
+         data-content)))
 
-
-;; todo wip
 
 (defn csv-content->input-data
   [csv-data]
   (let [data-maps (csv-data->maps csv-data)]
+    (println "Got CSV data: " data-maps)
+    data-maps))
 
-    (println "Got CSV data: " data-maps)))
+
+(defn set-input-data!
+  [input-data-maps]
+  (let []
+    (reset! sketch-input-x-count* (count input-data-maps))
+    (redraw-sketch-widget!)
+    (let [{:keys [^JPanel drawing-widget items-point-setters items-point-getters]} @items-points-accessors*]
+      (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) input-data-maps)]
+        (println "Set " i x y (type x) (type y))
+        ((nth items-point-setters i)
+         x
+         (input-data/y->gui-coord-y sketchpad-size* y))))))
+
+
+(defn open-file-and-set-input-data!
+  [sel-file]
+  (with-open [reader (io/reader sel-file)]
+    (doall
+      (let [csv-data   (csv/read-csv reader)
+            input-data (csv-content->input-data csv-data)]
+        (set-input-data! input-data)))))
 
 
 (defn ^JPanel input-file-picker-widget
@@ -711,12 +750,10 @@
                                             (when (and (= JFileChooser/APPROVE_OPTION res)
                                                        sel-file)
                                               (println "Got file: " (.getAbsolutePath sel-file))
-                                              (ss/set-text* input-file-label (str "[WIP] Got file: " (.getName sel-file)))
+                                              (ss/set-text* input-file-label
+                                                            (str "[WIP] Got file: " (.getName sel-file)))
+                                              (open-file-and-set-input-data! sel-file))))])
 
-                                              (with-open [reader (io/reader sel-file)]
-                                                (doall
-                                                  (let [csv-data (csv/read-csv reader)]
-                                                    (csv-content->input-data csv-data)))))))])
         ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
                                        (.add select-file-button)
                                        (.add input-file-label))]
