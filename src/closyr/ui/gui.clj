@@ -344,7 +344,7 @@
             (let [setter (nth items-point-setters i)
                   getter (nth items-point-getters i)]
               (setter
-                (* x (/ w 675))
+                (+ 50.0 (* x (/ w 675)))
                 (+ (.getY ^Point (getter))
                    (if (pos? (- h old-h))
                      (Math/ceil (/ (- h old-h) 2))
@@ -687,19 +687,17 @@
 
 (defn update-replace-drawing-widget
   [draw-container]
-  (reset! replace-drawing-widget!*
-          (fn [^JPanel drawing-widget]
-            (println "REPLACE DRAWING WIDGET!")
-            (reset! new-xs?* true)
-            (let [new-widget (:drawing-widget
-                               (input-data-items-widget
-                                 (input-y-fns @input-y-fn*)))]
-
-              (ss/replace!
-                draw-container
-                drawing-widget
-                new-widget)
-              #_(ss/repaint! new-widget)))))
+  (reset!
+    replace-drawing-widget!*
+    (fn [^JPanel drawing-widget]
+      (println "REPLACE DRAWING WIDGET!")
+      (reset! new-xs?* true)
+      (ss/replace!
+        draw-container
+        drawing-widget
+        (:drawing-widget
+          (input-data-items-widget
+            (input-y-fns @input-y-fn*)))))))
 
 
 (defn csv-data->maps
@@ -712,36 +710,52 @@
                              (do
                                (println "Got CSV without column names " (first csv-data))
                                csv-data))
-                           (map (fn [vs] (map #(Double/parseDouble %) vs))))]
-    (println "Data content:" (count data-content) data-content)
-    (map zipmap
-         (if has-col-names
-           (->> (first csv-data)                            ; First row is the header
-                (map keyword)                               ; Drop if you want string keys instead
-                repeat)
-           (repeat [:x :y]))
-         data-content)))
-
-
-(defn csv-content->input-data
-  [csv-data]
-  (let [data-maps (csv-data->maps csv-data)]
-    (println "Got CSV data: " data-maps)
-    data-maps))
+                           (map (fn [vs] (map #(Double/parseDouble %) vs))))
+        col-names     (if has-col-names
+                        (->> (first csv-data)
+                             (map keyword)
+                             repeat)
+                        (repeat [:x :y]))]
+    (println "Data content:" (count data-content) (take 1 col-names) data-content)
+    (map zipmap col-names data-content)))
 
 
 (defn set-input-data!
   [input-data-maps]
-  (let []
+  (let [{:keys [^JPanel drawing-widget]} @items-points-accessors*
+        canvas-w (ss/width drawing-widget)
+        canvas-h (ss/height drawing-widget)]
     (reset! sketch-input-x-count* (count input-data-maps))
     (redraw-sketch-widget!)
-    (let [{:keys [^JPanel drawing-widget items-point-setters items-point-getters]} @items-points-accessors*]
-      (reset! xs* (mapv :x input-data-maps))
-      (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) input-data-maps)]
-        (println "Set " i x y)
-        ((nth items-point-setters i)
-         x
-         (input-data/y->gui-coord-y sketchpad-size* y))))))
+    (let [{:keys [items-point-setters items-point-getters]} @items-points-accessors*
+          xs            (map :x input-data-maps)
+          ys            (map :y input-data-maps)
+          max-x         (reduce max xs)
+          min-x         (reduce min xs)
+          max-y         (reduce max ys)
+          min-y         (reduce min ys)
+
+          diff-y        (- max-y min-y)
+          diff-x        (- max-x min-x)
+
+          x-scalar      (/ (- canvas-w 100) diff-x)
+          y-scalar      (min 10.0 (/ (- canvas-h 50) diff-y))
+
+          scaled-inputs (->>
+                          input-data-maps
+                          (map (fn [{:keys [x y]}]
+                                 {:x (* x-scalar x)
+                                  :y (* y-scalar y)})))]
+      (reset! xs* (mapv :x scaled-inputs))
+      (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) scaled-inputs)]
+        (let []
+          (println "Set ixy: " i x y
+                   " scalars: " x-scalar y-scalar
+                   " diff: " diff-x diff-y
+                   " canvas: " canvas-w canvas-h)
+          ((nth items-point-setters i)
+           x
+           (input-data/y->gui-coord-y sketchpad-size* y)))))))
 
 
 (defn open-file-and-set-input-data!
@@ -749,7 +763,7 @@
   (with-open [reader (io/reader sel-file)]
     (doall
       (let [csv-data   (csv/read-csv reader)
-            input-data (csv-content->input-data csv-data)]
+            input-data (csv-data->maps csv-data)]
         (set-input-data! input-data)))))
 
 
