@@ -100,7 +100,12 @@
     (<! (timeout 50))
     (when-let [{:keys [input-xs-vec-extended
                        best-eval-extended
-                       best-eval best-score best-f-str i iters]
+                       best-eval
+                       best-score
+                       best-95p-v
+                       best-50p-v
+                       best-05p-v
+                       best-f-str i iters]
                 :as   sim-msg} (<! sim->gui-chan)]
 
       (let [{:keys [input-xs-vec input-ys-vec]} @sim-input-args*]
