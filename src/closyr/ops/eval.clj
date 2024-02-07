@@ -1,8 +1,5 @@
 (ns closyr.ops.eval
-  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
-    [closyr.dataset.prng :refer :all]
     [closyr.ops.common :as ops-common])
   (:import
     (org.matheclipse.core.eval

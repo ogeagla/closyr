@@ -195,15 +195,11 @@
                                (- pt-x
                                   (.getX (.getPoint e))))
                              500.0)]
-
-
             (setter
               pt-x
               (+ (* (min 1 (+ 0.95 diff)) pt-y)
                  (* (max 0 (- 0.05 diff)) (.getY (.getPoint e)))))))
-        items-point-getters)))
-
-  #_(ss/repaint! e))
+        items-point-getters))))
 
 
 (defn sketchpad-on-click:broad-brush
@@ -220,15 +216,11 @@
                                (- pt-x
                                   (.getX (.getPoint e))))
                              500.0)]
-
-
             (setter
               pt-x
               (+ (* (min 1 (+ 0.85 diff)) pt-y)
                  (* (max 0 (- 0.15 diff)) (.getY (.getPoint e)))))))
-        items-point-getters)))
-
-  #_(ss/repaint! e))
+        items-point-getters))))
 
 
 (defn sketchpad-on-click:huge-brush
@@ -250,9 +242,7 @@
               pt-x
               (+ (* (min 1 (+ 0.65 diff)) pt-y)
                  (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
-        items-point-getters)))
-
-  #_(ss/repaint! e))
+        items-point-getters))))
 
 
 (defn sketchpad-on-click:line-brush
@@ -266,9 +256,7 @@
                 pt-x      (.getX pt)
                 pt-y      (.getY pt)]
             (setter pt-x (.getY (.getPoint e)))))
-        items-point-getters)))
-
-  #_(ss/repaint! e))
+        items-point-getters))))
 
 
 (def brush-fn* (atom sketchpad-on-click:skinny-brush))
@@ -454,8 +442,10 @@
 
 (defn ^JPanel experiment-settings-panel
   []
-  (let [iters-settings-container               (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
-        pcount-settings-container              (panel-grid {:rows 1 :cols 5 :border (radio-controls-border "Population Size")})
+  (let [iters-settings-container               (panel-grid
+                                                 {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
+        pcount-settings-container              (panel-grid
+                                                 {:rows 1 :cols 5 :border (radio-controls-border "Population Size")})
         ^JPanel settings-container             (panel-grid {:rows 1 :cols 2})
 
         btn-group-iters                        (ss/button-group)
