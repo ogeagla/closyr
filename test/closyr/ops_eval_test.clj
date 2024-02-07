@@ -35,6 +35,12 @@
       (is (= (str (.eval (F/Subtract F/E F/C1D2)))
              "-1/2+E"))
 
+      (is (= (str (.eval (F/Sqrt (F/Subtract x F/C1))))
+             "Sqrt(-1+x)"))
+
+      (is (= (str (F/Sqrt (F/Subtract x F/C1)))
+             "Sqrt(-1+x)"))
+
       (is (= (.toNumber (F/Subtract F/E F/C1D2))
              2.218281828459045))
 
