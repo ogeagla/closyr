@@ -435,6 +435,13 @@
                           (.minus ie (F/Divide 1 F/C10))
                           ie))}
 
+   {:op               :modify-leafs
+    :label            "1/c"
+    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                        (if (and (.isNumber ie) (ops-common/should-modify-leaf leaf-count pheno))
+                          (.divide F/C1 ie)
+                          ie))}
+
    ;; {:op               :modify-leafs
    ;; :label            "c+1/100"
    ;; :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
@@ -605,7 +612,6 @@
                         (if (ops-common/should-modify-branch leaf-count pheno)
                           (F/Log ie)
                           ie))}
-
 
    {:op               :modify-branches
     :label            "b*b"

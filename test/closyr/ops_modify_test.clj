@@ -545,6 +545,9 @@
    [:modify-leafs
     "c-1/10"
     "-11/10+x+Cos(x)-11/10*x*Sin(2/5-11/10*x)"]
+   [:modify-leafs
+    "1/c"
+    "-1+x+Cos(x)-x*Sin(2-x)"]
    ;; [:modify-leafs
    ;; "c+1/100"
    ;; "-99/100+x+Cos(x)-99/100*x*Sin(51/100-99/100*x)"]
@@ -661,7 +664,7 @@
                                              (ops-init/initial-mutations)))]
         (is (= (count all-mods-applied-on-fn)
                (count all-mods-applied-on-fn-expected)))
-        (when (= (count all-mods-applied-on-fn)
+        (if (= (count all-mods-applied-on-fn)
                  (count all-mods-applied-on-fn-expected))
           (doall
             (map
@@ -671,7 +674,9 @@
                   (is (= actual-label expected-label))
                   (is (= actual-fn-str expected-fn-str))))
               all-mods-applied-on-fn
-              all-mods-applied-on-fn-expected)))))))
+              all-mods-applied-on-fn-expected))
+          (is (= all-mods-applied-on-fn
+                 all-mods-applied-on-fn-expected)))))))
 
 
 (comment (run-tests 'closyr.ops-modify-test))
