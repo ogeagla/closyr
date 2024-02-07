@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 export _JAVA_OPTIONS="$_JAVA_OPTIONS \
 	-Dawt.useSystemAAFontSettings=on \
