@@ -21,6 +21,19 @@
 (alter-var-root #'ops-common/*simplify-max-leafs* (constantly 100))
 
 
+(deftest create-pheno-test
+  (testing "with valid expr"
+    (is (=
+          (let [x (F/Dummy "x")]
+            (str (:expr (ops-common/->phenotype x (F/Sin x) nil))))
+          "Sin(x)")))
+
+  (testing "with nil expr defaults to y=x"
+    (is (=
+          (str (:expr (ops-common/->phenotype (F/Dummy "x") F/NIL nil)))
+          "x"))))
+
+
 (deftest parse-expr-str-test
   (testing "can parse simple fn str"
     (let [x      (F/Dummy "x")

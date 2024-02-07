@@ -118,6 +118,9 @@
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
    (try
      (let [^ExprEvaluator util (or util (new-util))
+           ^IAST expr          (if (.isNIL expr)
+                                 sym-x
+                                 expr)
            ^IAST expr          (.eval util expr)]
        {:sym  variable
         :util util
