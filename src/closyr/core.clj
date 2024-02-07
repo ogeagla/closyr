@@ -3,7 +3,11 @@
   (:require
     [clojure.string :as str]
     [clojure.tools.cli :as cli]
-    [closyr.symreg :as symreg]))
+    [closyr.dataset.csv :as input-csv]
+    [closyr.symreg :as symreg])
+  (:import
+    (java.io
+      File)))
 
 
 (set! *warn-on-reflection* true)
@@ -26,6 +30,11 @@
     :default 10
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 1 % 10001) "Must be a number between 1 and 10001"]]
+
+   ["-f" "--infile INFILE" "CSV Input File"
+    :default nil
+    :parse-fn #(File. ^String %)
+    :validate [#(.exists ^File %) "CSV File must exist"]]
 
    ["-y" "--ys YS" "Y values to fit against. Without xs, will use 0,...,N"
     :default nil
@@ -66,12 +75,21 @@
 
 
 (defn validate-symreg-opts
-  [{:keys [ys xs]
+  [{:keys [ys xs infile]
     :as   opts}]
-  (cond
-    (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch")
-    (and xs (nil? ys)) (println "Error: only XS provided, please provide YS")
-    :else opts))
+  (let [opts (if (not (nil? infile))
+               (let [csv-data (input-csv/get-csv-data infile)
+                     xs       (mapv :x csv-data)
+                     ys       (mapv :y csv-data)]
+                 (assoc opts :xs xs :ys ys))
+               opts)]
+
+
+    (-> (cond
+          (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch")
+          (and xs (nil? ys)) (println "Error: only XS provided, please provide YS")
+          :else opts)
+        (dissoc :infile))))
 
 
 (defn -main
