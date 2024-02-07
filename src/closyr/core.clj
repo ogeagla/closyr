@@ -77,19 +77,17 @@
 (defn validate-symreg-opts
   [{:keys [ys xs infile]
     :as   opts}]
-  (let [opts (if (not (nil? infile))
+  (let [opts (if-not (nil? infile)
                (let [csv-data (input-csv/get-csv-data infile)
                      xs       (mapv :x csv-data)
                      ys       (mapv :y csv-data)]
                  (assoc opts :xs xs :ys ys))
-               opts)]
-
-
-    (-> (cond
-          (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch")
-          (and xs (nil? ys)) (println "Error: only XS provided, please provide YS")
-          :else opts)
-        (dissoc :infile))))
+               opts)
+        opts (cond
+               (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch")
+               (and xs (nil? ys)) (println "Error: only XS provided, please provide YS")
+               :else opts)]
+    (dissoc opts :infile)))
 
 
 (defn -main

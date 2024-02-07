@@ -67,7 +67,7 @@
                  (fn [i]
                    (try
                      (let [^IExpr res (.getArg eval-p (inc i) F/Infinity)]
-                       (if (or (.isReal res))
+                       (if (.isReal res)
                          (ops-common/expr->double res)
                          Double/POSITIVE_INFINITY))
                      (catch Exception e

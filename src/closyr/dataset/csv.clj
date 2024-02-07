@@ -9,15 +9,15 @@
 
 (defn csv-data->maps
   [csv-data]
-  (let [has-col-names (= "x" (first (first csv-data)))
-        data-content  (->> (if has-col-names
+  (let [has-col-names (= "x" (ffirst csv-data))
+        data-content  (map (fn [vs] (map #(Double/parseDouble %) vs))
+                           (if has-col-names
                              (do
                                (println "Got CSV with column names " (first csv-data))
                                (rest csv-data))
                              (do
                                (println "Got CSV without column names " (first csv-data))
-                               csv-data))
-                           (map (fn [vs] (map #(Double/parseDouble %) vs))))
+                               csv-data)))
         col-names     (if has-col-names
                         (->> (first csv-data)
                              (map keyword)

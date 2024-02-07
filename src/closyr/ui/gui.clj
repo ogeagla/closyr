@@ -724,11 +724,10 @@
           x-scalar      (/ (- canvas-w 100) diff-x)
           y-scalar      (min 10.0 (/ (- canvas-h 50) diff-y))
 
-          scaled-inputs (->>
-                          input-data-maps
-                          (map (fn [{:keys [x y]}]
-                                 {:x (* x-scalar x)
-                                  :y (* y-scalar y)})))]
+          scaled-inputs (map (fn [{:keys [x y]}]
+                               {:x (* x-scalar x)
+                                :y (* y-scalar y)})
+                             input-data-maps)]
       (reset! xs* (mapv :x scaled-inputs))
       (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) scaled-inputs)]
         (let []
