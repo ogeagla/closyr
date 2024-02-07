@@ -96,7 +96,7 @@
 
 
 (defn mutation-fn
-  [initial-muts p-winner p-discard pop]
+  [initial-muts p-winner p-discard ]
   (try
     (let [start        (Date.)
           [new-pheno iters mods] (ops-modify/apply-modifications
@@ -120,10 +120,10 @@
 
 
 (defn crossover-fn
-  [initial-muts p p-discard pop]
+  [initial-muts p p-discard ]
   (let [crossover-result (ops-modify/crossover p p-discard)]
     (when crossover-result
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or
       crossover-result
-      (mutation-fn initial-muts p p-discard pop))))
+      (mutation-fn initial-muts p p-discard ))))

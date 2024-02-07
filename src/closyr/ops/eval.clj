@@ -28,7 +28,7 @@
 (set! *warn-on-reflection* true)
 
 
-(defn ^IExpr eval-phenotype-on-string-args
+#_(defn ^IExpr eval-phenotype-on-string-args
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno} string-args]
   (try
     (.evalFunction util (ops-common/expr->fn pheno) string-args)
@@ -153,7 +153,7 @@
             (eval-vec-pheno p (assoc run-args :input-xs-list x-tail-list :input-xs-count (count x-tail)))))))
 
 
-(defn eval-vec-pheno-oversample-from-orig-xs
+#_(defn eval-vec-pheno-oversample-from-orig-xs
   [p
    {:keys [input-xs-list input-xs-count input-xs-vec input-ys-vec]
     :as   run-args}]
