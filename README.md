@@ -71,7 +71,7 @@ While a function search is running:
 
 Coverage looks like this if you run `lein cloverage`:
 
-![test_coverage_2024-02-02_10-30.png](screenshots%2Ftest_coverage_2024-02-02_10-30.png)
+![test_coverage_2024-02-07_10-32.png](screenshots%2Ftest_coverage_2024-02-07_10-32.png)
 
 ## How It Works
 
