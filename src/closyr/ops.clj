@@ -17,7 +17,7 @@
 
 
 (def min-score -100000000)
-(def max-leafs 60)
+(def max-leafs 50)
 (def max-resid 1000000)
 
 

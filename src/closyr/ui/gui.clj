@@ -504,7 +504,7 @@
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-10k (ss/radio-menu-item
                                                  ;; :background color:very-light-gray
-                                                 :text "10000"
+                                                 :text "50000"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-50k (ss/radio-menu-item
