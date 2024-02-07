@@ -716,7 +716,8 @@
                              (map keyword)
                              repeat)
                         (repeat [:x :y]))]
-    (println "Data content:" (count data-content) (take 1 col-names) data-content)
+    (when-not (= #{:x :y} (set (first col-names))) (throw (Exception. "Need x/y columns")))
+    (println "Data content:" (count data-content) (first col-names) data-content)
     (map zipmap col-names data-content)))
 
 
@@ -775,7 +776,7 @@
                                        (.setCurrentDirectory (File. (System/getProperty "user.home")))
                                        (.setFileFilter file-filter))
 
-        input-file-label             (JLabel. "[WIP] Pick a file...")
+        input-file-label             (JLabel. "Pick a file...")
 
         ^JButton select-file-button  (ss/button
                                        :text "Input data from file"
@@ -788,8 +789,10 @@
                                                        sel-file)
                                               (println "Got file: " (.getAbsolutePath sel-file))
                                               (ss/set-text* input-file-label
-                                                            (str "[WIP] Got file: " (.getName sel-file)))
-                                              (open-file-and-set-input-data! sel-file))))])
+                                                            (str "Got file: " (.getName sel-file)))
+                                              (try (open-file-and-set-input-data! sel-file)
+                                                   (catch Exception e
+                                                     (ss/set-text* input-file-label (.getMessage e)))))))])
 
         ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
                                        (.add select-file-button)

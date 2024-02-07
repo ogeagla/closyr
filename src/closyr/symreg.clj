@@ -479,14 +479,15 @@
            "pop: " (count initial-phenos)
            "muts: " (count initial-muts))
 
-  (run-from-inputs run-config
-                   (if use-gui?
-                     (start-gui-and-get-input-data run-config)
-                     (->run-args (merge (reset! sim-input-args*
-                                                {:input-xs-exprs input-xs-exprs
-                                                 :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
-                                                 :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
-                                        run-config)))))
+  (run-from-inputs
+    run-config
+    (if use-gui?
+      (start-gui-and-get-input-data run-config)
+      (->run-args (merge (reset! sim-input-args*
+                                 {:input-xs-exprs input-xs-exprs
+                                  :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
+                                  :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
+                         run-config)))))
 
 
 (defn in-flames
