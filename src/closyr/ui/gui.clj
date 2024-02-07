@@ -439,7 +439,7 @@
 
 (def experiment-settings*
   (atom {:input-iters        100
-         :input-phenos-count 5000}))
+         :input-phenos-count 2000}))
 
 
 (defn settings-iters-on-change
@@ -488,23 +488,23 @@
         btn-group-pcounts                      (ss/button-group)
         ^JRadioButtonMenuItem pcount-radio-1k  (ss/radio-menu-item
                                                  ;; :background color:very-light-gray
-                                                 :text "1000"
+                                                 :text "500"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-2k  (ss/radio-menu-item
                                                  ;; :background color:very-light-gray
-                                                 :text "2000"
+                                                 :text "1000"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-5k  (ss/radio-menu-item
                                                  ;; :background color:very-light-gray
-                                                 :text "5000"
+                                                 :text "2000"
                                                  :selected? true
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-10k (ss/radio-menu-item
                                                  ;; :background color:very-light-gray
-                                                 :text "50000"
+                                                 :text "5000"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-50k (ss/radio-menu-item
