@@ -70,7 +70,7 @@
                     :expr (.plus (F/Divide (F/Times (F/num 1.0) (F/Sin (F/Plus x F/C1)))
                                            (F/Plus x (F/Cos x)))
                                  x)})))
-             ":Sin(x)+Sin(1+Sin(x))/(Cos(Sin(x))+Sin(x))"))
+             "Sin(x)+Sin(1+Sin(x))/(Cos(Sin(x))+Sin(x))"))
       (is (=
             @mods-count*
             6))))
