@@ -13,20 +13,21 @@
 
 (def initial-exprs
   (let [^ISymbol x ops-common/sym-x]
-    [F/C0
+    [
+     ;F/C0
      F/C1
      x
      x
      x
-     x
-     (F/Times -1 (ops-common/->iexprs [x]))
+     ;x
+     ;(F/Times -1 (ops-common/->iexprs [x]))
      (F/Times -1 (ops-common/->iexprs [x]))
      (F/Times -1 (ops-common/->iexprs [x]))
      (F/Times -1 (ops-common/->iexprs [x]))
      ;; (F/Log x)
-     ;; (F/Exp x)
-     ;; (F/Sin x)
-     ;; (F/Cos x)
+     (F/Exp x)
+     (F/Sin x)
+     (F/Cos x)
      ;; (F/Sqr x)
      ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
      ]))
