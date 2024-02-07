@@ -51,32 +51,71 @@
              (str (.plus (F/num 1.0) ^IExpr (F/Sin x)))))))
 
   (testing "modify-branches"
-    (let [x (F/Dummy "x")]
+    (let [x           (F/Dummy "x")
+          mods-count* (atom 0)]
       (is (= (str
                (:expr
                  (ops-modify/modify
                    {:op               :modify-branches
                     :label            "branch cos"
-                    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                    :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                  {^IAST expr :expr ^ISymbol x-sym :sym
+                                                   :as        pheno}
+                                                  ^IExpr ie]
+                                        (swap! mods-count* inc)
                                         (F/Cos ie))}
                    {:sym  x
                     :expr (.plus (F/num 1.0) x)})))
-             (str (F/Cos (.plus (F/num 1.0) x)))))))
+             (str (F/Cos (.plus (F/num 1.0) x)))))
+      (is (=
+            @mods-count*
+            1))))
 
-  (testing "modify-ast-head"
-    (let [x (F/Dummy "x")]
+  (testing "modify-branches 2"
+    (let [x           (F/Dummy "x")
+          mods-count* (atom 0)]
       (is (= (str
                (:expr
                  (ops-modify/modify
-                   {:op               :modify-ast-head
-                    :label            "sin->cos"
-                    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                        (if (= F/Sin ie)
-                                          F/Cos
-                                          ie))}
+                   {:op               :modify-branches
+                    :label            "branch cos"
+                    :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                  {^IAST expr :expr ^ISymbol x-sym :sym
+                                                   :as        pheno}
+                                                  ^IExpr ie]
+                                        (swap! mods-count* inc)
+                                        (F/Cos ie))}
                    {:sym  x
-                    :expr (.plus (F/num 1.0) ^IExpr (F/Sin x))})))
-             (str (.plus (F/num 1.0) ^IExpr (F/Cos x))))))))
+                    :expr (.plus (F/Times (F/num 1.0) (F/Sin (F/Plus x F/C1))) x)})))
+             "Cos(x+Cos(Sin(Cos(1+x))))"))
+      (is (=
+            @mods-count*
+            3))))
+
+  (testing "modify-ast-head"
+    (let [x           (F/Dummy "x")
+          mods-count* (atom 0)]
+      (is
+        (=
+          (str
+            (:expr
+              (ops-modify/modify
+                {:op               :modify-ast-head
+                 :label            "sin->cos"
+                 :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                               {^IAST expr :expr ^ISymbol x-sym :sym
+                                                :as        pheno}
+                                               ^IExpr ie]
+                                     (swap! mods-count* inc)
+                                     (if (= F/Sin ie)
+                                       F/Cos
+                                       ie))}
+                {:sym  x
+                 :expr (.plus (F/num 1.0) ^IExpr (F/Sin x))})))
+          (str (.plus (F/num 1.0) ^IExpr (F/Cos x)))))
+      (is (=
+            @mods-count*
+            2)))))
 
 
 (deftest apply-modifications-test
