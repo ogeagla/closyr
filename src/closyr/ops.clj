@@ -2,11 +2,14 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
+    [clojure.string :as str]
     [closyr.dataset.prng :refer :all]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.modify :as ops-modify])
   (:import
+    (java.text
+      DecimalFormat)
     (java.util
       Date)
     (org.matheclipse.core.interfaces
@@ -22,6 +25,18 @@
 
 
 (def sim-stats* (atom {}))
+
+
+(def ^:dynamic *log-steps* 1)
+(def test-timer* (atom nil))
+
+
+(def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
+
+
+(defn format-fn-str
+  [fn-str]
+  (str/replace (str/trim-newline (str fn-str)) #"\n|\r" ""))
 
 
 (defn sum
@@ -96,12 +111,12 @@
 
 
 (defn mutation-fn
-  [initial-muts p-winner p-discard ]
+  [initial-muts p-winner p-discard]
   (try
-    (let [start        (Date.)
+    (let [start   (Date.)
           [new-pheno iters mods] (ops-modify/apply-modifications
                                    max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
-          diff-ms      (ops-common/start-date->diff-ms start)]
+          diff-ms (ops-common/start-date->diff-ms start)]
 
       (when (> diff-ms 5000)
         (println "Warning, this modification sequence took a long time: "
@@ -120,10 +135,121 @@
 
 
 (defn crossover-fn
-  [initial-muts p p-discard ]
+  [initial-muts p p-discard]
   (let [crossover-result (ops-modify/crossover p p-discard)]
     (when crossover-result
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or
       crossover-result
-      (mutation-fn initial-muts p p-discard ))))
+      (mutation-fn initial-muts p p-discard))))
+
+
+(defn sort-population
+  [pops]
+  (->>
+    (:pop pops)
+    (remove #(nil? (:score %)))
+    (sort-by :score)
+    (reverse)))
+
+
+(defn reportable-phen-str
+  [{:keys [^IExpr expr ^double score last-op mods-applied] p-id :id :as p}]
+  (str
+    " id: " (str/join (take 3 (str p-id)))
+    " last mod #: " (or mods-applied "-")
+    " last op: " (format "%17s" (str last-op)) #_(str/join (take 8 (str last-op)))
+    " score: " (.format score-format score)
+    " leafs: " (.leafCount expr)
+    ;; strip newlines from here also:
+    " fn: " (format-fn-str expr)))
+
+
+(defn summarize-sim-stats
+  []
+  (try
+    (let [{{xcs :counts}                :crossovers
+           {cs     :counts
+            sz-in  :size-in
+            sz-out :size-out}           :mutations
+           {len-deductions :len-deductions
+            min-scores     :min-scores} :scoring
+           :as                          dat} @sim-stats*
+
+          len-deductions-sorted
+          (sort len-deductions)
+
+          sz-in-sorted
+          (sort sz-in)
+
+          sz-out-sorted
+          (sort sz-out)
+          summary-data
+          (-> dat
+              (assoc :crossovers
+                     {:crossovers-count xcs})
+              (assoc :scoring
+                     {:len-deductions (count len-deductions)
+                      :len-ded-mean   (/ (sum len-deductions) (count len-deductions))
+                      :len-ded-min    (first len-deductions-sorted)
+                      :len-ded-max    (last len-deductions-sorted)
+                      :len-ded-med    (nth len-deductions-sorted
+                                           (/ (count len-deductions-sorted) 2))})
+              (assoc :mutations
+                     {:counts              (reverse (sort-by second cs))
+                      :sz-in-mean-max-min  [(Math/round ^double (/ (sum sz-in) (count sz-in)))
+                                            (last sz-in-sorted)
+                                            (first sz-in-sorted)]
+
+                      :sz-out-mean-max-min [(Math/round ^double (/ (sum sz-out) (count sz-out)))
+                                            (last sz-out-sorted)
+                                            (first sz-out-sorted)]}))]
+      (str "muts:" (count sz-in) " min scores: " min-scores
+           " "
+           (:scoring summary-data)
+           "\n  "
+           (:mutations summary-data)
+           "\n  "
+           (:crossovers summary-data)))
+    (catch Exception e
+      (println "Error summarizing stats: " e)
+      (str "Error: " (.getMessage e)))))
+
+
+(defn report-iteration
+  [i
+   iters
+   ga-result
+   {:keys [input-xs-list input-xs-count input-ys-vec
+           sim-stop-start-chan sim->gui-chan extended-domain-args]
+    :as   run-args}
+   {:keys [use-gui?] :as run-config}]
+  (when (or (= 1 i) (zero? (mod i *log-steps*)))
+    (let [bests    (sort-population ga-result)
+          took-s   (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
+          pop-size (count (:pop ga-result))
+          best-v   (first bests)
+          evaled   (ops-eval/eval-vec-pheno best-v run-args)
+          {evaled-extended :ys xs-extended :xs} (ops-eval/eval-vec-pheno-oversample
+                                                  best-v run-args extended-domain-args)]
+
+      (reset! test-timer* (Date.))
+      (println i "-step pop size: " pop-size
+               " took secs: " took-s
+               " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
+               (str "\n top 20 best:\n"
+                    (->> (take 20 bests)
+                         (map reportable-phen-str)
+                         (str/join "\n")))
+               "\n"
+               (summarize-sim-stats))
+
+      (when use-gui?
+        (put! sim->gui-chan {:iters                 iters
+                             :i                     (inc (- iters i))
+                             :best-eval             evaled
+                             :input-xs-vec-extended xs-extended
+                             :best-eval-extended    evaled-extended
+                             :best-f-str            (str (:expr best-v))
+                             :best-score            (:score best-v)}))))
+  (reset! sim-stats* {}))

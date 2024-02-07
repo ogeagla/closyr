@@ -2,6 +2,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.test :refer :all]
+    [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
     [closyr.symreg :as symreg]))
@@ -10,12 +11,12 @@
 (deftest can-run-experiment
 
   (testing "with built-in sample data"
-    (is (= (count (:pop (binding [symreg/*log-steps* 10]
+    (is (= (count (:pop (binding [ops/*log-steps* 10]
                           (symreg/run-app-without-gui))))
            1000)))
 
   (testing "with provided data"
-    (is (= (binding [symreg/*log-steps* 5]
+    (is (= (binding [ops/*log-steps* 5]
              (count
                (:pop
                  (symreg/run-with-monitoring
@@ -40,7 +41,7 @@
 (deftest can-run-experiment-gui
   (testing "gui can start and run experiments; NOTE: do not run this while in headless mode, eg on CI"
     (is (=
-          (binding [symreg/*log-steps* 5]
+          (binding [ops/*log-steps* 5]
             (let [control-process (go
                                     (<! (timeout 1000))
                                     (println "Start sim")

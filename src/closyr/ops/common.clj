@@ -213,3 +213,32 @@
              :simple? true
              :expr simpled-expr))
     pheno))
+
+(defn extend-xs
+  [input-xs-vec]
+  (let [x-min                (first input-xs-vec)
+        x-max                (last input-xs-vec)
+        x-range-sz           (- x-max x-min)
+        x-range-pct-extend   0.35
+        extra-pts            (* x-range-pct-extend (count input-xs-vec))
+        x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
+
+        x-head               (reverse
+                               (mapv
+                                 (fn [i]
+                                   (- x-min (* (inc i) x-range-extend-pt-sz)))
+                                 (range extra-pts)))
+
+        x-tail               (mapv
+                               (fn [i]
+                                 (+ x-max (* (inc i) x-range-extend-pt-sz)))
+                               (range extra-pts))
+
+        x-tail-list          (exprs->exprs-list (doubles->exprs x-tail))
+        x-head-list          (exprs->exprs-list (doubles->exprs x-head))
+        xs                   (concat x-head input-xs-vec x-tail)]
+    {:xs          xs
+     :x-head      x-head
+     :x-head-list x-head-list
+     :x-tail      x-tail
+     :x-tail-list x-tail-list}))

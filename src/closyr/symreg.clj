@@ -7,7 +7,6 @@
     [closyr.ga :as ga]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
-    [closyr.ops.eval :as ops-eval]
     [closyr.ops.initialize :as ops-init]
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
@@ -40,19 +39,7 @@
 (def ^:dynamic *gui-close-chan* (chan))
 
 
-(def test-timer* (atom nil))
 (def sim-input-args* (atom nil))
-
-
-(def ^:dynamic *log-steps* 1)
-
-
-(def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
-
-
-(defn format-fn-str
-  [fn-str]
-  (str/replace (str/trim-newline (str fn-str)) #"\n|\r" ""))
 
 
 (defn near-exact-solution
@@ -83,117 +70,6 @@
             (> (abs v) 10e9) 0.0
             :else v))
         doubles-coll))
-
-
-(defn sort-population
-  [pops]
-  (->>
-    (:pop pops)
-    (remove #(nil? (:score %)))
-    (sort-by :score)
-    (reverse)))
-
-
-(defn reportable-phen-str
-  [{:keys [^IExpr expr ^double score last-op mods-applied] p-id :id :as p}]
-  (str
-    " id: " (str/join (take 3 (str p-id)))
-    " last mod #: " (or mods-applied "-")
-    " last op: " (format "%17s" (str last-op)) #_(str/join (take 8 (str last-op)))
-    " score: " (.format score-format score)
-    " leafs: " (.leafCount expr)
-    ;; strip newlines from here also:
-    " fn: " (format-fn-str expr)))
-
-
-(defn summarize-sim-stats
-  []
-  (try
-    (let [{{xcs :counts}                :crossovers
-           {cs     :counts
-            sz-in  :size-in
-            sz-out :size-out}           :mutations
-           {len-deductions :len-deductions
-            min-scores     :min-scores} :scoring
-           :as                          dat} @ops/sim-stats*
-
-          len-deductions-sorted
-          (sort len-deductions)
-
-          sz-in-sorted
-          (sort sz-in)
-
-          sz-out-sorted
-          (sort sz-out)
-          summary-data
-          (-> dat
-              (assoc :crossovers
-                     {:crossovers-count xcs})
-              (assoc :scoring
-                     {:len-deductions (count len-deductions)
-                      :len-ded-mean   (/ (ops/sum len-deductions) (count len-deductions))
-                      :len-ded-min    (first len-deductions-sorted)
-                      :len-ded-max    (last len-deductions-sorted)
-                      :len-ded-med    (nth len-deductions-sorted
-                                           (/ (count len-deductions-sorted) 2))})
-              (assoc :mutations
-                     {:counts              (reverse (sort-by second cs))
-                      :sz-in-mean-max-min  [(Math/round ^double (/ (ops/sum sz-in) (count sz-in)))
-                                            (last sz-in-sorted)
-                                            (first sz-in-sorted)]
-
-                      :sz-out-mean-max-min [(Math/round ^double (/ (ops/sum sz-out) (count sz-out)))
-                                            (last sz-out-sorted)
-                                            (first sz-out-sorted)]}))]
-      (str "muts:" (count sz-in) " min scores: " min-scores
-           " "
-           (:scoring summary-data)
-           "\n  "
-           (:mutations summary-data)
-           "\n  "
-           (:crossovers summary-data)))
-    (catch Exception e
-      (println "Error summarizing stats: " e)
-      (str "Error: " (.getMessage e)))))
-
-
-(defn report-iteration
-  [i
-   iters
-   ga-result
-   {:keys [input-xs-list input-xs-count input-ys-vec
-           sim-stop-start-chan sim->gui-chan extended-domain-args]
-    :as   run-args}
-   {:keys [use-gui?] :as run-config}]
-  (when (or (= 1 i) (zero? (mod i *log-steps*)))
-    (let [bests    (sort-population ga-result)
-          took-s   (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
-          pop-size (count (:pop ga-result))
-          best-v   (first bests)
-          evaled   (ops-eval/eval-vec-pheno best-v run-args)
-          {evaled-extended :ys xs-extended :xs} (ops-eval/eval-vec-pheno-oversample
-                                                  best-v run-args extended-domain-args)]
-
-      (reset! test-timer* (Date.))
-      (println i "-step pop size: " pop-size
-               " took secs: " took-s
-               " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
-               (str "\n top 20 best:\n"
-                    (->> (take 20 bests)
-                         (map reportable-phen-str)
-                         (str/join "\n")))
-               "\n"
-               (summarize-sim-stats))
-
-      (when use-gui?
-        (put! sim->gui-chan {:iters                 iters
-                             :i                     (inc (- iters i))
-                             :best-eval             evaled
-                             :input-xs-vec-extended xs-extended
-                             :best-eval-extended    evaled-extended
-                             :best-f-str            (str (:expr best-v))
-                             :best-score            (:score best-v)}))))
-  (reset! ops/sim-stats* {}))
 
 
 (defn close-chans!
@@ -266,7 +142,7 @@
           (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
           (.setTitle scores-chart "Best Score")
 
-          (let [fn-str (str "y = " (format-fn-str best-f-str))]
+          (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
             (when (not= fn-str (.getText sim-selectable-text))
               (println "New Best Function: " fn-str)
               (ss/set-text* sim-selectable-text fn-str)))
@@ -386,7 +262,7 @@
                      initial-phenos))
     (throw (Exception. "Run args needs all params!")))
 
-  {:extended-domain-args (ops-eval/extend-xs input-xs-vec)
+  {:extended-domain-args (ops-common/extend-xs input-xs-vec)
    :input-xs-list        (ops-common/exprs->exprs-list input-xs-exprs)
    :input-xs-count       (count input-xs-exprs)
    :input-xs-vec         input-xs-vec
@@ -439,7 +315,7 @@
                          initial-phenos)
         start          (Date.)
         _              (do (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
-                           (reset! test-timer* start))
+                           (reset! ops/test-timer* start))
 
         {:keys [final-population next-step]} (loop [pop (ga/initialize
                                                           initial-phenos
@@ -455,7 +331,7 @@
                                                    {:final-population pop
                                                     :next-step        :restart}
                                                    (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-                                                     (report-iteration i iters ga-result run-args run-config)
+                                                     (ops/report-iteration i iters ga-result run-args run-config)
                                                      (recur ga-result (next-iters i scores))))))]
 
     (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")

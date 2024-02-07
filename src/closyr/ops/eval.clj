@@ -29,13 +29,13 @@
 
 
 #_(defn ^IExpr eval-phenotype-on-string-args
-  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno} string-args]
-  (try
-    (.evalFunction util (ops-common/expr->fn pheno) string-args)
-    (catch SyntaxError se (println "Warning: syntax error in eval: " se))
-    (catch MathException me (println "Warning: math error in eval: " me))
-    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
-    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
+    [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno} string-args]
+    (try
+      (.evalFunction util (ops-common/expr->fn pheno) string-args)
+      (catch SyntaxError se (println "Warning: syntax error in eval: " se))
+      (catch MathException me (println "Warning: math error in eval: " me))
+      (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
+      (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
 
 
 (defn ^IExpr eval-phenotype-on-expr-args
@@ -79,7 +79,7 @@
                  (mapv
                    (fn [i]
                      (try
-                       (let [^IExpr arg0  (.getArg eval-p 0 F/Infinity)]
+                       (let [^IExpr arg0 (.getArg eval-p 0 F/Infinity)]
                          (ops-common/expr->double
                            (if (.isNumber new-expr)
                              new-expr
@@ -100,36 +100,6 @@
     y
     (min (+ max-y 10.0)
          (max y (- min-y 10.0)))))
-
-
-(defn extend-xs
-  [input-xs-vec]
-  (let [x-min                (first input-xs-vec)
-        x-max                (last input-xs-vec)
-        x-range-sz           (- x-max x-min)
-        x-range-pct-extend   0.35
-        extra-pts            (* x-range-pct-extend (count input-xs-vec))
-        x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
-
-        x-head               (reverse
-                               (mapv
-                                 (fn [i]
-                                   (- x-min (* (inc i) x-range-extend-pt-sz)))
-                                 (range extra-pts)))
-
-        x-tail               (mapv
-                               (fn [i]
-                                 (+ x-max (* (inc i) x-range-extend-pt-sz)))
-                               (range extra-pts))
-
-        x-tail-list          (ops-common/exprs->exprs-list (ops-common/doubles->exprs x-tail))
-        x-head-list          (ops-common/exprs->exprs-list (ops-common/doubles->exprs x-head))
-        xs                   (concat x-head input-xs-vec x-tail)]
-    {:xs          xs
-     :x-head      x-head
-     :x-head-list x-head-list
-     :x-tail      x-tail
-     :x-tail-list x-tail-list}))
 
 
 (defn eval-extended
@@ -154,19 +124,19 @@
 
 
 #_(defn eval-vec-pheno-oversample-from-orig-xs
-  [p
-   {:keys [input-xs-list input-xs-count input-xs-vec input-ys-vec]
-    :as   run-args}]
-  (let [{x-head      :x-head
-         x-head-list :x-head-list
-         x-tail      :x-tail
-         x-tail-list :x-tail-list
-         :as         ext-info} (extend-xs input-xs-vec)
-        xs           (concat x-head (:input-xs-vec run-args) x-tail)
-        evaluated-ys (eval-extended p run-args ext-info)]
+    [p
+     {:keys [input-xs-list input-xs-count input-xs-vec input-ys-vec]
+      :as   run-args}]
+    (let [{x-head      :x-head
+           x-head-list :x-head-list
+           x-tail      :x-tail
+           x-tail-list :x-tail-list
+           :as         ext-info} (ops-common/extend-xs input-xs-vec)
+          xs           (concat x-head (:input-xs-vec run-args) x-tail)
+          evaluated-ys (eval-extended p run-args ext-info)]
 
-    {:xs xs
-     :ys evaluated-ys}))
+      {:xs xs
+       :ys evaluated-ys}))
 
 
 (defn eval-vec-pheno-oversample
