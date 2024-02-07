@@ -73,6 +73,14 @@ Coverage looks like this if you run `lein cloverage`:
 
 ![test_coverage_2024-02-02_10-30.png](screenshots%2Ftest_coverage_2024-02-02_10-30.png)
 
+## How It Works
+
+- We use Genetic Algorithms to allow candidate functions of best fit to compete.
+- They compete on a computed score on the input data, and we use the sum of residuals to generate the score.
+- Evolution consists of mutation and crossover. 
+- Mutations act on the function's AST and modify branches, leafs, or the whole tree.  Operations like `+0.1`, `*x`, `/Sin(x)` are applied to functions.
+- Crossovers combine two functions' ASTs at a random point, and combine using various operators like `+`, and `*`.
+
 ## Roadmap
 
 - [ ] CLI options accept a CSV file (GUI already supports this)
