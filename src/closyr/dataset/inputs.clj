@@ -80,4 +80,3 @@
              sketchpad-size*
              (* 60
                 (rand))))}})
-

@@ -76,13 +76,13 @@
 
 
 (defn clamp-infinites
-  [doubles]
+  [doubles-coll]
   (mapv (fn [v]
           (cond
             (infinite? v) 0.0
             (> (abs v) 10e9) 0.0
             :else v))
-        doubles))
+        doubles-coll))
 
 
 (defn sort-population
