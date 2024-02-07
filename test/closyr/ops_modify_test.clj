@@ -50,6 +50,31 @@
                     :expr (.plus (F/num 1.0) x)})))
              (str (.plus (F/num 1.0) ^IExpr (F/Sin x)))))))
 
+
+  (testing "modify-leafs 2"
+    (let [x (F/Dummy "x")
+          mods-count* (atom 0)]
+      (is (= (str
+               (:expr
+                 (ops-modify/modify
+                   {:op               :modify-leafs
+                    :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                  {^IAST expr :expr ^ISymbol x-sym :sym
+                                                   :as pheno}
+                                                  ^IExpr ie]
+                                        (swap! mods-count* inc)
+                                        (if (= (.toString ie) "x")
+                                          (F/Sin ie)
+                                          ie))}
+                   {:sym  x
+                    :expr (.plus (F/Divide (F/Times (F/num 1.0) (F/Sin (F/Plus x F/C1)))
+                                           (F/Plus x (F/Cos x)))
+                                 x)})))
+             ":Sin(x)+Sin(1+Sin(x))/(Cos(Sin(x))+Sin(x))"))
+      (is (=
+            @mods-count*
+            6))))
+
   (testing "modify-branches"
     (let [x           (F/Dummy "x")
           mods-count* (atom 0)]
