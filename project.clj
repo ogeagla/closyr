@@ -17,7 +17,7 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
-                 [org.slf4j/slf4j-api "2.0.11"]
+                 [org.slf4j/slf4j-api "2.0.12"]
                  [org.apache.logging.log4j/log4j-core "2.22.1"]
 
                  [org.matheclipse/matheclipse-core "3.1.0-SNAPSHOT"

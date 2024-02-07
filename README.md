@@ -65,12 +65,24 @@ While a function search is running:
 
 ![gui_running_2024-02-01_09-29.png](screenshots%2Fgui_running_2024-02-01_09-29.png)
 
-### Tests
+## Tests
 
     $ lein test
 
-Coverage looks like this:
+Coverage looks like this if you run `lein cloverage`:
+
 ![test_coverage_2024-02-02_10-30.png](screenshots%2Ftest_coverage_2024-02-02_10-30.png)
+
+## Roadmap
+
+- [ ] CLI options accept a CSV file (GUI already supports this)
+- [ ] More tests
+- [ ] A different frontend.  The current Java Swing frontend does the job, but it's not easy to maintain and it's hard to make look better.
+
+
+## Credits
+
+- This project would not have been possible without the symbolic math library `Symja` (https://github.com/axkr/symja_android_library), which has been great to use and I consider it to be like a `MathJs` (https://github.com/josdejong/mathjs) on the JVM.
 
 
 
