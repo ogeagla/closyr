@@ -1,9 +1,6 @@
 (ns closyr.symreg
-  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
-    [clojure.string :as str]
-    [closyr.dataset.prng :refer :all]
     [closyr.ga :as ga]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
