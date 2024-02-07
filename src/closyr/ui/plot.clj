@@ -25,14 +25,6 @@
 
 
 
-(defn test-plots-1
-  []
-  (let [x-data         (double-array [0.0 1.0 2.0])
-        y-data         (double-array [2.0 1.0 0.0])
-        ^XYChart chart (QuickChart/getChart "Sample" "X" "Y" "y(x)" x-data y-data)]
-    (.displayChart (SwingWrapper. chart))))
-
-
 (def color:plot-bg (Color. 60 60 60))
 
 
@@ -48,20 +40,6 @@
     (.setYAxisTitleColor Color/WHITE)
     (.setChartBackgroundColor color:plot-bg)
     (.setPlotBackgroundColor color:plot-bg)))
-
-
-(defn test-plots-2
-  []
-  (let [x-data           (double-array [0.0 1.0 2.0])
-        y-data           (double-array [2.0 1.0 0.0])
-        ^XYChart chart   (doto (XYChart. 600 400 Styler$ChartTheme/GGPlot2)
-                           (.setTitle "Sample")
-                           (.setXAxisTitle "X")
-                           (.setYAxisTitle "Y"))
-        ^XYSeries series (doto (.addSeries chart "y(x)" x-data y-data)
-                           (.setMarker SeriesMarkers/CIRCLE))]
-    (apply-style chart)
-    (.displayChart (SwingWrapper. chart))))
 
 
 (defn make-plot:2-series
@@ -99,13 +77,3 @@
     (apply-style chart)
 
     chart))
-
-
-(defn show-plot
-  [^String best-fn-label x-data y-data-1 y-data-2]
-  (-> (make-plot:2-series best-fn-label "objective(x)" x-data x-data y-data-1 y-data-2)
-      (SwingWrapper.)
-      .displayChart))
-
-
-(comment (test-plots-2))

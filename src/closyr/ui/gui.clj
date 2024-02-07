@@ -1,12 +1,8 @@
 (ns closyr.ui.gui
-  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
-    [clojure.data.csv :as csv]
-    [clojure.java.io :as io]
     [closyr.dataset.csv :as input-csv]
     [closyr.dataset.inputs :as input-data]
-    [closyr.dataset.prng :refer :all]
     [closyr.ui.plot :as plot]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
@@ -700,9 +696,6 @@
             (input-y-fns @input-y-fn*)))))))
 
 
-
-
-
 (defn set-input-data!
   [input-data-maps]
   (let [{:keys [^JPanel drawing-widget]} @items-points-accessors*
@@ -738,8 +731,6 @@
           ((nth items-point-setters i)
            x
            (input-data/y->gui-coord-y sketchpad-size* y)))))))
-
-
 
 
 (defn ^JPanel input-file-picker-widget

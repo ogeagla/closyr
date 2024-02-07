@@ -97,18 +97,3 @@
     (parse-main-opts args)
     (validate-symreg-opts)
     (symreg/run-app-from-cli-args)))
-
-
-(defn test-cli
-  []
-  [(let [test-input '("-vvvp80000" "foo" "--help" "--invalid-opt" "-i50000" "-y1,1,1" "-x1,1,1,1,1,1,1,1,1")]
-     (validate-symreg-opts (parse-main-opts test-input)))
-
-   (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6")]
-     (validate-symreg-opts (parse-main-opts test-input)))
-
-   (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "--ys" "1,2,30,4,5,6,10" "--xs" "0,1,2,3,4,5,6")]
-     (validate-symreg-opts (parse-main-opts test-input)))])
-
-
-(comment (test-cli))
