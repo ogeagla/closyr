@@ -25,7 +25,7 @@
 
 
 
-(def color:plot-bg (Color. 60 60 60))
+(def color:plot-bg (Color. 57 57 57))
 
 
 (defn apply-style
