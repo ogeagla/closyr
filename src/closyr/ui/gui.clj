@@ -704,8 +704,8 @@
           diff-y        (- max-y min-y)
           diff-x        (- max-x min-x)
 
-          x-scalar      (/ (- canvas-w 100) diff-x)
-          y-scalar      (min 10.0 (/ (- canvas-h 50) diff-y))
+          x-scalar      (/ (- canvas-w 200) diff-x)
+          y-scalar      (min 10.0 (/ (- canvas-h 100) diff-y))
 
           scaled-inputs (map (fn [{:keys [x y]}]
                                {:x (* x-scalar x)
