@@ -77,6 +77,8 @@ Requirements:
 - Java
 
 
+Then run:
+
 
     $ lein uberjar
     $ java -jar target/uberjar/closyr-0.1.0-standalone.jar
