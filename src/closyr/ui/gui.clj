@@ -107,6 +107,7 @@
    "20K"   20000
    "50K"   50000})
 
+
 (def sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
 
 
@@ -284,7 +285,7 @@
         items-point-getters))))
 
 
-(def brush-fn* (atom sketchpad-on-click:skinny-brush))
+(def brush-fn* (atom sketchpad-on-click:broad-brush))
 
 
 (def brushes-map
@@ -444,8 +445,6 @@
              (- 7.5 (/ (.getY pt)
                        (/ (:h @sketchpad-size*) 15.0)))]))
         items-point-getters))
-
-
 
 
 (defn settings-iters-on-change
@@ -635,12 +634,12 @@
         btn-group-brush                 (ss/button-group)
         ^JRadioButtonMenuItem b-radio-0 (ss/radio-menu-item
                                           ;; :background color:very-light-gray
-                                          :selected? true
                                           :text brush-label:skinny
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
                                           ;; :background color:very-light-gray
+                                          :selected? true
                                           :text brush-label:broad
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
@@ -665,42 +664,42 @@
 
 (defn ^JPanel xs-panel
   []
-  (let [xs-config-container              (panel-grid {:rows 1 :cols 5 :border (radio-controls-border "Points Count")})
-        ^JPanel xs-container             (panel-grid {:rows 1 :cols 1})
+  (let [xs-config-container                (panel-grid {:rows 1 :cols 5 :border (radio-controls-border "Points Count")})
+        ^JPanel xs-container               (panel-grid {:rows 1 :cols 1})
 
-        btn-group-xs                     (ss/button-group)
-        ^JRadioButtonMenuItem xs-radio-10 (ss/radio-menu-item
-                                           ;; :background color:very-light-gray
-                                           :text "10"
-                                           :group btn-group-xs
-                                           :listen [:mouse-clicked xs-on-change])
-        ^JRadioButtonMenuItem xs-radio-25 (ss/radio-menu-item
-                                           ;; :background color:very-light-gray
-                                           :text "25"
-                                           :group btn-group-xs
-                                           :listen [:mouse-clicked xs-on-change])
-        ^JRadioButtonMenuItem xs-radio-50 (ss/radio-menu-item
-                                           ;; :background color:very-light-gray
-                                           :selected? true
-                                           :text "50"
-                                           :group btn-group-xs
-                                           :listen [:mouse-clicked xs-on-change])
+        btn-group-xs                       (ss/button-group)
+        ^JRadioButtonMenuItem xs-radio-10  (ss/radio-menu-item
+                                             ;; :background color:very-light-gray
+                                             :text "10"
+                                             :group btn-group-xs
+                                             :listen [:mouse-clicked xs-on-change])
+        ^JRadioButtonMenuItem xs-radio-25  (ss/radio-menu-item
+                                             ;; :background color:very-light-gray
+                                             :text "25"
+                                             :group btn-group-xs
+                                             :listen [:mouse-clicked xs-on-change])
+        ^JRadioButtonMenuItem xs-radio-50  (ss/radio-menu-item
+                                             ;; :background color:very-light-gray
+                                             :selected? true
+                                             :text "50"
+                                             :group btn-group-xs
+                                             :listen [:mouse-clicked xs-on-change])
         ^JRadioButtonMenuItem xs-radio-100 (ss/radio-menu-item
-                                           ;; :background color:very-light-gray
-                                           :text "100"
-                                           :group btn-group-xs
-                                           :listen [:mouse-clicked xs-on-change])
+                                             ;; :background color:very-light-gray
+                                             :text "100"
+                                             :group btn-group-xs
+                                             :listen [:mouse-clicked xs-on-change])
 
         ^JRadioButtonMenuItem xs-radio-200 (ss/radio-menu-item
-                                           ;; :background color:very-light-gray
-                                           :text "200"
-                                           :group btn-group-xs
-                                           :listen [:mouse-clicked xs-on-change])]
+                                             ;; :background color:very-light-gray
+                                             :text "200"
+                                             :group btn-group-xs
+                                             :listen [:mouse-clicked xs-on-change])]
     (.add xs-config-container xs-radio-10)
     (.add xs-config-container xs-radio-25)
     (.add xs-config-container xs-radio-50)
     (.add xs-config-container xs-radio-100)
-    ;(.add xs-config-container xs-radio-200)
+    ;; (.add xs-config-container xs-radio-200)
     (.add xs-container xs-config-container)
     xs-container))
 
@@ -765,10 +764,10 @@
                                        (.setCurrentDirectory (File. (System/getProperty "user.home")))
                                        (.setFileFilter file-filter))
 
-        input-file-label             (JLabel. "Pick a file...")
+        input-file-label             (JLabel. "")
 
         ^JButton select-file-button  (ss/button
-                                       :text "Input data from file"
+                                       :text "Choose Input Data CSV"
                                        :listen
                                        [:mouse-clicked
                                         (fn [^MouseEvent e]
@@ -777,11 +776,17 @@
                                             (when (and (= JFileChooser/APPROVE_OPTION res)
                                                        sel-file)
                                               (println "Got file: " (.getAbsolutePath sel-file))
-                                              (ss/set-text* input-file-label
-                                                            (str "Got file: " (.getName sel-file)))
-                                              (try (set-input-data! (input-csv/get-csv-data sel-file))
-                                                   (catch Exception e
-                                                     (ss/set-text* input-file-label (.getMessage e)))))))])
+
+                                              (try
+                                                (let [csv-data (input-csv/get-csv-data sel-file)]
+                                                  (set-input-data! csv-data)
+                                                  (ss/set-text* input-file-label
+                                                                (str "Points: " (count csv-data)
+                                                                     " From file: " (.getName sel-file)
+                                                                     )))
+                                                (catch Exception e
+                                                  (ss/set-text* input-file-label
+                                                                (str "Error: " (.getMessage e))))))))])
 
         ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
                                        (.add select-file-button)
@@ -829,7 +834,7 @@
             content-pane                    (doto (.getContentPane my-frame)
                                               (.setLayout (GridLayout. 1 1)))
 
-            sim-info-label                  (JLabel. "Press Start To Begin Function Search")
+            sim-info-label                  (JLabel. "")
             ^JTextField sim-selectable-text (doto (JTextField. "")
                                               (.setEditable false))
 
@@ -845,7 +850,7 @@
             ^XYChart scores-chart           (plot/make-plot:n-series
 
                                               {:x-axis-title "Iteration"
-                                               :y-axis-title "Score (L1 Loss)"
+                                               :y-axis-title "Score"
                                                :chart-title  "No data to show"
                                                :series       [{:label  series-scores-p90-label
                                                                :xs     xs-scores-p90
@@ -878,7 +883,8 @@
 
 
             {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
-            status-label                    (JLabel. "Waiting to start...")
+
+            status-label                    (JLabel. "Press Start To Begin Function Search")
 
             ^JButton ctl-start-stop-btn     (ss/button
                                               ;; :background color:very-light-gray

@@ -101,8 +101,10 @@
            ^String series-scores-p95-label
            ^String series-scores-p90-label]
     :as   conf}]
-  (ss/set-text* status-label (str "Running"))
-  (go-loop []
+  (println "Begin chart update loop")
+
+
+  (go-loop [chart-iter 0]
     (<! (timeout 50))
     (when-let [{:keys [input-xs-vec-extended
                        best-eval-extended
@@ -117,6 +119,9 @@
 
       (let [{:keys [input-xs-vec input-ys-vec]} @sim-input-args*]
         (try
+
+          (when (zero? chart-iter) (ss/set-text* status-label (str "Running")))
+
           (.clear ys-best-fn)
           (.addAll ys-best-fn (if best-eval-extended
                                 (clamp-infinites best-eval-extended)
@@ -191,7 +196,7 @@
         (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
           (if-not (= msg :continue)
             (close-chans!)
-            (recur)))))))
+            (recur (inc chart-iter))))))))
 
 
 (defn setup-gui
