@@ -23,7 +23,7 @@ Currently this application is not packaged, so you have to run it from source, u
 
 Use the application via GUI or in the terminal. 
 
-There are 4 options.
+There are 4 ways to run the application.  See next section for details about the options you can provide when running the app.
 
 
 ### Run the provided realase JAR
