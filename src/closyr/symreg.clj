@@ -315,8 +315,7 @@
    :input-ys-vec         input-ys-vec
    :input-iters          (or input-iters iters)
    :initial-phenos       initial-phenos
-   :input-phenos-count   (when input-phenos-count
-                           input-phenos-count)})
+   :input-phenos-count   input-phenos-count})
 
 
 (defn wait-and-get-gui-args
