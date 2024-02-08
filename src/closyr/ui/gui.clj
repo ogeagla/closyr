@@ -79,9 +79,12 @@
 
 
 (def xs->gap
-  {100 6
+  {200 3
+   100 6
    50  12
-   20  28})
+   25  24
+   20  28
+   10  56})
 
 
 (def sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
@@ -661,30 +664,42 @@
 
 (defn ^JPanel xs-panel
   []
-  (let [xs-config-container              (panel-grid {:rows 1 :cols 3 :border (radio-controls-border "Points Count")})
+  (let [xs-config-container              (panel-grid {:rows 1 :cols 5 :border (radio-controls-border "Points Count")})
         ^JPanel xs-container             (panel-grid {:rows 1 :cols 1})
 
         btn-group-xs                     (ss/button-group)
-        ^JRadioButtonMenuItem xs-radio-1 (ss/radio-menu-item
+        ^JRadioButtonMenuItem xs-radio-10 (ss/radio-menu-item
                                            ;; :background color:very-light-gray
-                                           :text "20"
+                                           :text "10"
                                            :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])
-        ^JRadioButtonMenuItem xs-radio-2 (ss/radio-menu-item
+        ^JRadioButtonMenuItem xs-radio-25 (ss/radio-menu-item
+                                           ;; :background color:very-light-gray
+                                           :text "25"
+                                           :group btn-group-xs
+                                           :listen [:mouse-clicked xs-on-change])
+        ^JRadioButtonMenuItem xs-radio-50 (ss/radio-menu-item
                                            ;; :background color:very-light-gray
                                            :selected? true
                                            :text "50"
                                            :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])
-        ^JRadioButtonMenuItem xs-radio-3 (ss/radio-menu-item
+        ^JRadioButtonMenuItem xs-radio-100 (ss/radio-menu-item
                                            ;; :background color:very-light-gray
                                            :text "100"
                                            :group btn-group-xs
+                                           :listen [:mouse-clicked xs-on-change])
+
+        ^JRadioButtonMenuItem xs-radio-200 (ss/radio-menu-item
+                                           ;; :background color:very-light-gray
+                                           :text "200"
+                                           :group btn-group-xs
                                            :listen [:mouse-clicked xs-on-change])]
-    ;; (.add xs-config-container (JLabel. "Points: "))
-    (.add xs-config-container xs-radio-1)
-    (.add xs-config-container xs-radio-2)
-    (.add xs-config-container xs-radio-3)
+    (.add xs-config-container xs-radio-10)
+    (.add xs-config-container xs-radio-25)
+    (.add xs-config-container xs-radio-50)
+    (.add xs-config-container xs-radio-100)
+    ;(.add xs-config-container xs-radio-200)
     (.add xs-container xs-config-container)
     xs-container))
 
