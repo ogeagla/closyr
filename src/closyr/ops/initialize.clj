@@ -13,7 +13,8 @@
 
 (def initial-exprs
   (let [^ISymbol x ops-common/sym-x]
-    [
+    [x]
+    #_[
      ;F/C0
      F/C1
      x

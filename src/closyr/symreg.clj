@@ -9,8 +9,6 @@
     [flames.core :as flames]
     [seesaw.core :as ss])
   (:import
-    (java.text
-      DecimalFormat)
     (java.util
       Date
       List)
@@ -22,10 +20,7 @@
       JTextField)
     (org.knowm.xchart
       XChartPanel
-      XYChart)
-    (org.matheclipse.core.interfaces
-      IExpr
-      ISymbol)))
+      XYChart)))
 
 
 (set! *warn-on-reflection* true)
@@ -331,7 +326,7 @@
   "Initialize and show GUI, then park and wait on user input to start"
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs] :as run-config}]
 
-  ;; these are the data shown in the plots before the expriement is started:
+  ;; these are the data shown in the plots before the experiment is started:
   (reset! sim-input-args* {:input-xs-vec (ops-common/exprs->doubles input-xs-exprs)
                            :input-ys-vec (ops-common/exprs->doubles input-ys-exprs)})
 
@@ -378,8 +373,13 @@
     :as   run-args}]
   (let [iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
-                         (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
+                         (do
+                           (println "Generating pheno count: " input-phenos-count
+                                    " via reps: " (/ input-phenos-count (count ops-init/initial-exprs))
+                                    " from initial exprs: " (count ops-init/initial-exprs))
+                           (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs))))
                          initial-phenos)
+        run-config     (assoc run-config :initial-phenos initial-phenos)
         start          (Date.)
         _              (do (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
                            (reset! ops/test-timer* start))

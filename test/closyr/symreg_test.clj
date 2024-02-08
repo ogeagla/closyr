@@ -13,35 +13,35 @@
   (testing "with built-in sample data"
     (is (= (count (:pop (binding [ops/*log-steps* 10]
                           (symreg/run-app-without-gui))))
-           1000)))
+           100)))
 
   (testing "with provided data"
-    (is (= (binding [ops/*log-steps* 5]
+    (is (= (binding [ops/*log-steps* 10]
              (count
                (:pop
                  (symreg/run-with-monitoring
                    (fn []
                      (symreg/run-experiment
-                       {:initial-phenos (ops-init/initial-phenotypes 10)
-                        :initial-muts   (ops-init/initial-mutations)
-                        :iters          5
-                        :use-gui?       false
-                        :input-xs-exprs (->> (range 50)
-                                             (map (fn [i] (* Math/PI (/ i 15.0))))
-                                             ops-common/doubles->exprs)
-                        :input-ys-exprs (->> (range 50)
-                                             (map (fn [i]
-                                                    (+ 2.0
-                                                       (/ i 10.0)
-                                                       (Math/cos (* Math/PI (/ i 15.0))))))
-                                             ops-common/doubles->exprs)}))))))
+                       {:input-phenos-count 100
+                        :initial-muts       (ops-init/initial-mutations)
+                        :iters              5
+                        :use-gui?           false
+                        :input-xs-exprs     (->> (range 50)
+                                                 (map (fn [i] (* Math/PI (/ i 15.0))))
+                                                 ops-common/doubles->exprs)
+                        :input-ys-exprs     (->> (range 50)
+                                                 (map (fn [i]
+                                                        (+ 2.0
+                                                           (/ i 10.0)
+                                                           (Math/cos (* Math/PI (/ i 15.0))))))
+                                                 ops-common/doubles->exprs)}))))))
            100))))
 
 
 (deftest can-run-experiment-gui
   (testing "gui can start and run experiments; NOTE: do not run this while in headless mode, eg on CI"
     (is (=
-          (binding [ops/*log-steps* 5]
+          (binding [ops/*log-steps* 10]
             (let [control-process (go
                                     (<! (timeout 1000))
                                     (println "Start sim")

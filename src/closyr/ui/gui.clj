@@ -87,6 +87,26 @@
    10  56})
 
 
+(def experiment-settings*
+  (atom {:input-iters        100
+         :input-phenos-count 2000}))
+
+
+(def amount->number
+  {"10"    10
+   "100"   100
+   "500"   500
+   "1000"  1000
+   "2000"  2000
+   "5000"  5000
+   "10000" 10000
+   "1K"    1000
+   "2K"    2000
+   "5K"    5000
+   "10K"   10000
+   "20K"   20000
+   "50K"   50000})
+
 (def sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
 
 
@@ -426,25 +446,6 @@
         items-point-getters))
 
 
-(def experiment-settings*
-  (atom {:input-iters        100
-         :input-phenos-count 2000}))
-
-
-(def amount->number
-  {"10"    10
-   "100"   100
-   "500"   500
-   "1000"  1000
-   "2000"  2000
-   "5000"  5000
-   "10000" 10000
-   "1K"    1000
-   "2K"    2000
-   "5K"    5000
-   "10K"   10000
-   "20K"   20000
-   "50K"   50000})
 
 
 (defn settings-iters-on-change
