@@ -349,6 +349,27 @@
     (dec i)))
 
 
+(defn run-ga-iterations
+  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
+   run-args]
+  (loop [pop (ga/initialize
+               initial-phenos
+               (partial ops/score-fn run-args)
+               (partial ops/mutation-fn initial-muts)
+               (partial ops/crossover-fn initial-muts))
+         i   iters]
+    (if (zero? i)
+      {:final-population pop
+       :next-step        :wait}
+      (if (and use-gui?
+               (park-if-gui-pause-and-return-if-should-restart run-args))
+        {:final-population pop
+         :next-step        :restart}
+        (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
+          (ops/report-iteration i iters ga-result run-args run-config)
+          (recur ga-result (next-iters i scores)))))))
+
+
 (defn run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
@@ -363,22 +384,7 @@
         _              (do (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
                            (reset! ops/test-timer* start))
 
-        {:keys [final-population next-step]} (loop [pop (ga/initialize
-                                                          initial-phenos
-                                                          (partial ops/score-fn run-args)
-                                                          (partial ops/mutation-fn initial-muts)
-                                                          (partial ops/crossover-fn initial-muts))
-                                                    i   iters]
-                                               (if (zero? i)
-                                                 {:final-population pop
-                                                  :next-step        :wait}
-                                                 (if (and use-gui?
-                                                          (park-if-gui-pause-and-return-if-should-restart run-args))
-                                                   {:final-population pop
-                                                    :next-step        :restart}
-                                                   (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-                                                     (ops/report-iteration i iters ga-result run-args run-config)
-                                                     (recur ga-result (next-iters i scores))))))]
+        {:keys [final-population next-step]} (run-ga-iterations run-config run-args)]
 
     (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
     (case next-step
