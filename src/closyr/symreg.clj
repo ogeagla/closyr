@@ -343,6 +343,7 @@
 
 
 (defn next-iters
+  "Determine how many more GA iterations are left based on score, and stop if near perfect solution."
   [i scores]
   (if (some #(> % -1e-3) scores)
     (near-exact-solution i scores)
@@ -350,9 +351,10 @@
 
 
 (defn config->log-steps
-  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
-   {:keys [input-xs-count]
-    :as   run-args}]
+  "Determine how often (every n iters) to log and update charts. Returns n."
+  [{:keys [iters initial-phenos]}
+   {:keys [input-xs-count]}]
+
   (cond
 
     (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 20
@@ -369,6 +371,7 @@
 
 
 (defn run-ga-iterations
+  "Run GA evolution iterations on initial population"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    run-args]
   (binding [ops/*log-steps* (config->log-steps run-config run-args)]
@@ -431,6 +434,8 @@
 
 
 (defn run-experiment
+  "Run a GA evolution experiment to search for function of best fit for input data.  The
+  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
   (println "initial data: iters: " iters
            "pop: " (count initial-phenos)
