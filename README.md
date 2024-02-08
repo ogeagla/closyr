@@ -15,9 +15,14 @@ Warning: This is experimental software, with an unstable API. Expect breaking ch
 
 ## Installation
 
-Currently this application is not packaged, so you have to run it from source, using Clojure development tools (`leiningen`)
 
-    $ lein deps
+Run the application from binary, download a release JAR and see the Usage section below.  
+This project is not yet available in a JAR repository (though I'd use Clojars if enough requests).
+
+
+Or, you can run the app from source, using Clojure development tools (`leiningen`) in this project:
+
+    $ lein deps/repl/run/uberjar
 
 ## Usage
 
