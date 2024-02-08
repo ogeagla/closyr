@@ -349,27 +349,48 @@
     (dec i)))
 
 
+(defn config->log-steps
+  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
+   {:keys [input-xs-count]
+    :as   run-args}]
+  (cond
+
+    (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 20
+    (and (< (count initial-phenos) 1000) (< input-xs-count 50) (> iters 100)) 10
+    (and (< (count initial-phenos) 1000) (< input-xs-count 100) (> iters 100)) 5
+    (and (< (count initial-phenos) 1000) (< input-xs-count 200) (> iters 100)) 2
+
+    (and (< (count initial-phenos) 2000) (< input-xs-count 25) (> iters 100)) 10
+    (and (< (count initial-phenos) 2000) (< input-xs-count 50) (> iters 100)) 5
+    (and (< (count initial-phenos) 2000) (< input-xs-count 100) (> iters 100)) 2
+    (and (< (count initial-phenos) 2000) (< input-xs-count 200) (> iters 100)) 2
+
+    :else 1))
+
+
 (defn run-ga-iterations
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    run-args]
-  (loop [pop (ga/initialize
-               initial-phenos
-               (partial ops/score-fn run-args)
-               (partial ops/mutation-fn initial-muts)
-               (partial ops/crossover-fn initial-muts))
-         i   iters]
-    (if (zero? i)
-      {:iters-done       (- iters i)
-       :final-population pop
-       :next-step        :wait}
-      (if (and use-gui?
-               (park-if-gui-pause-and-return-if-should-restart run-args))
+  (binding [ops/*log-steps* (config->log-steps run-config run-args)]
+    (println "Running with logging every n steps: " ops/*log-steps*)
+    (loop [pop (ga/initialize
+                 initial-phenos
+                 (partial ops/score-fn run-args)
+                 (partial ops/mutation-fn initial-muts)
+                 (partial ops/crossover-fn initial-muts))
+           i   iters]
+      (if (zero? i)
         {:iters-done       (- iters i)
          :final-population pop
-         :next-step        :restart}
-        (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-          (ops/report-iteration i iters ga-result run-args run-config)
-          (recur ga-result (next-iters i scores)))))))
+         :next-step        :wait}
+        (if (and use-gui?
+                 (park-if-gui-pause-and-return-if-should-restart run-args))
+          {:iters-done       (- iters i)
+           :final-population pop
+           :next-step        :restart}
+          (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
+            (ops/report-iteration i iters ga-result run-args run-config)
+            (recur ga-result (next-iters i scores))))))))
 
 
 (defn run-from-inputs
