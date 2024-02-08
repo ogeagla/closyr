@@ -93,15 +93,16 @@ You can also provide the same command-line options to `java` command, like:
     $ java -jar target/uberjar/closyr-0.1.0-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
 
 ## Run Options
+| Short,Long Option   | Required?       | Example | Description                                                                                                                         |
+|---------------------|-----------------|---------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `-t` `--headless`   | no              | `-t`    | run without GUI, in terminal only                                                                                                   |     
+| `-p` `--population` | no              | `100`   | size of population which will evolve; the number of functions we create and modify                                                  |    
+| `-i` `--iterations` | no              | `50`    | number of iterations to run for                                                                                                     |    
+| `-x` `--xs`         | no, unless `ys` | `1,3,4` | the xs for the points in the dataset to fit against; if provided, must also provide `ys`                                            | 
+| `-y` `--ys`         | no, unless `xs` | `2,4,8` | the ys for the points in the dataset to fit against; if provided, must also provide `xs`                                            |    
+| `-f` `--infile`     | no              | `f.csv` | A CSV file which either contains 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset  |  
 
-- `-t` `--headless`   : [optional] run without GUI, in terminal only
-- `-p` `--population` : [optional] size of population which will evolve; the number of functions we create and modify
-- `-i` `--iterations` : [optional] number of iterations to run for
-- `-x` `--xs`         : [optional] the xs for the points in the dataset to fit against; if provided, must also provide `ys`
-- `-y` `--ys`         : [optional] the ys for the points in the dataset to fit against; if provided, must also provide `xs`
-- `-f` `--infile`     : [optional] A CSV file which either contains 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset
-
-## Examples
+## Example Screenshots
 
 On successful application start, you should see this:
 
