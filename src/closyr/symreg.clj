@@ -433,25 +433,6 @@
                  (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
 
 
-(defn run-experiment
-  "Run a GA evolution experiment to search for function of best fit for input data.  The
-  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-  (println "initial data: iters: " iters
-           "pop: " (count initial-phenos)
-           "muts: " (count initial-muts))
-
-  (run-from-inputs
-    run-config
-    (if use-gui?
-      (start-gui-and-get-input-data run-config)
-      (->run-args (merge (reset! sim-input-args*
-                                 {:input-xs-exprs input-xs-exprs
-                                  :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
-                                  :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
-                         run-config)))))
-
-
 (defn in-flames
   [f]
   ;; http://localhost:54321/flames.svg
@@ -463,64 +444,75 @@
 (def ^:dynamic *use-flamechart* false)
 
 
-(defn run-with-monitoring
-  [experiment-fn]
-  (if *use-flamechart*
-    ;; with flame graph analysis:
-    (in-flames experiment-fn)
-    ;; plain experiment:
-    (experiment-fn)))
+(defn run-experiment
+  "Run a GA evolution experiment to search for function of best fit for input data.  The
+  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
+  (println "initial data: iters: " iters
+           "pop: " (count initial-phenos)
+           "muts: " (count initial-muts))
+
+  (let [symbolic-regression-search-fn
+        (fn []
+          (run-from-inputs
+            run-config
+            (if use-gui?
+              (start-gui-and-get-input-data run-config)
+              (->run-args (merge (reset! sim-input-args*
+                                         {:input-xs-exprs input-xs-exprs
+                                          :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
+                                          :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
+                                 run-config)))))]
+    (if *use-flamechart*
+      ;; with flame graph analysis:
+      (in-flames symbolic-regression-search-fn)
+      ;; plain experiment:
+      (symbolic-regression-search-fn))))
 
 
 (defn run-app-without-gui
   []
-  (run-with-monitoring
-    (fn []
-      (run-experiment
-        {:initial-phenos (ops-init/initial-phenotypes 100)
-         :initial-muts   (ops-init/initial-mutations)
-         :iters          20
-         :use-gui?       false
-         :input-xs-exprs (->> (range 50)
-                              (map (fn [i] (* Math/PI (/ i 15.0))))
-                              ops-common/doubles->exprs)
-         :input-ys-exprs (->> (range 50)
-                              (map (fn [i]
-                                     (+ 2.0
-                                        (/ i 10.0)
-                                        (Math/sin (* Math/PI (/ i 15.0))))))
-                              ops-common/doubles->exprs)}))))
+  (run-experiment
+    {:initial-phenos (ops-init/initial-phenotypes 100)
+     :initial-muts   (ops-init/initial-mutations)
+     :iters          20
+     :use-gui?       false
+     :input-xs-exprs (->> (range 50)
+                          (map (fn [i] (* Math/PI (/ i 15.0))))
+                          ops-common/doubles->exprs)
+     :input-ys-exprs (->> (range 50)
+                          (map (fn [i]
+                                 (+ 2.0
+                                    (/ i 10.0)
+                                    (Math/sin (* Math/PI (/ i 15.0))))))
+                          ops-common/doubles->exprs)}))
 
 
 (defn run-app-with-gui
   []
-  (run-with-monitoring
-    (fn []
-      (run-experiment
-        {:initial-phenos (ops-init/initial-phenotypes 1000)
-         :initial-muts   (ops-init/initial-mutations)
-         :input-xs-exprs input-xs-exprs
-         :input-ys-exprs input-ys-exprs
-         :iters          200
-         :use-gui?       true}))))
+  (run-experiment
+    {:initial-phenos (ops-init/initial-phenotypes 1000)
+     :initial-muts   (ops-init/initial-mutations)
+     :input-xs-exprs input-xs-exprs
+     :input-ys-exprs input-ys-exprs
+     :iters          200
+     :use-gui?       true}))
 
 
 (defn run-app-from-cli-args
   [{:keys [iterations population headless xs ys] :as cli-opts}]
   (println "Running from CLI opts: " cli-opts)
-  (run-with-monitoring
-    (fn []
-      (run-experiment
-        {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
-         :initial-muts   (ops-init/initial-mutations)
-         :iters          iterations
-         :use-gui?       (not headless)
-         :input-xs-exprs (if xs
-                           (ops-common/doubles->exprs xs)
-                           input-xs-exprs)
-         :input-ys-exprs (if ys
-                           (ops-common/doubles->exprs ys)
-                           input-ys-exprs)})))
+  (run-experiment
+    {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
+     :initial-muts   (ops-init/initial-mutations)
+     :iters          iterations
+     :use-gui?       (not headless)
+     :input-xs-exprs (if xs
+                       (ops-common/doubles->exprs xs)
+                       input-xs-exprs)
+     :input-ys-exprs (if ys
+                       (ops-common/doubles->exprs ys)
+                       input-ys-exprs)})
   (println "CLI: Done!")
   (System/exit 0))
 

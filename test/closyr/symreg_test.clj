@@ -21,22 +21,20 @@
     (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
       (fn []
         (let [{:keys [final-population next-step iters-done]}
-              (symreg/run-with-monitoring
-                (fn []
-                  (symreg/run-experiment
-                    {:input-phenos-count 100
-                     :initial-muts       (ops-init/initial-mutations)
-                     :iters              5
-                     :use-gui?           false
-                     :input-xs-exprs     (->> (range 50)
-                                              (map (fn [i] (* Math/PI (/ i 15.0))))
-                                              ops-common/doubles->exprs)
-                     :input-ys-exprs     (->> (range 50)
-                                              (map (fn [i]
-                                                     (+ 2.0
-                                                        (/ i 10.0)
-                                                        (Math/cos (* Math/PI (/ i 15.0))))))
-                                              ops-common/doubles->exprs)})))]
+              (symreg/run-experiment
+                {:input-phenos-count 100
+                 :initial-muts       (ops-init/initial-mutations)
+                 :iters              5
+                 :use-gui?           false
+                 :input-xs-exprs     (->> (range 50)
+                                          (map (fn [i] (* Math/PI (/ i 15.0))))
+                                          ops-common/doubles->exprs)
+                 :input-ys-exprs     (->> (range 50)
+                                          (map (fn [i]
+                                                 (+ 2.0
+                                                    (/ i 10.0)
+                                                    (Math/cos (* Math/PI (/ i 15.0))))))
+                                          ops-common/doubles->exprs)})]
           (is (= (count (:pop final-population))
                  100))
 
@@ -63,15 +61,13 @@
                                 (put! symreg/*gui-close-chan* :close-please)
                                 (put! symreg/*sim->gui-chan* :next))]
 
-          (symreg/run-with-monitoring
-            (fn []
-              (symreg/run-experiment
-                {:initial-phenos (ops-init/initial-phenotypes 20)
-                 :initial-muts   (ops-init/initial-mutations)
-                 :input-xs-exprs symreg/input-xs-exprs
-                 :input-ys-exprs symreg/input-ys-exprs
-                 :iters          20
-                 :use-gui?       true})))
+          (symreg/run-experiment
+            {:initial-phenos (ops-init/initial-phenotypes 20)
+             :initial-muts   (ops-init/initial-mutations)
+             :input-xs-exprs symreg/input-xs-exprs
+             :input-ys-exprs symreg/input-ys-exprs
+             :iters          20
+             :use-gui?       true})
 
 
           (is (= (<!! control-process) true)))))))
