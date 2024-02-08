@@ -166,11 +166,10 @@
           (.add ys-scores-p99 best-99p-score)
           (.add ys-scores-p95 best-95p-score)
           (.add ys-scores-p75 best-75p-score)
-          (.updateXYSeries scores-chart series-scores-best-label xs-scores-best ys-scores-best nil)
-          (.updateXYSeries scores-chart series-scores-p99-label xs-scores-p99 ys-scores-p99 nil)
-          (.updateXYSeries scores-chart series-scores-p95-label xs-scores-p95 ys-scores-p95 nil)
           (.updateXYSeries scores-chart series-scores-p75-label xs-scores-p75 ys-scores-p75 nil)
-
+          (.updateXYSeries scores-chart series-scores-p95-label xs-scores-p95 ys-scores-p95 nil)
+          (.updateXYSeries scores-chart series-scores-p99-label xs-scores-p99 ys-scores-p99 nil)
+          (.updateXYSeries scores-chart series-scores-best-label xs-scores-best ys-scores-best nil)
           (.setTitle scores-chart "Population Score")
 
           (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]

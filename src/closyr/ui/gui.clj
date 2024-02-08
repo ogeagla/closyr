@@ -831,14 +831,9 @@
                                               {:x-axis-title "Iteration"
                                                :y-axis-title "Score (L1 Loss)"
                                                :chart-title  "No data to show"
-                                               :series       [{:label  series-scores-best-label
-                                                               :xs     xs-scores-best
-                                                               :ys     ys-scores-best
-                                                               :marker SeriesMarkers/PLUS}
-
-                                                              {:label  series-scores-p99-label
-                                                               :xs     xs-scores-p99
-                                                               :ys     ys-scores-p99
+                                               :series       [{:label  series-scores-p75-label
+                                                               :xs     xs-scores-p75
+                                                               :ys     ys-scores-p75
                                                                :marker SeriesMarkers/CROSS}
 
                                                               {:label  series-scores-p95-label
@@ -846,10 +841,15 @@
                                                                :ys     ys-scores-p95
                                                                :marker SeriesMarkers/CROSS}
 
-                                                              {:label  series-scores-p75-label
-                                                               :xs     xs-scores-p75
-                                                               :ys     ys-scores-p75
-                                                               :marker SeriesMarkers/CROSS}]
+                                                              {:label  series-scores-p99-label
+                                                               :xs     xs-scores-p99
+                                                               :ys     ys-scores-p99
+                                                               :marker SeriesMarkers/CROSS}
+
+                                                              {:label  series-scores-best-label
+                                                               :xs     xs-scores-best
+                                                               :ys     ys-scores-best
+                                                               :marker SeriesMarkers/PLUS}]
                                                :width        400
                                                :height       200})
             ;; ^XYChart scores-chart           (plot/make-plot:1-series
