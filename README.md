@@ -23,13 +23,16 @@ Currently this application is not packaged, so you have to run it from source, u
 
 Use the application via GUI or in the terminal. 
 
-There are 3 options.
+There are 4 options.
 
 
 ### Run the provided realase JAR
 
 Requirements:
 - Java
+
+
+Then run:
 
 
     $ java -jar closyr-0.1.0-SNAPSHOT-standalone.jar ...options here...
@@ -41,7 +44,10 @@ Requirements:
 - Java
 - Leiningen
 
-    
+
+Then run:
+
+
     $ lein run
 
 Or headless (just in the terminal), where you can specify options and input data:
@@ -59,6 +65,9 @@ Requirements:
 - Leiningen (I will provide a deps file if enough interest)
 
 
+Then run:
+
+
     (require '[closyr.symreg :as symreg]) 
     (symreg/run-app-with-gui)
 
@@ -66,6 +75,7 @@ Requirements:
 
 Requirements:
 - Java
+
 
 
     $ lein uberjar
@@ -79,7 +89,7 @@ You can also provide the same command-line options to `java` command, like:
 
 - `-t` `--headless`   : [optional] run without GUI, in terminal only
 - `-p` `--population` : [optional] size of population which will evolve; the number of functions we create and modify
-- `-t` `--iterations` : [optional] number of iterations to run for
+- `-i` `--iterations` : [optional] number of iterations to run for
 - `-x` `--xs`         : [optional] the xs for the points in the dataset to fit against; if provided, must also provide `ys`
 - `-y` `--ys`         : [optional] the ys for the points in the dataset to fit against; if provided, must also provide `xs`
 - `-f` `--infile`     : [optional] A CSV file which either contains 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset
