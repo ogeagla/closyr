@@ -62,7 +62,9 @@
       MaterialLiteTheme)
     (org.knowm.xchart
       XChartPanel
-      XYChart)))
+      XYChart)
+    (org.knowm.xchart.style.markers
+      SeriesMarkers)))
 
 
 (set! *warn-on-reflection* true)
@@ -775,9 +777,21 @@
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
            ^String series-best-fn-label ^String series-objective-fn-label update-loop
-           ^String series-scores-label
-           ^List xs-scores
-           ^List ys-scores]
+           ^String series-scores-best-label
+
+           ^String series-scores-p99-label
+           ^String series-scores-p95-label
+           ^String series-scores-p75-label
+
+           ^List xs-scores-best
+           ^List ys-scores-best
+
+           ^List xs-scores-p99
+           ^List ys-scores-p99
+           ^List xs-scores-p95
+           ^List ys-scores-p95
+           ^List xs-scores-p75
+           ^List ys-scores-p75]
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
@@ -812,12 +826,38 @@
                                               ys-objective-fn)
             best-fn-chart-panel             (XChartPanel. best-fn-chart)
 
-            ^XYChart scores-chart           (plot/make-plot:1-series
-                                              series-scores-label
-                                              "Iteration"
-                                              "Score"
-                                              xs-scores
-                                              ys-scores)
+            ^XYChart scores-chart           (plot/make-plot:n-series
+
+                                              {:x-axis-title "Iteration"
+                                               :y-axis-title "Score (L1 Loss)"
+                                               :chart-title  "No data to show"
+                                               :series       [{:label  series-scores-best-label
+                                                               :xs     xs-scores-best
+                                                               :ys     ys-scores-best
+                                                               :marker SeriesMarkers/CIRCLE}
+
+                                                              {:label  series-scores-p99-label
+                                                               :xs     xs-scores-p99
+                                                               :ys     ys-scores-p99
+                                                               :marker SeriesMarkers/RECTANGLE}
+
+                                                              {:label  series-scores-p95-label
+                                                               :xs     xs-scores-p95
+                                                               :ys     ys-scores-p95
+                                                               :marker SeriesMarkers/RECTANGLE}
+
+                                                              {:label  series-scores-p75-label
+                                                               :xs     xs-scores-p75
+                                                               :ys     ys-scores-p75
+                                                               :marker SeriesMarkers/TRAPEZOID}]
+                                               :width        400
+                                               :height       200})
+            ;; ^XYChart scores-chart           (plot/make-plot:1-series
+            ;;                                  series-scores-best-label
+            ;;                                  "Iteration"
+            ;;                                  "Score"
+            ;;                                  xs-scores-best
+            ;;                                  ys-scores-best)
             scores-chart-panel              (XChartPanel. scores-chart)
 
 
@@ -935,9 +975,21 @@
        :xs-objective-fn           (doto (CopyOnWriteArrayList.) (.add 0.0) (.add 1.0))
        :ys-best-fn                (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 1.0))
        :ys-objective-fn           (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 1.9))
-       :xs-scores                 (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
-       :ys-scores                 (doto (CopyOnWriteArrayList.) (.add 1.0) (.add 2.0))
-       :series-scores-label       "series scores"
+       :xs-scores-best            (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
+       :ys-scores-best            (doto (CopyOnWriteArrayList.) (.add 1.0) (.add 2.0))
+
+       :xs-scores-p99             (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
+       :ys-scores-p99             (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 2.0))
+       :xs-scores-p95             (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
+       :ys-scores-p95             (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 2.0))
+       :xs-scores-p75             (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
+       :ys-scores-p75             (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 2.0))
+
+       :series-scores-best-label  "series scores"
+       :series-scores-p99-label   "p99 score"
+       :series-scores-p95-label   "p95 score"
+       :series-scores-p75-label   "p75 score"
+
        :series-best-fn-label      "series 1"
        :series-objective-fn-label "series 2"
        :sim-stop-start-chan       sim-stop-start-chan

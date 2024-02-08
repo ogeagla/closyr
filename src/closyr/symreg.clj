@@ -91,9 +91,20 @@
            ^JButton ctl-start-stop-btn]}
    {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
            ^String series-best-fn-label ^String series-objective-fn-label
-           ^List xs-scores
-           ^List ys-scores
-           ^String series-scores-label]
+
+           ^List xs-scores-best
+           ^List ys-scores-best
+           ^List xs-scores-p99
+           ^List ys-scores-p99
+           ^List xs-scores-p95
+           ^List ys-scores-p95
+           ^List xs-scores-p75
+           ^List ys-scores-p75
+
+           ^String series-scores-best-label
+           ^String series-scores-p99-label
+           ^String series-scores-p95-label
+           ^String series-scores-p75-label]
     :as   conf}]
   (ss/set-text* status-label (str "Running"))
   (go-loop []
@@ -102,9 +113,10 @@
                        best-eval-extended
                        best-eval
                        best-score
-                       best-95p-v
-                       best-50p-v
-                       best-05p-v
+                       best-99p-score
+                       best-95p-score
+                       best-75p-score
+
                        best-f-str i iters]
                 :as   sim-msg} (<! sim->gui-chan)]
 
@@ -129,8 +141,15 @@
           (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
 
           (when (= 1 i)
-            (.clear xs-scores)
-            (.clear ys-scores))
+
+            (.clear xs-scores-best)
+            (.clear ys-scores-best)
+            (.clear xs-scores-p99)
+            (.clear ys-scores-p99)
+            (.clear xs-scores-p95)
+            (.clear ys-scores-p95)
+            (.clear xs-scores-p75)
+            (.clear ys-scores-p75))
 
           (when (= iters i)
             (let [^JButton reset-btn @gui/ctl-reset-btn*]
@@ -139,17 +158,31 @@
 
               (ss/set-text* status-label (str "Done"))))
 
-          (.add xs-scores i)
-          (.add ys-scores best-score)
-          (.updateXYSeries scores-chart series-scores-label xs-scores ys-scores nil)
-          (.setTitle scores-chart "Best Score")
+          (.add xs-scores-best i)
+          (.add xs-scores-p99 i)
+          (.add xs-scores-p95 i)
+          (.add xs-scores-p75 i)
+          (.add ys-scores-best best-score)
+          (.add ys-scores-p99 best-99p-score)
+          (.add ys-scores-p95 best-95p-score)
+          (.add ys-scores-p75 best-75p-score)
+          (.updateXYSeries scores-chart series-scores-best-label xs-scores-best ys-scores-best nil)
+          (.updateXYSeries scores-chart series-scores-p99-label xs-scores-p99 ys-scores-p99 nil)
+          (.updateXYSeries scores-chart series-scores-p95-label xs-scores-p95 ys-scores-p95 nil)
+          (.updateXYSeries scores-chart series-scores-p75-label xs-scores-p75 ys-scores-p75 nil)
+
+          (.setTitle scores-chart "Population Score")
 
           (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
             (when (not= fn-str (.getText sim-selectable-text))
               (println "New Best Function: " fn-str)
               (ss/set-text* sim-selectable-text fn-str)))
 
-          (ss/set-text* info-label (str "Iteration: " i "/" iters " Score: " best-score))
+          (ss/set-text* info-label (str "Iteration: " i "/" iters
+                                        " Best Score: " best-score
+                                        " P99 Score: " best-99p-score
+                                        " P95 Score: " best-95p-score
+                                        " p75 Score: " best-75p-score))
 
           (.revalidate best-fn-chart-panel)
           (.repaint best-fn-chart-panel)
@@ -178,9 +211,21 @@
        :xs-objective-fn           (doto (CopyOnWriteArrayList.) (.addAll input-xs-vec))
        :ys-best-fn                (doto (CopyOnWriteArrayList.) (.addAll (repeat (count input-xs-vec) 0.0)))
        :ys-objective-fn           (doto (CopyOnWriteArrayList.) (.addAll input-ys-vec))
-       :xs-scores                 (doto (CopyOnWriteArrayList.) (.add 0.0))
-       :ys-scores                 (doto (CopyOnWriteArrayList.) (.add 0.0))
-       :series-scores-label       "best score"
+
+       :xs-scores-best            (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :ys-scores-best            (doto (CopyOnWriteArrayList.) (.add 0.0))
+
+       :xs-scores-p99             (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :ys-scores-p99             (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :xs-scores-p95             (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :ys-scores-p95             (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :xs-scores-p75             (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :ys-scores-p75             (doto (CopyOnWriteArrayList.) (.add 0.0))
+
+       :series-scores-best-label  "best score"
+       :series-scores-p99-label   "p99 score"
+       :series-scores-p95-label   "p95 score"
+       :series-scores-p75-label   "p75 score"
        :series-best-fn-label      "best fn"
        :series-objective-fn-label "objective fn"
        :update-loop               (partial chart-update-loop sim->gui-chan)})

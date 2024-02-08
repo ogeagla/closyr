@@ -229,9 +229,9 @@
           took-s     (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
           pop-size   (count (:pop ga-result))
           best-v     (first bests)
+          best-99p-v (nth bests (* 0.01 (count bests)))
           best-95p-v (nth bests (* 0.05 (count bests)))
-          best-50p-v (nth bests (* 0.5 (count bests)))
-          best-05p-v (nth bests (* 0.95 (count bests)))
+          best-75p-v (nth bests (* 0.25 (count bests)))
           evaled     (ops-eval/eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (ops-eval/eval-vec-pheno-oversample
                                                   best-v run-args extended-domain-args)]
@@ -255,7 +255,7 @@
                              :best-eval-extended    evaled-extended
                              :best-f-str            (str (:expr best-v))
                              :best-score            (:score best-v)
-                             :best-95p-v            best-95p-v
-                             :best-50p-v            best-50p-v
-                             :best-05p-v            best-05p-v}))))
+                             :best-99p-score        (:score best-99p-v)
+                             :best-95p-score        (:score best-95p-v)
+                             :best-75p-score        (:score best-75p-v)}))))
   (reset! sim-stats* {}))
