@@ -834,22 +834,22 @@
                                                :series       [{:label  series-scores-best-label
                                                                :xs     xs-scores-best
                                                                :ys     ys-scores-best
-                                                               :marker SeriesMarkers/CIRCLE}
+                                                               :marker SeriesMarkers/PLUS}
 
                                                               {:label  series-scores-p99-label
                                                                :xs     xs-scores-p99
                                                                :ys     ys-scores-p99
-                                                               :marker SeriesMarkers/RECTANGLE}
+                                                               :marker SeriesMarkers/CROSS}
 
                                                               {:label  series-scores-p95-label
                                                                :xs     xs-scores-p95
                                                                :ys     ys-scores-p95
-                                                               :marker SeriesMarkers/RECTANGLE}
+                                                               :marker SeriesMarkers/CROSS}
 
                                                               {:label  series-scores-p75-label
                                                                :xs     xs-scores-p75
                                                                :ys     ys-scores-p75
-                                                               :marker SeriesMarkers/TRAPEZOID}]
+                                                               :marker SeriesMarkers/CROSS}]
                                                :width        400
                                                :height       200})
             ;; ^XYChart scores-chart           (plot/make-plot:1-series
