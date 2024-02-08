@@ -797,7 +797,7 @@
 
            ^String series-scores-p99-label
            ^String series-scores-p95-label
-           ^String series-scores-p75-label
+           ^String series-scores-p90-label
 
            ^List xs-scores-best
            ^List ys-scores-best
@@ -806,8 +806,8 @@
            ^List ys-scores-p99
            ^List xs-scores-p95
            ^List ys-scores-p95
-           ^List xs-scores-p75
-           ^List ys-scores-p75]
+           ^List xs-scores-p90
+           ^List ys-scores-p90]
     :as   gui-data}]
   (SwingUtilities/invokeLater
     (fn []
@@ -847,9 +847,9 @@
                                               {:x-axis-title "Iteration"
                                                :y-axis-title "Score (L1 Loss)"
                                                :chart-title  "No data to show"
-                                               :series       [{:label  series-scores-p75-label
-                                                               :xs     xs-scores-p75
-                                                               :ys     ys-scores-p75
+                                               :series       [{:label  series-scores-p90-label
+                                                               :xs     xs-scores-p90
+                                                               :ys     ys-scores-p90
                                                                :marker SeriesMarkers/CROSS}
 
                                                               {:label  series-scores-p95-label
@@ -998,13 +998,13 @@
        :ys-scores-p99             (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 2.0))
        :xs-scores-p95             (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
        :ys-scores-p95             (doto (CopyOnWriteArrayList.) (.add 2.0) (.add 2.0))
-       :xs-scores-p75             (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
-       :ys-scores-p75             (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 2.0))
+       :xs-scores-p90             (doto (CopyOnWriteArrayList.) (.add -3.0) (.add -1.9))
+       :ys-scores-p90             (doto (CopyOnWriteArrayList.) (.add 3.0) (.add 2.0))
 
        :series-scores-best-label  "series scores"
        :series-scores-p99-label   "p99 score"
        :series-scores-p95-label   "p95 score"
-       :series-scores-p75-label   "p75 score"
+       :series-scores-p90-label   "p90 score"
 
        :series-best-fn-label      "series 1"
        :series-objective-fn-label "series 2"

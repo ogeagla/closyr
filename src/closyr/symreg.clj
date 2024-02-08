@@ -93,13 +93,13 @@
            ^List ys-scores-p99
            ^List xs-scores-p95
            ^List ys-scores-p95
-           ^List xs-scores-p75
-           ^List ys-scores-p75
+           ^List xs-scores-p90
+           ^List ys-scores-p90
 
            ^String series-scores-best-label
            ^String series-scores-p99-label
            ^String series-scores-p95-label
-           ^String series-scores-p75-label]
+           ^String series-scores-p90-label]
     :as   conf}]
   (ss/set-text* status-label (str "Running"))
   (go-loop []
@@ -108,9 +108,9 @@
                        best-eval-extended
                        best-eval
                        best-score
-                       best-99p-score
-                       best-95p-score
-                       best-75p-score
+                       best-p99-score
+                       best-p95-score
+                       best-p90-score
 
                        best-f-str i iters]
                 :as   sim-msg} (<! sim->gui-chan)]
@@ -143,8 +143,8 @@
             (.clear ys-scores-p99)
             (.clear xs-scores-p95)
             (.clear ys-scores-p95)
-            (.clear xs-scores-p75)
-            (.clear ys-scores-p75))
+            (.clear xs-scores-p90)
+            (.clear ys-scores-p90))
 
           (when (= iters i)
             (let [^JButton reset-btn @gui/ctl-reset-btn*]
@@ -156,12 +156,12 @@
           (.add xs-scores-best i)
           (.add xs-scores-p99 i)
           (.add xs-scores-p95 i)
-          (.add xs-scores-p75 i)
+          (.add xs-scores-p90 i)
           (.add ys-scores-best best-score)
-          (.add ys-scores-p99 best-99p-score)
-          (.add ys-scores-p95 best-95p-score)
-          (.add ys-scores-p75 best-75p-score)
-          (.updateXYSeries scores-chart series-scores-p75-label xs-scores-p75 ys-scores-p75 nil)
+          (.add ys-scores-p99 best-p99-score)
+          (.add ys-scores-p95 best-p95-score)
+          (.add ys-scores-p90 best-p90-score)
+          (.updateXYSeries scores-chart series-scores-p90-label xs-scores-p90 ys-scores-p90 nil)
           (.updateXYSeries scores-chart series-scores-p95-label xs-scores-p95 ys-scores-p95 nil)
           (.updateXYSeries scores-chart series-scores-p99-label xs-scores-p99 ys-scores-p99 nil)
           (.updateXYSeries scores-chart series-scores-best-label xs-scores-best ys-scores-best nil)
@@ -174,9 +174,9 @@
 
           (ss/set-text* info-label (str "Iteration: " i "/" iters
                                         " Best Score: " best-score
-                                        " P99 Score: " best-99p-score
-                                        " P95 Score: " best-95p-score
-                                        " p75 Score: " best-75p-score))
+                                        " P99 Score: " best-p99-score
+                                        " P95 Score: " best-p95-score
+                                        " p90 Score: " best-p90-score))
 
           (.revalidate best-fn-chart-panel)
           (.repaint best-fn-chart-panel)
@@ -213,13 +213,13 @@
        :ys-scores-p99             (doto (CopyOnWriteArrayList.) (.add 0.0))
        :xs-scores-p95             (doto (CopyOnWriteArrayList.) (.add 0.0))
        :ys-scores-p95             (doto (CopyOnWriteArrayList.) (.add 0.0))
-       :xs-scores-p75             (doto (CopyOnWriteArrayList.) (.add 0.0))
-       :ys-scores-p75             (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :xs-scores-p90             (doto (CopyOnWriteArrayList.) (.add 0.0))
+       :ys-scores-p90             (doto (CopyOnWriteArrayList.) (.add 0.0))
 
        :series-scores-best-label  "best score"
        :series-scores-p99-label   "p99 score"
        :series-scores-p95-label   "p95 score"
-       :series-scores-p75-label   "p75 score"
+       :series-scores-p90-label   "p90 score"
        :series-best-fn-label      "best fn"
        :series-objective-fn-label "objective fn"
        :update-loop               (partial chart-update-loop sim->gui-chan)})
