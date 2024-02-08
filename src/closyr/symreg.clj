@@ -354,11 +354,13 @@
                (partial ops/crossover-fn initial-muts))
          i   iters]
     (if (zero? i)
-      {:final-population pop
+      {:iters-done       (- iters i)
+       :final-population pop
        :next-step        :wait}
       (if (and use-gui?
                (park-if-gui-pause-and-return-if-should-restart run-args))
-        {:final-population pop
+        {:iters-done       (- iters i)
+         :final-population pop
          :next-step        :restart}
         (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
           (ops/report-iteration i iters ga-result run-args run-config)
@@ -379,14 +381,15 @@
                                     " from initial exprs: " (count ops-init/initial-exprs))
                            (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs))))
                          initial-phenos)
-        run-config     (assoc run-config :initial-phenos initial-phenos)
+        run-config     (assoc run-config :initial-phenos initial-phenos :iters iters)
         start          (Date.)
         _              (do (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
                            (reset! ops/test-timer* start))
 
-        {:keys [final-population next-step]} (run-ga-iterations run-config run-args)]
+        {:keys [final-population next-step iters-done]
+         :as   completed-ga-data} (run-ga-iterations run-config run-args)]
 
-    (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds")
+    (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds for iters: " iters-done)
     (case next-step
       :wait (if use-gui?
               (do
@@ -394,7 +397,7 @@
                 (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
                   (recur run-config (merge run-args new-gui-args))))
               (do (println "Done.")
-                  final-population))
+                  completed-ga-data))
       :restart (do
                  (println "Restarting...")
                  (<!! (timeout 200))
