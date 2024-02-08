@@ -26,7 +26,20 @@ Use the application via GUI or in the terminal.
 There are 3 options.
 
 
+### Run the provided realase JAR
+
+Requirements:
+- Java
+
+
+    $ java -jar closyr-0.1.0-SNAPSHOT-standalone.jar ...options here...
+
+
 ### Lein Run
+
+Requirements:
+- Java
+- Leiningen
 
     
     $ lein run
@@ -41,11 +54,18 @@ Which is the same as:
 
 ###  In Clojure REPL
 
+Requirements:
+- Java
+- Leiningen (I will provide a deps file if enough interest)
+
 
     (require '[closyr.symreg :as symreg]) 
     (symreg/run-app-with-gui)
 
 ### Build and run JAR
+
+Requirements:
+- Java
 
 
     $ lein uberjar
@@ -54,6 +74,15 @@ Which is the same as:
 You can also provide the same command-line options to `java` command, like:
 
     $ java -jar target/uberjar/closyr-0.1.0-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
+
+## Run Options
+
+- `-t` `--headless`   : [optional] run without GUI, in terminal only
+- `-p` `--population` : [optional] size of population which will evolve; the number of functions we create and modify
+- `-t` `--iterations` : [optional] number of iterations to run for
+- `-x` `--xs`         : [optional] the xs for the points in the dataset to fit against; if provided, must also provide `ys`
+- `-y` `--ys`         : [optional] the ys for the points in the dataset to fit against; if provided, must also provide `xs`
+- `-f` `--infile`     : [optional] A CSV file which either contains 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset
 
 ## Examples
 
