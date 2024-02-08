@@ -6,7 +6,7 @@ A Symbolic Regression tool, written in Clojure.
 
 Warning: This is experimental software, with an unstable API. Expect breaking changes prior to a major release.
 
-- Draw an objective function or select a built-in dataset
+- Draw an objective function, select a built-in dataset, or provide a CSV
 - Select number of points, iterations
 - See progress 
   - Chart of best fitting function
@@ -37,8 +37,6 @@ Requirements:
 - Java
 
 
-Then run:
-
 
     $ java -jar closyr-0.1.0-SNAPSHOT-standalone.jar ...options here...
 
@@ -46,11 +44,8 @@ Then run:
 ### Lein Run
 
 Requirements:
-- Java
-- Leiningen
+- Java, Leiningen
 
-
-Then run:
 
 
     $ lein run
@@ -66,11 +61,8 @@ Which is the same as:
 ###  In Clojure REPL
 
 Requirements:
-- Java
-- Leiningen (I will provide a deps file if enough interest)
+- Java, Leiningen (I will provide a deps file if enough interest)
 
-
-Then run:
 
 
     (require '[closyr.symreg :as symreg]) 
@@ -79,10 +71,8 @@ Then run:
 ### Build and run JAR
 
 Requirements:
-- Java
+- Java, Leiningen
 
-
-Then run:
 
 
     $ lein uberjar
