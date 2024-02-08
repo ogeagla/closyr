@@ -141,6 +141,11 @@ Coverage looks like this if you run `lein cloverage`:
 - This project would not have been possible without the symbolic math library `Symja` (https://github.com/axkr/symja_android_library), which has been great to use and I consider it to be like a `MathJs` (https://github.com/josdejong/mathjs) on the JVM.
 
 
+## Contribute
+
+I accept PRs, please open an issue to discuss beforehand to make sure we are in alignment. Thanks!
+
+
 
 ## License
 
