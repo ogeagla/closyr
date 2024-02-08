@@ -129,7 +129,7 @@ Coverage looks like this if you run `lein cloverage`:
 
 ## Roadmap
 
-- [ ] CLI options accept a CSV file (GUI already supports this)
+- [x] CLI options accept a CSV file (GUI already supports this)
 - [ ] More tests
 - [ ] A different frontend.  The current Java Swing frontend does the job, but it's not easy to maintain and it's hard to make look better.
 - [ ] Can this be a follow-up to this issue, asking for a symbolic regression tool on the JVM? https://github.com/axkr/symja_android_library/issues/850
