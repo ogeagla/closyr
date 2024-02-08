@@ -22,7 +22,7 @@ This project is not yet available in a JAR repository (though I'd use Clojars if
 
 Or, you can run the app from source, using Clojure development tools (`leiningen`) in this project:
 
-    $ lein deps/repl/run/uberjar
+    $ lein deps/repl/run/uberjar...
 
 ## Usage
 
@@ -33,9 +33,7 @@ There are 4 ways to run the application.  See next section for details about the
 
 ### Run the provided realase JAR
 
-Requirements:
-- Java
-
+Requirements: Java
 
 
     $ java -jar closyr-0.1.0-SNAPSHOT-standalone.jar ...options here...
@@ -43,9 +41,7 @@ Requirements:
 
 ### Lein Run
 
-Requirements:
-- Java, Leiningen
-
+Requirements: Java, Leiningen
 
 
     $ lein run
@@ -60,9 +56,7 @@ Which is the same as:
 
 ###  In Clojure REPL
 
-Requirements:
-- Java, Leiningen (I will provide a deps file if enough interest)
-
+Requirements: Java, Leiningen (I will provide a deps file if enough interest)
 
 
     (require '[closyr.symreg :as symreg]) 
@@ -70,9 +64,7 @@ Requirements:
 
 ### Build and run JAR
 
-Requirements:
-- Java, Leiningen
-
+Requirements: Java, Leiningen
 
 
     $ lein uberjar
