@@ -39,3 +39,13 @@
                                 (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1) nil)
                                 (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil))))
                   "x^2+Sin(x)"))))))))
+
+
+(deftest compute-residuals
+  (testing "valid input"
+    (is (= (ops/compute-residual 10.0 5.0)
+           5.0)))
+
+  (testing "invalid input"
+    (is (= (ops/compute-residual ##Inf 5.0)
+           ops/max-resid))))
