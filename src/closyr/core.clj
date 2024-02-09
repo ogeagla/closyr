@@ -86,6 +86,7 @@
         opts (cond
                (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch")
                (and xs (nil? ys)) (println "Error: only XS provided, please provide YS")
+               (and ys (nil? xs)) (println "Error: only YS provided, please provide XS")
                :else opts)]
     (dissoc opts :infile)))
 
