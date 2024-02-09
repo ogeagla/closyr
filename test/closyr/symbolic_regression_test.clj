@@ -86,9 +86,18 @@
                                             {:new-state          :start
                                              :input-data-x       [0 1 2 3 4]
                                              :input-data-y       [1 3 6 18 8]
-                                             :input-iters        100
-                                             :input-phenos-count 2000}))
+                                             :input-iters        200
+                                             :input-phenos-count 500}))
 
+                                  (<! (timeout 1000))
+                                  (is (put! symreg/*sim-stop-start-chan*
+                                            {:new-state          :pause}))
+                                  (<! (timeout 1000))
+                                  (is (put! symreg/*sim-stop-start-chan*
+                                            {:new-state          :start}))
+                                  (<! (timeout 1000))
+                                  (is (put! symreg/*sim-stop-start-chan*
+                                            {:new-state          :pause}))
                                   (<! (timeout 1000))
 
                                   (is (put! symreg/*sim-stop-start-chan*
@@ -96,7 +105,7 @@
                                              :input-data-x       [0 1 2 3 4]
                                              :input-data-y       [1 13 16 8 8]
                                              :input-iters        500
-                                             :input-phenos-count 2000}))
+                                             :input-phenos-count 500}))
 
                                   (<! (timeout 1000))
 
@@ -119,3 +128,16 @@
 
 
             (is (= (<!! control-process) true))))))))
+
+
+(deftest derive-log-steps
+  (testing "with basic input"
+    (is (=
+          (symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 0 10))}
+                                    {:input-xs-count 10})
+          20))
+
+    (is (=
+          (symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 0 10))}
+                                    {:input-xs-count 10})
+          1))))
