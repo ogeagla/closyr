@@ -60,9 +60,6 @@
       AbstractDocument$DefaultDocumentEvent)
     (mdlaf
       MaterialLookAndFeel)
-    (mdlaf.themes
-      JMarsDarkTheme
-      MaterialLiteTheme)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -248,11 +245,7 @@
 
 (defn setup-theme
   []
-  ;; (LafManager/install (DarculaTheme.))
-  ;; (LafManager/install (SolarizedDarkTheme.))
-
   (try
-
     (UIManager/setLookAndFeel
       (MaterialLookAndFeel.
         ;; (MaterialLiteTheme.)
@@ -274,7 +267,6 @@
 
 (defn radio-controls-border
   [title]
-  ;; (BorderFactory/createLineBorder (Color. 80 80 80) 1)
   (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title))
 
 
