@@ -60,6 +60,18 @@
             {:expr    "x"
              :simple? true}))))
 
+  (testing "simplify ignore"
+    (reset! ops-common/do-not-simplify-fns* {"x" 1})
+    (let [x (F/Dummy "x")]
+      (is (=
+            (update (ops-common/maybe-simplify {:expr x})
+                    :expr str)
+            {:expr    "x"
+             :simple? true}))
+      (is (= @ops-common/do-not-simplify-fns*
+             {"x" 2})))
+    (reset! ops-common/do-not-simplify-fns* {}))
+
   (testing "simplify sum"
     (let [x (F/Dummy "x")]
       (is (=

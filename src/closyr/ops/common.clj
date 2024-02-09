@@ -169,7 +169,9 @@
   (inversely-proportional-to-leaf-size leaf-count 0.25))
 
 
-(def ^:private do-not-simplify-fns* (atom {}))
+(def do-not-simplify-fns*
+  "Map of fns to not attempt to simplify because they've taken too long in the past"
+  (atom {}))
 
 
 (defn- check-simplify-timing
@@ -180,7 +182,7 @@
       (<! (timeout (int (Math/pow 10 (+ 1.5 (/ c 4))))))
       (when (> c 6)
 
-        (swap! do-not-simplify-fns* assoc (str expr) true)
+        (swap! do-not-simplify-fns* assoc (str expr) 1)
         (log/warn "Warning: simplify taking a long time: " c
                   " " (.leafCount expr) " : " (str expr)
                   " total slow fns: " (count @do-not-simplify-fns*)))
@@ -193,6 +195,7 @@
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
   (if (@do-not-simplify-fns* (str expr))
     (do
+      (swap! do-not-simplify-fns* update (str expr) inc)
       (log/warn "Skip fn which we cannot simplify: " (str expr))
       expr)
     (try
