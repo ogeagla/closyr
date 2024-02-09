@@ -343,7 +343,21 @@
                              :expr F/C4}
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
-                   (str (F/Power F/C4 (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))))))))
+                   (str (F/Power F/C4 (F/Times x (F/Cos (F/Subtract F/C1D2 x))))))))))))
+
+  (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
+                   #'prng/rand-nth (fn [coll] (last coll))}
+    (fn []
+      (with-redefs [ops-modify/crossover-sampler [:exp21]]
+        (let [x (F/Dummy "x")]
+          (testing "Can crossover mix of IExpr and IAST with Exp21"
+            (is (= (str (:expr
+                          (ops-modify/crossover
+                            {:sym  x
+                             :expr F/C4}
+                            {:sym  x
+                             :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
+                   "x^4*Cos(1/2-x)^4"))))))))
 
 
 (def all-mods-applied-on-fn-expected
