@@ -1,4 +1,4 @@
-(ns closyr.symreg
+(ns closyr.symbolic-regression
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.tools.logging :as log]

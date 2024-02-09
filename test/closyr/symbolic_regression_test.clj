@@ -1,11 +1,11 @@
-(ns closyr.symreg-test
+(ns closyr.symbolic-regression-test
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
     [clojure.test :refer :all]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
-    [closyr.symreg :as symreg]))
+    [closyr.symbolic-regression :as symreg]))
 
 
 (deftest can-run-experiment

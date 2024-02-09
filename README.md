@@ -59,7 +59,7 @@ Which is the same as:
 Requirements: Java, Leiningen (I will provide a deps file if enough interest)
 
 
-    (require '[closyr.symreg :as symreg]) 
+    (require '[closyr.symbolic-regression :as symreg]) 
     (symreg/run-app-with-gui)
 
 ### Build and run JAR

@@ -5,7 +5,7 @@
     [clojure.tools.cli :as cli]
     [clojure.tools.logging :as log]
     [closyr.dataset.csv :as input-csv]
-    [closyr.symreg :as symreg])
+    [closyr.symbolic-regression :as symreg])
   (:import
     (java.io
       File)))
