@@ -46,6 +46,10 @@
     (is (= (#'ops/compute-residual 10.0 5.0)
            5.0)))
 
-  (testing "invalid input"
+  (testing "invalid input 1"
     (is (= (#'ops/compute-residual ##Inf 5.0)
+           ops/max-resid)))
+
+  (testing "invalid input 2"
+    (is (= (#'ops/compute-residual ##Inf ##Inf)
            ops/max-resid))))
