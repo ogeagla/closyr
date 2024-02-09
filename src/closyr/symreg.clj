@@ -410,31 +410,36 @@
   (let [iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
                          (do
-                           (println "Generating pheno count: " input-phenos-count
+                           #_(println "Generating pheno count: " input-phenos-count
                                     " via reps: " (/ input-phenos-count (count ops-init/initial-exprs))
                                     " from initial exprs: " (count ops-init/initial-exprs))
                            (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs))))
                          initial-phenos)
         run-config     (assoc run-config :initial-phenos initial-phenos :iters iters)
         start          (Date.)
-        _              (do (println "Start " start "iters: " iters " pop size: " (count initial-phenos))
+        _              (do (println "-- Start " start
+                                    "iters: " iters
+                                    " pop size: " (count initial-phenos)
+                                    " --")
                            (reset! ops/test-timer* start))
 
         {:keys [final-population next-step iters-done]
          :as   completed-ga-data} (run-ga-iterations run-config run-args)]
 
-    (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds for iters: " iters-done)
+    (println "-- Took " (/ (ops-common/start-date->diff-ms start) 1000.0)
+             " seconds for iters: " iters-done
+             " --")
     (case next-step
-      :stop (do (println "Stopped."))
+      :stop (do (println "-- Stopped. --"))
       :wait (if use-gui?
               (do
-                (println "Experiment complete, waiting for GUI to start another")
+                (println "-- Experiment complete, waiting for GUI to start another --")
                 (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
                   (recur run-config (merge run-args new-gui-args))))
-              (do (println "Done.")
+              (do (println "-- Done. --")
                   completed-ga-data))
       :restart (do
-                 (println "Restarting...")
+                 (println "-- Restarting... --")
                  (<!! (timeout 200))
                  (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
 
@@ -454,9 +459,10 @@
   "Run a GA evolution experiment to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-  (println "initial data: iters: " iters
+  (println "-- Run with initial data: iters: " iters
            "pop: " (count initial-phenos)
-           "muts: " (count initial-muts))
+           "muts: " (count initial-muts)
+           " --")
 
   (let [symbolic-regression-search-fn
         (fn []
