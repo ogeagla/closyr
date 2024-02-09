@@ -73,10 +73,51 @@
   (close! *gui-close-chan*))
 
 
-(defn chart-update-loop
-  "In the GUI thread, loops over data sent from the experiement to be rendered onto the GUI. Parks waiting on new data,
-  and ends the loop when a command in the close chan is sent"
-  [sim->gui-chan
+(defn update-chart-accumulate
+  [^XYChart chart ^String series i y-value ^List xs ^List ys]
+
+  (when (= 1 i)
+
+    (.clear xs)
+    (.clear ys))
+
+
+  (.add xs i)
+  (.add ys y-value)
+
+  (.updateXYSeries chart series xs ys nil))
+
+
+(defn check-if-done
+  [i iters status-label ctl-start-stop-btn]
+  (when (= iters i)
+    (let [^JButton reset-btn @gui/ctl-reset-btn*]
+      (ss/set-text* ctl-start-stop-btn gui/ctl:start)
+      (.setEnabled reset-btn false)
+      (ss/set-text* status-label (str "Done")))))
+
+
+(defn check-new-best-fn
+  [best-f-str best-fn-selectable-text]
+  (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
+    (when (not= fn-str (.getText best-fn-selectable-text))
+      (log/warn "New Best Function: " fn-str)
+      (ss/set-text* best-fn-selectable-text fn-str))))
+
+
+(defn check-should-recur
+  []
+  (go
+    (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
+      (if-not (= msg :continue)
+        (do (log/warn "Closing chans")
+            (close-chans!)
+            false)
+        true))))
+
+
+(defn repaint-gui
+  [chart-iter
    {:keys [^XYChart best-fn-chart
            ^XYChart scores-chart
            ^XChartPanel best-fn-chart-panel
@@ -84,7 +125,8 @@
            ^JTextField best-fn-selectable-text
            ^JLabel info-label
            ^JLabel status-label
-           ^JButton ctl-start-stop-btn]}
+           ^JButton ctl-start-stop-btn]
+    :as   ui-elements}
    {:keys [^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
            ^String series-best-fn-label ^String series-objective-fn-label
 
@@ -101,104 +143,87 @@
            ^String series-scores-p99-label
            ^String series-scores-p95-label
            ^String series-scores-p90-label]
-    :as   conf}]
+    :as   conf}
+   {:keys [input-xs-vec-extended
+           best-eval-extended
+           best-eval
+           best-score
+           best-p99-score
+           best-p95-score
+           best-p90-score
+           best-f-str i iters]
+    :as   sim-msg}]
+  (let [{:keys [input-xs-vec input-ys-vec]} @sim-input-args*]
+
+    (when (zero? chart-iter) (ss/set-text* status-label (str "Running")))
+
+    (.clear ys-best-fn)
+    (.addAll ys-best-fn (if best-eval-extended
+                          (clamp-infinites best-eval-extended)
+                          best-eval))
+
+    (.clear ys-objective-fn)
+    (.addAll ys-objective-fn input-ys-vec)
+
+    (.clear xs-best-fn)
+    (.addAll xs-best-fn (or input-xs-vec-extended input-xs-vec))
+
+    (.clear xs-objective-fn)
+    (.addAll xs-objective-fn input-xs-vec)
+
+    (.setTitle best-fn-chart "Best vs Objective Functions")
+    (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
+    (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
+
+    (update-chart-accumulate scores-chart ^String series-scores-p90-label i best-p90-score xs-scores-p90 ys-scores-p90)
+    (update-chart-accumulate scores-chart ^String series-scores-p95-label i best-p95-score xs-scores-p95 ys-scores-p95)
+    (update-chart-accumulate scores-chart ^String series-scores-p99-label i best-p99-score xs-scores-p99 ys-scores-p99)
+    (update-chart-accumulate scores-chart ^String series-scores-best-label i best-score xs-scores-best ys-scores-best)
+
+    (.setTitle scores-chart "Population Score")
+
+    (check-if-done i iters status-label ctl-start-stop-btn)
+
+    (check-new-best-fn best-f-str best-fn-selectable-text)
+
+    (ss/set-text* info-label (str "Iteration: " i "/" iters
+                                  " Best Score: " best-score
+                                  " P99 Score: " best-p99-score
+                                  " P95 Score: " best-p95-score
+                                  " p90 Score: " best-p90-score))
+
+    (.revalidate best-fn-chart-panel)
+    (.repaint best-fn-chart-panel)
+
+    (.revalidate scores-chart-panel)
+    (.repaint scores-chart-panel)))
+
+
+(defn chart-update-loop
+  "In the GUI thread, loops over data sent from the experiement to be rendered onto the GUI. Parks waiting on new data,
+  and ends the loop when a command in the close chan is sent"
+  [sim->gui-chan
+   {:keys [^JLabel status-label]
+    :as   ui-elements}
+   conf]
+
   (log/warn "Begin chart update loop")
 
-
   (go-loop [chart-iter 0]
+
     (<! (timeout 50))
-    (when-let [{:keys [input-xs-vec-extended
-                       best-eval-extended
-                       best-eval
-                       best-score
-                       best-p99-score
-                       best-p95-score
-                       best-p90-score
 
-                       best-f-str i iters]
-                :as   sim-msg} (<! sim->gui-chan)]
+    (when-let [sim-msg (<! sim->gui-chan)]
+      (try
 
-      (let [{:keys [input-xs-vec input-ys-vec]} @sim-input-args*]
-        (try
+        (repaint-gui chart-iter ui-elements conf sim-msg)
 
-          (when (zero? chart-iter) (ss/set-text* status-label (str "Running")))
+        (catch Exception e
+          (log/error "Err in redrawing GUI: " (.getMessage e))
+          (ss/set-text* status-label (str "Error!"))))
 
-          (.clear ys-best-fn)
-          (.addAll ys-best-fn (if best-eval-extended
-                                (clamp-infinites best-eval-extended)
-                                best-eval))
-
-          (.clear ys-objective-fn)
-          (.addAll ys-objective-fn input-ys-vec)
-
-          (.clear xs-best-fn)
-          (.addAll xs-best-fn (or input-xs-vec-extended input-xs-vec))
-
-          (.clear xs-objective-fn)
-          (.addAll xs-objective-fn input-xs-vec)
-
-          (.setTitle best-fn-chart "Best vs Objective Functions")
-          (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
-          (.updateXYSeries best-fn-chart series-objective-fn-label xs-objective-fn ys-objective-fn nil)
-
-          (when (= 1 i)
-
-            (.clear xs-scores-best)
-            (.clear ys-scores-best)
-            (.clear xs-scores-p99)
-            (.clear ys-scores-p99)
-            (.clear xs-scores-p95)
-            (.clear ys-scores-p95)
-            (.clear xs-scores-p90)
-            (.clear ys-scores-p90))
-
-          (when (= iters i)
-            (let [^JButton reset-btn @gui/ctl-reset-btn*]
-              (ss/set-text* ctl-start-stop-btn gui/ctl:start)
-              (.setEnabled reset-btn false)
-
-              (ss/set-text* status-label (str "Done"))))
-
-          (.add xs-scores-best i)
-          (.add xs-scores-p99 i)
-          (.add xs-scores-p95 i)
-          (.add xs-scores-p90 i)
-          (.add ys-scores-best best-score)
-          (.add ys-scores-p99 best-p99-score)
-          (.add ys-scores-p95 best-p95-score)
-          (.add ys-scores-p90 best-p90-score)
-          (.updateXYSeries scores-chart series-scores-p90-label xs-scores-p90 ys-scores-p90 nil)
-          (.updateXYSeries scores-chart series-scores-p95-label xs-scores-p95 ys-scores-p95 nil)
-          (.updateXYSeries scores-chart series-scores-p99-label xs-scores-p99 ys-scores-p99 nil)
-          (.updateXYSeries scores-chart series-scores-best-label xs-scores-best ys-scores-best nil)
-          (.setTitle scores-chart "Population Score")
-
-          (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
-            (when (not= fn-str (.getText best-fn-selectable-text))
-              (log/warn "New Best Function: " fn-str)
-              (ss/set-text* best-fn-selectable-text fn-str)))
-
-          (ss/set-text* info-label (str "Iteration: " i "/" iters
-                                        " Best Score: " best-score
-                                        " P99 Score: " best-p99-score
-                                        " P95 Score: " best-p95-score
-                                        " p90 Score: " best-p90-score))
-
-          (.revalidate best-fn-chart-panel)
-          (.repaint best-fn-chart-panel)
-
-          (.revalidate scores-chart-panel)
-          (.repaint scores-chart-panel)
-          (catch Exception e
-            (log/error "Err in redrawing GUI: " (.getMessage e))
-            (ss/set-text* status-label (str "Error!"))))
-
-
-        (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
-          (if-not (= msg :continue)
-            (do (log/warn "Closing chans")
-                (close-chans!))
-            (recur (inc chart-iter))))))))
+      (when (<! (check-should-recur))
+        (recur (inc chart-iter))))))
 
 
 (defn setup-gui
