@@ -13,7 +13,7 @@
 ;; from https://github.com/trystan/random-seed
 (set! *warn-on-reflection* true)
 
-(defonce ^Random rng (new Random))
+(def ^Random rng (new Random))
 
 
 (defn set-random-seed!
