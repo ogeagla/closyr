@@ -195,7 +195,8 @@
 
         (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
           (if-not (= msg :continue)
-            (close-chans!)
+            (do (println "Closing chans")
+                (close-chans!))
             (recur (inc chart-iter))))))))
 
 
@@ -234,16 +235,12 @@
 
 (defn update-plot-input-data
   [{new-state          :new-state
-    reset?             :reset
     input-data-x       :input-data-x
     input-data-y       :input-data-y
     input-iters        :input-iters
     input-phenos-count :input-phenos-count}]
 
-  (println "Got state req: "
-           (if reset?
-             "Reset"
-             (if new-state gui/ctl:start gui/ctl:stop)))
+  (println "Got state req: " new-state)
 
   (let [input-xs-exprs (if input-data-x
                          (ops-common/doubles->exprs input-data-x)
@@ -266,29 +263,33 @@
 
 (defn restart-with-new-inputs
   [msg]
-  (println "Restarting experiment! ")
+  (println "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
   (<!! (timeout 200))
   true)
 
 
-(defn park-if-gui-pause-and-return-if-should-restart
+(defn check-gui-command-and-maybe-park
   "If no message from GUI is available, no-op, otherwise process stop/restart requests"
   [{:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
-  (let [[msg ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
-    (when-not (= msg :continue)
-      (if (:reset msg)
-        (restart-with-new-inputs msg)
-        (do
-          (println "Parking updates due to Stop command")
-          (let [msg (<!! sim-stop-start-chan)]
-            (if (:reset msg)
-              (restart-with-new-inputs msg)
-              (do
-                (println "Resuming updates")
-                nil))))))))
+  (let [[{:keys [new-state] :as msg} ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
+    (when (and msg (not= msg :continue))
+      (if (= :stop new-state)
+        :stop
+        (if (= :restart new-state)
+          (restart-with-new-inputs msg)
+          (do
+            (println "~~~ Parking updates due to Stop command ~~~")
+            (let [{:keys [new-state] :as msg} (<!! sim-stop-start-chan)]
+              (if (= :stop new-state)
+                :stop
+                (if (= :restart new-state)
+                  (restart-with-new-inputs msg)
+                  (do
+                    (println "~~~ Resuming updates ~~~")
+                    nil))))))))))
 
 
 (defn ->run-args
@@ -385,14 +386,19 @@
         {:iters-done       (- iters i)
          :final-population pop
          :next-step        :wait}
-        (if (and use-gui?
-                 (park-if-gui-pause-and-return-if-should-restart run-args))
-          {:iters-done       (- iters i)
-           :final-population pop
-           :next-step        :restart}
-          (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-            (ops/report-iteration i iters ga-result run-args run-config)
-            (recur ga-result (next-iters i scores))))))))
+        (let [should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
+          (if (and use-gui? should-return)
+            (if (= :stop should-return)
+              {:iters-done       (- iters i)
+               :final-population pop
+               :next-step        :stop}
+
+              {:iters-done       (- iters i)
+               :final-population pop
+               :next-step        :restart})
+            (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
+              (ops/report-iteration i iters ga-result run-args run-config)
+              (recur ga-result (next-iters i scores)))))))))
 
 
 (defn run-from-inputs
@@ -419,6 +425,7 @@
 
     (println "Took " (/ (ops-common/start-date->diff-ms start) 1000.0) " seconds for iters: " iters-done)
     (case next-step
+      :stop (do (println "Stopped."))
       :wait (if use-gui?
               (do
                 (println "Experiment complete, waiting for GUI to start another")

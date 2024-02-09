@@ -554,12 +554,12 @@
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
 
-        (println "clicked Start/Stop: " is-start)
+        (println "clicked Start/Pause: " is-start)
 
         (reset! experiment-is-running?* is-start)
         (.setEnabled ^JButton @ctl-reset-btn* true)
         (put! sim-stop-start-chan (merge @experiment-settings*
-                                         {:new-state    is-start
+                                         {:new-state    (if is-start :start :pause)
                                           :input-data-x input-x
                                           :input-data-y input-y}))
         (ss/set-text* e
@@ -584,8 +584,7 @@
         (reset! experiment-is-running?* true)
         (println "clicked Reset")
         (put! sim-stop-start-chan (merge @experiment-settings*
-                                         {:new-state    true
-                                          :reset        true
+                                         {:new-state    :restart
                                           :input-data-x input-x
                                           :input-data-y input-y}))
         (ss/set-text* start-top-label ctl:stop)
@@ -1028,7 +1027,7 @@
          (go
            (<! sim-stop-start-chan)
            (go-loop []
-             (<! (timeout 4000))
+             (<! (timeout 2000))
              (let [[n ch] (alts! [sim-stop-start-chan] :default :continue :priority true)]
                (if (= n :continue)
                  :ok

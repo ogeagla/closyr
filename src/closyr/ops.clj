@@ -20,7 +20,7 @@
 
 
 (def min-score -100000000)
-(def max-leafs 50)
+(def max-leafs 40)
 (def max-resid 1000000)
 
 
@@ -215,6 +215,7 @@
       (println "Error summarizing stats: " e)
       (str "Error: " (.getMessage e)))))
 
+(def ^:dynamic *print-top-n* 20)
 
 (defn report-iteration
   [i
@@ -240,8 +241,8 @@
       (println i "-step pop size: " pop-size
                " took secs: " took-s
                " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
-               (str "\n top 20 best:\n"
-                    (->> (take 20 bests)
+               (str "\n top " *print-top-n* " best:\n"
+                    (->> (take *print-top-n* bests)
                          (map reportable-phen-str)
                          (str/join "\n")))
                "\n"
