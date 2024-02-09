@@ -77,6 +77,13 @@
 
 (def sketch-input-x-count* (atom 50))
 
+(def ctl:start "Start")
+(def ctl:stop "Pause")
+(def ctl:restart "Restart")
+
+(def experiment-is-running?* (atom false))
+(def ctl-reset-btn* (atom nil))
+
 
 (def xs->gap
   {200 3
@@ -122,89 +129,12 @@
 
 (def sketchpad-size* (atom {}))
 
-(def color:very-light-gray (Color. 204 204 204))
-(def color:light-gray Color/LIGHT_GRAY)
-(def color:very-light-pink (Color. 250 210 210))
+(def input-y-fn* (atom input-data/initial-fn))
 
 
-(defn setup-theme
-  []
-  ;; (LafManager/install (DarculaTheme.))
-  ;; (LafManager/install (SolarizedDarkTheme.))
+(def new-xs?* (atom true))
 
-  (try
-
-    (UIManager/setLookAndFeel
-      (MaterialLookAndFeel.
-        ;; (MaterialLiteTheme.)
-        ;; (JMarsDarkTheme.)
-        (DarkStackOverflowTheme.)))
-
-    (catch UnsupportedLookAndFeelException e
-      (println "Theme error: " e))))
-
-
-(defn ^JPanel panel-grid
-  [{:keys [rows cols ^Border border]}]
-  (let [panel (doto (JPanel. (BorderLayout.))
-                ;; (.setSize 1200 100)
-                ;; (.setBackground color:light-gray)
-                (.setLayout (GridLayout. rows cols)))]
-    (cond-> panel
-      (not (nil? border)) (.setBorder border))
-    panel))
-
-
-(defn radio-controls-border
-  [title]
-  ;; (BorderFactory/createLineBorder (Color. 80 80 80) 1)
-  (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title))
-
-
-(defn movable
-  ([w] (movable w {:disable-x? false}))
-  ([w {disable-x? :disable-x?}]
-   (let [^Point start-point (Point.)]
-     (sb/when-mouse-dragged
-       w
-       ;; When the mouse is pressed, move the widget to the front of the z order
-       :start (fn [^MouseEvent e]
-                (ss/move! e :to-front)
-                (.setLocation start-point ^Point (.getPoint e)))
-       ;; When the mouse is dragged move the widget
-       ;; Unfortunately, the delta passed to this function doesn't work correctly
-       ;; if the widget is moved during the drag. So, the move is calculated
-       ;; manually.
-       :drag (fn [^MouseEvent e _]
-               (let [^Point p (.getPoint e)]
-                 (ss/move! e :by [(if disable-x? 0 (- (.x p) (.x start-point)))
-                                  (- (.y p) (.y start-point))]))))
-     w)))
-
-
-(defn make-label
-  [location-fn text]
-  (doto
-    ;; Instead of a boring label, make the label rounded with
-    ;; some custom drawing. Use the before paint hook to draw
-    ;; under the label's text.
-    (ss/label
-      :border 5
-      :text text
-      :location (location-fn)
-      :paint {:before (fn [c g]
-                        (sg/draw g (sg/rounded-rect 3
-                                                    3
-                                                    (- (ss/width c) 6)
-                                                    (- (ss/width c) 6)
-                                                    ;; (- (ss/height c) 6)
-                                                    9)
-                                 (sg/style :foreground "salmon"
-                                           :background "#666"
-                                           :stroke 2)))})
-    ;; Set the bounds to its preferred size. Note that this has to be
-    ;; done after the label is fully constructed.
-    (ss/config! :bounds :preferred)))
+(def xs* (atom nil))
 
 
 (defn sketchpad-on-click:skinny-brush
@@ -313,7 +243,82 @@
     (mapv first)))
 
 
-(def input-y-fn* (atom input-data/initial-fn))
+(defn setup-theme
+  []
+  ;; (LafManager/install (DarculaTheme.))
+  ;; (LafManager/install (SolarizedDarkTheme.))
+
+  (try
+
+    (UIManager/setLookAndFeel
+      (MaterialLookAndFeel.
+        ;; (MaterialLiteTheme.)
+        ;; (JMarsDarkTheme.)
+        (DarkStackOverflowTheme.)))
+
+    (catch UnsupportedLookAndFeelException e
+      (println "Theme error: " e))))
+
+
+(defn ^JPanel panel-grid
+  [{:keys [rows cols ^Border border]}]
+  (let [panel (doto (JPanel. (BorderLayout.))
+                (.setLayout (GridLayout. rows cols)))]
+    (cond-> panel
+      (not (nil? border)) (.setBorder border))
+    panel))
+
+
+(defn radio-controls-border
+  [title]
+  ;; (BorderFactory/createLineBorder (Color. 80 80 80) 1)
+  (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title))
+
+
+(defn movable
+  ([w] (movable w {:disable-x? false}))
+  ([w {disable-x? :disable-x?}]
+   (let [^Point start-point (Point.)]
+     (sb/when-mouse-dragged
+       w
+       ;; When the mouse is pressed, move the widget to the front of the z order
+       :start (fn [^MouseEvent e]
+                (ss/move! e :to-front)
+                (.setLocation start-point ^Point (.getPoint e)))
+       ;; When the mouse is dragged move the widget
+       ;; Unfortunately, the delta passed to this function doesn't work correctly
+       ;; if the widget is moved during the drag. So, the move is calculated
+       ;; manually.
+       :drag (fn [^MouseEvent e _]
+               (let [^Point p (.getPoint e)]
+                 (ss/move! e :by [(if disable-x? 0 (- (.x p) (.x start-point)))
+                                  (- (.y p) (.y start-point))]))))
+     w)))
+
+
+(defn make-label
+  [location-fn text]
+  (doto
+    ;; Instead of a boring label, make the label rounded with
+    ;; some custom drawing. Use the before paint hook to draw
+    ;; under the label's text.
+    (ss/label
+      :border 5
+      :text text
+      :location (location-fn)
+      :paint {:before (fn [c g]
+                        (sg/draw g (sg/rounded-rect 3
+                                                    3
+                                                    (- (ss/width c) 6)
+                                                    (- (ss/width c) 6)
+                                                    ;; (- (ss/height c) 6)
+                                                    9)
+                                 (sg/style :foreground "salmon"
+                                           :background "#666"
+                                           :stroke 2)))})
+    ;; Set the bounds to its preferred size. Note that this has to be
+    ;; done after the label is fully constructed.
+    (ss/config! :bounds :preferred)))
 
 
 (defn draw-grid
@@ -325,11 +330,6 @@
     (doseq [y (range 0 h 10)]
       (.drawLine g 0 y w y)))
   [c g])
-
-
-(def new-xs?* (atom true))
-
-(def xs* (atom nil))
 
 
 (defn reposition-labels
@@ -415,14 +415,12 @@
         items-point-setters    (map
                                  (fn [^JLabel widget]
                                    (fn [x y]
-                                     ;; (println "set widget loc: " x y)
                                      (set-widget-location widget x y)))
                                  items)
 
         ^JPanel drawing-widget (ss/xyz-panel
                                  :paint (comp reposition-labels draw-grid)
                                  :id :xyz
-                                 ;; :background color:very-light-gray #_"#BBBBBB" #_"#888888" #_"#222222"
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
@@ -471,62 +469,51 @@
 
         btn-group-iters                        (ss/button-group)
         ^JRadioButtonMenuItem iter-radio-10    (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "10"
                                                  :group btn-group-iters
                                                  :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-100   (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :selected? true
                                                  :text "100"
                                                  :group btn-group-iters
                                                  :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-1k    (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "1K"
                                                  :group btn-group-iters
                                                  :listen [:mouse-clicked settings-iters-on-change])
         ^JRadioButtonMenuItem iter-radio-10k   (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "10K"
                                                  :group btn-group-iters
                                                  :listen [:mouse-clicked settings-iters-on-change])
 
         btn-group-pcounts                      (ss/button-group)
         ^JRadioButtonMenuItem pcount-radio-500 (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "500"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-1k  (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "1K"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-2k  (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "2K"
                                                  :selected? true
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-10k (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "5K"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])
         ^JRadioButtonMenuItem pcount-radio-50k (ss/radio-menu-item
-                                                 ;; :background color:very-light-gray
                                                  :text "50K"
                                                  :group btn-group-pcounts
                                                  :listen [:mouse-clicked settings-pheno-count-on-change])]
-    ;; (.add pcount-settings-container (JLabel. "Pop Count:"))
     (.add pcount-settings-container pcount-radio-500)
     (.add pcount-settings-container pcount-radio-1k)
     (.add pcount-settings-container pcount-radio-2k)
     (.add pcount-settings-container pcount-radio-10k)
     (.add pcount-settings-container pcount-radio-50k)
 
-    ;; (.add iters-settings-container (JLabel. "Iterations:"))
     (.add iters-settings-container iter-radio-10)
     (.add iters-settings-container iter-radio-100)
     (.add iters-settings-container iter-radio-1k)
@@ -534,14 +521,6 @@
     (.add settings-container iters-settings-container)
     (.add settings-container pcount-settings-container)
     settings-container))
-
-
-(def ctl:start "Start")
-(def ctl:stop "Pause")
-(def ctl:restart "Restart")
-
-(def experiment-is-running?* (atom false))
-(def ctl-reset-btn* (atom nil))
 
 
 (defn start-stop-on-click
@@ -632,27 +611,22 @@
 
         btn-group-brush                 (ss/button-group)
         ^JRadioButtonMenuItem b-radio-0 (ss/radio-menu-item
-                                          ;; :background color:very-light-gray
                                           :text brush-label:skinny
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
-                                          ;; :background color:very-light-gray
                                           :selected? true
                                           :text brush-label:broad
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-2 (ss/radio-menu-item
-                                          ;; :background color:very-light-gray
                                           :text brush-label:huge
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])
         ^JRadioButtonMenuItem b-radio-3 (ss/radio-menu-item
-                                          ;; :background color:very-light-gray
                                           :text brush-label:line
                                           :group btn-group-brush
                                           :listen [:mouse-clicked brush-on-change])]
-    ;; (.add brush-config-container (JLabel. "Brush: "))
     (.add brush-config-container b-radio-0)
     (.add brush-config-container b-radio-1)
     (.add brush-config-container b-radio-2)
@@ -668,29 +642,24 @@
 
         btn-group-xs                       (ss/button-group)
         ^JRadioButtonMenuItem xs-radio-10  (ss/radio-menu-item
-                                             ;; :background color:very-light-gray
                                              :text "10"
                                              :group btn-group-xs
                                              :listen [:mouse-clicked xs-on-change])
         ^JRadioButtonMenuItem xs-radio-25  (ss/radio-menu-item
-                                             ;; :background color:very-light-gray
                                              :text "25"
                                              :group btn-group-xs
                                              :listen [:mouse-clicked xs-on-change])
         ^JRadioButtonMenuItem xs-radio-50  (ss/radio-menu-item
-                                             ;; :background color:very-light-gray
                                              :selected? true
                                              :text "50"
                                              :group btn-group-xs
                                              :listen [:mouse-clicked xs-on-change])
         ^JRadioButtonMenuItem xs-radio-100 (ss/radio-menu-item
-                                             ;; :background color:very-light-gray
                                              :text "100"
                                              :group btn-group-xs
                                              :listen [:mouse-clicked xs-on-change])
 
         ^JRadioButtonMenuItem xs-radio-200 (ss/radio-menu-item
-                                             ;; :background color:very-light-gray
                                              :text "200"
                                              :group btn-group-xs
                                              :listen [:mouse-clicked xs-on-change])]
@@ -781,8 +750,7 @@
                                                   (set-input-data! csv-data)
                                                   (ss/set-text* input-file-label
                                                                 (str "Points: " (count csv-data)
-                                                                     " From file: " (.getName sel-file)
-                                                                     )))
+                                                                     " From file: " (.getName sel-file))))
                                                 (catch Exception e
                                                   (ss/set-text* input-file-label
                                                                 (str "Error: " (.getMessage e))))))))])
@@ -886,7 +854,6 @@
             status-label                    (JLabel. "Press Start To Begin Function Search")
 
             ^JButton ctl-start-stop-btn     (ss/button
-                                              ;; :background color:very-light-gray
                                               :text ctl:start
                                               :listen [:mouse-clicked
                                                        (partial start-stop-on-click
@@ -895,7 +862,6 @@
             ^JButton ctl-reset-btn          (reset! ctl-reset-btn*
                                                     (doto
                                                       ^JButton (ss/button
-                                                                 ;; :background color:very-light-gray
                                                                  :text ctl:restart
                                                                  :listen [:mouse-clicked
                                                                           (partial reset-on-click
@@ -907,7 +873,6 @@
             xs-container                    (xs-panel)
             settings-panel                  (experiment-settings-panel)
             ^JComboBox input-fn-picker      (ss/combobox
-                                              ;; :background color:very-light-gray
                                               :model dataset-fns
                                               :listen [:action input-dataset-change])
 
