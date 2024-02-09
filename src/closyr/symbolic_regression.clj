@@ -557,22 +557,28 @@
      :use-gui?       true}))
 
 
+(defn exit
+  []
+  #_(System/exit 0))
+
+
 (defn run-app-from-cli-args
   [{:keys [iterations population headless xs ys] :as cli-opts}]
-  (log/warn "Running from CLI opts: " cli-opts)
-  (run-experiment
-    {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
-     :initial-muts   (ops-init/initial-mutations)
-     :iters          iterations
-     :use-gui?       (not headless)
-     :input-xs-exprs (if xs
-                       (ops-common/doubles->exprs xs)
-                       input-xs-exprs)
-     :input-ys-exprs (if ys
-                       (ops-common/doubles->exprs ys)
-                       input-ys-exprs)})
-  (log/warn "CLI: Done!")
-  (System/exit 0))
+  (log/warn "CLI: run from options: " cli-opts)
+  (let [result (run-experiment
+                 {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
+                  :initial-muts   (ops-init/initial-mutations)
+                  :iters          iterations
+                  :use-gui?       (not headless)
+                  :input-xs-exprs (if xs
+                                    (ops-common/doubles->exprs xs)
+                                    input-xs-exprs)
+                  :input-ys-exprs (if ys
+                                    (ops-common/doubles->exprs ys)
+                                    input-ys-exprs)})]
+    (log/warn "CLI: Done!")
+    (exit)
+    result))
 
 
 (comment (run-app-without-gui))

@@ -231,7 +231,7 @@
                                       {:op               :modify-leafs
                                        :label            "c+1/2"
                                        :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (if (and (.isNumber ie) (ops-common/should-modify-leaf leaf-count pheno))
+                                                           (if (and (.isNumber ie))
                                                              (F/Plus ie (F/Divide 1 F/C2))
                                                              ie))}
                                       {:op          :modify-fn
@@ -244,7 +244,7 @@
                                       :expr (.plus (F/num 1.0) x)})]
             (is (= iters 5))
             (is (= (str (:expr pheno))
-                   "-Sqrt(x)+1.1*ArcCos(1.1*(1.0+x))"))))))))
+                   "-Sqrt(x)+1.6*ArcCos(1.6*(1.5+x))"))))))))
 
 
 (deftest crossover-test

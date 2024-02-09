@@ -40,9 +40,8 @@
   :profiles {:uberjar {:aot      :all
                        :manifest {"Multi-Release" true}
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"
-                                  ;"-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
-                                  "-Dlog4j2.configurationFile=resources/log4j2.properties"
-                                  ]}}
+                                  ;; "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+                                  "-Dlog4j2.configurationFile=resources/log4j2.properties"]}}
 
   :plugins [[lein-cloverage "1.2.4"]
             [lein-vanity "0.2.0"]

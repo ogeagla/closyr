@@ -1,7 +1,8 @@
 (ns closyr.core-test
   (:require
     [clojure.test :refer :all]
-    [closyr.core :refer :all]))
+    [closyr.core :refer :all]
+    [closyr.symbolic-regression :as symreg]))
 
 
 (deftest cli-options-test
@@ -95,3 +96,19 @@
            :population 1000
            :xs         [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
            :ys         [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]}))))
+
+
+(deftest main-test
+  (testing "with valid args"
+    (let [exited* (atom nil)]
+      (is (=
+            (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 100)
+                             #'symreg/exit              (fn [] (reset! exited* true))}
+              (fn []
+                (some->
+                  (-main "-t" "-p" "20" "-i" "10" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6")
+                  :final-population
+                  :pop
+                  count)))
+            20))
+      (is (true? @exited*)))))
