@@ -71,22 +71,31 @@
 (set! *warn-on-reflection* true)
 
 
-(def brush-label:skinny "S")
-(def brush-label:broad "M")
-(def brush-label:huge "L")
-(def brush-label:line "Y")
+(def ^:private brush-label:skinny "S")
+(def ^:private brush-label:broad "M")
+(def ^:private brush-label:huge "L")
+(def ^:private brush-label:line "Y")
 
-(def sketch-input-x-count* (atom 50))
-
-(def ctl:start "Start")
-(def ctl:stop "Pause")
-(def ctl:restart "Restart")
-
-(def experiment-is-running?* (atom false))
-(def ctl-reset-btn* (atom nil))
+(def ^:private sketch-input-x-count* (atom 50))
 
 
-(def xs->gap
+(def ctl:start
+  "Button start text"
+  "Start")
+
+
+(def ^:private ctl:stop "Pause")
+(def ^:private ctl:restart "Restart")
+
+(def ^:private experiment-is-running?* (atom false))
+
+
+(def ctl-reset-btn*
+  "Button which signals to restart GA"
+  (atom nil))
+
+
+(def ^:private xs->gap
   {200 3
    100 6
    50  12
@@ -95,12 +104,12 @@
    10  56})
 
 
-(def experiment-settings*
+(def ^:private experiment-settings*
   (atom {:input-iters        100
          :input-phenos-count 2000}))
 
 
-(def amount->number
+(def ^:private amount->number
   {"10"    10
    "100"   100
    "500"   500
@@ -116,29 +125,29 @@
    "50K"   50000})
 
 
-(def sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
+(def ^:private sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
 
 
-(def items-points-accessors* (atom {}))
-(def replace-drawing-widget!* (atom nil))
+(def ^:private items-points-accessors* (atom {}))
+(def ^:private replace-drawing-widget!* (atom nil))
 
 
-(defn redraw-sketch-widget!
+(defn- redraw-sketch-widget!
   []
   (@replace-drawing-widget!* (:drawing-widget @items-points-accessors*)))
 
 
-(def sketchpad-size* (atom {}))
+(def ^:private sketchpad-size* (atom {}))
 
-(def input-y-fn* (atom input-data/initial-fn))
-
-
-(def new-xs?* (atom true))
-
-(def xs* (atom nil))
+(def ^:private input-y-fn* (atom input-data/initial-fn))
 
 
-(defn sketchpad-on-click:skinny-brush
+(def ^:private new-xs?* (atom true))
+
+(def ^:private xs* (atom nil))
+
+
+(defn- sketchpad-on-click:skinny-brush
   [items x-scale ^MouseEvent e]
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
     (doall
@@ -159,7 +168,7 @@
         items-point-getters))))
 
 
-(defn sketchpad-on-click:broad-brush
+(defn- sketchpad-on-click:broad-brush
   [items x-scale ^MouseEvent e]
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
     (doall
@@ -180,7 +189,7 @@
         items-point-getters))))
 
 
-(defn sketchpad-on-click:huge-brush
+(defn- sketchpad-on-click:huge-brush
   [items x-scale ^MouseEvent e]
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
     (doall
@@ -202,7 +211,7 @@
         items-point-getters))))
 
 
-(defn sketchpad-on-click:line-brush
+(defn- sketchpad-on-click:line-brush
   [items x-scale ^MouseEvent e]
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
     (doall
@@ -216,10 +225,10 @@
         items-point-getters))))
 
 
-(def brush-fn* (atom sketchpad-on-click:broad-brush))
+(def ^:private brush-fn* (atom sketchpad-on-click:broad-brush))
 
 
-(def brushes-map
+(def ^:private brushes-map
   {brush-label:skinny sketchpad-on-click:skinny-brush
    brush-label:broad  sketchpad-on-click:broad-brush
    brush-label:huge   sketchpad-on-click:huge-brush
@@ -230,21 +239,21 @@
   (input-data/input-y-fns-data sketchpad-size* sketch-input-x-count*))
 
 
-(def input-y-fns
+(def ^:private input-y-fns
   (into {}
         (map
           (fn [[k v]] [k (:fn v)])
           selectable-input-fns)))
 
 
-(def dataset-fns
+(def ^:private dataset-fns
   (->>
     selectable-input-fns
     (sort-by #(:idx (second %)))
     (mapv first)))
 
 
-(defn setup-theme
+(defn- setup-theme
   []
   (try
     (UIManager/setLookAndFeel
@@ -257,7 +266,7 @@
       (log/error "Theme error: " e))))
 
 
-(defn ^JPanel panel-grid
+(defn- ^JPanel panel-grid
   [{:keys [rows cols ^Border border]}]
   (let [panel (doto (JPanel. (BorderLayout.))
                 (.setLayout (GridLayout. rows cols)))]
@@ -266,12 +275,12 @@
     panel))
 
 
-(defn radio-controls-border
+(defn- radio-controls-border
   [title]
   (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title))
 
 
-(defn movable
+(defn- movable
   ([w] (movable w {:disable-x? false}))
   ([w {disable-x? :disable-x?}]
    (let [^Point start-point (Point.)]
@@ -292,7 +301,7 @@
      w)))
 
 
-(defn make-label
+(defn- make-label
   [location-fn text]
   (doto
     ;; Instead of a boring label, make the label rounded with
@@ -317,7 +326,7 @@
     (ss/config! :bounds :preferred)))
 
 
-(defn draw-grid
+(defn- draw-grid
   [c ^Graphics2D g]
   (let [w (ss/width c) h (ss/height c)]
     (.setColor g (Color. 98 98 98))
@@ -328,7 +337,7 @@
   [c g])
 
 
-(defn reposition-labels
+(defn- reposition-labels
   [[c ^Graphics2D g]]
   ;; (println "Reposition sketchpad labels' points")
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
@@ -371,12 +380,12 @@
           (range @sketch-input-x-count*))))))
 
 
-(defn set-widget-location
+(defn- set-widget-location
   [^JLabel widget ^double x ^double y]
   (.setLocation widget x y))
 
 
-(defn input-data-items-widget
+(defn- input-data-items-widget
   [points-fn]
   (log/warn "Create input-data-items-widget")
   (let [^JPanel bp             (doto
@@ -431,7 +440,7 @@
      :items-point-setters items-point-setters}))
 
 
-(defn getters->input-data
+(defn- getters->input-data
   [items-point-getters]
   (mapv (fn [getter]
           (let [^Point pt (getter)]
@@ -441,21 +450,21 @@
         items-point-getters))
 
 
-(defn settings-iters-on-change
+(defn- settings-iters-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (swap! experiment-settings* assoc :input-iters (amount->number b))
     (log/warn "iters changed to " b)))
 
 
-(defn settings-pheno-count-on-change
+(defn- settings-pheno-count-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (swap! experiment-settings* assoc :input-phenos-count (amount->number b))
     (log/warn "pheno count changed to " b)))
 
 
-(defn ^JPanel experiment-settings-panel
+(defn- ^JPanel experiment-settings-panel
   []
   (let [iters-settings-container               (panel-grid
                                                  {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
@@ -519,7 +528,7 @@
     settings-container))
 
 
-(defn start-stop-on-click
+(defn- start-stop-on-click
   [sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
   (let [{:keys [items-point-getters]} @items-points-accessors*]
     (if-not sim-stop-start-chan
@@ -548,7 +557,7 @@
                         "Paused"))))))
 
 
-(defn reset-on-click
+(defn- reset-on-click
   [^JButton start-top-label sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
   (let [{:keys [items-point-getters]} @items-points-accessors*]
     (if-not sim-stop-start-chan
@@ -566,7 +575,7 @@
         (ss/set-text* status-label "Running")))))
 
 
-(defn input-dataset-change
+(defn- input-dataset-change
   [^ActionEvent e]
   (let [{:keys [^JPanel drawing-widget items-point-setters items-point-getters]} @items-points-accessors*
         ^JComboBox jcb (.getSource e)
@@ -582,14 +591,14 @@
     (log/warn "Selected: " selection)))
 
 
-(defn brush-on-change
+(defn- brush-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (reset! brush-fn* (brushes-map b))
     (log/warn "brush change to " b)))
 
 
-(defn xs-on-change
+(defn- xs-on-change
   [^MouseEvent e]
   (let [xs-str (.getText ^JRadioButtonMenuItem (.getSource e))
         new-xs (Integer/parseInt xs-str)]
@@ -600,7 +609,7 @@
     (log/warn "brush xs to " xs-str " -> " new-xs)))
 
 
-(defn ^JPanel brush-panel
+(defn- ^JPanel brush-panel
   []
   (let [brush-config-container          (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Brush")})
         ^JPanel brush-container         (panel-grid {:rows 1 :cols 3})
@@ -631,7 +640,7 @@
     brush-container))
 
 
-(defn ^JPanel xs-panel
+(defn- ^JPanel xs-panel
   []
   (let [xs-config-container                (panel-grid {:rows 1 :cols 5 :border (radio-controls-border "Points Count")})
         ^JPanel xs-container               (panel-grid {:rows 1 :cols 1})
@@ -668,7 +677,7 @@
     xs-container))
 
 
-(defn update-replace-drawing-widget
+(defn- update-replace-drawing-widget
   [draw-container]
   (reset!
     replace-drawing-widget!*
@@ -683,7 +692,7 @@
             (input-y-fns @input-y-fn*)))))))
 
 
-(defn set-input-data!
+(defn- set-input-data!
   [input-data-maps]
   (let [{:keys [^JPanel drawing-widget]} @items-points-accessors*
         canvas-w (ss/width drawing-widget)
@@ -720,7 +729,7 @@
            (input-data/y->gui-coord-y sketchpad-size* y)))))))
 
 
-(defn ^JPanel input-file-picker-widget
+(defn- ^JPanel input-file-picker-widget
   [parent-widget]
   (let [file-filter                  (FileNameExtensionFilter. "CSV Text File" (into-array ["csv"]))
 
@@ -757,7 +766,7 @@
     input-file-container))
 
 
-(defn set-app-icon
+(defn- set-app-icon
   [^JFrame frame]
   (let [^Image icon (.getImage (Toolkit/getDefaultToolkit) (io/resource "icons/icon_v5_qtr.png"))]
     (doto frame
@@ -765,6 +774,7 @@
 
 
 (defn create-and-show-gui
+  "Create a show Swing GUI"
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
            ^String series-best-fn-label ^String series-objective-fn-label update-loop
@@ -950,7 +960,7 @@
           gui-data)))))
 
 
-(defn test-gui-1
+(defn- test-gui-1
   []
   (let [sim-stop-start-chan (chan)]
     (create-and-show-gui
@@ -1015,7 +1025,7 @@
              (recur))))})))
 
 
-(defn test-gui-2
+(defn- test-gui-2
   []
   (ss/invoke-later
 
