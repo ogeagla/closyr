@@ -83,13 +83,13 @@
 
       (when (or (neg? length-deduction) (Double/isNaN length-deduction))
         (log/warn "warning: bad/negative deduction increases score: "
-                 leafs length-deduction (str (:expr pheno))))
+                  leafs length-deduction (str (:expr pheno))))
       (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
       overall-score)
     (catch Exception e
       (log/error "Err in computing score from residuals: "
-               (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
+                 (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
 
@@ -121,10 +121,10 @@
 
       (when (> diff-ms 5000)
         (log/warn "Warning, this modification sequence took a long time: "
-                 diff-ms " ms for mods: " (count mods)
-                 "\n for old expr: " (:expr p-winner)
-                 "\n and new expr: " (:expr new-pheno)
-                 "\n mods: " mods))
+                  diff-ms " ms for mods: " (count mods)
+                  "\n for old expr: " (:expr p-winner)
+                  "\n and new expr: " (:expr new-pheno)
+                  "\n mods: " mods))
 
       (swap! sim-stats* update-in [:mutations :counts iters] #(inc (or % 0)))
       (swap! sim-stats* update-in [:mutations :size-in] #(into (or % []) [(.leafCount ^IExpr (:expr p-winner))]))
@@ -159,7 +159,7 @@
   (str
     " id: " (str/join (take 3 (str p-id)))
     " last mod #: " (or mods-applied "-")
-    " last op: " (format "%17s" (str last-op)) #_(str/join (take 8 (str last-op)))
+    " last op: " (format "%18s" (str last-op))
     " score: " (.format score-format score)
     " leafs: " (.leafCount expr)
     ;; strip newlines from here also:
@@ -216,7 +216,15 @@
       (log/error "Error summarizing stats: " e)
       (str "Error: " (.getMessage e)))))
 
+
 (def ^:dynamic *print-top-n* 20)
+
+
+(defn log-iteration
+  [& args]
+  (apply #'log/warn args)
+  (apply println args))
+
 
 (defn report-iteration
   [i
@@ -239,15 +247,15 @@
                                                   best-v run-args extended-domain-args)]
 
       (reset! test-timer* (Date.))
-      (log/warn i "-step pop size: " pop-size
-               " took secs: " took-s
-               " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
-               (str "\n top " *print-top-n* " best:\n"
-                    (->> (take *print-top-n* bests)
-                         (map reportable-phen-str)
-                         (str/join "\n")))
-               "\n"
-               (summarize-sim-stats))
+      (log-iteration i "-step pop size: " pop-size
+                     " took secs: " took-s
+                     " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
+                     (str "\n top " *print-top-n* " best:\n"
+                          (->> (take *print-top-n* bests)
+                               (map reportable-phen-str)
+                               (str/join "\n")))
+                     "\n"
+                     (summarize-sim-stats))
 
       (when use-gui?
         (put! sim->gui-chan {:iters                 iters
