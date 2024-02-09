@@ -178,6 +178,7 @@
           (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
             (when (not= fn-str (.getText sim-selectable-text))
               (log/warn "New Best Function: " fn-str)
+              (println "New Best Function: " fn-str)
               (ss/set-text* sim-selectable-text fn-str)))
 
           (ss/set-text* info-label (str "Iteration: " i "/" iters
