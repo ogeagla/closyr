@@ -101,10 +101,12 @@
 (defn ^IAST expr->fn
   "Turn an IExpr into a Function IAST"
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}]
-  (F/Function
-    (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-     (into-array ISymbol [x-sym]))
-    expr))
+  (let [res (F/Function
+              (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
+                      (into-array ISymbol [x-sym]))
+              expr)]
+    ;(println "create expr fn: " (type expr) " : " expr "\n --> " res)
+    res))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
@@ -128,10 +130,14 @@
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
    (try
      (let [^ExprEvaluator util (or util (new-util))
+           ;_ (println "expr 1 " expr)
            ^IAST expr          (if (.isNIL expr)
-                                 (F/Times sym-x F/C1)
+                                 (F/Times variable F/C1)
                                  expr)
-           ^IAST expr          (.eval util expr)]
+           ;_ (println "expr 2 " expr)
+           ^IAST expr          (.eval util expr)
+           ;_ (println "expr 3 " expr)
+           ]
        {:sym  variable
         :util util
         :id   (UUID/randomUUID)

@@ -42,11 +42,15 @@
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
     (when-not util (log/warn "*** Warning: No util provided to evaluation engine! ***"))
-    (if (and expr expr-args)
+    (if (and expr expr-args (not (.isNIL expr)))
       (let [^IAST ast  (F/ast expr-args (ops-common/expr->fn pheno))
             ^IExpr res (.eval (or util (ops-common/new-util)) ast)]
+
+        ;(println (type expr) (type ast) (type res) "\n , " ast " -->> " res)
         res)
-      (log/warn "Warning: eval needs both expr and args"))
+      (do
+        ;(println "Skipp eval : " expr)
+        (log/warn "Warning: eval needs both expr and args, and expr cannot be NIL")))
     (catch NullPointerException npe (log/error "Warning: NPE error in eval: " (str expr) " : " npe))
     (catch ArgumentTypeException se (log/error "Warning: argument type error in eval: " (str expr) " : " se))
     (catch SyntaxError se (log/error "Warning: syntax error in eval: " (str expr) " : " se))

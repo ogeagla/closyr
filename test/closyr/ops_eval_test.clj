@@ -18,13 +18,50 @@
 
 (deftest eval-f-test
   (let [x (F/Dummy "x")]
+    (testing "eval on nil expr defaults to y=x"
+      (is (= (str (ops-eval/eval-phenotype-on-expr-args
+                    (ops-common/->phenotype x F/NIL nil)
+                    (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 1.0]))))
+             "{0.0,1.0}")))
     (testing "can eval various fns for simple inputs"
       (is (= (mapv
                ops-common/expr->double
                (ops-eval/eval-phenotype-on-expr-args
                  (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
-                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))))
-             [0.0]))
+                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
+             [0.0 0.5])))
+
+    (testing "can eval various fns for simple inputs and y=x"
+      (is (= (mapv
+               ops-common/expr->double
+               (ops-eval/eval-phenotype-on-expr-args
+                 (ops-common/->phenotype x (F/Times x F/C1) nil)
+                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
+             [0.5 1.0])))
+
+    (testing "can eval various fns for simple inputs 2"
+      (is (= (mapv
+               ops-common/expr->double
+               (ops-eval/eval-phenotype-on-expr-args
+                 (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
+                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
+             [0.0 0.5]))
+
+      (is (= (mapv
+               ops-common/expr->double
+               (ops-eval/eval-phenotype-on-expr-args
+                 (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
+                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [##Inf]))))
+             [##Inf]))
+
+      (is (= (mapv
+               ops-common/expr->double
+               (ops-eval/eval-phenotype-on-expr-args
+                 (ops-common/->phenotype x (F/Subtract x F/Infinity) nil)
+                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0]))))
+             [##-Inf]))
+
+
 
       (is (instance? IExpr (F/Subtract F/E F/C1D2)))
       (is (instance? IAST (F/Subtract F/E F/C1D2)))
