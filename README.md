@@ -114,6 +114,9 @@ Coverage looks like this if you run `lein cloverage`:
 
 - [x] CLI options accept a CSV file (GUI already supports this)
 - [ ] More tests
+- [ ] Use something like ProGuard to shrink the JAR for releases 
+  - https://stackoverflow.com/questions/12281365/obfuscating-clojure-uberjars-with-proguard
+  - https://github.com/eiffelqiu/obfuscate-clojure-project-demo/tree/master
 - [ ] A different frontend.  The current Java Swing frontend does the job, but it's not easy to maintain and it's hard to make look better.
 - [ ] Can this be a follow-up to this issue, asking for a symbolic regression tool on the JVM? https://github.com/axkr/symja_android_library/issues/850
 - [ ] When I created this and my other symbolic regression tools, I didn't know about the formal field of symbolic regression.  I've since found some great libraries that I should review and apply the lessons to this project: https://github.com/MilesCranmer/PySR
