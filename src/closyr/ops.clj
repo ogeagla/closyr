@@ -222,7 +222,7 @@
 
 (defn log-iteration
   [& args]
-  (apply #'log/warn args)
+  (log/warn (str/join " " args))
   (apply println args))
 
 
