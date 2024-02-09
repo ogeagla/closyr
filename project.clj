@@ -21,6 +21,7 @@
 
                  [org.slf4j/slf4j-api "2.0.12"]
                  [org.apache.logging.log4j/log4j-core "2.22.1"]
+                 [org.apache.logging.log4j/log4j-api "2.22.1"]
 
                  [org.matheclipse/matheclipse-core "3.1.0-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-api]]
@@ -38,7 +39,10 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
                        :manifest {"Multi-Release" true}
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"
+                                  ;"-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
+                                  "-Dlog4j2.configurationFile=resources/log4j2.properties"
+                                  ]}}
 
   :plugins [[lein-cloverage "1.2.4"]
             [lein-vanity "0.2.0"]
