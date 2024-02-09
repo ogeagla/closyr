@@ -1,8 +1,8 @@
 (ns closyr.symbolic-regression
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
-    [clojure.tools.logging :as log]
     [clojure.string :as str]
+    [clojure.tools.logging :as log]
     [closyr.ga :as ga]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
@@ -33,8 +33,6 @@
 
 
 (def sim-input-args* (atom nil))
-
-
 
 
 (defn near-exact-solution
@@ -83,7 +81,7 @@
            ^XYChart scores-chart
            ^XChartPanel best-fn-chart-panel
            ^XChartPanel scores-chart-panel
-           ^JTextField sim-selectable-text
+           ^JTextField best-fn-selectable-text
            ^JLabel info-label
            ^JLabel status-label
            ^JButton ctl-start-stop-btn]}
@@ -176,9 +174,9 @@
           (.setTitle scores-chart "Population Score")
 
           (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
-            (when (not= fn-str (.getText sim-selectable-text))
+            (when (not= fn-str (.getText best-fn-selectable-text))
               (log/warn "New Best Function: " fn-str)
-              (ss/set-text* sim-selectable-text fn-str)))
+              (ss/set-text* best-fn-selectable-text fn-str)))
 
           (ss/set-text* info-label (str "Iteration: " i "/" iters
                                         " Best Score: " best-score
@@ -406,18 +404,18 @@
 (defn print-end-time
   [start iters-done next-step]
   (log/warn "-- Done! Next state: " next-step
-           " took" (/ (ops-common/start-date->diff-ms start) 1000.0)
-           " seconds for iters: " iters-done
-           " --"))
+            " took" (/ (ops-common/start-date->diff-ms start) 1000.0)
+            " seconds for iters: " iters-done
+            " --"))
 
 
 (defn print-and-save-start-time
   [iters initial-phenos]
   (let [start (Date.)]
     (log/warn "-- Start " start
-             "iters: " iters
-             " pop size: " (count initial-phenos)
-             " --")
+              "iters: " iters
+              " pop size: " (count initial-phenos)
+              " --")
     (reset! ops/test-timer* start)))
 
 
@@ -473,9 +471,9 @@
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
   (log/warn "-- Running! iters: " iters
-           "pop: " (count initial-phenos)
-           "muts: " (count initial-muts)
-           " --")
+            "pop: " (count initial-phenos)
+            "muts: " (count initial-muts)
+            " --")
 
   (let [symbolic-regression-search-fn
         (fn []
