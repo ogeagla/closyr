@@ -1,6 +1,6 @@
 # closyr
 
-![icon_v4_qtr.png](resources%2Ficons%2Ficon_v4_qtr.png)
+![icon_v5_qtr.png](resources%2Ficons%2Ficon_v5_qtr.png)
 
 A Symbolic Regression tool, written in Clojure.
 

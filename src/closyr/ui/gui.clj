@@ -758,7 +758,7 @@
 
 (defn set-app-icon
   [^JFrame frame]
-  (let [^Image icon (.getImage (Toolkit/getDefaultToolkit) (io/resource "icons/icon_v2_qtr.png"))]
+  (let [^Image icon (.getImage (Toolkit/getDefaultToolkit) (io/resource "icons/icon_v5_qtr.png"))]
     (doto frame
       (.setIconImage icon))))
 
