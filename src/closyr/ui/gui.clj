@@ -1,6 +1,7 @@
 (ns closyr.ui.gui
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
+    [clojure.java.io :as io]
     [closyr.dataset.csv :as input-csv]
     [closyr.dataset.inputs :as input-data]
     [closyr.ui.plot :as plot]
@@ -20,7 +21,9 @@
       GridBagConstraints
       GridBagLayout
       GridLayout
-      Point)
+      Image
+      Point
+      Toolkit)
     (java.awt.event
       ActionEvent
       MouseEvent)
@@ -265,7 +268,7 @@
   (let [panel (doto (JPanel. (BorderLayout.))
                 (.setLayout (GridLayout. rows cols)))]
     (cond-> panel
-      (not (nil? border)) (.setBorder border))
+            (not (nil? border)) (.setBorder border))
     panel))
 
 
@@ -761,6 +764,13 @@
     input-file-container))
 
 
+(defn set-app-icon
+  [^JFrame frame]
+  (let [^Image icon (.getImage (Toolkit/getDefaultToolkit) (io/resource "icons/icon_v2_qtr.png"))]
+    (doto frame
+      (.setIconImage icon))))
+
+
 (defn create-and-show-gui
   [{:keys [sim-stop-start-chan
            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
@@ -787,7 +797,8 @@
       (setup-theme)
 
       (let [my-frame                        (doto (JFrame. "CLOSYR")
-                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE))
+                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE)
+                                              (set-app-icon))
 
             bottom-container                (panel-grid {:rows 2 :cols 1})
             inputs-and-info-container       (panel-grid {:rows 3 :cols 1})
