@@ -265,7 +265,6 @@
   [msg]
   (println "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
-  (<!! (timeout 200))
   true)
 
 
@@ -401,6 +400,25 @@
               (recur ga-result (next-iters i scores)))))))))
 
 
+(defn print-end-time
+  [start iters-done next-step]
+
+  (println "-- Done! Next state: " next-step
+           " took" (/ (ops-common/start-date->diff-ms start) 1000.0)
+           " seconds for iters: " iters-done
+           " --"))
+
+
+(defn print-and-save-start-time
+  [iters initial-phenos]
+  (let [start (Date.)]
+    (println "-- Start " start
+             "iters: " iters
+             " pop size: " (count initial-phenos)
+             " --")
+    (reset! ops/test-timer* start)))
+
+
 (defn run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
@@ -409,39 +427,32 @@
     :as   run-args}]
   (let [iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
-                         (do
-                           #_(println "Generating pheno count: " input-phenos-count
-                                    " via reps: " (/ input-phenos-count (count ops-init/initial-exprs))
-                                    " from initial exprs: " (count ops-init/initial-exprs))
-                           (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs))))
+                         (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         run-config     (assoc run-config :initial-phenos initial-phenos :iters iters)
-        start          (Date.)
-        _              (do (println "-- Start " start
-                                    "iters: " iters
-                                    " pop size: " (count initial-phenos)
-                                    " --")
-                           (reset! ops/test-timer* start))
+        start          (print-and-save-start-time iters initial-phenos)
 
         {:keys [final-population next-step iters-done]
          :as   completed-ga-data} (run-ga-iterations run-config run-args)]
 
-    (println "-- Took " (/ (ops-common/start-date->diff-ms start) 1000.0)
-             " seconds for iters: " iters-done
-             " --")
+    (print-end-time start iters-done next-step)
+
     (case next-step
-      :stop (do (println "-- Stopped. --"))
-      :wait (if use-gui?
-              (do
-                (println "-- Experiment complete, waiting for GUI to start another --")
-                (when-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
-                  (recur run-config (merge run-args new-gui-args))))
-              (do (println "-- Done. --")
-                  completed-ga-data))
-      :restart (do
-                 (println "-- Restarting... --")
-                 (<!! (timeout 200))
-                 (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
+
+      :stop
+      completed-ga-data
+
+      :wait
+      (if use-gui?
+        (do (println "-- Waiting for GUI input to start again --")
+            (if-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
+              (recur run-config (merge run-args new-gui-args))
+              completed-ga-data))
+        completed-ga-data)
+
+      :restart
+      (do (println "-- Restarting... --")
+          (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
 
 
 (defn in-flames
