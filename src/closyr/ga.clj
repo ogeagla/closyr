@@ -44,6 +44,15 @@
       [(+ e1-score e2-score) [e1 next-e]])))
 
 
+(defn pop->chunks
+  [pop]
+  (cond
+    (>= (count pop) 10000) 200
+    (>= (count pop) 2000) 100
+    (>= (count pop) 500) 40
+    :else 20))
+
+
 (defn evolve
   [{:keys [pop score-fn mutation-fn crossover-fn]
     :as   config}]
@@ -54,7 +63,7 @@
                          (shuffle))
 
           new-pop-data (->>
-                         (partition-all 80 pop-shuff)
+                         (partition-all (pop->chunks pop) pop-shuff)
                          (pmap (fn [pop-chunk]
                                  (mapv (partial compete config)
                                        (partition-all 2 pop-chunk))))
