@@ -849,6 +849,9 @@
             {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
 
             status-label                        (JLabel. "Press Start To Begin Function Search")
+            status-column                       (doto (panel-grid {:rows 2 :cols 1})
+                                                  (.add status-label)
+                                                  (.add (JLabel. "" #_"placeholder")))
 
             ^JButton ctl-start-stop-btn         (ss/button
                                                   :text ctl:start
@@ -884,12 +887,12 @@
             ^JPanel input-file-container        (input-file-picker-widget status-row)
 
             status-row                          (doto status-row
-                                                  (.add status-label)
+                                                  (.add status-column)
                                                   (.add input-file-container))
 
             btns-container                      (doto (panel-grid {:rows 2 :cols 1})
-                                                  (.add status-row)
-                                                  (.add btns-row))
+                                                  (.add btns-row)
+                                                  (.add status-row))
 
             settings-container                  (doto (panel-grid {:rows 2 :cols 1})
                                                   (.add settings-panel)
@@ -914,14 +917,15 @@
         (.add inputs-and-info-container best-fn-selectable-text)
 
         (.add draw-parent drawing-widget)
-        (.add row-3-container btns-container)
+        (.add row-3-container draw-parent)
         (.add row-3-container scores-chart-panel)
 
         (.add bottom-container row-3-container)
         (.add bottom-container inputs-and-info-container)
 
+        (.add ctls-container btns-container)
         (.add ctls-container settings-container)
-        (.add ctls-container draw-parent)
+
 
         (.add top-container ctls-container)
         (.add top-container best-fn-chart-panel)
