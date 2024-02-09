@@ -13,7 +13,9 @@
      (* -1 y)))
 
 
-(def initial-fn "sin+cos 1")
+(def initial-fn
+  "Initial function to use on screen in sketchpad"
+  "sin+cos 1")
 
 
 (defn input-y-fns-data

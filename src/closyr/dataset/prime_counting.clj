@@ -3,7 +3,7 @@
 (set! *warn-on-reflection* true)
 
 
-(def all-maps
+(def ^:private all-maps
   [{:x 0, :pi_x 0}
    {:x 1, :pi_x 0}
    {:x 2, :pi_x 1}
@@ -1007,12 +1007,13 @@
    ])
 
 
-(def all
+(def ^:private all
   (mapv (fn [{x :x pi-of-x :pi_x}]
           [x pi-of-x])
         all-maps))
 
 
 (defn get-data
+  "Get first n primes count"
   [n]
   (take n all))

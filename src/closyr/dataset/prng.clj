@@ -13,7 +13,7 @@
 ;; from https://github.com/trystan/random-seed
 (set! *warn-on-reflection* true)
 
-(def ^Random rng (new Random))
+(def ^:private ^Random rng (new Random))
 
 
 (defn set-random-seed!
@@ -60,7 +60,7 @@
 (rand-int 100)
 
 
-(defn test-rand-int-gen
+(defn- test-rand-int-gen
   [seed n]
   (set-random-seed! seed)
   (println "Seed: " seed " n: " n

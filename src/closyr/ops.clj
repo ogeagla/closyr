@@ -20,16 +20,20 @@
 (set! *warn-on-reflection* true)
 
 
-(def min-score -100000000)
-(def max-leafs 40)
-(def max-resid 1000000)
+(def ^:private min-score -100000000)
+(def ^:private max-leafs 40)
+(def max-resid
+  "Default residual value to use when otherwise it would be invalid or infinite"
+  1000000)
 
 
-(def sim-stats* (atom {}))
+(def ^:private sim-stats* (atom {}))
 
 
 (def ^:dynamic *log-steps* 1)
-(def test-timer* (atom nil))
+(def test-timer*
+  "Timer to use during GA evolution"
+  (atom nil))
 
 
 (def ^:private ^DecimalFormat score-format (DecimalFormat. "###.#####"))
