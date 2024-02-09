@@ -2,6 +2,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [clojure.java.io :as io]
+    [clojure.tools.logging :as log]
     [closyr.dataset.csv :as input-csv]
     [closyr.dataset.inputs :as input-data]
     [closyr.ui.plot :as plot]
@@ -253,7 +254,7 @@
         (DarkStackOverflowTheme.)))
 
     (catch UnsupportedLookAndFeelException e
-      (println "Theme error: " e))))
+      (log/error "Theme error: " e))))
 
 
 (defn ^JPanel panel-grid
@@ -377,7 +378,7 @@
 
 (defn input-data-items-widget
   [points-fn]
-  (println "Create input-data-items-widget")
+  (log/warn "Create input-data-items-widget")
   (let [^JPanel bp             (doto
                                  (ss/border-panel
                                    :border (sbr/line-border :top 15 :color "#AAFFFF")
@@ -389,7 +390,7 @@
                                               (fn [^AbstractDocument$DefaultDocumentEvent e]
                                                 (let [doc     (.getDocument e)
                                                       doc-txt (.getText doc 0 (.getLength doc))]
-                                                  (println "New text: " doc-txt)))]))
+                                                  (log/warn "New text: " doc-txt)))]))
                                  (ss/config! :bounds :preferred)
                                  (movable))
 
@@ -444,14 +445,14 @@
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (swap! experiment-settings* assoc :input-iters (amount->number b))
-    (println "iters changed to " b)))
+    (log/warn "iters changed to " b)))
 
 
 (defn settings-pheno-count-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (swap! experiment-settings* assoc :input-phenos-count (amount->number b))
-    (println "pheno count changed to " b)))
+    (log/warn "pheno count changed to " b)))
 
 
 (defn ^JPanel experiment-settings-panel
@@ -522,13 +523,13 @@
   [sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
   (let [{:keys [items-point-getters]} @items-points-accessors*]
     (if-not sim-stop-start-chan
-      (println "warning: no sim-stop-start-chan provided")
+      (log/warn "warning: no sim-stop-start-chan provided")
       (let [is-start   (= ctl:start (ss/get-text* e))
             input-data (getters->input-data items-point-getters)
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
 
-        (println "clicked Start/Pause: " is-start)
+        (log/warn "clicked Start/Pause: " is-start)
 
         (reset! experiment-is-running?* is-start)
         (.setEnabled ^JButton @ctl-reset-btn* true)
@@ -551,12 +552,12 @@
   [^JButton start-top-label sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
   (let [{:keys [items-point-getters]} @items-points-accessors*]
     (if-not sim-stop-start-chan
-      (println "warning: no sim-stop-start-chan provided")
+      (log/warn "warning: no sim-stop-start-chan provided")
       (let [input-data (getters->input-data items-point-getters)
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
         (reset! experiment-is-running?* true)
-        (println "clicked Reset")
+        (log/warn "clicked Reset")
         (put! sim-stop-start-chan (merge @experiment-settings*
                                          {:new-state    :restart
                                           :input-data-x input-x
@@ -578,14 +579,14 @@
        (.getX ^Point ((nth items-point-getters i)))
        (new-fn i)))
     (ss/repaint! drawing-widget)
-    (println "Selected: " selection)))
+    (log/warn "Selected: " selection)))
 
 
 (defn brush-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (reset! brush-fn* (brushes-map b))
-    (println "brush change to " b)))
+    (log/warn "brush change to " b)))
 
 
 (defn xs-on-change
@@ -596,7 +597,7 @@
     (reset! sketch-input-x-count* new-xs)
     (reset! sketch-input-x-scale* (xs->gap new-xs))
     (redraw-sketch-widget!)
-    (println "brush xs to " xs-str " -> " new-xs)))
+    (log/warn "brush xs to " xs-str " -> " new-xs)))
 
 
 (defn ^JPanel brush-panel
@@ -672,7 +673,7 @@
   (reset!
     replace-drawing-widget!*
     (fn [^JPanel drawing-widget]
-      (println "REPLACE DRAWING WIDGET!")
+      (log/warn "REPLACE DRAWING WIDGET!")
       (reset! new-xs?* true)
       (ss/replace!
         draw-container
@@ -710,7 +711,7 @@
       (reset! xs* (mapv :x scaled-inputs))
       (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) scaled-inputs)]
         (let []
-          (println "Set ixy: " i x y
+          (log/warn "Set ixy: " i x y
                    " scalars: " x-scalar y-scalar
                    " diff: " diff-x diff-y
                    " canvas: " canvas-w canvas-h)
@@ -738,7 +739,7 @@
                                                 sel-file (.getSelectedFile input-file-picker)]
                                             (when (and (= JFileChooser/APPROVE_OPTION res)
                                                        sel-file)
-                                              (println "Got file: " (.getAbsolutePath sel-file))
+                                              (log/warn "Got file: " (.getAbsolutePath sel-file))
 
                                               (try
                                                 (let [csv-data (input-csv/get-csv-data sel-file)]
@@ -1000,7 +1001,7 @@
                (if (= n :continue)
                  :ok
                  (do
-                   (println "Parking updates to chart due to Stop command")
+                   (log/warn "Parking updates to chart due to Stop command")
                    (<! sim-stop-start-chan))))
              ;; (println "Draw new points " (.size xs-best-fn))
              (.add xs-best-fn (.size xs-best-fn))

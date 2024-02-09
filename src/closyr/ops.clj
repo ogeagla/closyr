@@ -3,6 +3,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
+    [clojure.tools.logging :as log]
     [closyr.dataset.prng :refer :all]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
@@ -63,8 +64,8 @@
               (- expected actual))]
     (if (not-finite? res)
       (do
-        (println "warning, res not a number: " res
-                 " exp: " expected " actual: " actual)
+        (log/warn "warning, res not a number: " res
+                  " exp: " expected " actual: " actual)
         max-resid)
       (min max-resid (abs res)))))
 
@@ -81,13 +82,13 @@
 
 
       (when (or (neg? length-deduction) (Double/isNaN length-deduction))
-        (println "warning: bad/negative deduction increases score: "
+        (log/warn "warning: bad/negative deduction increases score: "
                  leafs length-deduction (str (:expr pheno))))
       (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
       overall-score)
     (catch Exception e
-      (println "Err in computing score from residuals: "
+      (log/error "Err in computing score from residuals: "
                (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
@@ -106,7 +107,7 @@
             (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs)
             (tally-min-score min-score)))))
     (catch Exception e
-      (println "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
+      (log/error "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
 
@@ -119,7 +120,7 @@
           diff-ms (ops-common/start-date->diff-ms start)]
 
       (when (> diff-ms 5000)
-        (println "Warning, this modification sequence took a long time: "
+        (log/warn "Warning, this modification sequence took a long time: "
                  diff-ms " ms for mods: " (count mods)
                  "\n for old expr: " (:expr p-winner)
                  "\n and new expr: " (:expr new-pheno)
@@ -131,7 +132,7 @@
 
       (assoc new-pheno :mods-applied iters))
     (catch Exception e
-      (println "Err in mutation: " e))))
+      (log/error "Err in mutation: " e))))
 
 
 (defn crossover-fn
@@ -212,7 +213,7 @@
            "\n  "
            (:crossovers summary-data)))
     (catch Exception e
-      (println "Error summarizing stats: " e)
+      (log/error "Error summarizing stats: " e)
       (str "Error: " (.getMessage e)))))
 
 (def ^:dynamic *print-top-n* 20)
@@ -238,7 +239,7 @@
                                                   best-v run-args extended-domain-args)]
 
       (reset! test-timer* (Date.))
-      (println i "-step pop size: " pop-size
+      (log/warn i "-step pop size: " pop-size
                " took secs: " took-s
                " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
                (str "\n top " *print-top-n* " best:\n"

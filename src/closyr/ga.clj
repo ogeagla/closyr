@@ -1,6 +1,7 @@
 (ns closyr.ga
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
+    [clojure.tools.logging :as log]
     [closyr.dataset.prng :refer :all]))
 
 
@@ -81,7 +82,7 @@
               :mutation-fn  mutation-fn
               :crossover-fn crossover-fn}))
     (catch Exception e
-      (println "Err in evolve: " e))))
+      (log/error "Err in evolve: " e))))
 
 
 (def initial-pop
@@ -119,15 +120,15 @@
           pop
           (let [new-pop (evolve pop)
                 s       (reduce + 0.0 (:pop-scores new-pop))]
-            (println i " pop score: " s)
+            (log/warn i " pop score: " s)
             (recur new-pop
                    (if (zero? s)
                      (do
-                       (println "Perfect score!")
+                       (log/warn "Perfect score!")
                        0)
                      (dec i)))))))
     (catch Exception e
-      (println "ERR doing test GA: " e))))
+      (log/error "ERR doing test GA: " e))))
 
 
 (comment (run-test))

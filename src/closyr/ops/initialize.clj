@@ -1,5 +1,6 @@
 (ns closyr.ops.initialize
   (:require
+    [clojure.tools.logging :as log]
     [closyr.ops.common :as ops-common])
   (:import
     (org.matheclipse.core.expression
@@ -569,7 +570,7 @@
                             #_(println "b simplify: " (.leafCount ie) " : " (str ie))
                             (try (:expr (ops-common/maybe-simplify (assoc pheno :expr ie)))
                                  (catch Exception e
-                                   (println "Error in simplify branch: " e))))
+                                   (log/error "Error in simplify branch: " e))))
                           ie))}
 
    {:op               :modify-branches

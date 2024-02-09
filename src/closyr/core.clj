@@ -3,6 +3,7 @@
   (:require
     [clojure.string :as str]
     [clojure.tools.cli :as cli]
+    [clojure.tools.logging :as log]
     [closyr.dataset.csv :as input-csv]
     [closyr.symreg :as symreg])
   (:import
@@ -22,7 +23,7 @@
                (mapv #(Double/parseDouble %)))]
       ns)
     (catch Exception e
-      (println "Cant parse numbers str: " numbers-str " : " e))))
+      (log/error "Cant parse numbers str: " numbers-str " : " e))))
 
 
 (def cli-options
@@ -67,11 +68,9 @@
   (let [{errors  :errors
          options :options
          :as     main-opts} (cli/parse-opts args cli-options)]
-    ;; (println "Got main args: " args)
-    ;; (println "Got main opts: " main-opts)
     (when (seq errors)
-      (println "Warning(s) from CLI input processor: \n Warning:" (str/join "\n Warning: " errors))
-      (println "From CLI args: " args))
+      (log/warn "Warning(s) from CLI input processor: \n Warning:" (str/join "\n Warning: " errors))
+      (log/warn "From CLI args: " args))
     options))
 
 
@@ -85,9 +84,9 @@
                  (assoc opts :xs xs :ys ys))
                opts)
         opts (cond
-               (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch. XS/YS: " xs ys)
-               (and xs (nil? ys)) (println "Error: only XS provided, please provide YS. XS/YS: " xs ys)
-               (and ys (nil? xs)) (println "Error: only YS provided, please provide XS. XS/YS: " xs ys)
+               (and ys xs (not= (count ys) (count xs))) (log/error "Error: XS and YS count mismatch. XS/YS: " xs ys)
+               (and xs (nil? ys)) (log/error "Error: only XS provided, please provide YS. XS/YS: " xs ys)
+               (and ys (nil? xs)) (log/error "Error: only YS provided, please provide XS. XS/YS: " xs ys)
                :else opts)]
     (dissoc opts :infile)))
 

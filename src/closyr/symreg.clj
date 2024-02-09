@@ -1,6 +1,8 @@
 (ns closyr.symreg
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
+    [clojure.tools.logging :as log]
+    [clojure.string :as str]
     [closyr.ga :as ga]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
@@ -25,7 +27,6 @@
 
 (set! *warn-on-reflection* true)
 
-
 (def ^:dynamic *sim->gui-chan* (chan))
 (def ^:dynamic *sim-stop-start-chan* (chan))
 (def ^:dynamic *gui-close-chan* (chan))
@@ -34,9 +35,11 @@
 (def sim-input-args* (atom nil))
 
 
+
+
 (defn near-exact-solution
   [i old-scores]
-  (println "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
+  (log/warn "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
   0)
 
 
@@ -66,7 +69,7 @@
 
 (defn close-chans!
   []
-  (println "!! Got GUI exit command, see you later !!")
+  (log/warn "!! Got GUI exit command, see you later !!")
   (close! *sim->gui-chan*)
   (close! *sim-stop-start-chan*)
   (close! *gui-close-chan*))
@@ -101,7 +104,7 @@
            ^String series-scores-p95-label
            ^String series-scores-p90-label]
     :as   conf}]
-  (println "Begin chart update loop")
+  (log/warn "Begin chart update loop")
 
 
   (go-loop [chart-iter 0]
@@ -174,7 +177,7 @@
 
           (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
             (when (not= fn-str (.getText sim-selectable-text))
-              (println "New Best Function: " fn-str)
+              (log/warn "New Best Function: " fn-str)
               (ss/set-text* sim-selectable-text fn-str)))
 
           (ss/set-text* info-label (str "Iteration: " i "/" iters
@@ -189,13 +192,13 @@
           (.revalidate scores-chart-panel)
           (.repaint scores-chart-panel)
           (catch Exception e
-            (println "Err in redrawing GUI: " (.getMessage e))
+            (log/error "Err in redrawing GUI: " (.getMessage e))
             (ss/set-text* status-label (str "Error!"))))
 
 
         (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
           (if-not (= msg :continue)
-            (do (println "Closing chans")
+            (do (log/warn "Closing chans")
                 (close-chans!))
             (recur (inc chart-iter))))))))
 
@@ -240,7 +243,7 @@
     input-iters        :input-iters
     input-phenos-count :input-phenos-count}]
 
-  (println "Got state req: " new-state)
+  (log/warn "Got state req: " new-state)
 
   (let [input-xs-exprs (if input-data-x
                          (ops-common/doubles->exprs input-data-x)
@@ -263,7 +266,7 @@
 
 (defn restart-with-new-inputs
   [msg]
-  (println "~~~ Restarting experiment! ~~~")
+  (log/warn "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
   true)
 
@@ -280,14 +283,14 @@
         (if (= :restart new-state)
           (restart-with-new-inputs msg)
           (do
-            (println "~~~ Parking updates due to Stop command ~~~")
+            (log/warn "~~~ Parking updates due to Stop command ~~~")
             (let [{:keys [new-state] :as msg} (<!! sim-stop-start-chan)]
               (if (= :stop new-state)
                 :stop
                 (if (= :restart new-state)
                   (restart-with-new-inputs msg)
                   (do
-                    (println "~~~ Resuming updates ~~~")
+                    (log/warn "~~~ Resuming updates ~~~")
                     nil))))))))))
 
 
@@ -374,7 +377,7 @@
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    run-args]
   (binding [ops/*log-steps* (config->log-steps run-config run-args)]
-    (println "Running with logging every n steps: " ops/*log-steps*)
+    (log/warn "Running with logging every n steps: " ops/*log-steps*)
     (loop [pop (ga/initialize
                  initial-phenos
                  (partial ops/score-fn run-args)
@@ -402,8 +405,7 @@
 
 (defn print-end-time
   [start iters-done next-step]
-
-  (println "-- Done! Next state: " next-step
+  (log/warn "-- Done! Next state: " next-step
            " took" (/ (ops-common/start-date->diff-ms start) 1000.0)
            " seconds for iters: " iters-done
            " --"))
@@ -412,7 +414,7 @@
 (defn print-and-save-start-time
   [iters initial-phenos]
   (let [start (Date.)]
-    (println "-- Start " start
+    (log/warn "-- Start " start
              "iters: " iters
              " pop size: " (count initial-phenos)
              " --")
@@ -444,14 +446,14 @@
 
       :wait
       (if use-gui?
-        (do (println "-- Waiting for GUI input to start again --")
+        (do (log/warn "-- Waiting for GUI input to start again --")
             (if-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
               (recur run-config (merge run-args new-gui-args))
               completed-ga-data))
         completed-ga-data)
 
       :restart
-      (do (println "-- Restarting... --")
+      (do (log/warn "-- Restarting... --")
           (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
 
 
@@ -470,7 +472,7 @@
   "Run a GA evolution experiment to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-  (println "-- Run with initial data: iters: " iters
+  (log/warn "-- Running! iters: " iters
            "pop: " (count initial-phenos)
            "muts: " (count initial-muts)
            " --")
@@ -524,7 +526,7 @@
 
 (defn run-app-from-cli-args
   [{:keys [iterations population headless xs ys] :as cli-opts}]
-  (println "Running from CLI opts: " cli-opts)
+  (log/warn "Running from CLI opts: " cli-opts)
   (run-experiment
     {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
      :initial-muts   (ops-init/initial-mutations)
@@ -536,7 +538,7 @@
      :input-ys-exprs (if ys
                        (ops-common/doubles->exprs ys)
                        input-ys-exprs)})
-  (println "CLI: Done!")
+  (log/warn "CLI: Done!")
   (System/exit 0))
 
 

@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
+    [clojure.tools.logging :as log]
     [closyr.dataset.prng :refer :all])
   (:import
     (java.util
@@ -127,7 +128,7 @@
         :id   (UUID/randomUUID)
         :expr expr})
      (catch Exception e
-       (println "Err creating pheno: " expr " , " variable " , " e)))))
+       (log/error "Err creating pheno: " expr " , " variable " , " e)))))
 
 
 (def modify-leafs-sampler [true false false false])
@@ -168,7 +169,7 @@
       ;; wait sequence in ms looks like: 100, 316, 1000, ...
       (<! (timeout (int (Math/pow 10 (+ 2 (/ c 2))))))
       (when (> c 2)
-        (println "Warning: simplify taking a long time: " c " " (.leafCount expr) " : " (str expr))
+        (log/warn "Warning: simplify taking a long time: " c " " (.leafCount expr) " : " (str expr))
         (swap! do-not-simplify-fns* assoc (str expr) true))
       (recur (inc c)))))
 
@@ -179,7 +180,7 @@
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
   (if (@do-not-simplify-fns* (str expr))
     (do
-      (println "Skip fn which we cannot simplify: " (str expr))
+      (log/warn "Skip fn which we cannot simplify: " (str expr))
       expr)
     (try
       (check-simplify-timing expr done?*)
@@ -192,13 +193,13 @@
             diff-ms        (start-date->diff-ms start)]
         (reset! done?* true)
         (when (> diff-ms 2000)
-          (println "Long simplify: "
+          (log/warn "Long simplify: "
                    (.leafCount expr) (str expr) " -->> "
                    (.leafCount res) (str res)))
         res)
 
       (catch Exception e
-        (println "Err in eval simplify for fn: " (str expr) " : " e)
+        (log/error "Err in eval simplify for fn: " (str expr) " : " e)
         expr))))
 
 
@@ -211,7 +212,7 @@
     (let [start              (Date.)
           done?*             (atom false)
           ^IAST simpled-expr (do-simplify start done?* pheno)]
-      (when-not util (println "Warning creating new util during simplify"))
+      (when-not util (log/warn "Warning creating new util during simplify"))
       (assoc pheno
              :simple? true
              :expr simpled-expr))

@@ -3,6 +3,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str]
+    [clojure.tools.logging :as log]
     [closyr.dataset.prng :refer :all]
     [closyr.ops.common :as ops-common])
   (:import
@@ -159,7 +160,7 @@
           (with-recent-mod-metadata {:label (name crossover-flavor)
                                      :op    :modify-crossover})))
     (catch Exception e
-      (println "Error in ops/crossover: " (.getMessage e))
+      (log/error "Error in ops/crossover: " (.getMessage e))
       nil)))
 
 
@@ -180,7 +181,7 @@
                               (modify mod-to-apply pheno)
                               (catch Exception e
                                 (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
-                                  (println "Warning, mutation failed: " (:label mod-to-apply)
+                                  (log/warn "Warning, mutation failed: " (:label mod-to-apply)
                                            " on: " (str (:expr pheno))
                                            " due to: " e))
                                 pheno))

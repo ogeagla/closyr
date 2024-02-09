@@ -17,6 +17,8 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
+                 [org.clojure/tools.logging "1.2.4"]
+
                  [org.slf4j/slf4j-api "2.0.12"]
                  [org.apache.logging.log4j/log4j-core "2.22.1"]
 
@@ -26,6 +28,8 @@
                   :exclusions [org.slf4j/slf4j-api]]]
 
   ;; :java-source-paths ["src/main/java"]
+
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"]
 
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
                                    :releases  false

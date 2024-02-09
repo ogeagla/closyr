@@ -1,5 +1,6 @@
 (ns closyr.ops.eval
   (:require
+    [clojure.tools.logging :as log]
     [closyr.ops.common :as ops-common])
   (:import
     (org.matheclipse.core.eval
@@ -39,18 +40,18 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
-    (when-not util (println "*** Warning: No util provided to evaluation engine! ***"))
+    (when-not util (log/warn "*** Warning: No util provided to evaluation engine! ***"))
     (if (and expr expr-args)
       (let [^IAST ast  (F/ast expr-args (ops-common/expr->fn pheno))
             ^IExpr res (.eval (or util (ops-common/new-util)) ast)]
         res)
-      (println "Warning: eval needs both expr and args"))
-    (catch NullPointerException npe (println "Warning: NPE error in eval: " (str expr) " : " npe))
-    (catch ArgumentTypeException se (println "Warning: argument type error in eval: " (str expr) " : " se))
-    (catch SyntaxError se (println "Warning: syntax error in eval: " (str expr) " : " se))
-    (catch MathException me (println "Warning: math error in eval: " (str expr) " : " me))
-    (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " (str expr) " : " soe))
-    (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " (str expr) " : " oome))))
+      (log/warn "Warning: eval needs both expr and args"))
+    (catch NullPointerException npe (log/error "Warning: NPE error in eval: " (str expr) " : " npe))
+    (catch ArgumentTypeException se (log/error "Warning: argument type error in eval: " (str expr) " : " se))
+    (catch SyntaxError se (log/error "Warning: syntax error in eval: " (str expr) " : " se))
+    (catch MathException me (log/error "Warning: math error in eval: " (str expr) " : " me))
+    (catch StackOverflowError soe (log/error "Warning: stack overflow error in eval: " (str expr) " : " soe))
+    (catch OutOfMemoryError oome (log/error "Warning: OOM error in eval: " (str expr) " : " oome))))
 
 
 (defn eval-vec-pheno
@@ -68,7 +69,7 @@
                          (ops-common/expr->double res)
                          Double/POSITIVE_INFINITY))
                      (catch Exception e
-                       (println "Error in evaling function on input values: " (str eval-p) " : " e)
+                       (log/error "Error in evaling function on input values: " (str eval-p) " : " e)
                        Double/POSITIVE_INFINITY)))
                  (range (dec (.size eval-p))))
             vs (if (= input-xs-count (count vs))
@@ -84,7 +85,7 @@
                                eval-p
                                arg0))))
                        (catch Exception e
-                         (println "Error in evaling function on const xs vector: "
+                         (log/error "Error in evaling function on const xs vector: "
                                   (str eval-p) " : " (.getMessage e))
                          (throw e))))
                    (range input-xs-count)))]
