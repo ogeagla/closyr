@@ -32,16 +32,17 @@
 (def ^:dynamic *gui-close-chan* (chan))
 
 
-(def sim-input-args* (atom nil))
+(def ^:private sim-input-args* (atom nil))
 
 
-(defn near-exact-solution
+(defn- near-exact-solution
   [i old-scores]
   (log/warn "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
   0)
 
 
 (def input-xs-exprs
+  "Sample input xs as exprs"
   (->>
     (range 50)
     (map (fn [i] (* Math/PI (/ i 15.0))))
@@ -49,13 +50,14 @@
 
 
 (def input-ys-exprs
+  "Sample input ys as exprs"
   (->>
     (range 50)
     (map (fn [i] 0.0))
     ops-common/doubles->exprs))
 
 
-(defn clamp-infinites
+(defn- clamp-infinites
   [doubles-coll]
   (mapv (fn [v]
           (cond
@@ -65,7 +67,7 @@
         doubles-coll))
 
 
-(defn close-chans!
+(defn- close-chans!
   []
   (log/warn "!! Got GUI exit command, see you later !!")
   (close! *sim->gui-chan*)
@@ -73,14 +75,12 @@
   (close! *gui-close-chan*))
 
 
-(defn update-chart-accumulate
+(defn- update-chart-accumulate
   [^XYChart chart ^String series i y-value ^List xs ^List ys]
 
   (when (= 1 i)
-
     (.clear xs)
     (.clear ys))
-
 
   (.add xs i)
   (.add ys y-value)
@@ -88,7 +88,7 @@
   (.updateXYSeries chart series xs ys nil))
 
 
-(defn check-if-done
+(defn- check-if-done
   [i iters status-label ctl-start-stop-btn]
   (when (= iters i)
     (let [^JButton reset-btn @gui/ctl-reset-btn*]
@@ -97,7 +97,7 @@
       (ss/set-text* status-label (str "Done")))))
 
 
-(defn check-new-best-fn
+(defn- check-new-best-fn
   [best-f-str ^JTextField best-fn-selectable-text]
   (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
     (when (not= fn-str (.getText best-fn-selectable-text))
@@ -105,7 +105,7 @@
       (ss/set-text* best-fn-selectable-text fn-str))))
 
 
-(defn check-should-recur
+(defn- check-should-recur
   []
   (go
     (let [[msg ch] (alts! [*gui-close-chan*] :default :continue :priority true)]
@@ -116,7 +116,7 @@
         true))))
 
 
-(defn repaint-gui
+(defn- repaint-gui
   [chart-iter
    {:keys [^XYChart best-fn-chart
            ^XYChart scores-chart
@@ -226,7 +226,7 @@
         (recur (inc chart-iter))))))
 
 
-(defn setup-gui
+(defn- setup-gui
   []
   (let [sim->gui-chan       *sim->gui-chan*
         sim-stop-start-chan *sim-stop-start-chan*
@@ -259,7 +259,7 @@
      :sim-stop-start-chan sim-stop-start-chan}))
 
 
-(defn update-plot-input-data
+(defn- update-plot-input-data
   [{new-state          :new-state
     input-data-x       :input-data-x
     input-data-y       :input-data-y
@@ -287,14 +287,14 @@
     @sim-input-args*))
 
 
-(defn restart-with-new-inputs
+(defn- restart-with-new-inputs
   [msg]
   (log/warn "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
   true)
 
 
-(defn check-gui-command-and-maybe-park
+(defn- check-gui-command-and-maybe-park
   "If no message from GUI is available, no-op, otherwise process stop/restart requests"
   [{:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
@@ -317,7 +317,7 @@
                     nil))))))))))
 
 
-(defn ->run-args
+(defn- ->run-args
   [{input-xs-exprs     :input-xs-exprs
     input-xs-vec       :input-xs-vec
     input-ys-vec       :input-ys-vec
@@ -344,7 +344,7 @@
    :input-phenos-count   input-phenos-count})
 
 
-(defn wait-and-get-gui-args
+(defn- wait-and-get-gui-args
   "Park and wait on GUI input, return the inputs as args to GA run"
   [sim-stop-start-chan]
   ;; wait for GUI to press Start, which submits the new xs/ys data:
@@ -352,7 +352,7 @@
     (->run-args (update-plot-input-data msg))))
 
 
-(defn start-gui-and-get-input-data
+(defn- start-gui-and-get-input-data
   "Initialize and show GUI, then park and wait on user input to start"
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs] :as run-config}]
 
@@ -367,7 +367,7 @@
     (merge gui-comms (wait-and-get-gui-args sim-stop-start-chan))))
 
 
-(defn next-iters
+(defn- next-iters
   "Determine how many more GA iterations are left based on score, and stop if near perfect solution."
   [i scores]
   (if (some #(> % -1e-3) scores)
@@ -405,7 +405,7 @@
     :else 1))
 
 
-(defn run-ga-iterations
+(defn- run-ga-iterations
   "Run GA evolution iterations on initial population"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    run-args]
@@ -436,7 +436,7 @@
               (recur ga-result (next-iters i scores)))))))))
 
 
-(defn print-end-time
+(defn- print-end-time
   [start iters-done next-step]
   (log/warn "-- Done! Next state: " next-step
             " took" (/ (ops-common/start-date->diff-ms start) 1000.0)
@@ -444,7 +444,7 @@
             " --"))
 
 
-(defn print-and-save-start-time
+(defn- print-and-save-start-time
   [iters initial-phenos]
   (let [start (Date.)]
     (log/warn "-- Start " start
@@ -454,7 +454,7 @@
     (reset! ops/test-timer* start)))
 
 
-(defn run-from-inputs
+(defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count input-xs-list input-xs-count input-ys-vec
@@ -490,7 +490,7 @@
           (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
 
 
-(defn in-flames
+(defn- in-flames
   [f]
   ;; http://localhost:54321/flames.svg
   (let [flames (flames/start! {:port 54321, :host "localhost"})]

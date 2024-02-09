@@ -27,6 +27,7 @@
 
 
 (defn doubles->exprs
+  "Turn a coll of doubles to IExprs"
   [numbers]
   (mapv
     (fn [^double n] (F/num n))
@@ -34,30 +35,37 @@
 
 
 (defn expr->double
+  "Turn an IExpr to a double"
   [^IExpr expr]
   (.doubleValue (.toNumber expr)))
 
 
 (defn exprs->doubles
+  "Turn IExprs to vec of doubles"
   [exprs]
   (mapv expr->double exprs))
 
 
-(def ^ISymbol sym-x (F/Dummy "x"))
+(def ^ISymbol sym-x
+  "The variable to use in functions"
+  (F/Dummy "x"))
 
 
 (defn ^EvalEngine new-eval-engine
+  "Create a new eval engine"
   []
   (doto (EvalEngine. true)
     (.setQuietMode true)))
 
 
 (defn ^ExprEvaluator new-util
+  "Create a new expr evaluator"
   []
   (ExprEvaluator. (new-eval-engine) true 0))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->exprs-list
+  "Turn a coll of exprs into a primitive IExpr array List"
   [exprs]
   (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
         (into-array IExpr exprs)
@@ -66,22 +74,24 @@
     exprs-list))
 
 
-(def ^IExpr assume-x-gt-zero (F/Greater sym-x 0))
+(def ^:private ^IExpr assume-x-gt-zero (F/Greater sym-x 0))
 
 
-(def ^:dynamic *simplify-probability-sampler*
+(def ^:private ^:dynamic *simplify-probability-sampler*
   0.5)
 
 
-(def ^:dynamic *simplify-timeout*
+(def ^:private ^:dynamic *simplify-timeout*
   500)
 
 
 (def ^:dynamic *simplify-max-leafs*
+  "Max leafs allowed for a candidate IExpr to simplify"
   5)
 
 
 (defn start-date->diff-ms
+  "Compute ms difference from start to now"
   [^Date start]
   (let [end  (Date.)
         diff (- (.getTime end) (.getTime start))]
@@ -89,6 +99,7 @@
 
 
 (defn ^IAST expr->fn
+  "Turn an IExpr into a Function IAST"
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}]
   (F/Function
     (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
@@ -97,23 +108,21 @@
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" ->iexprs
+  "Turn a coll to an IExpr primitive array"
   [coll]
   ^"[Lorg.matheclipse.core.interfaces.IExpr;"
   (into-array IExpr coll))
 
 
-(defn ^"[Ljava.lang.String;" ->strings
-  [coll]
-  (into-array String coll))
-
-
 (defn ^Function as-function
+  "Wrap in clojure fn into a java.util.function.Function"
   [f]
   (reify Function
     (apply [this arg] (f arg))))
 
 
 (defn ->phenotype
+  "Create a GA phenotype from an expr and symbol and other args"
   ([{v :sym e :expr u :util}]
    (->phenotype v e u))
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
@@ -131,10 +140,8 @@
        (log/error "Err creating pheno: " expr " , " variable " , " e)))))
 
 
-(def modify-leafs-sampler [true false false false])
 
-
-(defn inversely-proportional-to-leaf-size
+(defn- inversely-proportional-to-leaf-size
   [leaf-count scalar]
   (let [leaf-scalar (min 1.0
                          (max 0.005
@@ -145,24 +152,27 @@
 
 
 (defn should-modify-leaf
+  "Based on probability, check if should modify leaf"
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
   (inversely-proportional-to-leaf-size leaf-count 1.5))
 
 
 (defn should-modify-branch
+  "Based on probability, check if should modify branch"
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
   (inversely-proportional-to-leaf-size leaf-count 0.5))
 
 
 (defn should-modify-ast-head
+  "Based on probability, check if should modify AST head"
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
   (inversely-proportional-to-leaf-size leaf-count 0.25))
 
 
-(def do-not-simplify-fns* (atom {}))
+(def ^:private do-not-simplify-fns* (atom {}))
 
 
-(defn check-simplify-timing
+(defn- check-simplify-timing
   [^IAST expr done?*]
   (go-loop [c 0]
     (when-not @done?*
@@ -177,7 +187,7 @@
       (recur (inc c)))))
 
 
-(defn ^IAST do-simplify
+(defn- ^IAST do-simplify
   [start
    done?*
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
@@ -197,8 +207,8 @@
         (reset! done?* true)
         (when (> diff-ms 2000)
           (log/warn "Long simplify: "
-                   (.leafCount expr) (str expr) " -->> "
-                   (.leafCount res) (str res)))
+                    (.leafCount expr) (str expr) " -->> "
+                    (.leafCount res) (str res)))
         res)
 
       (catch Exception e
@@ -207,6 +217,7 @@
 
 
 (defn ^IAST maybe-simplify
+  "Maybe simplify pheno expr"
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
 
   (if (and (<= (.leafCount expr) *simplify-max-leafs*)
@@ -223,6 +234,7 @@
 
 
 (defn extend-xs
+  "Add extra xs on either side of the provided range"
   [input-xs-vec]
   (let [x-min                (first input-xs-vec)
         x-max                (last input-xs-vec)
