@@ -78,7 +78,25 @@
                (ops-common/->phenotype x (F/Sqrt (F/Subtract x F/C1)) nil)
                {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
                 :input-xs-count 3})
-             [##Inf ##Inf 0.0])))))
+             [##Inf ##Inf 0.0]))
+
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x (F/C1) nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
+             [1.0 1.0 1.0]))
+
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x F/Infinity nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
+             [##Inf ##Inf ##Inf]))
+
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x x nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
+             [0.0 0.5 1.0])))))
 
 
 (deftest eval-f-benchmark-test
