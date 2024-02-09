@@ -10,7 +10,7 @@
 
 (defn csv-data->maps
   [csv-data]
-  (let [has-col-names (= "x" (ffirst csv-data))
+  (let [has-col-names (or (= "x" (ffirst csv-data)) (= "y" (ffirst csv-data)))
         data-content  (map (fn [vs] (map #(Double/parseDouble %) vs))
                            (if has-col-names
                              (do

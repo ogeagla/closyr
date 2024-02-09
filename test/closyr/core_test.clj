@@ -62,9 +62,32 @@
            :ys         [1.0 2.0 30.0 4.0 5.0 6.0 10.0]})))
 
 
-  (testing "handles valid long options w csv data"
+  (testing "handles valid long options w csv data with columns"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_1.csv")]
+            (validate-symreg-opts (parse-main-opts test-input)))
+
+          {:headless   true
+           :iterations 200
+           :population 1000
+           :xs         [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
+           :ys         [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]})))
+
+
+  (testing "handles valid long options w csv data with columns with in order y,x"
+    (is (=
+          (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_3.csv")]
+            (validate-symreg-opts (parse-main-opts test-input)))
+
+          {:headless   true
+           :iterations 200
+           :population 1000
+           :xs         [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0 30.0 45.0 55.0 60.0]
+           :ys         [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]})))
+
+  (testing "handles valid long options w csv data without columns"
+    (is (=
+          (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_2.csv")]
             (validate-symreg-opts (parse-main-opts test-input)))
 
           {:headless   true
