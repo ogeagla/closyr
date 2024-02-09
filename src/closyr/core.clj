@@ -14,7 +14,7 @@
 (set! *warn-on-reflection* true)
 
 
-(defn str->doubles-vec
+(defn- str->doubles-vec
   [numbers-str]
   (try
     (let [ns (->>
@@ -26,7 +26,7 @@
       (log/error "Cant parse numbers str: " numbers-str " : " e))))
 
 
-(def cli-options
+(def ^:private cli-options
   [["-i" "--iterations ITERATIONS" "Number of iterations"
     :default 10
     :parse-fn #(Integer/parseInt %)
@@ -63,7 +63,7 @@
    #_["-h" "--help"]])
 
 
-(defn parse-main-opts
+(defn- parse-main-opts
   [args]
   (let [{errors  :errors
          options :options
@@ -74,7 +74,7 @@
     options))
 
 
-(defn validate-symreg-opts
+(defn- validate-symreg-opts
   [{:keys [ys xs infile]
     :as   opts}]
   (let [opts (if-not (nil? infile)
@@ -91,7 +91,7 @@
     (dissoc opts :infile)))
 
 
-(def big-text
+(def ^:private big-text
   (str #"
 ________/\\\\\\\\\__/\\\___________________/\\\\\__________/\\\\\\\\\\\____/\\\________/\\\____/\\\\\\\\\_____
  _____/\\\////////__\/\\\_________________/\\\///\\\______/\\\/////////\\\_\///\\\____/\\\/___/\\\///////\\\___

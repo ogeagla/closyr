@@ -43,9 +43,9 @@
 
 (deftest compute-residuals
   (testing "valid input"
-    (is (= (ops/compute-residual 10.0 5.0)
+    (is (= (#'ops/compute-residual 10.0 5.0)
            5.0)))
 
   (testing "invalid input"
-    (is (= (ops/compute-residual ##Inf 5.0)
+    (is (= (#'ops/compute-residual ##Inf 5.0)
            ops/max-resid))))

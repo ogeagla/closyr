@@ -8,7 +8,7 @@
 (set! *warn-on-reflection* true)
 
 
-(defn csv-data->maps
+(defn- csv-data->maps
   [csv-data]
   (let [has-col-names (or (= "x" (ffirst csv-data)) (= "y" (ffirst csv-data)))
         data-content  (map (fn [vs] (map #(Double/parseDouble %) vs))
@@ -30,6 +30,7 @@
 
 
 (defn get-csv-data
+  "Read a file and get back parsed x/y input data"
   [csv-file]
   (with-open [reader (io/reader csv-file)]
     (doall

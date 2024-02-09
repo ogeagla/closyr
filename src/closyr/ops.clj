@@ -32,32 +32,33 @@
 (def test-timer* (atom nil))
 
 
-(def ^DecimalFormat score-format (DecimalFormat. "###.#####"))
+(def ^:private ^DecimalFormat score-format (DecimalFormat. "###.#####"))
 
 
 (defn format-fn-str
+  "Remove newlines from fn expr string"
   [fn-str]
   (str/replace (str/trim-newline (str fn-str)) #"\n|\r" ""))
 
 
-(defn sum
+(defn- sum
   [coll]
   (reduce + 0.0 coll))
 
 
-(defn tally-min-score
+(defn- tally-min-score
   [min-score]
   (swap! sim-stats* update-in [:scoring :min-scores] #(inc (or % 0)))
   min-score)
 
 
-(defn not-finite?
+(defn- not-finite?
   [n]
   (or (not (number? n))
       (and (number? n) (Double/isNaN n))))
 
 
-(defn compute-residual
+(defn- compute-residual
   [expected actual]
   (let [res (if (not-finite? actual)
               max-resid
@@ -70,7 +71,7 @@
       (min max-resid (abs res)))))
 
 
-(defn compute-score-from-actuals-and-expecteds
+(defn- compute-score-from-actuals-and-expecteds
   [pheno f-of-xs input-ys-vec leafs]
   (try
     (let [abs-resids       (map compute-residual input-ys-vec f-of-xs)
@@ -94,6 +95,7 @@
 
 
 (defn score-fn
+  "Symbolic regression scoring"
   [{:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}
@@ -112,6 +114,7 @@
 
 
 (defn mutation-fn
+  "Symbolic regression mutation"
   [initial-muts p-winner p-discard]
   (try
     (let [start   (Date.)
@@ -136,6 +139,7 @@
 
 
 (defn crossover-fn
+  "Symbolic regression crossover"
   [initial-muts p p-discard]
   (let [crossover-result (ops-modify/crossover p p-discard)]
     (when crossover-result
@@ -145,7 +149,7 @@
       (mutation-fn initial-muts p p-discard))))
 
 
-(defn sort-population
+(defn- sort-population
   [pops]
   (->>
     (:pop pops)
@@ -154,7 +158,7 @@
     (reverse)))
 
 
-(defn reportable-phen-str
+(defn- reportable-phen-str
   [{:keys [^IExpr expr ^double score last-op mods-applied] p-id :id :as p}]
   (str
     " id: " (str/join (take 3 (str p-id)))
@@ -166,7 +170,7 @@
     " fn: " (format-fn-str expr)))
 
 
-(defn summarize-sim-stats
+(defn- summarize-sim-stats
   []
   (try
     (let [{{xcs :counts}                :crossovers
@@ -217,16 +221,17 @@
       (str "Error: " (.getMessage e)))))
 
 
-(def ^:dynamic *print-top-n* 20)
+(def ^:dynamic ^:private *print-top-n* 20)
 
 
-(defn log-iteration
+(defn- log-iteration
   [& args]
   (log/warn (str/join " " args))
   (apply println args))
 
 
 (defn report-iteration
+  "Print and maybe send to GUI a summary report of the population, including best fn/score/etc"
   [i
    iters
    ga-result

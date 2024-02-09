@@ -5,6 +5,7 @@
 
 
 (defn y->gui-coord-y
+  "Translate actual Y to a GUI Y coordinate (scale, translate, flip upside down)"
   [sketchpad-size* y]
   (+ (/ (or (:h @sketchpad-size*)
             170)
@@ -16,6 +17,7 @@
 
 
 (defn input-y-fns-data
+  "Functions to display in GUI which can be used as input data"
   [sketchpad-size* sketch-input-x-count*]
   {initial-fn
    {:idx 0

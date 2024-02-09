@@ -1,7 +1,7 @@
 (ns closyr.core-test
   (:require
     [clojure.test :refer :all]
-    [closyr.core :refer :all]
+    [closyr.core :as core]
     [closyr.symbolic-regression :as symreg]))
 
 
@@ -9,13 +9,13 @@
   (testing "handles invalid inputs"
     (is (=
           (let [test-input '("-vvvp80000" "foo" "--help" "--invalid-opt" "-i50000" "-y1,1,1" "-x1,1,1,1,1,1,1,1,1")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           nil)))
   (testing "handles valid short options w data inline"
     (is (=
           (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless   true
            :iterations 200
@@ -27,7 +27,7 @@
   (testing "if xs, also needs ys"
     (is (=
           (let [test-input '("-t" "-p1000" "-i" "200" "-x" "0,1,2,3,4,5,6")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           nil)))
 
@@ -35,7 +35,7 @@
   (testing "if ys, also needs xs"
     (is (=
           (let [test-input '("-t" "-p1000" "-i" "200" "-y" "0,1,2,3,4,5,6")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           nil)))
 
@@ -43,7 +43,7 @@
   (testing "handles valid short options w csv data"
     (is (=
           (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-f" "resources/csvs/test_inputs_1.csv")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless   true
            :iterations 200
@@ -54,7 +54,7 @@
   (testing "handles valid long options w data inline"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "--ys" "1,2,30,4,5,6,10" "--xs" "0,1,2,3,4,5,6")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless   true
            :iterations 200
@@ -66,7 +66,7 @@
   (testing "handles valid long options w csv data with columns"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_1.csv")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless   true
            :iterations 200
@@ -78,7 +78,7 @@
   (testing "handles valid long options w csv data with columns with in order y,x"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_3.csv")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless   true
            :iterations 200
@@ -89,7 +89,7 @@
   (testing "handles valid long options w csv data without columns"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_2.csv")]
-            (validate-symreg-opts (parse-main-opts test-input)))
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless   true
            :iterations 200
@@ -106,7 +106,7 @@
                              #'symreg/exit              (fn [] (reset! exited* true))}
               (fn []
                 (some->
-                  (-main "-t" "-p" "20" "-i" "10" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6")
+                  (core/-main "-t" "-p" "20" "-i" "10" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6")
                   :final-population
                   :pop
                   count)))

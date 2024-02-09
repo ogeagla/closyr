@@ -9,6 +9,7 @@
 
 
 (defn initialize
+  "Initialize GA population and functions"
   [initial-pop score-fn mutation-fn crossover-fn]
   {:pop          initial-pop
    :score-fn     score-fn
@@ -21,14 +22,14 @@
   [true true true true false])
 
 
-(defn with-score
+(defn- with-score
   [the-score-fn p]
   (if (:score p)
     p
     (assoc p :score (the-score-fn p))))
 
 
-(defn compete
+(defn- compete
   [{:keys [pop score-fn mutation-fn crossover-fn]
     :as   config}
    [{^double e1-score :score :as e1} {^double e2-score :score :as e2}]]
@@ -45,7 +46,7 @@
       [(+ e1-score e2-score) [e1 next-e]])))
 
 
-(defn pop->chunks
+(defn- pop->chunks
   [pop]
   (cond
     (>= (count pop) 10000) 200
@@ -55,6 +56,7 @@
 
 
 (defn evolve
+  "Evolve a population using random competition"
   [{:keys [pop score-fn mutation-fn crossover-fn]
     :as   config}]
   (try
