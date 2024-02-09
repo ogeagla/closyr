@@ -25,7 +25,7 @@
 (set! *warn-on-reflection* true)
 
 
-(defn ^Function tree-leaf-modifier
+(defn- ^Function tree-leaf-modifier
   [modifier]
   (ops-common/as-function
     (fn ^IExpr [^IExpr ie]
@@ -34,7 +34,7 @@
         (modifier ie)))))
 
 
-(defn ^Function tree-branch-modifier
+(defn- ^Function tree-branch-modifier
   [modifier]
   (ops-common/as-function
     (fn ^IExpr [^IExpr ie]
@@ -45,7 +45,7 @@
         ie))))
 
 
-(defn ^Function tree-ast-head-modifier
+(defn- ^Function tree-ast-head-modifier
   [modifier]
   (ops-common/as-function
     (fn ^IExpr [^IExpr ie]
@@ -55,7 +55,7 @@
         ie))))
 
 
-(defn op-short-str_unmemo
+(defn- op-short-str_unmemo
   [{:keys [op label] :as modif}]
   (let [op-str    (name op)
         ops-short (->> (str/split op-str #"-")
@@ -65,10 +65,10 @@
     (str ops-short ":" label)))
 
 
-(def op-short-str (memoize op-short-str_unmemo))
+(def ^:private op-short-str (memoize op-short-str_unmemo))
 
 
-(defn with-recent-mod-metadata
+(defn- with-recent-mod-metadata
   [p {:keys [op label] :as modif}]
   (assoc p :last-op (op-short-str (select-keys modif [:op :label]))))
 
@@ -122,16 +122,17 @@
       (with-recent-mod-metadata modif)))
 
 
-(defn is-expr-function?
+(defn- is-expr-function?
   [^IExpr ie]
   (instance? IAST ie))
 
 
-(def crossover-sampler
+(def ^:private crossover-sampler
   [:plus :times :divide12 :divide21 :minus12 :minus21])
 
 
 (defn crossover
+  "Do phenotype crossover on their expr AST"
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p} p-discard]
   (try
     (let [^IExpr e1        (:expr p)
@@ -165,6 +166,7 @@
 
 
 (defn apply-modifications
+  "Apply a sequence of modifications"
   [max-leafs mods-count initial-muts p-winner p-discard]
   (loop [iters      0
          c          mods-count
@@ -182,8 +184,8 @@
                               (catch Exception e
                                 (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
                                   (log/warn "Warning, mutation failed: " (:label mod-to-apply)
-                                           " on: " (str (:expr pheno))
-                                           " due to: " e))
+                                            " on: " (str (:expr pheno))
+                                            " due to: " e))
                                 pheno))
 
             ^IExpr new-expr (:expr new-pheno)
@@ -204,6 +206,7 @@
 
 
 (def mutations-sampler
+  "A coll whose random element is the number of modifications to apply in succession"
   (->>
     []
     (concat (repeat 50 1))
