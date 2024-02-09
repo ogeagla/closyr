@@ -231,7 +231,7 @@
                                       {:op               :modify-leafs
                                        :label            "c+1/2"
                                        :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (if (and (.isNumber ie))
+                                                           (if (.isNumber ie)
                                                              (F/Plus ie (F/Divide 1 F/C2))
                                                              ie))}
                                       {:op          :modify-fn
