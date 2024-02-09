@@ -174,30 +174,30 @@
       [pheno #_(maybe-simplify pheno)
        iters
        mods]
-      (let [pheno        (if first-run? (assoc pheno :util (:util p-discard)) pheno)
-            mod-to-apply (rand-nth initial-muts)
-            new-pheno    (try
-                           (modify mod-to-apply pheno)
-                           (catch Exception e
-                             (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
-                               (println "Warning, mutation failed: " (:label mod-to-apply)
-                                        " on: " (str (:expr pheno))
-                                        " due to: " e))
-                             pheno))
+      (let [pheno           (if first-run? (assoc pheno :util (:util p-discard)) pheno)
+            mod-to-apply    (rand-nth initial-muts)
+            new-pheno       (try
+                              (modify mod-to-apply pheno)
+                              (catch Exception e
+                                (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
+                                  (println "Warning, mutation failed: " (:label mod-to-apply)
+                                           " on: " (str (:expr pheno))
+                                           " due to: " e))
+                                pheno))
 
-            new-leafs    (some->
-                           ^IExpr (:expr new-pheno)
-                           (.leafCount))
+            ^IExpr new-expr (:expr new-pheno)
+            new-leafs       (some-> new-expr (.leafCount))
 
             ;; stop modification loop if too big or something went wrong:
-            count-to-go  (if (or (nil? new-leafs)
-                                 (> new-leafs max-leafs))
-                           0
-                           (dec c))]
+            count-to-go     (if (or (nil? new-leafs)
+                                    (nil? new-expr)
+                                    (> new-leafs max-leafs))
+                              0
+                              (dec c))]
         (recur
           (inc iters)
           count-to-go
-          (if new-leafs new-pheno pheno)
+          (if (and new-leafs new-expr) new-pheno pheno)
           false
           (into mods [(select-keys mod-to-apply [:label :op])]))))))
 
@@ -220,11 +220,11 @@
     (concat (repeat 2 13))
     (concat (repeat 1 14))
     (concat (repeat 1 15))
-    ;(concat (repeat 1 16))
-    ;(concat (repeat 2 17))
-    ;(concat (repeat 1 18))
-    ;(concat (repeat 1 19))
-    ;(concat (repeat 1 20))
+    ;; (concat (repeat 1 16))
+    ;; (concat (repeat 2 17))
+    ;; (concat (repeat 1 18))
+    ;; (concat (repeat 1 19))
+    ;; (concat (repeat 1 20))
 
     vec)
   #_[1 1 1 1 1 1 1 1 1
