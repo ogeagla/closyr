@@ -39,12 +39,12 @@
    ["-y" "--ys YS" "Y values to fit against. Without xs, will use 0,...,N"
     :default nil
     :parse-fn str->doubles-vec
-    :validate [#(< 4 (count %) 101) "Y values count must be between 4 and 101, separated by ,"]]
+    :validate [#(< 2 (count %) 101) "Y values count must be between 2 and 101, separated by ,"]]
 
    ["-x" "--xs XS" "X values to fit against. Must provide ys if providing xs"
     :default nil
     :parse-fn str->doubles-vec
-    :validate [#(< 4 (count %) 101) "X values count must be between 4 and 101, separated by ,"]]
+    :validate [#(< 2 (count %) 101) "X values count must be between 2 and 101, separated by ,"]]
 
    ["-p" "--population POPULATION" "Population size"
     :default 20
@@ -70,7 +70,8 @@
     ;; (println "Got main args: " args)
     ;; (println "Got main opts: " main-opts)
     (when (seq errors)
-      (println "Warning(s) from CLI input processor: \n Warning:" (str/join "\n Warning: " errors)))
+      (println "Warning(s) from CLI input processor: \n Warning:" (str/join "\n Warning: " errors))
+      (println "From CLI args: " args))
     options))
 
 
@@ -84,9 +85,9 @@
                  (assoc opts :xs xs :ys ys))
                opts)
         opts (cond
-               (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch")
-               (and xs (nil? ys)) (println "Error: only XS provided, please provide YS")
-               (and ys (nil? xs)) (println "Error: only YS provided, please provide XS")
+               (and ys xs (not= (count ys) (count xs))) (println "Error: XS and YS count mismatch. XS/YS: " xs ys)
+               (and xs (nil? ys)) (println "Error: only XS provided, please provide YS. XS/YS: " xs ys)
+               (and ys (nil? xs)) (println "Error: only YS provided, please provide XS. XS/YS: " xs ys)
                :else opts)]
     (dissoc opts :infile)))
 
