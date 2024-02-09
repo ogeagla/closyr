@@ -13,6 +13,7 @@
 
 
 (def initial-exprs
+  "Initial exprs to use in GA evolution"
   (let [^ISymbol x ops-common/sym-x]
     [x]
     #_[
@@ -36,6 +37,7 @@
 
 
 (defn initial-phenotypes
+  "Initial exprs scaled up in quantity to use in GA evolution"
   [reps]
   (let [^ISymbol x ops-common/sym-x]
     (->>
@@ -47,6 +49,7 @@
 
 
 (defn initial-mutations
+  "All mutations to use in GA evolutions"
   []
   [{:op          :modify-fn
     :label       "Derivative"

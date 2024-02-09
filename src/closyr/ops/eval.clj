@@ -37,6 +37,7 @@
 
 
 (defn ^IExpr eval-phenotype-on-expr-args
+  "Eval an expr at every point in the args"
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
@@ -55,6 +56,7 @@
 
 
 (defn eval-vec-pheno
+  "Evaluate a phenotype's expr on input xs/ys vecs"
   [p
    {:keys [input-xs-list input-xs-count input-ys-vec]
     :as   run-args}]
@@ -92,7 +94,7 @@
         vs))))
 
 
-(defn clamp-oversampled-ys
+(defn- clamp-oversampled-ys
   [max-y min-y y]
   (if (infinite? y)
     y
@@ -101,6 +103,7 @@
 
 
 (defn eval-extended
+  "Eval phenotype expr on extended domain"
   [p
    run-args
    {x-head      :x-head
@@ -138,6 +141,7 @@
 
 
 (defn eval-vec-pheno-oversample
+  "Evaluate a pheno expr on an extended domain"
   [p
    {:keys [input-xs-list input-xs-count input-xs-vec input-ys-vec]
     :as   run-args}
