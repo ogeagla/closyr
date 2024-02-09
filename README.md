@@ -115,6 +115,7 @@ Coverage looks like this if you run `lein cloverage`:
 - [x] CLI options accept a CSV file (GUI already supports this)
 - [ ] More tests
 - [ ] Use something like ProGuard to shrink the JAR for releases 
+  - https://www.guardsquare.com/manual/configuration/examples
   - https://stackoverflow.com/questions/12281365/obfuscating-clojure-uberjars-with-proguard
   - https://github.com/eiffelqiu/obfuscate-clojure-project-demo/tree/master
 - [ ] A different frontend.  The current Java Swing frontend does the job, but it's not easy to maintain and it's hard to make look better.
