@@ -17,7 +17,7 @@
       BorderLayout
       Color
       Container
-      FlowLayout
+      Cursor FlowLayout
       Graphics2D
       GridBagConstraints
       GridBagLayout
@@ -429,7 +429,8 @@
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
-
+    (-> drawing-widget (.setCursor (Cursor/getPredefinedCursor Cursor/HAND_CURSOR)))
+    (println "Set hand cursor for sketchpad widget: " (.getCursor drawing-widget))
 
     (reset! items-points-accessors* {:drawing-widget      drawing-widget
                                      :items-point-getters items-point-getters
