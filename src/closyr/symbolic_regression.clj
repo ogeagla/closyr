@@ -2,7 +2,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
-    [clojure.tools.logging :as log]
+    [closyr.log :as log]
     [closyr.ga :as ga]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
@@ -37,7 +37,7 @@
 
 (defn- near-exact-solution
   [i old-scores]
-  (log/warn "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
+  (log/info "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
   0)
 
 
@@ -101,7 +101,7 @@
   [best-f-str ^JTextField best-fn-selectable-text]
   (let [fn-str (str "y = " (ops/format-fn-str best-f-str))]
     (when (not= fn-str (.getText best-fn-selectable-text))
-      (log/warn "New Best Function: " fn-str)
+      (log/info "New Best Function: " fn-str)
       (ss/set-text* best-fn-selectable-text fn-str))))
 
 
@@ -207,7 +207,7 @@
     :as   ui-elements}
    conf]
 
-  (log/warn "Begin chart update loop")
+  (log/info "Begin chart update loop")
 
   (go-loop [chart-iter 0]
 
@@ -266,7 +266,7 @@
     input-iters        :input-iters
     input-phenos-count :input-phenos-count}]
 
-  (log/warn "Got state req: " new-state)
+  (log/info "Got state req: " new-state)
 
   (let [input-xs-exprs (if input-data-x
                          (ops-common/doubles->exprs input-data-x)
@@ -289,7 +289,7 @@
 
 (defn- restart-with-new-inputs
   [msg]
-  (log/warn "~~~ Restarting experiment! ~~~")
+  (log/info "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
   true)
 
@@ -306,14 +306,14 @@
         (if (= :restart new-state)
           (restart-with-new-inputs msg)
           (do
-            (log/warn "~~~ Parking updates due to Stop command ~~~")
+            (log/info "~~~ Parking updates due to Stop command ~~~")
             (let [{:keys [new-state] :as msg} (<!! sim-stop-start-chan)]
               (if (= :stop new-state)
                 :stop
                 (if (= :restart new-state)
                   (restart-with-new-inputs msg)
                   (do
-                    (log/warn "~~~ Resuming updates ~~~")
+                    (log/info "~~~ Resuming updates ~~~")
                     nil))))))))))
 
 
@@ -410,7 +410,7 @@
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    run-args]
   (binding [ops/*log-steps* (config->log-steps run-config run-args)]
-    (log/warn "Running with logging every n steps: " ops/*log-steps*)
+    (log/info "Running with logging every n steps: " ops/*log-steps*)
     (loop [pop (ga/initialize
                  initial-phenos
                  (partial ops/score-fn run-args)
@@ -438,7 +438,7 @@
 
 (defn- print-end-time
   [start iters-done next-step]
-  (log/warn "-- Done! Next state: " next-step
+  (log/info "-- Done! Next state: " next-step
             " took" (/ (ops-common/start-date->diff-ms start) 1000.0)
             " seconds for iters: " iters-done
             " --"))
@@ -447,7 +447,7 @@
 (defn- print-and-save-start-time
   [iters initial-phenos]
   (let [start (Date.)]
-    (log/warn "-- Start " start
+    (log/info "-- Start " start
               "iters: " iters
               " pop size: " (count initial-phenos)
               " --")
@@ -479,14 +479,14 @@
 
       :wait
       (if use-gui?
-        (do (log/warn "-- Waiting for GUI input to start again --")
+        (do (log/info "-- Waiting for GUI input to start again --")
             (if-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
               (recur run-config (merge run-args new-gui-args))
               completed-ga-data))
         completed-ga-data)
 
       :restart
-      (do (log/warn "-- Restarting... --")
+      (do (log/info "-- Restarting... --")
           (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
 
 
@@ -505,7 +505,7 @@
   "Run a GA evolution experiment to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-  (log/warn "-- Running! iters: " iters
+  (log/info "-- Running! iters: " iters
             "pop: " (count initial-phenos)
             "muts: " (count initial-muts)
             " --")
@@ -564,7 +564,7 @@
 
 (defn run-app-from-cli-args
   [{:keys [iterations population headless xs ys] :as cli-opts}]
-  (log/warn "CLI: run from options: " cli-opts)
+  (log/info "CLI: run from options: " cli-opts)
   (let [result (run-experiment
                  {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
                   :initial-muts   (ops-init/initial-mutations)
@@ -576,7 +576,7 @@
                   :input-ys-exprs (if ys
                                     (ops-common/doubles->exprs ys)
                                     input-ys-exprs)})]
-    (log/warn "CLI: Done!")
+    (log/info "CLI: Done!")
     (exit)
     result))
 

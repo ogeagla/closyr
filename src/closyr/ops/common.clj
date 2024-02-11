@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
-    [clojure.tools.logging :as log]
+    [closyr.log :as log]
     [closyr.dataset.prng :refer :all])
   (:import
     (java.util

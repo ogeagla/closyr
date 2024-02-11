@@ -1,6 +1,6 @@
 (ns closyr.ops.eval
   (:require
-    [clojure.tools.logging :as log]
+    [closyr.log :as log]
     [closyr.ops.common :as ops-common])
   (:import
     (org.matheclipse.core.eval

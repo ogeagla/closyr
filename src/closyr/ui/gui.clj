@@ -2,7 +2,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [clojure.java.io :as io]
-    [clojure.tools.logging :as log]
+    [closyr.log :as log]
     [closyr.dataset.csv :as input-csv]
     [closyr.dataset.inputs :as input-data]
     [closyr.ui.plot :as plot]
@@ -387,7 +387,7 @@
 
 (defn- input-data-items-widget
   [points-fn]
-  (log/warn "Create input-data-items-widget")
+  (log/info "Create input-data-items-widget")
   (let [^JPanel bp             (doto
                                  (ss/border-panel
                                    :border (sbr/line-border :top 15 :color "#AAFFFF")
@@ -399,7 +399,7 @@
                                               (fn [^AbstractDocument$DefaultDocumentEvent e]
                                                 (let [doc     (.getDocument e)
                                                       doc-txt (.getText doc 0 (.getLength doc))]
-                                                  (log/warn "New text: " doc-txt)))]))
+                                                  (log/info "New text: " doc-txt)))]))
                                  (ss/config! :bounds :preferred)
                                  (movable))
 
@@ -455,14 +455,14 @@
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (swap! experiment-settings* assoc :input-iters (amount->number b))
-    (log/warn "iters changed to " b)))
+    (log/info "iters changed to " b)))
 
 
 (defn- settings-pheno-count-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (swap! experiment-settings* assoc :input-phenos-count (amount->number b))
-    (log/warn "pheno count changed to " b)))
+    (log/info "pheno count changed to " b)))
 
 
 (defn- ^JPanel experiment-settings-panel
@@ -539,7 +539,7 @@
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
 
-        (log/warn "clicked Start/Pause: " is-start)
+        (log/info "clicked Start/Pause: " is-start)
 
         (reset! experiment-is-running?* is-start)
         (.setEnabled ^JButton @ctl-reset-btn* true)
@@ -567,7 +567,7 @@
             input-x    (mapv first input-data)
             input-y    (mapv second input-data)]
         (reset! experiment-is-running?* true)
-        (log/warn "clicked Reset")
+        (log/info "clicked Reset")
         (put! sim-stop-start-chan (merge @experiment-settings*
                                          {:new-state    :restart
                                           :input-data-x input-x
@@ -589,14 +589,14 @@
        (.getX ^Point ((nth items-point-getters i)))
        (new-fn i)))
     (ss/repaint! drawing-widget)
-    (log/warn "Selected: " selection)))
+    (log/info "Selected: " selection)))
 
 
 (defn- brush-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
     (reset! brush-fn* (brushes-map b))
-    (log/warn "brush change to " b)))
+    (log/info "brush change to " b)))
 
 
 (defn- xs-on-change
@@ -607,7 +607,7 @@
     (reset! sketch-input-x-count* new-xs)
     (reset! sketch-input-x-scale* (xs->gap new-xs))
     (redraw-sketch-widget!)
-    (log/warn "brush xs to " xs-str " -> " new-xs)))
+    (log/info "brush xs to " xs-str " -> " new-xs)))
 
 
 (defn- ^JPanel brush-panel
@@ -683,7 +683,7 @@
   (reset!
     replace-drawing-widget!*
     (fn [^JPanel drawing-widget]
-      (log/warn "REPLACE DRAWING WIDGET!")
+      (log/info "REPLACE DRAWING WIDGET!")
       (reset! new-xs?* true)
       (ss/replace!
         draw-container
@@ -721,7 +721,7 @@
       (reset! xs* (mapv :x scaled-inputs))
       (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) scaled-inputs)]
         (let []
-          (log/warn "Set ixy: " i x y
+          (log/info "Set ixy: " i x y
                     " scalars: " x-scalar y-scalar
                     " diff: " diff-x diff-y
                     " canvas: " canvas-w canvas-h)
@@ -749,7 +749,7 @@
                                                 sel-file (.getSelectedFile input-file-picker)]
                                             (when (and (= JFileChooser/APPROVE_OPTION res)
                                                        sel-file)
-                                              (log/warn "Got file: " (.getAbsolutePath sel-file))
+                                              (log/info "Got file: " (.getAbsolutePath sel-file))
 
                                               (try
                                                 (let [csv-data (input-csv/get-csv-data sel-file)]
@@ -758,6 +758,7 @@
                                                                 (str "Points: " (count csv-data)
                                                                      " From file: " (.getName sel-file))))
                                                 (catch Exception e
+                                                  (log/error e)
                                                   (ss/set-text* input-file-label
                                                                 (str "Error: " (.getMessage e))))))))])
 
@@ -1005,7 +1006,7 @@
                (if (= n :continue)
                  :ok
                  (do
-                   (log/warn "Parking updates to chart due to Stop command")
+                   (log/info "Parking updates to chart due to Stop command")
                    (<! sim-stop-start-chan))))
              ;; (println "Draw new points " (.size xs-best-fn))
              (.add xs-best-fn (.size xs-best-fn))

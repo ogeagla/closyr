@@ -3,16 +3,21 @@
   (:require
     [clojure.string :as str]
     [clojure.tools.cli :as cli]
-    [clojure.tools.logging :as log]
+    [closyr.log :as log]
     [closyr.dataset.csv :as input-csv]
-    [closyr.symbolic-regression :as symreg])
+    [closyr.symbolic-regression :as symreg]
+    ;[unilog.config  :refer [start-logging!]]
+    )
   (:import
     (java.io
       File)))
 
-
 (set! *warn-on-reflection* true)
+#_(start-logging! {
+                 :level :info
+                 :overrides  {"edu.jas.ufd" :error}
 
+                 })
 
 (defn- str->doubles-vec
   [numbers-str]
@@ -70,7 +75,7 @@
          :as     main-opts} (cli/parse-opts args cli-options)]
     (when (seq errors)
       (log/warn "Warning(s) from CLI input processor: \n Warning:" (str/join "\n Warning: " errors))
-      (log/warn "From CLI args: " args))
+      (log/info "From CLI args: " args))
     options))
 
 
@@ -109,7 +114,7 @@ ________/\\\\\\\\\__/\\\___________________/\\\\\__________/\\\\\\\\\\\____/\\\_
   "Validate CLI args and run symbolic regression"
   [& args]
   (println big-text)
-  ;; (log/warn big-text)
+  ;; (log/info big-text)
 
   (some->
     (parse-main-opts args)

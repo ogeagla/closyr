@@ -3,7 +3,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str]
-    [clojure.tools.logging :as log]
+    [closyr.log :as log]
     [closyr.dataset.prng :refer :all]
     [closyr.ops.common :as ops-common])
   (:import

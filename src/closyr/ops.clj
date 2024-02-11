@@ -3,7 +3,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
-    [clojure.tools.logging :as log]
+    [closyr.log :as log]
     [closyr.dataset.prng :refer :all]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
@@ -230,7 +230,7 @@
 
 (defn- log-iteration
   [& args]
-  (log/warn (str/join " " args))
+  (log/info (str/join " " args))
   (apply println args))
 
 
