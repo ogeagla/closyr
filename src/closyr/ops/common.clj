@@ -199,6 +199,7 @@
   [^IAST expr]
   (F/Simplify expr))
 
+(def ^:dynamic *long-simplify-thresh-ms* 2000)
 
 (defn- ^IAST do-simplify
   [start
@@ -219,7 +220,7 @@
             res            (.eval (or util (new-util)) new-expr)
             diff-ms        (start-date->diff-ms start)]
         (reset! done?* true)
-        (when (> diff-ms 2000)
+        (when (> diff-ms *long-simplify-thresh-ms*)
           (log/warn "Long simplify: "
                     (.leafCount expr) (str expr) " -->> "
                     (.leafCount res) (str res)))
