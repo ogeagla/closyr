@@ -100,7 +100,7 @@ An example of using the GUI:
 
 Coverage looks like this if you run `lein cloverage`:
 
-![test_coverage_2024-02-07_10-32.png](screenshots%2Ftest_coverage_2024-02-07_10-32.png)
+![test_coverage_2024-02-12_09-35.png](screenshots%2Ftest_coverage_2024-02-12_09-35.png)
 
 ## How It Works
 
