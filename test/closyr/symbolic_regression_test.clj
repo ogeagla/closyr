@@ -8,6 +8,17 @@
     [closyr.symbolic-regression :as symreg]))
 
 
+(deftest end-iters-if-solution-found-test
+  (testing "not solved"
+    (is (=
+          (#'symreg/next-iters 10 [-10.0])
+          9)))
+  (testing "an exact solution"
+    (is (=
+          (#'symreg/next-iters 10 [0.0])
+          0))))
+
+
 (deftest can-run-from-cli-args
   (testing "args from CLI are passed along correctly to implementation"
     (let [args* (atom nil)]
@@ -152,13 +163,13 @@
                                              :input-iters        200
                                              :input-phenos-count 500}))
 
-                                  (<! (timeout 1000))
+                                  (<! (timeout 100))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :pause}))
                                   (<! (timeout 1000))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :start}))
-                                  (<! (timeout 1000))
+                                  (<! (timeout 100))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :pause}))
                                   (<! (timeout 1000))
@@ -173,9 +184,18 @@
                                   (<! (timeout 1000))
 
                                   (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state :stop}))
+                                            {:new-state          :restart
+                                             :input-data-x       [0 1 2 3 4]
+                                             :input-data-y       [11 3 6 18 8]
+                                             :input-iters        300
+                                             :input-phenos-count 400}))
 
                                   (<! (timeout 1000))
+
+                                  (is (put! symreg/*sim-stop-start-chan*
+                                            {:new-state :stop}))
+
+                                  (<! (timeout 100))
 
                                   (is (put! symreg/*gui-close-chan* :close-please))
                                   (is (put! symreg/*sim->gui-chan* :next))
