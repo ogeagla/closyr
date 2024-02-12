@@ -2,8 +2,8 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
-    [closyr.log :as log]
     [closyr.ga :as ga]
+    [closyr.log :as log]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
@@ -264,7 +264,8 @@
     input-data-x       :input-data-x
     input-data-y       :input-data-y
     input-iters        :input-iters
-    input-phenos-count :input-phenos-count}]
+    input-phenos-count :input-phenos-count
+    max-leafs          :max-leafs}]
 
   (log/info "Got state req: " new-state)
 
@@ -282,7 +283,8 @@
                              :input-xs-vec       input-xs-vec
                              :input-ys-vec       input-ys-vec
                              :input-iters        input-iters
-                             :input-phenos-count input-phenos-count})
+                             :input-phenos-count input-phenos-count
+                             :max-leafs          max-leafs})
 
     @sim-input-args*))
 
@@ -324,6 +326,7 @@
     input-iters        :input-iters
     iters              :iters
     input-phenos-count :input-phenos-count
+    max-leafs          :max-leafs
     initial-phenos     :initial-phenos}]
 
   (when-not (and input-xs-exprs
@@ -341,7 +344,8 @@
    :input-ys-vec         input-ys-vec
    :input-iters          (or input-iters iters)
    :initial-phenos       initial-phenos
-   :input-phenos-count   input-phenos-count})
+   :input-phenos-count   input-phenos-count
+   :max-leafs            max-leafs})
 
 
 (defn- wait-and-get-gui-args
@@ -413,9 +417,9 @@
     (log/info "Running with logging every n steps: " ops/*log-steps*)
     (loop [pop (ga/initialize
                  initial-phenos
-                 (partial ops/score-fn run-args)
-                 (partial ops/mutation-fn initial-muts)
-                 (partial ops/crossover-fn initial-muts))
+                 (partial ops/score-fn run-args run-config)
+                 (partial ops/mutation-fn run-config initial-muts)
+                 (partial ops/crossover-fn run-config initial-muts))
            i   iters]
       (if (zero? i)
         {:iters-done       (- iters i)
@@ -457,14 +461,16 @@
 (defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
-   {:keys [input-iters input-phenos-count input-xs-list input-xs-count input-ys-vec
+   {:keys [input-iters input-phenos-count max-leafs input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
   (let [iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
                          (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
-        run-config     (assoc run-config :initial-phenos initial-phenos :iters iters)
+        run-config     (assoc run-config :initial-phenos initial-phenos
+                                         :iters iters
+                                         :max-leafs (or max-leafs ops/default-max-leafs))
         start          (print-and-save-start-time iters initial-phenos)
 
         {:keys [final-population next-step iters-done]

@@ -3,8 +3,8 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
-    [closyr.log :as log]
     [closyr.dataset.prng :refer :all]
+    [closyr.log :as log]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.modify :as ops-modify])
@@ -21,7 +21,13 @@
 
 
 (def ^:private min-score -100000000)
-(def ^:private max-leafs 40)
+
+
+(def default-max-leafs
+  "Default max number of AST tree leafs in candidate pheno function"
+  40)
+
+
 (def max-resid
   "Default residual value to use when otherwise it would be invalid or infinite"
   1000000)
@@ -31,6 +37,8 @@
 
 
 (def ^:dynamic *log-steps* 1)
+
+
 (def test-timer*
   "Timer to use during GA evolution"
   (atom nil))
@@ -103,6 +111,7 @@
   [{:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}
+   {:keys [max-leafs]}
    pheno]
   (try
     (let [leafs (.leafCount ^IExpr (:expr pheno))]
@@ -119,7 +128,11 @@
 
 (defn mutation-fn
   "Symbolic regression mutation"
-  [initial-muts p-winner p-discard]
+  [{:keys [max-leafs]
+    :as   run-args}
+   initial-muts
+   p-winner
+   p-discard]
   (try
     (let [start   (Date.)
           [new-pheno iters mods] (ops-modify/apply-modifications
@@ -144,13 +157,17 @@
 
 (defn crossover-fn
   "Symbolic regression crossover"
-  [initial-muts p p-discard]
+  [{:keys [max-leafs]
+    :as   run-args}
+   initial-muts
+   p
+   p-discard]
   (let [crossover-result (ops-modify/crossover p p-discard)]
     (when crossover-result
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or
       crossover-result
-      (mutation-fn initial-muts p p-discard))))
+      (mutation-fn run-args initial-muts p p-discard))))
 
 
 (defn- sort-population

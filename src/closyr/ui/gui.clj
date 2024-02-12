@@ -2,9 +2,9 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [clojure.java.io :as io]
-    [closyr.log :as log]
     [closyr.dataset.csv :as input-csv]
     [closyr.dataset.inputs :as input-data]
+    [closyr.log :as log]
     [closyr.ui.plot :as plot]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
@@ -17,7 +17,8 @@
       BorderLayout
       Color
       Container
-      Cursor FlowLayout
+      Cursor
+      FlowLayout
       Graphics2D
       GridBagConstraints
       GridBagLayout
@@ -105,7 +106,8 @@
 
 
 (def ^:private experiment-settings*
-  (atom {:input-iters        100
+  (atom {:max-leafs          40
+         :input-iters        100
          :input-phenos-count 2000}))
 
 
@@ -448,6 +450,48 @@
              (- 7.5 (/ (.getY pt)
                        (/ (:h @sketchpad-size*) 15.0)))]))
         items-point-getters))
+
+
+(defn- settings-max-leafs-on-change
+  [^MouseEvent e]
+  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
+    (swap! experiment-settings* assoc :max-leafs (Double/parseDouble b))
+    (log/info "max leafs changed to " b)))
+
+
+(defn- ^JPanel max-leafs-settings-panel
+  []
+  (let [max-leafs-settings-container              (panel-grid
+                                                    {:rows 1 :cols 4 :border (radio-controls-border "Max Function Leafs")})
+
+        ^JPanel settings-container                (panel-grid {:rows 1 :cols 1})
+
+        btn-group-max-leafs                       (ss/button-group)
+        ^JRadioButtonMenuItem max-leafs-radio-10  (ss/radio-menu-item
+                                                    :text "20"
+                                                    :group btn-group-max-leafs
+                                                    :listen [:mouse-clicked settings-max-leafs-on-change])
+        ^JRadioButtonMenuItem max-leafs-radio-100 (ss/radio-menu-item
+                                                    :selected? true
+                                                    :text "40"
+                                                    :group btn-group-max-leafs
+                                                    :listen [:mouse-clicked settings-max-leafs-on-change])
+        ^JRadioButtonMenuItem max-leafs-radio-1k  (ss/radio-menu-item
+                                                    :text "60"
+                                                    :group btn-group-max-leafs
+                                                    :listen [:mouse-clicked settings-max-leafs-on-change])
+        ^JRadioButtonMenuItem max-leafs-radio-10k (ss/radio-menu-item
+                                                    :text "120"
+                                                    :group btn-group-max-leafs
+                                                    :listen [:mouse-clicked settings-max-leafs-on-change])]
+
+
+    (.add max-leafs-settings-container max-leafs-radio-10)
+    (.add max-leafs-settings-container max-leafs-radio-100)
+    (.add max-leafs-settings-container max-leafs-radio-1k)
+    (.add max-leafs-settings-container max-leafs-radio-10k)
+    (.add settings-container max-leafs-settings-container)
+    settings-container))
 
 
 (defn- settings-iters-on-change
@@ -862,7 +906,13 @@
             status-label                        (JLabel. "Press Start To Begin Function Search")
             status-column                       (doto (panel-grid {:rows 2 :cols 1})
                                                   (.add status-label)
-                                                  (.add (JLabel. "" #_"placeholder")))
+                                                  (.add
+
+                                                    ;; todo implement max-leafs setting in symreg then remove this placeholder:
+                                                    #_(JLabel. "")
+                                                    (max-leafs-settings-panel)
+
+                                                    ))
 
             ^JButton ctl-start-stop-btn         (ss/button
                                                   :text ctl:start
