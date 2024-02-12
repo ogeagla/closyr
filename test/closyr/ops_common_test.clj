@@ -60,6 +60,21 @@
             {:expr    "x"
              :simple? true}))))
 
+  (testing "simplify function too long"
+    (let [x (F/Dummy "x")]
+      (is (=
+            (binding [ops-common/*simplify-max-leafs* 10]
+              (update (ops-common/maybe-simplify {:expr
+                                                  (-> (F/Cos (F/ArcSin x))
+                                                      (F/Plus (F/Tan (F/ArcSin x)))
+                                                      (F/Times F/C2)
+                                                      (F/Plus F/C1)
+                                                      (F/Plus (F/Sin x))
+                                                      (F/Plus (F/Cos x))
+                                                      (F/Plus (F/Sqrt x)))})
+                      :expr str))
+            {:expr "1+Sqrt(x)+Cos(x)+Sin(x)+2*(Cos(ArcSin(x))+Tan(ArcSin(x)))"}))))
+
   (testing "simplify ignore"
     (reset! ops-common/do-not-simplify-fns* {"x" 1})
     (let [x (F/Dummy "x")]
