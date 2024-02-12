@@ -90,6 +90,10 @@ On successful application start, you can start an run a search.  You might see s
 
 ![gui_done_2024-02-12_08-44.png](screenshots%2Fgui_done_2024-02-12_08-44.png)
 
+An example of using the GUI:
+
+![gui_usage_clip_Peek 2024-02-12 09-03.gif](screenshots%2Fgui_usage_clip_Peek%202024-02-12%2009-03.gif)
+
 ## Tests
 
     $ lein test
