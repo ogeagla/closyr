@@ -5,7 +5,7 @@
            [org.slf4j LoggerFactory MDC]))
 
 (set! *warn-on-reflection* true)
-(def ^Logger logger (LoggerFactory/getLogger "clojure-example-logback-integration"))
+(def ^Logger logger (LoggerFactory/getLogger "closyr"))
 
 (defn set-log-level!
   "Pass keyword :error :warn :info :debug"

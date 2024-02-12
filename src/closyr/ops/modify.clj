@@ -184,8 +184,8 @@
                               (catch Exception e
                                 (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
                                   (log/warn "Warning, mutation failed: " (:label mod-to-apply)
-                                            " on: " (str (:expr pheno))
-                                            " due to: " e))
+                                            " on: " (type (:expr pheno)) " / " (str (:expr pheno))
+                                            " due to: " (.getMessage e)))
                                 pheno))
 
             ^IExpr new-expr (:expr new-pheno)

@@ -182,17 +182,22 @@
 
 (defn- check-simplify-timing
   [^IAST expr done?*]
-  (go-loop [c 0]
-    (when-not @done?*
-      ;; wait sequence in ms looks like: 100, 316, 1000, ...
-      (<! (timeout (int (Math/pow 10 (+ 1.5 (/ c 4))))))
-      (when (> c 6)
-
-        (swap! do-not-simplify-fns* assoc (str expr) 1)
-        (log/warn "Warning: simplify taking a long time: " c
-                  " " (.leafCount expr) " : " (str expr)
-                  " total slow fns: " (count @do-not-simplify-fns*)))
-      (recur (inc c)))))
+  (let [report-done?* (atom false)]
+    (go-loop [c 0]
+      (when-not @done?*
+        ;; wait sequence in ms looks like: 100, 316, 1000, ...
+        (<! (timeout (int (Math/pow 10 (+ 1.5 (/ c 4))))))
+        (when (> c 6)
+          (reset! report-done?* true)
+          (swap! do-not-simplify-fns* assoc (str expr) 1)
+          (log/warn "Warning: simplify taking a long time: " c
+                    " " (.leafCount expr) " : " (str expr)
+                    " total slow fns: " (count @do-not-simplify-fns*)))
+        (recur (inc c))))
+    (when @report-done?*
+      (log/warn "Warning: simplify took a long time: "
+                " : " (str expr)
+                " total slow fns: " (count @do-not-simplify-fns*)))))
 
 
 (defn- ^IAST do-simplify

@@ -20,7 +20,7 @@
                  ;[spootnik/unilog "0.7.31"]
                  [ch.qos.logback/logback-classic "1.4.14"]
                  ;[org.clojure/tools.logging "1.3.0"]
-                 [org.slf4j/jcl-over-slf4j "2.0.7"]
+                 [org.slf4j/jcl-over-slf4j "2.0.12"]
 
                  [org.slf4j/slf4j-api "2.0.12"]
                  [org.apache.logging.log4j/log4j-core "2.22.1"]
