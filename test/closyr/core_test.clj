@@ -14,10 +14,13 @@
           nil)))
   (testing "handles valid short options w data inline"
     (is (=
-          (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6" "-l" "20" "-c")]
+          (let [test-input
+                '("-t" "-p1000" "foo" "-i" "200" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6" "-l" "20" "-c"
+                       "-g" "debug")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless       true
+           :log-level      :debug
            :max-leafs      20
            :use-flamechart true
            :iterations     200
@@ -48,13 +51,21 @@
 
           nil)))
 
+  (testing "unrecognized log levels"
+    (is (=
+          (let [test-input '("-t" "-p1000" "-i" "200" "-g" "wearn")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          nil)))
+
 
   (testing "handles valid short options w csv data"
     (is (=
-          (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-f" "resources/csvs/test_inputs_1.csv")]
+          (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-f" "resources/csvs/test_inputs_1.csv" "-g" "warn")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless       true
+           :log-level      :warn
            :max-leafs      40
            :use-flamechart false
            :iterations     200
@@ -64,10 +75,11 @@
 
   (testing "handles valid long options w data inline"
     (is (=
-          (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "--ys" "1,2,30,4,5,6,10" "--xs" "0,1,2,3,4,5,6" "--use-flamechart" "--max-leafs" "60")]
+          (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "--ys" "1,2,30,4,5,6,10" "--xs" "0,1,2,3,4,5,6" "--use-flamechart" "--max-leafs" "60" "--log-level" "error")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless       true
+           :log-level      :error
            :max-leafs      60
            :use-flamechart true
            :iterations     200
@@ -82,6 +94,7 @@
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless       true
+           :log-level      :info
            :max-leafs      40
            :use-flamechart false
            :iterations     200
@@ -96,6 +109,7 @@
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless       true
+           :log-level      :info
            :max-leafs      40
            :use-flamechart false
            :iterations     200
@@ -109,6 +123,7 @@
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
           {:headless       true
+           :log-level      :info
            :max-leafs      40
            :use-flamechart false
            :iterations     200

@@ -64,6 +64,11 @@
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 19 % 10001) "Must be a number between 19 and 10001"]]
 
+   ["-g" "--log-level LOG_LEVEL" "Log level"
+    :default :info
+    :parse-fn keyword
+    :validate [#{:error :warn :info :debug} "Log level must be either: error, warn, info or debug"]]
+
    ["-t" "--headless" "Headless mode, no GUI, run in terminal"
     :default false
     :id :headless]
@@ -91,8 +96,9 @@
 
 
 (defn- validate-symreg-opts
-  [{:keys [ys xs infile]
+  [{:keys [ys xs infile log-level]
     :as   opts}]
+  (log/set-log-level! log-level)
   (let [opts (if-not (nil? infile)
                (let [csv-data (input-csv/get-csv-data infile)
                      xs       (mapv :x csv-data)
