@@ -15,7 +15,7 @@
         </encoder>
     </appender>
 
-    <logger name="clojure-example-logback-integration" level="DEBUG"/>
+    <logger name="closyr" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

@@ -113,8 +113,8 @@ ________/\\\\\\\\\__/\\\___________________/\\\\\__________/\\\\\\\\\\\____/\\\_
 (defn -main
   "Validate CLI args and run symbolic regression"
   [& args]
-  (println big-text)
-  ;; (log/info big-text)
+  ;(println big-text)
+  (log/info big-text)
 
   (some->
     (parse-main-opts args)

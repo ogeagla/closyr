@@ -30,10 +30,10 @@
     [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno} string-args]
     (try
       (.evalFunction util (ops-common/expr->fn pheno) string-args)
-      (catch SyntaxError se (println "Warning: syntax error in eval: " se))
-      (catch MathException me (println "Warning: math error in eval: " me))
-      (catch StackOverflowError soe (println "Warning: stack overflow error in eval: " soe))
-      (catch OutOfMemoryError oome (println "Warning: OOM error in eval: " oome))))
+      (catch SyntaxError se (log/error "Warning: syntax error in eval: " se))
+      (catch MathException me (log/error "Warning: math error in eval: " me))
+      (catch StackOverflowError soe (log/error "Warning: stack overflow error in eval: " soe))
+      (catch OutOfMemoryError oome (log/error "Warning: OOM error in eval: " oome))))
 
 
 (defn ^IExpr eval-phenotype-on-expr-args
@@ -45,12 +45,8 @@
     (if (and expr expr-args (not (.isNIL expr)))
       (let [^IAST ast  (F/ast expr-args (ops-common/expr->fn pheno))
             ^IExpr res (.eval (or util (ops-common/new-util)) ast)]
-
-        ;(println (type expr) (type ast) (type res) "\n , " ast " -->> " res)
         res)
-      (do
-        ;(println "Skipp eval : " expr)
-        (log/warn "Warning: eval needs both expr and args, and expr cannot be NIL")))
+      (log/warn "Warning: eval needs both expr and args, and expr cannot be NIL"))
     (catch NullPointerException npe (log/error "Warning: NPE error in eval: " (str expr) " : " npe))
     (catch ArgumentTypeException se (log/error "Warning: argument type error in eval: " (str expr) " : " se))
     (catch SyntaxError se (log/error "Warning: syntax error in eval: " (str expr) " : " se))

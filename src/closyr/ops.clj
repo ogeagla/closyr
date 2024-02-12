@@ -231,7 +231,7 @@
 (defn- log-iteration
   [& args]
   (log/info (str/join " " args))
-  (apply println args))
+  #_(apply println args))
 
 
 (defn report-iteration

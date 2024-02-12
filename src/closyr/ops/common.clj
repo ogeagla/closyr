@@ -130,20 +130,16 @@
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
    (try
      (let [^ExprEvaluator util (or util (new-util))
-           ;_ (println "expr 1 " expr)
            ^IAST expr          (if (.isNIL expr)
                                  (F/Times variable F/C1)
                                  expr)
-           ;_ (println "expr 2 " expr)
-           ^IAST expr          (.eval util expr)
-           ;_ (println "expr 3 " expr)
-           ]
+           ^IAST expr          (.eval util expr)]
        {:sym  variable
         :util util
         :id   (UUID/randomUUID)
         :expr expr})
      (catch Exception e
-       (log/error "Err creating pheno: " expr " , " variable " , " e)))))
+       (log/error "Err creating pheno: " expr " , " variable " , " (.getMessage e))))))
 
 
 

@@ -339,7 +339,6 @@
 
 (defn- reposition-labels
   [[c ^Graphics2D g]]
-  ;; (println "Reposition sketchpad labels' points")
   (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
         w     (ss/width c)
         h     (ss/height c)
@@ -430,7 +429,7 @@
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
     (-> drawing-widget (.setCursor (Cursor/getPredefinedCursor Cursor/HAND_CURSOR)))
-    (println "Set hand cursor for sketchpad widget: " (.getCursor drawing-widget))
+    (log/info "Set hand cursor for sketchpad widget: " (.getCursor drawing-widget))
 
     (reset! items-points-accessors* {:drawing-widget      drawing-widget
                                      :items-point-getters items-point-getters
