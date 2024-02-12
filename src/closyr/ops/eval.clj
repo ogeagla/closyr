@@ -81,7 +81,7 @@
                      (try
                        (let [^IExpr arg0 (.getArg eval-p 0 F/Infinity)]
                          (ops-common/expr->double
-                           (if (.isNumber new-expr)
+                           (if (.isReal new-expr)
                              new-expr
                              (if (.isBuiltInSymbol arg0)
                                eval-p

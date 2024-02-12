@@ -27,7 +27,7 @@
       (is (= (mapv
                ops-common/expr->double
                (ops-eval/eval-phenotype-on-expr-args
-                 (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
+                 (ops-common/->phenotype x (F/Subtract x F/C1D2) (ops-common/new-util))
                  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
              [0.0 0.5])))
 
@@ -38,6 +38,30 @@
                  (ops-common/->phenotype x (F/Times x F/C1) nil)
                  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
              [0.5 1.0])))
+
+    (testing "indeterminate eval results"
+
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x F/Indeterminate nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                :input-xs-count 1})
+             nil))
+
+      (is (= (with-redefs-fn {#'ops-eval/eval-phenotype-on-expr-args (fn [_ _] F/Indeterminate)}
+               (fn []
+                 (ops-eval/eval-vec-pheno
+                   (ops-common/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
+                   {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                    :input-xs-count 1})))
+             nil))
+
+      (is (= (with-redefs-fn {#'ops-eval/eval-phenotype-on-expr-args (fn [_ _] nil)}
+               (fn []
+                 (ops-eval/eval-vec-pheno
+                   (ops-common/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
+                   {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                    :input-xs-count 1})))
+             nil)))
 
     (testing "can eval various fns for simple inputs 2"
       (is (= (mapv
@@ -86,7 +110,7 @@
              nil))
 
       (is (= (ops-eval/eval-vec-pheno
-               (ops-common/->phenotype x (F/Subtract F/E F/C1D2) nil)
+               (ops-common/->phenotype x (F/Subtract F/E F/C1D2) (ops-common/new-util))
                {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
                 :input-xs-count 1})
              [2.218281828459045]))
