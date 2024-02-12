@@ -74,17 +74,17 @@ You can also provide the same command-line options to `java` command, like:
 
     $ java -jar target/uberjar/closyr-0.1.0-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
 
-## Run Options
-| Short,Long Option       | Required?       | Example | Default | Description                                                                                                                        |
-|-------------------------|-----------------|---------|---------|------------------------------------------------------------------------------------------------------------------------------------|
-| `-t`,`--headless`       | no              | `-t`    | `false` | run without GUI, in terminal only                                                                                                  |     
-| `-c`,`--use-flamechart` | no              | `-c`    | `false` | run with flamecharts, http://localhost:54321/flames.svg                                                                            |     
-| `-p`,`--population`     | no              | `100`   | `20`    | size of population which will evolve; the number of functions we create and modify                                                 |    
-| `-i`,`--iterations`     | no              | `50`    | `10`    | number of iterations to run for                                                                                                    |    
-| `-l`,`--max-leafs`      | no              | `40`    | `40`    | max number of AST tree leafs in candidate functions                                                                                |    
-| `-x`,`--xs`             | no, unless `ys` | `1,3,4` | random  | the xs for the points in the dataset to fit against; if provided, must also provide `ys` and be the same count                     | 
-| `-y`,`--ys`             | no, unless `xs` | `2,4,8` | random  | the ys for the points in the dataset to fit against; if provided, must also provide `xs` and be the same count                     |    
-| `-f`,`--infile`         | no              | `f.csv` |         | A CSV file which either contains 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset |  
+## Options
+| Short, Long Option      | Required?       | Example | Default | Description                                                                                                                   |
+|-------------------------|-----------------|---------|---------|-------------------------------------------------------------------------------------------------------------------------------|
+| `-t`,`--headless`       | no              | `-t`    | `false` | run without GUI, in terminal only                                                                                             |     
+| `-c`,`--use-flamechart` | no              | `-c`    | `false` | run with flamecharts, run then visit http://localhost:54321/flames.svg                                                        |     
+| `-p`,`--population`     | no              | `100`   | `20`    | size of population which will evolve; the number of functions we create and modify                                            |    
+| `-i`,`--iterations`     | no              | `50`    | `10`    | number of iterations to run for                                                                                               |    
+| `-l`,`--max-leafs`      | no              | `40`    | `40`    | max number of AST tree leafs in candidate functions                                                                           |    
+| `-x`,`--xs`             | no, unless `ys` | `1,3,4` | random  | the xs for the points in the dataset to fit against; if provided, must also provide `ys` and be the same count                | 
+| `-y`,`--ys`             | no, unless `xs` | `2,4,8` | random  | the ys for the points in the dataset to fit against; if provided, must also provide `xs` and be the same count                |    
+| `-f`,`--infile`         | no              | `f.csv` |         | A CSV file. Contains either 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset |  
 
 ## Example Screenshots
 
