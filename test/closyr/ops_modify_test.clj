@@ -90,11 +90,11 @@
                                         (swap! mods-count* inc)
                                         (F/Cos ie))}
                    {:sym  x
-                    :expr (.plus (F/num 1.0) x)})))
-             (str (F/Cos (.plus (F/num 1.0) x)))))
+                    :expr (F/Plus (F/Sin x) (.plus (F/num 1.0) x))})))
+             "Cos(1.0+x+Cos(Sin(x)))"))
       (is (=
             @mods-count*
-            1))))
+            2))))
 
   (testing "modify-branches 2"
     (let [x           (F/Dummy "x")
