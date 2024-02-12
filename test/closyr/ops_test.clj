@@ -21,10 +21,43 @@
                          :input-xs-list  (ops-common/exprs->exprs-list
                                            (ops-common/doubles->exprs [0.5 1.0 2.0]))
                          :input-xs-count 3}
-                        {:max-leafs      ops/default-max-leafs}
+                        {:max-leafs ops/default-max-leafs}
                         (let [x (F/Dummy "x")]
                           (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))
           -3.0000147))))
+
+
+(deftest compute-score-from-actuals-and-expecteds-test
+  (testing "simple inputs"
+    (let [x (F/Dummy "x")]
+      (is (= (#'ops/compute-score-from-actuals-and-expecteds
+              (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
+              [0.5]
+              [1.0]
+              10)
+             -1.500015))))
+
+  (testing "without length deduction"
+    (with-redefs-fn {#'ops/length-deduction (fn [score leafs] score)}
+      (fn []
+        (let [x (F/Dummy "x")]
+          (is (= (#'ops/compute-score-from-actuals-and-expecteds
+                  (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
+                  [0.5]
+                  [1.0]
+                  10)
+                 0.0))))))
+
+  (testing "without length deduction 2"
+    (with-redefs-fn {#'ops/length-deduction (fn [score leafs] 0)}
+      (fn []
+        (let [x (F/Dummy "x")]
+          (is (= (#'ops/compute-score-from-actuals-and-expecteds
+                  (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
+                  [0.5]
+                  [1.0]
+                  10)
+                 -1.5)))))))
 
 
 (deftest crossover-fn-test

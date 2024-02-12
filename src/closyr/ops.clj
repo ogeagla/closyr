@@ -83,6 +83,11 @@
       (min max-resid (abs res)))))
 
 
+(defn- length-deduction
+  [score leafs]
+  (* (abs score) (min 0.1 (* 0.0000001 leafs leafs))))
+
+
 (defn- compute-score-from-actuals-and-expecteds
   [pheno f-of-xs input-ys-vec leafs]
   (try
@@ -90,13 +95,9 @@
           resid-sum        (sum abs-resids)
           score            (* -1.0 (+ (* 2.0 (/ resid-sum (count abs-resids)))
                                       (reduce max abs-resids)))
-          length-deduction (* (abs score) (min 0.1 (* 0.0000001 leafs leafs)))
+          length-deduction (length-deduction score leafs)
           overall-score    (- score length-deduction)]
 
-
-      (when (or (neg? length-deduction) (Double/isNaN length-deduction))
-        (log/warn "warning: bad/negative deduction increases score: "
-                  leafs length-deduction (str (:expr pheno))))
       (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
 
       overall-score)
