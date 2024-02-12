@@ -1,12 +1,10 @@
 (ns closyr.ops-common-test
   (:require
-    [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.test :refer :all]
-    [closyr.dataset.prng :as prng]
     [closyr.ops.common :as ops-common])
   (:import
-    (org.matheclipse.core.eval
-      EvalEngine)
+    (org.matheclipse.core.eval.exception
+      ArgumentTypeException)
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
@@ -19,6 +17,19 @@
 
 (alter-var-root #'ops-common/*simplify-probability-sampler* (constantly 2.0))
 (alter-var-root #'ops-common/*simplify-max-leafs* (constantly 100))
+
+
+(deftest expr->numbers-test
+  (testing "simple case"
+    (is (= (ops-common/exprs->doubles [F/C1 (F/num 0.1234)])
+           [1.0 0.1234])))
+
+  (testing "simple case with infinity"
+    (is (= (ops-common/exprs->doubles [F/C1 (F/num 0.1234) F/Infinity])
+           [1.0 0.1234 ##Inf])))
+
+  (testing "simple case with Complex Number"
+    (is (thrown? ArgumentTypeException (ops-common/exprs->doubles [F/C1 (F/num 0.1234) F/I])))))
 
 
 (deftest create-pheno-test
