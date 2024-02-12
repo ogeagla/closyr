@@ -33,6 +33,13 @@
 
           nil)))
 
+  (testing "if xs and ys, need to be same count"
+    (is (=
+          (let [test-input '("-t" "-p1000" "-i" "200" "-x" "0,1,2,3,4,5,6" "-y" "0,1,2,3,4,5,6,7,8")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          nil)))
+
 
   (testing "if ys, also needs xs"
     (is (=
