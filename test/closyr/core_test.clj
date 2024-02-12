@@ -51,12 +51,19 @@
 
           nil)))
 
-  (testing "unrecognized log levels"
+  (testing "unrecognized log levels still runs with default info"
     (is (=
           (let [test-input '("-t" "-p1000" "-i" "200" "-g" "wearn")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          nil)))
+          {:headless       true,
+           :log-level      :info,
+           :xs             nil,
+           :ys             nil,
+           :population     1000,
+           :use-flamechart false,
+           :iterations     200,
+           :max-leafs      40})))
 
 
   (testing "handles valid short options w csv data"
