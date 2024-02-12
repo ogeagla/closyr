@@ -17,9 +17,7 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
-                 ;[spootnik/unilog "0.7.31"]
                  [ch.qos.logback/logback-classic "1.4.14"]
-                 ;[org.clojure/tools.logging "1.3.0"]
                  [org.slf4j/jcl-over-slf4j "2.0.12"]
 
                  [org.slf4j/slf4j-api "2.0.12"]
@@ -31,10 +29,6 @@
                  [org.matheclipse/matheclipse-gpl "3.1.0-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-api]]]
 
-  ;; :java-source-paths ["src/main/java"]
-
-  ;:jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
-
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
                                    :releases  false
                                    :snapshots true}}
@@ -42,10 +36,7 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
                        :manifest {"Multi-Release" true}
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"
-                                  ;; "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"
-                                  ;"-Dlog4j2.configurationFile=resources/log4j2.properties"
-                                  ]}}
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
 
   :plugins [[lein-cloverage "1.2.4"]
             [lein-vanity "0.2.0"]
