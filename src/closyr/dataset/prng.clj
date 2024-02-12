@@ -58,16 +58,3 @@
 
 (set-random-seed! 888)
 (rand-int 100)
-
-
-(defn- test-rand-int-gen
-  [seed n]
-  (set-random-seed! seed)
-  (println "Seed: " seed " n: " n
-           ;; https://github.com/trystan/random-seed/issues/3
-           ;; odd that the first value is so similar for different seeds:
-           " rand-int: " (rand-int n)
-           " rand-int: " (rand-int n)))
-
-
-(comment (mapv #(test-rand-int-gen % 50) [1 5 10 20 50 75 100 1000 10000 100000]))
