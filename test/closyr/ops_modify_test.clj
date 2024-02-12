@@ -571,10 +571,10 @@
    [:modify-ast-head
     "^->*"
     "-1+x-1/2*x*Cos(x)-x*Sin(1/2-x)"]
-   [:modify-ast-head
+   #_[:modify-ast-head
     "/->*"
     "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
-   [:modify-ast-head
+   #_[:modify-ast-head
     "/->+"
     "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    [:modify-branches

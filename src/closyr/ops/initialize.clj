@@ -542,7 +542,7 @@
                           F/Times
                           ie))}
 
-   {:op               :modify-ast-head
+   #_{:op               :modify-ast-head
     :label            "/->*"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (ops-common/should-modify-ast-head leaf-count pheno)
@@ -550,7 +550,7 @@
                           F/Times
                           ie))}
 
-   {:op               :modify-ast-head
+   #_{:op               :modify-ast-head
     :label            "/->+"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (and (ops-common/should-modify-ast-head leaf-count pheno)
