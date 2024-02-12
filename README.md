@@ -75,16 +75,16 @@ You can also provide the same command-line options to `java` command, like:
     $ java -jar target/uberjar/closyr-0.1.0-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
 
 ## Run Options
-| Short,Long Option       | Required?       | Example | Description                                                                                                                        |
-|-------------------------|-----------------|---------|------------------------------------------------------------------------------------------------------------------------------------|
-| `-t` `--headless`       | no              | `-t`    | run without GUI, in terminal only                                                                                                  |     
-| `-c` `--use-flamechart` | no              | `-c`    | run with flamecharts, http://localhost:54321/flames.svg                                                                            |     
-| `-p` `--population`     | no              | `100`   | size of population which will evolve; the number of functions we create and modify                                                 |    
-| `-i` `--iterations`     | no              | `50`    | number of iterations to run for                                                                                                    |    
-| `-l` `--max-leafs`      | no              | `40`    | max number of AST tree leafs in candidate functions                                                                                |    
-| `-x` `--xs`             | no, unless `ys` | `1,3,4` | the xs for the points in the dataset to fit against; if provided, must also provide `ys`                                           | 
-| `-y` `--ys`             | no, unless `xs` | `2,4,8` | the ys for the points in the dataset to fit against; if provided, must also provide `xs`                                           |    
-| `-f` `--infile`         | no              | `f.csv` | A CSV file which either contains 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset |  
+| Short,Long Option       | Required?       | Example | Default | Description                                                                                                                        |
+|-------------------------|-----------------|---------|---------|------------------------------------------------------------------------------------------------------------------------------------|
+| `-t`,`--headless`       | no              | `-t`    | `false` | run without GUI, in terminal only                                                                                                  |     
+| `-c`,`--use-flamechart` | no              | `-c`    | `false` | run with flamecharts, http://localhost:54321/flames.svg                                                                            |     
+| `-p`,`--population`     | no              | `100`   | `20`    | size of population which will evolve; the number of functions we create and modify                                                 |    
+| `-i`,`--iterations`     | no              | `50`    | `10`    | number of iterations to run for                                                                                                    |    
+| `-l`,`--max-leafs`      | no              | `40`    | `40`    | max number of AST tree leafs in candidate functions                                                                                |    
+| `-x`,`--xs`             | no, unless `ys` | `1,3,4` | random  | the xs for the points in the dataset to fit against; if provided, must also provide `ys` and be the same count                     | 
+| `-y`,`--ys`             | no, unless `xs` | `2,4,8` | random  | the ys for the points in the dataset to fit against; if provided, must also provide `xs` and be the same count                     |    
+| `-f`,`--infile`         | no              | `f.csv` |         | A CSV file which either contains 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset |  
 
 ## Example Screenshots
 
@@ -150,3 +150,16 @@ Public License, v. 2.0 are satisfied: GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or (at your
 option) any later version, with the GNU Classpath Exception which is available
 at https://www.gnu.org/software/classpath/license.html.
+
+``` 
+________/\\\\\\\\\__/\\\___________________/\\\\\__________/\\\\\\\\\\\____/\\\________/\\\____/\\\\\\\\\_____
+ _____/\\\////////__\/\\\_________________/\\\///\\\______/\\\/////////\\\_\///\\\____/\\\/___/\\\///////\\\___
+  ___/\\\/___________\/\\\_______________/\\\/__\///\\\___\//\\\______\///____\///\\\/\\\/____\/\\\_____\/\\\___
+   __/\\\_____________\/\\\______________/\\\______\//\\\___\////\\\_____________\///\\\/______\/\\\\\\\\\\\/____
+    _\/\\\_____________\/\\\_____________\/\\\_______\/\\\______\////\\\____________\/\\\_______\/\\\//////\\\____
+     _\//\\\____________\/\\\_____________\//\\\______/\\\__________\////\\\_________\/\\\_______\/\\\____\//\\\___
+      __\///\\\__________\/\\\______________\///\\\__/\\\_____/\\\______\//\\\________\/\\\_______\/\\\_____\//\\\__
+       ____\////\\\\\\\\\_\/\\\\\\\\\\\\\\\____\///\\\\\/_____\///\\\\\\\\\\\/_________\/\\\_______\/\\\______\//\\\_
+        _______\/////////__\///////////////_______\/////_________\///////////___________\///________\///________\///__
+
+```
