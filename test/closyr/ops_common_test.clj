@@ -73,6 +73,19 @@
              "x+Cos(x^2)")))))
 
 
+(deftest simplify-with-slow-functions
+  (testing "simplify takes a long time logs the slow fn"
+    (with-redefs-fn {#'ops-common/simplify (fn [^IAST expr]
+                                             (Thread/sleep 5000)
+                                             (F/Simplify expr))}
+      (fn []
+        (let [x (F/Dummy "x")]
+          (is (= (update (ops-common/maybe-simplify {:expr (F/Plus F/C1 (F/Sin (F/ArcSin x)))})
+                         :expr str)
+                 {:expr    "1+x"
+                  :simple? true})))))))
+
+
 (deftest simplify-test
   (testing "simplify trig compose"
     (let [x (F/Dummy "x")]

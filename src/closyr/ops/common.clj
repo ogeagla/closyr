@@ -195,6 +195,11 @@
                 " total slow fns: " (count @do-not-simplify-fns*)))))
 
 
+(defn- ^IAST simplify
+  [^IAST expr]
+  (F/Simplify expr))
+
+
 (defn- ^IAST do-simplify
   [start
    done?*
@@ -206,7 +211,7 @@
       expr)
     (try
       (check-simplify-timing expr done?*)
-      (let [^IAST new-expr (F/Simplify expr)
+      (let [^IAST new-expr (simplify expr)
             #_(F/FullSimplify
                 (F/Simplify
                   expr
