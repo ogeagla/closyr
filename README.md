@@ -86,13 +86,9 @@ You can also provide the same command-line options to `java` command, like:
 
 ## Example Screenshots
 
-On successful application start, you should see this:
+On successful application start, you can start an run a search.  You might see something like this when done:
 
-![gui_after_startup_2024-02-01_09-27.png](screenshots%2Fgui_after_startup_2024-02-01_09-27.png)
-
-While a function search is running:
-
-![gui_running_2024-02-01_09-29.png](screenshots%2Fgui_running_2024-02-01_09-29.png)
+![gui_done_2024-02-12_08-44.png](screenshots%2Fgui_done_2024-02-12_08-44.png)
 
 ## Tests
 
