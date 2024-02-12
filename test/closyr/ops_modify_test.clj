@@ -580,7 +580,7 @@
    [:modify-branches
     "b derivative"
     "1-3/2*Cos(x)/x^(5/2)+15/8*Sin(x)/x^(7/2)-Sin(x)/(2*x^(3/2))"]
-   [:modify-branches
+   #_[:modify-branches
     "b simplify"
     "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    [:modify-branches

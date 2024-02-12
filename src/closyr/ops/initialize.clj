@@ -565,7 +565,7 @@
                           (F/D ie x-sym)
                           ie))}
 
-   {:op               :modify-branches
+   #_{:op               :modify-branches
     :label            "b simplify"
     :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
                         (if (> 9 (.leafCount ie) 4)
