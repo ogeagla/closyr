@@ -2,8 +2,8 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
-    [closyr.log :as log]
-    [closyr.dataset.prng :refer :all])
+    [closyr.dataset.prng :refer :all]
+    [closyr.log :as log])
   (:import
     (java.util
       Date
@@ -103,9 +103,9 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}]
   (let [res (F/Function
               (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
-                      (into-array ISymbol [x-sym]))
+               (into-array ISymbol [x-sym]))
               expr)]
-    ;(println "create expr fn: " (type expr) " : " expr "\n --> " res)
+    ;; (println "create expr fn: " (type expr) " : " expr "\n --> " res)
     res))
 
 
@@ -130,7 +130,8 @@
   ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
    (try
      (let [^ExprEvaluator util (or util (new-util))
-           ^IAST expr          (if (.isNIL expr)
+           ^IAST expr          (if (or (.isNIL expr)
+                                       (and (.isBuiltInSymbol expr) (not (.isReal expr))))
                                  (F/Times variable F/C1)
                                  expr)
            ^IAST expr          (.eval util expr)]
@@ -140,7 +141,6 @@
         :expr expr})
      (catch Exception e
        (log/error "Err creating pheno: " expr " , " variable " , " (.getMessage e))))))
-
 
 
 (defn- inversely-proportional-to-leaf-size

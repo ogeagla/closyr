@@ -54,13 +54,13 @@
                  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
              [0.5 1.0])))
 
-    (testing "indeterminate eval results"
+    (testing "indeterminate eval results, defaults to using y=x"
 
       (is (= (ops-eval/eval-vec-pheno
                (ops-common/->phenotype x F/Indeterminate nil)
                {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
                 :input-xs-count 1})
-             nil))
+             [0.5]))
 
       (is (= (with-redefs-fn {#'ops-eval/eval-phenotype-on-expr-args (fn [_ _] F/Indeterminate)}
                (fn []
@@ -166,7 +166,25 @@
                (ops-common/->phenotype x F/Infinity nil)
                {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
                 :input-xs-count 3})
-             [##Inf ##Inf ##Inf]))
+             [0.0 0.5 1.0]))
+
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x F/CN1 nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
+             [-1.0 -1.0 -1.0]))
+
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x (F/num 0.123) nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
+             [0.123 0.123 0.123]))
+
+      (is (= (ops-eval/eval-vec-pheno
+               (ops-common/->phenotype x (F/Plus F/CN1 F/C1) nil)
+               {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 0.5 1.0]))
+                :input-xs-count 3})
+             [0.0 0.0 0.0]))
 
       (is (= (ops-eval/eval-vec-pheno
                (ops-common/->phenotype x x nil)
