@@ -105,7 +105,6 @@
               (F/List ^"[Lorg.matheclipse.core.interfaces.ISymbol;"
                (into-array ISymbol [x-sym]))
               expr)]
-    ;; (println "create expr fn: " (type expr) " : " expr "\n --> " res)
     res))
 
 

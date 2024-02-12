@@ -386,23 +386,23 @@
 
   (cond
 
-    (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 20
-    (and (< (count initial-phenos) 1000) (< input-xs-count 50) (> iters 100)) 10
-    (and (< (count initial-phenos) 1000) (< input-xs-count 100) (> iters 100)) 5
-    (and (< (count initial-phenos) 1000) (< input-xs-count 200) (> iters 100)) 2
+    (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 25
+    (and (< (count initial-phenos) 1000) (< input-xs-count 50) (> iters 100)) 20
+    (and (< (count initial-phenos) 1000) (< input-xs-count 100) (> iters 100)) 10
+    (and (< (count initial-phenos) 1000) (< input-xs-count 200) (> iters 100)) 5
 
-    (and (< (count initial-phenos) 2000) (< input-xs-count 25) (> iters 100)) 10
-    (and (< (count initial-phenos) 2000) (< input-xs-count 50) (> iters 100)) 5
-    (and (< (count initial-phenos) 2000) (< input-xs-count 100) (> iters 100)) 2
-    (and (< (count initial-phenos) 2000) (< input-xs-count 200) (> iters 100)) 2
+    (and (< (count initial-phenos) 2000) (< input-xs-count 25) (> iters 100)) 20
+    (and (< (count initial-phenos) 2000) (< input-xs-count 50) (> iters 100)) 10
+    (and (< (count initial-phenos) 2000) (< input-xs-count 100) (> iters 100)) 5
+    (and (< (count initial-phenos) 2000) (< input-xs-count 200) (> iters 100)) 5
 
-    (and (< (count initial-phenos) 5000) (< input-xs-count 25) (> iters 100)) 5
+    (and (< (count initial-phenos) 5000) (< input-xs-count 25) (> iters 100)) 10
     (and (< (count initial-phenos) 5000) (< input-xs-count 50) (> iters 100)) 5
-    (and (< (count initial-phenos) 5000) (< input-xs-count 100) (> iters 100)) 2
+    (and (< (count initial-phenos) 5000) (< input-xs-count 100) (> iters 100)) 5
     (and (< (count initial-phenos) 5000) (< input-xs-count 200) (> iters 100)) 2
 
-    (and (< (count initial-phenos) 50000) (< input-xs-count 25) (> iters 100)) 2
-    (and (< (count initial-phenos) 50000) (< input-xs-count 50) (> iters 100)) 2
+    (and (< (count initial-phenos) 50000) (< input-xs-count 25) (> iters 100)) 5
+    (and (< (count initial-phenos) 50000) (< input-xs-count 50) (> iters 100)) 5
     (and (< (count initial-phenos) 50000) (< input-xs-count 100) (> iters 100)) 2
     (and (< (count initial-phenos) 50000) (< input-xs-count 200) (> iters 100)) 2
 

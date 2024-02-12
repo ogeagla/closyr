@@ -246,11 +246,6 @@
 (def ^:dynamic ^:private *print-top-n* 20)
 
 
-(defn- log-iteration
-  [& args]
-  (log/info (str/join " " args))
-  #_(apply println args))
-
 
 (defn report-iteration
   "Print and maybe send to GUI a summary report of the population, including best fn/score/etc"
@@ -274,7 +269,7 @@
                                                   best-v run-args extended-domain-args)]
 
       (reset! test-timer* (Date.))
-      (log-iteration i "-step pop size: " pop-size
+      (log/info i "-step pop size: " pop-size
                      " took secs: " took-s
                      " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
                      (str "\n top " *print-top-n* " best:\n"

@@ -1057,10 +1057,8 @@
                  (do
                    (log/info "Parking updates to chart due to Stop command")
                    (<! sim-stop-start-chan))))
-             ;; (println "Draw new points " (.size xs-best-fn))
              (.add xs-best-fn (.size xs-best-fn))
              (.add ys-best-fn (.size xs-best-fn))
-             ;; (.remove ys-objective-fn 0)
              (.add ys-objective-fn (* 10.0 (Math/random)))
 
              (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)

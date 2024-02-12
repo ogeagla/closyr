@@ -135,7 +135,7 @@
     (is (=
           (symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 0 10))}
                                     {:input-xs-count 10})
-          20))
+          25))
 
     (is (=
           (symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 0 10))}
