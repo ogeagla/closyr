@@ -41,18 +41,24 @@
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
-    (when-not util (log/warn "*** Warning: No util provided to evaluation engine! ***"))
-    (if (and expr expr-args (not (.isNIL expr)))
+    (when-not util
+      (log/warn "*** Warning: No util provided to evaluation engine! ***"))
+    (if (and
+          expr
+          expr-args
+          (not (.isNIL expr)))
       (let [^IAST ast  (F/ast expr-args (ops-common/expr->fn pheno))
             ^IExpr res (.eval (or util (ops-common/new-util)) ast)]
         res)
       (log/warn "Warning: eval needs both expr and args, and expr cannot be NIL"))
-    (catch NullPointerException npe (log/error "Warning: NPE error in eval: " (str expr) " : " npe))
-    (catch ArgumentTypeException se (log/error "Warning: argument type error in eval: " (str expr) " : " se))
-    (catch SyntaxError se (log/error "Warning: syntax error in eval: " (str expr) " : " se))
-    (catch MathException me (log/error "Warning: math error in eval: " (str expr) " : " me))
-    (catch StackOverflowError soe (log/error "Warning: stack overflow error in eval: " (str expr) " : " soe))
-    (catch OutOfMemoryError oome (log/error "Warning: OOM error in eval: " (str expr) " : " oome))))
+    (catch Exception e (log/error "Warning: Error in eval: " (str expr) " : " e))
+    ;(catch NullPointerException npe (log/error "Warning: NPE error in eval: " (str expr) " : " npe))
+    ;(catch ArgumentTypeException se (log/error "Warning: argument type error in eval: " (str expr) " : " se))
+    ;(catch SyntaxError se (log/error "Warning: syntax error in eval: " (str expr) " : " se))
+    ;(catch MathException me (log/error "Warning: math error in eval: " (str expr) " : " me))
+    ;(catch StackOverflowError soe (log/error "Warning: stack overflow error in eval: " (str expr) " : " soe))
+    ;(catch OutOfMemoryError oome (log/error "Warning: OOM error in eval: " (str expr) " : " oome))
+    ))
 
 
 (defn eval-vec-pheno

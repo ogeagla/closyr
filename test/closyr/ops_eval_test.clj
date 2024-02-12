@@ -31,6 +31,15 @@
                  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
              [0.0 0.5])))
 
+
+    (testing "can eval various fns for simple inputs without provided util in pheno"
+      (is (= (mapv
+               ops-common/expr->double
+               (ops-eval/eval-phenotype-on-expr-args
+                 (dissoc (ops-common/->phenotype x (F/Subtract x F/C1D2) (ops-common/new-util)) :util)
+                 (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
+             [0.0 0.5])))
+
     (testing "can eval various fns for simple inputs and y=x"
       (is (= (mapv
                ops-common/expr->double
