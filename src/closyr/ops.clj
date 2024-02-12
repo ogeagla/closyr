@@ -126,6 +126,7 @@
       (log/error "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
+(def ^:dynamic *long-running-mutation-thresh-ms* 5000)
 
 (defn mutation-fn
   "Symbolic regression mutation"
@@ -139,7 +140,7 @@
                                    max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
           diff-ms (ops-common/start-date->diff-ms start)]
 
-      (when (> diff-ms 5000)
+      (when (> diff-ms *long-running-mutation-thresh-ms*)
         (log/warn "Warning, this modification sequence took a long time: "
                   diff-ms " ms for mods: " (count mods)
                   "\n for old expr: " (:expr p-winner)
