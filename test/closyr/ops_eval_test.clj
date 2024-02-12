@@ -18,11 +18,37 @@
 
 (deftest eval-f-test
   (let [x (F/Dummy "x")]
+
+    (testing "basic assumptions"
+
+      (is (instance? IExpr (F/Subtract F/E F/C1D2)))
+      (is (instance? IAST (F/Subtract F/E F/C1D2)))
+
+      (is (= (str (F/Subtract F/E F/C1D2))
+             "-1/2+E"))
+
+      (is (= (str (.eval (F/Subtract F/E F/C1D2)))
+             "-1/2+E"))
+
+      (is (= (str (.eval (F/Sqrt (F/Subtract x F/C1))))
+             "Sqrt(-1+x)"))
+
+      (is (= (str (F/Sqrt (F/Subtract x F/C1)))
+             "Sqrt(-1+x)"))
+
+      (is (= (.toNumber (F/Subtract F/E F/C1D2))
+             2.218281828459045))
+
+      (is (= (try (.toNumber (F/Subtract x F/C1D2))
+                  (catch Exception e nil))
+             nil)))
+
     (testing "eval on nil expr defaults to y=x"
       (is (= (str (ops-eval/eval-phenotype-on-expr-args
                     (ops-common/->phenotype x F/NIL nil)
                     (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0 1.0]))))
              "{0.0,1.0}")))
+
     (testing "can eval various fns for simple inputs"
       (is (= (mapv
                ops-common/expr->double
@@ -30,7 +56,6 @@
                  (ops-common/->phenotype x (F/Subtract x F/C1D2) (ops-common/new-util))
                  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))))
              [0.0 0.5])))
-
 
     (testing "can eval various fns for simple inputs without provided util in pheno"
       (is (= (mapv
@@ -100,29 +125,6 @@
                  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.0]))))
              [##-Inf]))
 
-
-
-      (is (instance? IExpr (F/Subtract F/E F/C1D2)))
-      (is (instance? IAST (F/Subtract F/E F/C1D2)))
-
-      (is (= (str (F/Subtract F/E F/C1D2))
-             "-1/2+E"))
-
-      (is (= (str (.eval (F/Subtract F/E F/C1D2)))
-             "-1/2+E"))
-
-      (is (= (str (.eval (F/Sqrt (F/Subtract x F/C1))))
-             "Sqrt(-1+x)"))
-
-      (is (= (str (F/Sqrt (F/Subtract x F/C1)))
-             "Sqrt(-1+x)"))
-
-      (is (= (.toNumber (F/Subtract F/E F/C1D2))
-             2.218281828459045))
-
-      (is (= (try (.toNumber (F/Subtract x F/C1D2))
-                  (catch Exception e nil))
-             nil))
 
       (is (= (ops-eval/eval-vec-pheno
                (ops-common/->phenotype x (F/Subtract F/E F/C1D2) (ops-common/new-util))
