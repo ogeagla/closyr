@@ -3,21 +3,23 @@
   (:require
     [clojure.string :as str]
     [clojure.tools.cli :as cli]
-    [closyr.log :as log]
     [closyr.dataset.csv :as input-csv]
-    [closyr.symbolic-regression :as symreg]
-    ;[unilog.config  :refer [start-logging!]]
-    )
+    [closyr.log :as log]
+    [closyr.symbolic-regression :as symreg])
   (:import
     (java.io
       File)))
 
-(set! *warn-on-reflection* true)
-#_(start-logging! {
-                 :level :info
-                 :overrides  {"edu.jas.ufd" :error}
 
-                 })
+(set! *warn-on-reflection* true)
+
+
+#_(start-logging! {
+                   :level     :info
+                   :overrides {"edu.jas.ufd" :error}
+
+                   })
+
 
 (defn- str->doubles-vec
   [numbers-str]
@@ -36,6 +38,11 @@
     :default 10
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 1 % 10001) "Must be a number between 1 and 10001"]]
+
+   ["-l" "--max-leafs MAX_LEAFS" "Max number of AST tree leafs in candidate function"
+    :default 40
+    :parse-fn #(Integer/parseInt %)
+    :validate [#(< 4 % 201) "Must be a number between 4 and 201"]]
 
    ["-f" "--infile INFILE" "CSV Input File"
     :default nil
@@ -60,6 +67,10 @@
    ["-t" "--headless" "Headless mode, no GUI, run in terminal"
     :default false
     :id :headless]
+
+   ["-c" "--use-flamechart" "Use flamechart to monitor perf (http://localhost:54321/flames.svg)"
+    :default false
+    :id :use-flamechart]
 
    #_["-v" nil "Verbosity level"
       :id :verbosity

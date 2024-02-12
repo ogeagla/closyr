@@ -129,8 +129,7 @@
 
 (defn mutation-fn
   "Symbolic regression mutation"
-  [{:keys [max-leafs]
-    :as   run-args}
+  [{:keys [max-leafs]}
    initial-muts
    p-winner
    p-discard]
@@ -246,7 +245,6 @@
 (def ^:dynamic ^:private *print-top-n* 20)
 
 
-
 (defn report-iteration
   "Print and maybe send to GUI a summary report of the population, including best fn/score/etc"
   [i
@@ -255,7 +253,7 @@
    {:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}
-   {:keys [use-gui?] :as run-config}]
+   {:keys [use-gui? max-leafs] :as run-config}]
   (when (or (= 1 i) (zero? (mod i *log-steps*)))
     (let [bests      (sort-population ga-result)
           took-s     (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
@@ -270,14 +268,15 @@
 
       (reset! test-timer* (Date.))
       (log/info i "-step pop size: " pop-size
-                     " took secs: " took-s
-                     " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
-                     (str "\n top " *print-top-n* " best:\n"
-                          (->> (take *print-top-n* bests)
-                               (map reportable-phen-str)
-                               (str/join "\n")))
-                     "\n"
-                     (summarize-sim-stats))
+                " max leafs: " max-leafs
+                " took secs: " took-s
+                " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
+                (str "\n top " *print-top-n* " best:\n"
+                     (->> (take *print-top-n* bests)
+                          (map reportable-phen-str)
+                          (str/join "\n")))
+                "\n"
+                (summarize-sim-stats))
 
       (when use-gui?
         (put! sim->gui-chan {:iters                 iters

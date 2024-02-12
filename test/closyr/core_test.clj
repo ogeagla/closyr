@@ -14,14 +14,16 @@
           nil)))
   (testing "handles valid short options w data inline"
     (is (=
-          (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6")]
+          (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6" "-l" "20" "-c")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless   true
-           :iterations 200
-           :population 1000
-           :xs         [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
-           :ys         [1.0 2.0 30.0 4.0 5.0 6.0 10.0]})))
+          {:headless       true
+           :max-leafs      20
+           :use-flamechart true
+           :iterations     200
+           :population     1000
+           :xs             [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
+           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]})))
 
 
   (testing "if xs, also needs ys"
@@ -45,22 +47,26 @@
           (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-f" "resources/csvs/test_inputs_1.csv")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless   true
-           :iterations 200
-           :population 1000
-           :xs         [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys         [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]})))
+          {:headless       true
+           :max-leafs      40
+           :use-flamechart false
+           :iterations     200
+           :population     1000
+           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]})))
 
   (testing "handles valid long options w data inline"
     (is (=
-          (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "--ys" "1,2,30,4,5,6,10" "--xs" "0,1,2,3,4,5,6")]
+          (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "--ys" "1,2,30,4,5,6,10" "--xs" "0,1,2,3,4,5,6" "--use-flamechart" "--max-leafs" "60")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless   true
-           :iterations 200
-           :population 1000
-           :xs         [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
-           :ys         [1.0 2.0 30.0 4.0 5.0 6.0 10.0]})))
+          {:headless       true
+           :max-leafs      60
+           :use-flamechart true
+           :iterations     200
+           :population     1000
+           :xs             [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
+           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]})))
 
 
   (testing "handles valid long options w csv data with columns"
@@ -68,11 +74,13 @@
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_1.csv")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless   true
-           :iterations 200
-           :population 1000
-           :xs         [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys         [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]})))
+          {:headless       true
+           :max-leafs      40
+           :use-flamechart false
+           :iterations     200
+           :population     1000
+           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]})))
 
 
   (testing "handles valid long options w csv data with columns with in order y,x"
@@ -80,22 +88,26 @@
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_3.csv")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless   true
-           :iterations 200
-           :population 1000
-           :xs         [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0 30.0 45.0 55.0 60.0]
-           :ys         [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]})))
+          {:headless       true
+           :max-leafs      40
+           :use-flamechart false
+           :iterations     200
+           :population     1000
+           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0 30.0 45.0 55.0 60.0]
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]})))
 
   (testing "handles valid long options w csv data without columns"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_2.csv")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless   true
-           :iterations 200
-           :population 1000
-           :xs         [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys         [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]}))))
+          {:headless       true
+           :max-leafs      40
+           :use-flamechart false
+           :iterations     200
+           :population     1000
+           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]}))))
 
 
 (deftest main-test

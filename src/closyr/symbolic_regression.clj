@@ -460,17 +460,18 @@
 
 (defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
-  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
+  [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count max-leafs input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
-  (let [iters          (or input-iters iters)
+  (let [max-leafs      (or max-leafs cli-max-leafs)
+        iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
                          (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         run-config     (assoc run-config :initial-phenos initial-phenos
-                                         :iters iters
-                                         :max-leafs (or max-leafs ops/default-max-leafs))
+                              :iters iters
+                              :max-leafs (or max-leafs ops/default-max-leafs))
         start          (print-and-save-start-time iters initial-phenos)
 
         {:keys [final-population next-step iters-done]
@@ -569,23 +570,26 @@
 
 
 (defn run-app-from-cli-args
-  [{:keys [iterations population headless xs ys] :as cli-opts}]
+  [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
-  (let [result (run-experiment
-                 {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
-                  :initial-muts   (ops-init/initial-mutations)
-                  :iters          iterations
-                  :use-gui?       (not headless)
-                  :input-xs-exprs (if xs
-                                    (ops-common/doubles->exprs xs)
-                                    input-xs-exprs)
-                  :input-ys-exprs (if ys
-                                    (ops-common/doubles->exprs ys)
-                                    input-ys-exprs)})]
-    (log/info "CLI: Done!")
-    (exit)
-    result))
+  (binding [*use-flamechart* use-flamechart]
+    (let [result (run-experiment
+                   {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
+                    :initial-muts   (ops-init/initial-mutations)
+                    :iters          iterations
+                    :use-gui?       (not headless)
+                    :max-leafs      max-leafs
+                    :input-xs-exprs (if xs
+                                      (ops-common/doubles->exprs xs)
+                                      input-xs-exprs)
+                    :input-ys-exprs (if ys
+                                      (ops-common/doubles->exprs ys)
+                                      input-ys-exprs)})]
+      (log/info "CLI: Done!")
+      (exit)
+      result)))
 
 
 (comment (run-app-without-gui))
+(comment (binding [*use-flamechart* true] (run-app-with-gui)))
 (comment (run-app-with-gui))
