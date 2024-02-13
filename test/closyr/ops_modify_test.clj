@@ -181,6 +181,26 @@
       (is (= (str (:expr pheno))
              (str x)))))
 
+  (testing "single mod: divide by nonsense"
+    (let [x            (F/Dummy "x")
+          div-by-zero* (atom 0)
+          [pheno iters mods] (with-redefs-fn {#'ops-modify/divided-by-zero (fn [] (swap! div-by-zero* inc))}
+                               (fn []
+                                 (ops-modify/apply-modifications
+                                   100
+                                   2
+                                   [{:op          :modify-fn
+                                     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                    (.divide expr F/NIL))}]
+                                   {:sym  x
+                                    :expr x}
+                                   {:sym  x
+                                    :expr x})))]
+      (is (= iters 2))
+      (is (= @div-by-zero* 0))
+      (is (= (str (:expr pheno))
+             (str x)))))
+
   (testing "multiple mods 1"
     (let [x (F/Dummy "x")
           [pheno iters mods] (ops-modify/apply-modifications
