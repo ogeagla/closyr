@@ -153,7 +153,7 @@
 
       (assoc new-pheno :mods-applied iters))
     (catch Exception e
-      (log/error "Err in mutation: " e))))
+      (log/error "Err in mutation: " (or (.getMessage e) e)))))
 
 
 (defn crossover-fn
