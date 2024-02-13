@@ -75,16 +75,18 @@
 
 (deftest simplify-with-slow-functions
   (testing "simplify takes a long time logs the slow fn"
-    (binding [ops-common/*long-simplify-thresh-ms* 100]
+    (binding [ops-common/*long-simplify-thresh-ms* 1000]
       (with-redefs-fn {#'ops-common/simplify (fn [^IAST expr]
-                                               (Thread/sleep 500)
+                                               (Thread/sleep 1500)
                                                (F/Simplify expr))}
         (fn []
           (let [x (F/Dummy "x")]
-            (is (= (update (ops-common/maybe-simplify {:expr (F/Plus F/C1 (F/Sin (F/ArcSin x)))})
+            (is (= (update (ops-common/maybe-simplify {:expr (F/Plus F/C1D5 (F/Sin (F/ArcSin x)))})
                            :expr str)
-                   {:expr    "1+x"
-                    :simple? true}))))))))
+                   {:expr    "1/5+x"
+                    :simple? true}))
+            (is (= @ops-common/do-not-simplify-fns*
+                   {"1/5+Sin(ArcSin(x))" 1}))))))))
 
 
 (deftest simplify-test

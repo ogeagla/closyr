@@ -174,6 +174,8 @@
   "Map of fns to not attempt to simplify because they've taken too long in the past"
   (atom {}))
 
+(def ^:dynamic *long-simplify-thresh-ms* 2000)
+
 
 (defn- check-simplify-timing
   [^IAST expr done?*]
@@ -181,7 +183,8 @@
     (go-loop [c 0]
       (when-not @done?*
         ;; wait sequence in ms looks like: 100, 316, 1000, ...
-        (<! (timeout (int (Math/pow 10 (+ 1.5 (/ c 4))))))
+        (<! (timeout (int (Math/pow (/ *long-simplify-thresh-ms* 200)
+                                    (+ 1.5 (/ c 4))))))
         (when (> c 6)
           (reset! report-done?* true)
           (swap! do-not-simplify-fns* assoc (str expr) 1)
@@ -199,7 +202,7 @@
   [^IAST expr]
   (F/Simplify expr))
 
-(def ^:dynamic *long-simplify-thresh-ms* 2000)
+
 
 (defn- ^IAST do-simplify
   [start
