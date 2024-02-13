@@ -30,7 +30,7 @@
                (mapv #(Double/parseDouble %)))]
       ns)
     (catch Exception e
-      (log/error "Cant parse numbers str: " numbers-str " : " e))))
+      (log/error "Can't parse numbers str: " numbers-str " : " (.getMessage e)))))
 
 
 (def ^:private cli-options
