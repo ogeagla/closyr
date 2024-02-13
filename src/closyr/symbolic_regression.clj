@@ -77,7 +77,7 @@
 
 (defn- close-chans!
   []
-  (log/warn "!! Got GUI exit command, see you later !!")
+  (log/info "~~~ Got GUI exit command, see you later ~~~")
   (close! *sim->gui-chan*)
   (close! *sim-stop-start-chan*)
   (close! *gui-close-chan*))
@@ -215,8 +215,6 @@
     :as   ui-elements}
    conf]
 
-  (log/info "Begin chart update loop")
-
   (go-loop [chart-iter 0]
 
     (<! (timeout 50))
@@ -274,8 +272,6 @@
     input-iters        :input-iters
     input-phenos-count :input-phenos-count
     max-leafs          :max-leafs}]
-
-  (log/info "Got state req: " new-state)
 
   (let [input-xs-exprs (if input-data-x
                          (ops-common/doubles->exprs input-data-x)

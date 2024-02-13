@@ -574,49 +574,45 @@
 
 (defn- start-stop-on-click
   [sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
-  (let [{:keys [items-point-getters]} @items-points-accessors*]
-    (if-not sim-stop-start-chan
-      (log/warn "warning: no sim-stop-start-chan provided")
-      (let [is-start   (= ctl:start (ss/get-text* e))
-            input-data (getters->input-data items-point-getters)
-            input-x    (mapv first input-data)
-            input-y    (mapv second input-data)]
+  (let [{:keys [items-point-getters]} @items-points-accessors*
+        is-start   (= ctl:start (ss/get-text* e))
+        input-data (getters->input-data items-point-getters)
+        input-x    (mapv first input-data)
+        input-y    (mapv second input-data)]
 
-        (log/info "clicked Start/Pause: " is-start)
+    (log/info "clicked Start/Pause: " is-start)
 
-        (reset! experiment-is-running?* is-start)
-        (.setEnabled ^JButton @ctl-reset-btn* true)
-        (put! sim-stop-start-chan (merge @experiment-settings*
-                                         {:new-state    (if is-start :start :pause)
-                                          :input-data-x input-x
-                                          :input-data-y input-y}))
-        (ss/set-text* e
-                      (if is-start
-                        ctl:stop
-                        ctl:start))
+    (reset! experiment-is-running?* is-start)
+    (.setEnabled ^JButton @ctl-reset-btn* true)
+    (put! sim-stop-start-chan (merge @experiment-settings*
+                                     {:new-state    (if is-start :start :pause)
+                                      :input-data-x input-x
+                                      :input-data-y input-y}))
+    (ss/set-text* e
+                  (if is-start
+                    ctl:stop
+                    ctl:start))
 
-        (ss/set-text* status-label
-                      (if is-start
-                        "Running"
-                        "Paused"))))))
+    (ss/set-text* status-label
+                  (if is-start
+                    "Running"
+                    "Paused"))))
 
 
 (defn- reset-on-click
   [^JButton start-top-label sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
-  (let [{:keys [items-point-getters]} @items-points-accessors*]
-    (if-not sim-stop-start-chan
-      (log/warn "warning: no sim-stop-start-chan provided")
-      (let [input-data (getters->input-data items-point-getters)
-            input-x    (mapv first input-data)
-            input-y    (mapv second input-data)]
-        (reset! experiment-is-running?* true)
-        (log/info "clicked Reset")
-        (put! sim-stop-start-chan (merge @experiment-settings*
-                                         {:new-state    :restart
-                                          :input-data-x input-x
-                                          :input-data-y input-y}))
-        (ss/set-text* start-top-label ctl:stop)
-        (ss/set-text* status-label "Running")))))
+  (let [{:keys [items-point-getters]} @items-points-accessors*
+        input-data (getters->input-data items-point-getters)
+        input-x    (mapv first input-data)
+        input-y    (mapv second input-data)]
+    (reset! experiment-is-running?* true)
+    (log/info "clicked Reset")
+    (put! sim-stop-start-chan (merge @experiment-settings*
+                                     {:new-state    :restart
+                                      :input-data-x input-x
+                                      :input-data-y input-y}))
+    (ss/set-text* start-top-label ctl:stop)
+    (ss/set-text* status-label "Running")))
 
 
 (defn- input-dataset-change

@@ -79,7 +79,7 @@
               (- expected actual))]
     (if (not-finite? res)
       (do
-        (log/warn "warning, res not a number: " res
+        (log/warn "Warning, residual is not a number: " res
                   " exp: " expected " actual: " actual)
         max-resid)
       (min max-resid (abs res)))))
