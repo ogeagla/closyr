@@ -72,7 +72,7 @@
     (let [x (F/Dummy "x")]
       (binding [ops/*long-running-mutation-thresh-ms* 100]
         (with-redefs-fn {#'ops-modify/apply-modifications (fn [max-leafs mods-count initial-muts p-winner p-discard]
-                                                            (Thread/sleep 200)
+                                                            (Thread/sleep 500)
                                                             [p-winner 1 []])}
           (fn []
             (is (=
