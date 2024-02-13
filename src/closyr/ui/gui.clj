@@ -818,197 +818,194 @@
       (.setIconImage icon))))
 
 
+(defn- setup-ui-frame
+  [[{:keys [sim-stop-start-chan
+            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
+            ^String series-best-fn-label ^String series-objective-fn-label update-loop
+            ^String series-scores-best-label
+
+            ^String series-scores-p99-label
+            ^String series-scores-p95-label
+            ^String series-scores-p90-label
+
+            ^List xs-scores-best
+            ^List ys-scores-best
+
+            ^List xs-scores-p99
+            ^List ys-scores-p99
+            ^List xs-scores-p95
+            ^List ys-scores-p95
+            ^List xs-scores-p90
+            ^List ys-scores-p90]
+     :as   gui-data}]]
+  (let [my-frame                            (doto (JFrame. "CLOSYR")
+                                              (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE)
+                                              (set-app-icon))
+
+        bottom-container                    (panel-grid {:rows 2 :cols 1})
+        inputs-and-info-container           (panel-grid {:rows 3 :cols 1})
+        ctls-container                      (panel-grid {:rows 2 :cols 1})
+        row-3-container                     (panel-grid {:rows 1 :cols 2})
+        draw-parent                         (panel-grid {:rows 1 :cols 1})
+        top-container                       (panel-grid {:rows 1 :cols 2})
+        input-fn-container                  (panel-grid {:rows 1 :cols 1})
+
+        page-pane                           (panel-grid {:rows 2 :cols 1})
+        content-pane                        (doto (.getContentPane my-frame)
+                                              (.setLayout (GridLayout. 1 1)))
+
+        sim-info-label                      (JLabel. "")
+        ^JTextField best-fn-selectable-text (doto (JTextField. "")
+                                              (.setEditable false))
+
+        ^XYChart best-fn-chart              (plot/make-plot:2-series
+                                              series-best-fn-label
+                                              series-objective-fn-label
+                                              xs-best-fn
+                                              xs-objective-fn
+                                              ys-best-fn
+                                              ys-objective-fn)
+        best-fn-chart-panel                 (XChartPanel. best-fn-chart)
+
+        ^XYChart scores-chart               (plot/make-plot:n-series
+
+                                              {:x-axis-title "Iteration"
+                                               :y-axis-title "Score"
+                                               :chart-title  "No data to show"
+                                               :series       [{:label  series-scores-p90-label
+                                                               :xs     xs-scores-p90
+                                                               :ys     ys-scores-p90
+                                                               :marker SeriesMarkers/CROSS}
+
+                                                              {:label  series-scores-p95-label
+                                                               :xs     xs-scores-p95
+                                                               :ys     ys-scores-p95
+                                                               :marker SeriesMarkers/CROSS}
+
+                                                              {:label  series-scores-p99-label
+                                                               :xs     xs-scores-p99
+                                                               :ys     ys-scores-p99
+                                                               :marker SeriesMarkers/CROSS}
+
+                                                              {:label  series-scores-best-label
+                                                               :xs     xs-scores-best
+                                                               :ys     ys-scores-best
+                                                               :marker SeriesMarkers/PLUS}]
+                                               :width        400
+                                               :height       200})
+        scores-chart-panel                  (XChartPanel. scores-chart)
+
+        {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
+
+        status-label                        (JLabel. "Press Start To Begin Function Search")
+        status-column                       (doto (panel-grid {:rows 2 :cols 1})
+                                              (.add status-label)
+                                              (.add (max-leafs-settings-panel)))
+
+        ^JButton ctl-start-stop-btn         (ss/button
+                                              :text ctl:start
+                                              :listen [:mouse-clicked
+                                                       (partial start-stop-on-click
+                                                                sim-stop-start-chan
+                                                                status-label)])
+        ^JButton ctl-reset-btn              (reset! ctl-reset-btn*
+                                                    (doto
+                                                      ^JButton (ss/button
+                                                                 :text ctl:restart
+                                                                 :listen [:mouse-clicked
+                                                                          (partial reset-on-click
+                                                                                   ctl-start-stop-btn
+                                                                                   sim-stop-start-chan
+                                                                                   status-label)])
+                                                      (.setEnabled false)))
+        brush-container                     (brush-panel)
+        xs-container                        (xs-panel)
+        settings-panel                      (experiment-settings-panel)
+        ^JComboBox input-fn-picker          (ss/combobox
+                                              :model dataset-fns
+                                              :listen [:action input-dataset-change])
+
+        icon-test                           (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
+
+        btns-row                            (doto (panel-grid {:rows 1 :cols 2})
+                                              (.add ctl-start-stop-btn)
+                                              (.add ctl-reset-btn))
+
+        status-row                          (panel-grid {:rows 1 :cols 2})
+
+        ^JPanel input-file-container        (input-file-picker-widget status-row)
+
+        status-row                          (doto status-row
+                                              (.add status-column)
+                                              (.add input-file-container))
+
+        btns-container                      (doto (panel-grid {:rows 2 :cols 1})
+                                              (.add btns-row)
+                                              (.add status-row))
+
+        settings-container                  (doto (panel-grid {:rows 2 :cols 1})
+                                              (.add settings-panel)
+                                              (.add input-fn-container))
+
+        history-container                   (doto (panel-grid {:rows 1 :cols 1})
+                                              (.add (JLabel. "Hello")))
+
+        page-pane-tabbed                    (doto (JTabbedPane.)
+                                              (.setBounds 50 50 200 200)
+                                              (.add "Main" ctls-container)
+                                              (.add "Info" history-container))]
+
+    (update-replace-drawing-widget draw-parent)
+
+    (.add brush-container xs-container)
+    (.add brush-container input-fn-picker)
+
+    (.add input-fn-container brush-container)
+
+    (.add inputs-and-info-container sim-info-label)
+    (.add inputs-and-info-container best-fn-selectable-text)
+
+    (.add draw-parent drawing-widget)
+    (.add row-3-container draw-parent)
+    (.add row-3-container scores-chart-panel)
+
+    (.add bottom-container row-3-container)
+    (.add bottom-container inputs-and-info-container)
+
+    (.add ctls-container btns-container)
+    (.add ctls-container settings-container)
+
+
+    (.add top-container ctls-container)
+    (.add top-container best-fn-chart-panel)
+
+    (.add page-pane top-container)
+    (.add page-pane bottom-container)
+    (.add content-pane page-pane)
+
+    (.pack my-frame)
+    (.setVisible my-frame true)
+    (.setSize my-frame 1500 800)
+
+    (update-loop
+      {:best-fn-chart           best-fn-chart
+       :best-fn-chart-panel     best-fn-chart-panel
+       :info-label              sim-info-label
+       :status-label            status-label
+       :best-fn-selectable-text best-fn-selectable-text
+       :scores-chart-panel      scores-chart-panel
+       :scores-chart            scores-chart
+       :ctl-start-stop-btn      ctl-start-stop-btn}
+      gui-data)))
+
+
 (defn create-and-show-gui
   "Create a show Swing GUI"
-  [{:keys [sim-stop-start-chan
-           ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
-           ^String series-best-fn-label ^String series-objective-fn-label update-loop
-           ^String series-scores-best-label
-
-           ^String series-scores-p99-label
-           ^String series-scores-p95-label
-           ^String series-scores-p90-label
-
-           ^List xs-scores-best
-           ^List ys-scores-best
-
-           ^List xs-scores-p99
-           ^List ys-scores-p99
-           ^List xs-scores-p95
-           ^List ys-scores-p95
-           ^List xs-scores-p90
-           ^List ys-scores-p90]
-    :as   gui-data}]
+  [gui-data]
   (SwingUtilities/invokeLater
     (fn []
-
       (setup-theme)
-
-      (let [my-frame                            (doto (JFrame. "CLOSYR")
-                                                  (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE)
-                                                  (set-app-icon))
-
-            bottom-container                    (panel-grid {:rows 2 :cols 1})
-            inputs-and-info-container           (panel-grid {:rows 3 :cols 1})
-            ctls-container                      (panel-grid {:rows 2 :cols 1})
-            row-3-container                     (panel-grid {:rows 1 :cols 2})
-            draw-parent                         (panel-grid {:rows 1 :cols 1})
-            top-container                       (panel-grid {:rows 1 :cols 2})
-            input-fn-container                  (panel-grid {:rows 1 :cols 1})
-
-            page-pane                           (panel-grid {:rows 2 :cols 1})
-            content-pane                        (doto (.getContentPane my-frame)
-                                                  (.setLayout (GridLayout. 1 1)))
-
-            sim-info-label                      (JLabel. "")
-            ^JTextField best-fn-selectable-text (doto (JTextField. "")
-                                                  (.setEditable false))
-
-            ^XYChart best-fn-chart              (plot/make-plot:2-series
-                                                  series-best-fn-label
-                                                  series-objective-fn-label
-                                                  xs-best-fn
-                                                  xs-objective-fn
-                                                  ys-best-fn
-                                                  ys-objective-fn)
-            best-fn-chart-panel                 (XChartPanel. best-fn-chart)
-
-            ^XYChart scores-chart               (plot/make-plot:n-series
-
-                                                  {:x-axis-title "Iteration"
-                                                   :y-axis-title "Score"
-                                                   :chart-title  "No data to show"
-                                                   :series       [{:label  series-scores-p90-label
-                                                                   :xs     xs-scores-p90
-                                                                   :ys     ys-scores-p90
-                                                                   :marker SeriesMarkers/CROSS}
-
-                                                                  {:label  series-scores-p95-label
-                                                                   :xs     xs-scores-p95
-                                                                   :ys     ys-scores-p95
-                                                                   :marker SeriesMarkers/CROSS}
-
-                                                                  {:label  series-scores-p99-label
-                                                                   :xs     xs-scores-p99
-                                                                   :ys     ys-scores-p99
-                                                                   :marker SeriesMarkers/CROSS}
-
-                                                                  {:label  series-scores-best-label
-                                                                   :xs     xs-scores-best
-                                                                   :ys     ys-scores-best
-                                                                   :marker SeriesMarkers/PLUS}]
-                                                   :width        400
-                                                   :height       200})
-            scores-chart-panel                  (XChartPanel. scores-chart)
-
-            {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
-
-            status-label                        (JLabel. "Press Start To Begin Function Search")
-            status-column                       (doto (panel-grid {:rows 2 :cols 1})
-                                                  (.add status-label)
-                                                  (.add
-
-                                                    ;; todo implement max-leafs setting in symreg then remove this placeholder:
-                                                    #_(JLabel. "")
-                                                    (max-leafs-settings-panel)
-
-                                                    ))
-
-            ^JButton ctl-start-stop-btn         (ss/button
-                                                  :text ctl:start
-                                                  :listen [:mouse-clicked
-                                                           (partial start-stop-on-click
-                                                                    sim-stop-start-chan
-                                                                    status-label)])
-            ^JButton ctl-reset-btn              (reset! ctl-reset-btn*
-                                                        (doto
-                                                          ^JButton (ss/button
-                                                                     :text ctl:restart
-                                                                     :listen [:mouse-clicked
-                                                                              (partial reset-on-click
-                                                                                       ctl-start-stop-btn
-                                                                                       sim-stop-start-chan
-                                                                                       status-label)])
-                                                          (.setEnabled false)))
-            brush-container                     (brush-panel)
-            xs-container                        (xs-panel)
-            settings-panel                      (experiment-settings-panel)
-            ^JComboBox input-fn-picker          (ss/combobox
-                                                  :model dataset-fns
-                                                  :listen [:action input-dataset-change])
-
-            icon-test                           (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
-
-            btns-row                            (doto (panel-grid {:rows 1 :cols 2})
-                                                  (.add ctl-start-stop-btn)
-                                                  (.add ctl-reset-btn))
-
-            status-row                          (panel-grid {:rows 1 :cols 2})
-
-            ^JPanel input-file-container        (input-file-picker-widget status-row)
-
-            status-row                          (doto status-row
-                                                  (.add status-column)
-                                                  (.add input-file-container))
-
-            btns-container                      (doto (panel-grid {:rows 2 :cols 1})
-                                                  (.add btns-row)
-                                                  (.add status-row))
-
-            settings-container                  (doto (panel-grid {:rows 2 :cols 1})
-                                                  (.add settings-panel)
-                                                  (.add input-fn-container))
-
-            history-container                   (doto (panel-grid {:rows 1 :cols 1})
-                                                  (.add (JLabel. "Hello")))
-
-            page-pane-tabbed                    (doto (JTabbedPane.)
-                                                  (.setBounds 50 50 200 200)
-                                                  (.add "Main" ctls-container)
-                                                  (.add "Info" history-container))]
-
-        (update-replace-drawing-widget draw-parent)
-
-        (.add brush-container xs-container)
-        (.add brush-container input-fn-picker)
-
-        (.add input-fn-container brush-container)
-
-        (.add inputs-and-info-container sim-info-label)
-        (.add inputs-and-info-container best-fn-selectable-text)
-
-        (.add draw-parent drawing-widget)
-        (.add row-3-container draw-parent)
-        (.add row-3-container scores-chart-panel)
-
-        (.add bottom-container row-3-container)
-        (.add bottom-container inputs-and-info-container)
-
-        (.add ctls-container btns-container)
-        (.add ctls-container settings-container)
-
-
-        (.add top-container ctls-container)
-        (.add top-container best-fn-chart-panel)
-
-        (.add page-pane top-container)
-        (.add page-pane bottom-container)
-        (.add content-pane page-pane)
-
-        (.pack my-frame)
-        (.setVisible my-frame true)
-        (.setSize my-frame 1500 800)
-
-        (update-loop
-          {:best-fn-chart           best-fn-chart
-           :best-fn-chart-panel     best-fn-chart-panel
-           :info-label              sim-info-label
-           :status-label            status-label
-           :best-fn-selectable-text best-fn-selectable-text
-           :scores-chart-panel      scores-chart-panel
-           :scores-chart            scores-chart
-           :ctl-start-stop-btn      ctl-start-stop-btn}
-          gui-data)))))
+      (setup-ui-frame gui-data))))
 
 
 (defn- test-gui-1
