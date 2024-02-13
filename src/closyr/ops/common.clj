@@ -139,7 +139,8 @@
         :id   (UUID/randomUUID)
         :expr expr})
      (catch Exception e
-       (log/error "Err creating pheno: " expr " , " variable " , " (.getMessage e))))))
+       (log/error "Err creating pheno from expr/x: "
+                  (str expr) " / " (str variable) " : " (or (.getMessage e) e))))))
 
 
 (defn- inversely-proportional-to-leaf-size
@@ -174,6 +175,7 @@
   "Map of fns to not attempt to simplify because they've taken too long in the past"
   (atom {}))
 
+
 (def ^:dynamic *long-simplify-thresh-ms*
   "Log if simplification took longer than this time in ms"
   2000)
@@ -203,7 +205,6 @@
 (defn- ^IAST simplify
   [^IAST expr]
   (F/Simplify expr))
-
 
 
 (defn- ^IAST do-simplify
