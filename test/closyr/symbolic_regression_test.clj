@@ -224,3 +224,10 @@
           (symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 0 10))}
                                     {:input-xs-count 10})
           1))))
+
+
+(deftest check-if-done-test
+  (testing "not done"
+    (is (=
+          (#'symreg/check-if-done 1 10 nil nil)
+          nil))))
