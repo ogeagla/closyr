@@ -43,6 +43,13 @@
 
           nil)))
 
+  (testing "if xs and ys, all need to be numbers"
+    (is (=
+          (let [test-input '("-t" "-p1000" "-i" "200" "-x" "BAD,1,2,3,4,5,6" "-y" "0,1,2,3,4,5,6")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          nil)))
+
 
   (testing "if ys, also needs xs"
     (is (=
