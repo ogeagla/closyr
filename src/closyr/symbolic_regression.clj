@@ -1,7 +1,6 @@
 (ns closyr.symbolic-regression
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
-    [clojure.string :as str]
     [closyr.ga :as ga]
     [closyr.log :as log]
     [closyr.ops :as ops]
@@ -27,12 +26,17 @@
 
 (set! *warn-on-reflection* true)
 
+
 (def ^:dynamic *sim->gui-chan*
   "Put data here during iterations to update the GUI"
   (chan))
+
+
 (def ^:dynamic *sim-stop-start-chan*
   "Put data here from the GUI to start/stop/restart iterations"
   (chan))
+
+
 (def ^:dynamic *gui-close-chan*
   "Put data here to shut down the application"
   (chan))
@@ -474,8 +478,8 @@
                          (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         run-config     (assoc run-config :initial-phenos initial-phenos
-                              :iters iters
-                              :max-leafs (or max-leafs ops/default-max-leafs))
+                                         :iters iters
+                                         :max-leafs (or max-leafs ops/default-max-leafs))
         start          (print-and-save-start-time iters initial-phenos)
 
         {:keys [final-population next-step iters-done]
@@ -515,6 +519,17 @@
   false)
 
 
+(defn- get-input-data
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
+  (->run-args
+    (merge
+      (reset! sim-input-args*
+              {:input-xs-exprs input-xs-exprs
+               :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
+               :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
+      run-config)))
+
+
 (defn run-experiment
   "Run a GA evolution experiment to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
@@ -524,17 +539,12 @@
             "muts: " (count initial-muts)
             " --")
 
-  (let [symbolic-regression-search-fn
-        (fn []
-          (run-from-inputs
-            run-config
-            (if use-gui?
-              (start-gui-and-get-input-data run-config)
-              (->run-args (merge (reset! sim-input-args*
-                                         {:input-xs-exprs input-xs-exprs
-                                          :input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)
-                                          :input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)})
-                                 run-config)))))]
+  (let [symbolic-regression-search-fn (fn []
+                                        (run-from-inputs
+                                          run-config
+                                          (if use-gui?
+                                            (start-gui-and-get-input-data run-config)
+                                            (get-input-data run-config))))]
     (if *use-flamechart*
       ;; with flame graph analysis:
       (in-flames symbolic-regression-search-fn)
