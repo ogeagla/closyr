@@ -430,7 +430,7 @@
                                  :items items #_(conj items bp)
                                  :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
 
-    (-> drawing-widget (.setCursor (Cursor/getPredefinedCursor Cursor/HAND_CURSOR)))
+    (.setCursor drawing-widget (Cursor/getPredefinedCursor Cursor/HAND_CURSOR))
     (log/info "Set hand cursor for sketchpad widget: " (.getCursor drawing-widget))
 
     (reset! items-points-accessors* {:drawing-widget      drawing-widget
