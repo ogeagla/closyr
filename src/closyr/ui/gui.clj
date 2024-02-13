@@ -862,15 +862,14 @@
                                               {:x-axis-title "X"
                                                :y-axis-title "Y"
                                                :chart-title  "Start to see functions..."
-                                               :series       [{:label  series-best-fn-label
-                                                               :xs     xs-best-fn
-                                                               :ys     ys-best-fn
-                                                               :marker SeriesMarkers/PLUS}
-
-                                                              {:label  series-objective-fn-label
+                                               :series       [{:label  series-objective-fn-label
                                                                :xs     xs-objective-fn
                                                                :ys     ys-objective-fn
-                                                               :marker SeriesMarkers/CIRCLE}]
+                                                               :marker SeriesMarkers/CIRCLE}
+                                                              {:label  series-best-fn-label
+                                                               :xs     xs-best-fn
+                                                               :ys     ys-best-fn
+                                                               :marker SeriesMarkers/PLUS}]
                                                :width        400
                                                :height       200})
         best-fn-chart-panel                 (XChartPanel. best-fn-chart)
