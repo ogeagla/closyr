@@ -92,8 +92,9 @@
 (deftest simplify-test
   (testing "simplify trig compose"
     (let [x (F/Dummy "x")]
-      (is (= (update (ops-common/maybe-simplify {:expr (F/Sin (F/ArcSin x))})
-                     :expr str)
+      (is (= (dissoc (update (ops-common/maybe-simplify {:expr (F/Sin (F/ArcSin x)) :util (ops-common/new-util)})
+                             :expr str)
+                     :util)
              {:expr    "x"
               :simple? true}))))
 
