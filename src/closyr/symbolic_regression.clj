@@ -552,6 +552,20 @@
       (symbolic-regression-search-fn))))
 
 
+(defprotocol ISolverStateController
+  (start [this])
+  (restart [this])
+  (stop [this])
+  )
+
+(defrecord SolverStateController []
+  ISolverStateController
+  (start [this])
+  (restart [this])
+  (stop [this])
+  )
+
+
 (defprotocol ISymbolicRegressionSolver
 
   (solve
