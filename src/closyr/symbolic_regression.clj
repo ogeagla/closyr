@@ -53,7 +53,7 @@
   0)
 
 
-(def input-xs-exprs
+(def example-input-xs-exprs
   "Sample input xs as exprs"
   (->>
     (range 50)
@@ -61,7 +61,7 @@
     ops-common/doubles->exprs))
 
 
-(def input-ys-exprs
+(def example-input-ys-exprs
   "Sample input ys as exprs"
   (->>
     (range 50)
@@ -279,10 +279,10 @@
 
   (let [input-xs-exprs (if input-data-x
                          (ops-common/doubles->exprs input-data-x)
-                         input-xs-exprs)
+                         example-input-xs-exprs)
         input-ys-exprs (if input-data-y
                          (ops-common/doubles->exprs input-data-y)
-                         input-ys-exprs)
+                         example-input-ys-exprs)
 
         input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)
         input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)]
@@ -576,8 +576,8 @@
   (run-experiment
     {:initial-phenos (ops-init/initial-phenotypes 1000)
      :initial-muts   (ops-init/initial-mutations)
-     :input-xs-exprs input-xs-exprs
-     :input-ys-exprs input-ys-exprs
+     :input-xs-exprs example-input-xs-exprs
+     :input-ys-exprs example-input-ys-exprs
      :iters          200
      :use-gui?       true}))
 
@@ -600,10 +600,10 @@
                     :max-leafs      max-leafs
                     :input-xs-exprs (if xs
                                       (ops-common/doubles->exprs xs)
-                                      input-xs-exprs)
+                                      example-input-xs-exprs)
                     :input-ys-exprs (if ys
                                       (ops-common/doubles->exprs ys)
-                                      input-ys-exprs)})]
+                                      example-input-ys-exprs)})]
       (log/info "CLI: Done!")
       (exit)
       result)))

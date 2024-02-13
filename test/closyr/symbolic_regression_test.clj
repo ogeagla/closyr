@@ -139,8 +139,8 @@
               (symreg/run-experiment
                 {:initial-phenos (ops-init/initial-phenotypes 20)
                  :initial-muts   (ops-init/initial-mutations)
-                 :input-xs-exprs symreg/input-xs-exprs
-                 :input-ys-exprs symreg/input-ys-exprs
+                 :input-xs-exprs symreg/example-input-xs-exprs
+                 :input-ys-exprs symreg/example-input-ys-exprs
                  :iters          20
                  :use-gui?       true})
 
@@ -204,8 +204,8 @@
             (symreg/run-experiment
               {:initial-phenos (ops-init/initial-phenotypes 20)
                :initial-muts   (ops-init/initial-mutations)
-               :input-xs-exprs symreg/input-xs-exprs
-               :input-ys-exprs symreg/input-ys-exprs
+               :input-xs-exprs symreg/example-input-xs-exprs
+               :input-ys-exprs symreg/example-input-ys-exprs
                :iters          20
                :use-gui?       true})
 
