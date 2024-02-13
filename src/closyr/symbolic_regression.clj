@@ -478,8 +478,8 @@
                          (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         run-config     (assoc run-config :initial-phenos initial-phenos
-                                         :iters iters
-                                         :max-leafs (or max-leafs ops/default-max-leafs))
+                              :iters iters
+                              :max-leafs (or max-leafs ops/default-max-leafs))
         start          (print-and-save-start-time iters initial-phenos)
 
         {:keys [final-population next-step iters-done]
@@ -534,10 +534,6 @@
   "Run a GA evolution experiment to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-  (log/info "-- Running! iters: " iters
-            "pop: " (count initial-phenos)
-            "muts: " (count initial-muts)
-            " --")
 
   (let [symbolic-regression-search-fn (fn []
                                         (run-from-inputs
@@ -545,6 +541,10 @@
                                           (if use-gui?
                                             (start-gui-and-get-input-data run-config)
                                             (get-input-data run-config))))]
+    (log/info "-- Running! iters: " iters
+              "pop: " (count initial-phenos)
+              "muts: " (count initial-muts)
+              " --")
     (if *use-flamechart*
       ;; with flame graph analysis:
       (in-flames symbolic-regression-search-fn)
@@ -552,34 +552,52 @@
       (symbolic-regression-search-fn))))
 
 
+(defprotocol ISymbolicRegressionSolver
+
+  (solve
+    [this]
+    "Run the entire solver lifecycle.  To truly utilize protocol/record, I need to make this interface
+    much more fine-grained."))
+
+
+(defrecord SymbolicRegressionSolver
+  [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? max-leafs]
+
+  ISymbolicRegressionSolver
+
+  (solve [this] (run-experiment this)))
+
+
 (defn run-app-without-gui
   "Run app without GUI and with fake placeholder input data"
   []
-  (run-experiment
-    {:initial-phenos (ops-init/initial-phenotypes 100)
-     :initial-muts   (ops-init/initial-mutations)
-     :iters          20
-     :use-gui?       false
-     :input-xs-exprs (->> (range 50)
-                          (map (fn [i] (* Math/PI (/ i 15.0))))
-                          ops-common/doubles->exprs)
-     :input-ys-exprs (->> (range 50)
-                          (map (fn [i]
-                                 (+ 2.0
-                                    (/ i 10.0)
-                                    (Math/sin (* Math/PI (/ i 15.0))))))
-                          ops-common/doubles->exprs)}))
+  (solve
+    (map->SymbolicRegressionSolver
+      {:initial-phenos (ops-init/initial-phenotypes 100)
+       :initial-muts   (ops-init/initial-mutations)
+       :iters          20
+       :use-gui?       false
+       :input-xs-exprs (->> (range 50)
+                            (map (fn [i] (* Math/PI (/ i 15.0))))
+                            ops-common/doubles->exprs)
+       :input-ys-exprs (->> (range 50)
+                            (map (fn [i]
+                                   (+ 2.0
+                                      (/ i 10.0)
+                                      (Math/sin (* Math/PI (/ i 15.0))))))
+                            ops-common/doubles->exprs)})))
 
 
 (defn- run-app-with-gui
   []
-  (run-experiment
-    {:initial-phenos (ops-init/initial-phenotypes 1000)
-     :initial-muts   (ops-init/initial-mutations)
-     :input-xs-exprs example-input-xs-exprs
-     :input-ys-exprs example-input-ys-exprs
-     :iters          200
-     :use-gui?       true}))
+  (solve
+    (map->SymbolicRegressionSolver
+      {:initial-phenos (ops-init/initial-phenotypes 1000)
+       :initial-muts   (ops-init/initial-mutations)
+       :input-xs-exprs example-input-xs-exprs
+       :input-ys-exprs example-input-ys-exprs
+       :iters          200
+       :use-gui?       true})))
 
 
 (defn- exit
@@ -592,18 +610,18 @@
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   (binding [*use-flamechart* use-flamechart]
-    (let [result (run-experiment
-                   {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
-                    :initial-muts   (ops-init/initial-mutations)
-                    :iters          iterations
-                    :use-gui?       (not headless)
-                    :max-leafs      max-leafs
-                    :input-xs-exprs (if xs
-                                      (ops-common/doubles->exprs xs)
-                                      example-input-xs-exprs)
-                    :input-ys-exprs (if ys
-                                      (ops-common/doubles->exprs ys)
-                                      example-input-ys-exprs)})]
+    (let [run-config {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
+                      :initial-muts   (ops-init/initial-mutations)
+                      :iters          iterations
+                      :use-gui?       (not headless)
+                      :max-leafs      max-leafs
+                      :input-xs-exprs (if xs
+                                        (ops-common/doubles->exprs xs)
+                                        example-input-xs-exprs)
+                      :input-ys-exprs (if ys
+                                        (ops-common/doubles->exprs ys)
+                                        example-input-ys-exprs)}
+          result     (solve (map->SymbolicRegressionSolver run-config)) #_(run-experiment run-config)]
       (log/info "CLI: Done!")
       (exit)
       result)))

@@ -22,14 +22,14 @@
 (deftest can-run-from-cli-args
   (testing "args from CLI are passed along correctly to implementation"
     (let [args* (atom nil)]
-      (binding [ops/*print-top-n* 3]
+      (binding [ops/*print-top-n* 1]
         (is (=
               (with-redefs-fn {#'symreg/run-ga-iterations (fn [run-config run-args]
                                                             (reset! args*
                                                                     [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
                                                                      (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
                                                             {:next-step :stop})
-                               #'symreg/config->log-steps (fn [_ _] 20)}
+                               #'symreg/config->log-steps (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
                     {:iterations     20
@@ -55,14 +55,14 @@
 
   (testing "args from CLI are passed along correctly to implementation, and when none are passed we use defaults"
     (let [args* (atom nil)]
-      (binding [ops/*print-top-n* 3]
+      (binding [ops/*print-top-n* 1]
         (is (=
               (with-redefs-fn {#'symreg/run-ga-iterations (fn [run-config run-args]
                                                             (reset! args*
                                                                     [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
                                                                      (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
                                                             {:next-step :stop})
-                               #'symreg/config->log-steps (fn [_ _] 20)}
+                               #'symreg/config->log-steps (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
                     {:population 30
@@ -84,7 +84,7 @@
 
 (deftest can-run-experiment
 
-  (binding [ops/*print-top-n* 3]
+  (binding [ops/*print-top-n* 1]
     (testing "with built-in sample data"
       (is (= (count (:pop
                       (:final-population
@@ -111,6 +111,31 @@
                                                       (/ i 10.0)
                                                       (Math/cos (* Math/PI (/ i 15.0))))))
                                             ops-common/doubles->exprs)})]
+            (is (= (count (:pop final-population))
+                   100))
+
+            (is (= iters-done
+                   5))))))
+
+    (testing "with provided data using record"
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+        (fn []
+          (let [{:keys [final-population next-step iters-done]}
+                (symreg/solve
+                  (symreg/map->SymbolicRegressionSolver
+                    {:input-phenos-count 100
+                     :initial-muts       (ops-init/initial-mutations)
+                     :iters              5
+                     :use-gui?           false
+                     :input-xs-exprs     (->> (range 50)
+                                              (map (fn [i] (* Math/PI (/ i 15.0))))
+                                              ops-common/doubles->exprs)
+                     :input-ys-exprs     (->> (range 50)
+                                              (map (fn [i]
+                                                     (+ 2.0
+                                                        (/ i 10.0)
+                                                        (Math/cos (* Math/PI (/ i 15.0))))))
+                                              ops-common/doubles->exprs)}))]
             (is (= (count (:pop final-population))
                    100))
 
@@ -149,9 +174,9 @@
 
 
 (deftest can-run-experiment-gui:start-restart-stop
-  (binding [ops/*print-top-n* 3]
+  (binding [ops/*print-top-n* 1]
     (testing "gui can start and restart experiments; NOTE: do not run this while in headless mode, eg on CI"
-      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 500)}
         (fn []
           (let [control-process (go
                                   (<! (timeout 200))
