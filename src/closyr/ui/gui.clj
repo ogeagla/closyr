@@ -1057,8 +1057,8 @@
                (if (= n :continue)
                  :ok
                  (do
-                   (log/info "Parking updates to chart due to Stop command")
-                   (<! sim-stop-start-chan))))
+                   (log/info "Test GUI: Parking updates to chart due to Stop command")
+                   (log/info "Test GUI: Resuming: " (<! sim-stop-start-chan)))))
              (.add xs-best-fn (.size xs-best-fn))
              (.add ys-best-fn (.size xs-best-fn))
              (.add ys-objective-fn (* 10.0 (Math/random)))
