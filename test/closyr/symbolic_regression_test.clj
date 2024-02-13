@@ -154,7 +154,7 @@
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
         (fn []
           (let [control-process (go
-                                  (<! (timeout 1000))
+                                  (<! (timeout 200))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state          :start
@@ -166,13 +166,13 @@
                                   (<! (timeout 100))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :pause}))
-                                  (<! (timeout 1000))
+                                  (<! (timeout 200))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :start}))
                                   (<! (timeout 100))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :pause}))
-                                  (<! (timeout 1000))
+                                  (<! (timeout 200))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state          :restart
@@ -181,7 +181,7 @@
                                              :input-iters        500
                                              :input-phenos-count 500}))
 
-                                  (<! (timeout 1000))
+                                  (<! (timeout 200))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state          :restart
@@ -190,7 +190,7 @@
                                              :input-iters        300
                                              :input-phenos-count 400}))
 
-                                  (<! (timeout 1000))
+                                  (<! (timeout 200))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :stop}))
