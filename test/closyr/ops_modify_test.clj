@@ -52,7 +52,7 @@
 
 
   (testing "modify-leafs 2"
-    (let [x (F/Dummy "x")
+    (let [x           (F/Dummy "x")
           mods-count* (atom 0)]
       (is (= (str
                (:expr
@@ -60,7 +60,7 @@
                    {:op               :modify-leafs
                     :leaf-modifier-fn (fn ^IExpr [leaf-count
                                                   {^IAST expr :expr ^ISymbol x-sym :sym
-                                                   :as pheno}
+                                                   :as        pheno}
                                                   ^IExpr ie]
                                         (swap! mods-count* inc)
                                         (if (= (.toString ie) "x")
@@ -160,6 +160,26 @@
       (is (= iters 1))
       (is (= (str (:expr pheno))
              (str (F/Cos (.plus (F/num 1.0) x)))))))
+
+  (testing "single mod: divide by zero"
+    (let [x            (F/Dummy "x")
+          div-by-zero* (atom 0)
+          [pheno iters mods] (with-redefs-fn {#'ops-modify/divided-by-zero (fn [] (swap! div-by-zero* inc))}
+                               (fn []
+                                 (ops-modify/apply-modifications
+                                   100
+                                   2
+                                   [{:op          :modify-fn
+                                     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                    (.divide expr F/C0))}]
+                                   {:sym  x
+                                    :expr x}
+                                   {:sym  x
+                                    :expr x})))]
+      (is (= iters 2))
+      (is (= @div-by-zero* 2))
+      (is (= (str (:expr pheno))
+             (str x)))))
 
   (testing "multiple mods 1"
     (let [x (F/Dummy "x")
@@ -572,17 +592,17 @@
     "^->*"
     "-1+x-1/2*x*Cos(x)-x*Sin(1/2-x)"]
    #_[:modify-ast-head
-    "/->*"
-    "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
+      "/->*"
+      "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    #_[:modify-ast-head
-    "/->+"
-    "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
+      "/->+"
+      "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    [:modify-branches
     "b derivative"
     "1-3/2*Cos(x)/x^(5/2)+15/8*Sin(x)/x^(7/2)-Sin(x)/(2*x^(3/2))"]
    #_[:modify-branches
-    "b simplify"
-    "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
+      "b simplify"
+      "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    [:modify-branches
     "b sin"
     "-Sin(1-x-Sin(Sin(1/Sqrt(x))*Sin(Cos(x)))+Sin(x*Sin(Sin(Sin(1/2-Sin(x))))))"]
@@ -632,7 +652,7 @@
 
 (deftest mutations-test
   (with-redefs-fn {#'ops-common/should-modify-ast-head (fn [_ _] true)
-                   #'prng/rand (fn [] 0.0)}
+                   #'prng/rand                         (fn [] 0.0)}
     (fn []
       (let [x                      (F/Dummy "x")
             ;; x + cos(x) + x*sin(x-0.5) - 1

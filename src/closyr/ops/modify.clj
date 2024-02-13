@@ -3,8 +3,8 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str]
-    [closyr.log :as log]
     [closyr.dataset.prng :refer :all]
+    [closyr.log :as log]
     [closyr.ops.common :as ops-common])
   (:import
     (java.util.function
@@ -165,6 +165,11 @@
       nil)))
 
 
+(defn- divided-by-zero
+  "If we want to measure how many times we do this during modification. For now, just a placeholder for testing."
+  [])
+
+
 (defn apply-modifications
   "Apply a sequence of modifications"
   [max-leafs mods-count initial-muts p-winner p-discard]
@@ -182,7 +187,8 @@
             new-pheno       (try
                               (modify mod-to-apply pheno)
                               (catch Exception e
-                                (when-not (= "Infinite expression 1/0 encountered." (.getMessage e))
+                                (if (= "Infinite expression 1/0 encountered." (.getMessage e))
+                                  (divided-by-zero)
                                   (log/warn "Warning, mutation failed: " (:label mod-to-apply)
                                             " on: " (type (:expr pheno)) " / " (str (:expr pheno))
                                             " due to: " (or (.getMessage e) e)))
