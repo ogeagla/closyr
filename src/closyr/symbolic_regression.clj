@@ -466,6 +466,32 @@
     (reset! ops/test-timer* start)))
 
 
+(defprotocol ISolverStateController
+  (start [this])
+  (restart [this])
+  (stop [this])
+  )
+
+(defrecord SolverStateController
+  [
+   ;; the chans
+   ]
+  ISolverStateController
+  (start [this]
+    ;; ga/init
+    ;; run 1 iteration, rename this to "step"
+    )
+  (restart [this]
+    ;; re-init ga/init so that next iteration step uses new args
+    )
+  (stop [this]
+    ;; tear down and return pop
+    )
+  )
+
+
+
+
 (defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
@@ -551,19 +577,6 @@
       ;; plain experiment:
       (symbolic-regression-search-fn))))
 
-
-(defprotocol ISolverStateController
-  (start [this])
-  (restart [this])
-  (stop [this])
-  )
-
-(defrecord SolverStateController []
-  ISolverStateController
-  (start [this])
-  (restart [this])
-  (stop [this])
-  )
 
 
 (defprotocol ISymbolicRegressionSolver
