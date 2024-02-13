@@ -33,12 +33,12 @@
   (testing "basic setup"
     (let [count* (atom 0)
           pop1   (ga/initialize initial-pop score-fn mutation-fn crossover-fn)]
-      (is (= (count (loop [pop pop1
+      (is (= (count (loop [population pop1
                            i   100]
                       (swap! count* inc)
                       (if (zero? i)
-                        pop
-                        (let [new-pop (ga/evolve pop)
+                        population
+                        (let [new-pop (ga/evolve population)
                               s       (reduce + 0.0 (:pop-scores new-pop))]
                           (when (zero? (rem i 20))
                             (println i " pop score: " s))

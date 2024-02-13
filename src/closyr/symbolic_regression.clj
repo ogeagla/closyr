@@ -423,29 +423,29 @@
    run-args]
   (binding [ops/*log-steps* (config->log-steps run-config run-args)]
     (log/info "Running with logging every n steps: " ops/*log-steps*)
-    (loop [pop (ga/initialize
+    (loop [population (ga/initialize
                  initial-phenos
                  (partial ops/score-fn run-args run-config)
                  (partial ops/mutation-fn run-config initial-muts)
                  (partial ops/crossover-fn run-config initial-muts))
-           i   iters]
-      (if (zero? i)
-        {:iters-done       (- iters i)
-         :final-population pop
+           iters-to-go   iters]
+      (if (zero? iters-to-go)
+        {:iters-done       (- iters iters-to-go)
+         :final-population population
          :next-step        :wait}
         (let [should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
           (if (and use-gui? should-return)
             (if (= :stop should-return)
-              {:iters-done       (- iters i)
-               :final-population pop
+              {:iters-done       (- iters iters-to-go)
+               :final-population population
                :next-step        :stop}
 
-              {:iters-done       (- iters i)
-               :final-population pop
+              {:iters-done       (- iters iters-to-go)
+               :final-population population
                :next-step        :restart})
-            (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-              (ops/report-iteration i iters ga-result run-args run-config)
-              (recur ga-result (next-iters i scores)))))))))
+            (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
+              (ops/report-iteration iters-to-go iters ga-result run-args run-config)
+              (recur ga-result (next-iters iters-to-go scores)))))))))
 
 
 (defn- print-end-time
@@ -467,30 +467,87 @@
 
 
 (defprotocol ISolverStateController
-  (start [this])
-  (restart [this])
-  (stop [this])
+  (init [this])
+  (step [this])
+  #_(restart [this  run-config2 run-args2])
+  #_(stop [this])
+  (next-state [this])
   )
 
 (defrecord SolverStateController
   [
-   ;; the chans
-   ]
+   ;; the chans?
+   run-config
+   run-args]
+
   ISolverStateController
-  (start [this]
-    ;; ga/init
-    ;; run 1 iteration, rename this to "step"
-    )
-  (restart [this]
-    ;; re-init ga/init so that next iteration step uses new args
-    )
-  (stop [this]
-    ;; tear down and return pop
-    )
-  )
+
+  (init [this]
+    (let [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config} (or (:run-config this) run-config)
+          {:as run-args} (or (:run-args this) run-args)
+          init-pop (ga/initialize
+                     initial-phenos
+                     (partial ops/score-fn run-args run-config)
+                     (partial ops/mutation-fn run-config initial-muts)
+                     (partial ops/crossover-fn run-config initial-muts))]
+      (assoc this :ga-result init-pop :iters iters)))
+
+  (step [this]
+    (let [{:keys [iters ] } run-config
+          population (:ga-result this)
+          iters-to-go (:iters this)]
+      (if (zero? iters-to-go)
+        (assoc this :status :done :result {:iters-done       (- iters iters-to-go)
+                                           :final-population population
+                                           :next-step        :wait})
+        (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
+          (ops/report-iteration iters-to-go iters ga-result run-args run-config)
+          (assoc this :ga-result ga-result :iters (next-iters iters-to-go scores)
+                      )))))
+
+  #_(restart [this run-config2 run-args2]
+    (init (assoc this :run-config run-config2 :run-args run-args2)))
+
+  #_(stop [this]
+    (:ga-result this))
+
+  (next-state [this]
+    (let [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config} (or (:run-config this) run-config)
+          {:as run-args} (or (:run-args this) run-args)
+          iters-to-go (:iters this)
+          population (:ga-result this)
+          should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
+      (if (and use-gui? should-return)
+        (if (= :stop should-return)
+          {:iters-done       (- iters iters-to-go)
+           :final-population population
+           :next-step        :stop}
+
+          {:iters-done       (- iters iters-to-go)
+           :final-population population
+           :next-step        :restart})
+        :recur))))
 
 
+(defn- run-ga-iterations-using-record-BETA
+  "Run GA evolution iterations on initial population"
+  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
+   run-args]
+  (binding [ops/*log-steps* (config->log-steps run-config run-args)]
+    (log/info "Running with logging every n steps: " ops/*log-steps*)
 
+    ;(println "CTOR: " run-config run-args)
+    (loop [rec0 (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
+
+      (let [{iter-status :status iters-to-go :iters ga-result :ga-result
+             done-result :result
+             :as res} (step rec0)]
+        (if (= :done iter-status)
+          done-result
+          (let [the-next-state (next-state res)]
+            (if (= :recur the-next-state)
+              (recur res)
+              the-next-state)))))))
 
 (defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
@@ -509,7 +566,11 @@
         start          (print-and-save-start-time iters initial-phenos)
 
         {:keys [final-population next-step iters-done]
-         :as   completed-ga-data} (run-ga-iterations run-config run-args)]
+         :as   completed-ga-data} (run-ga-iterations-using-record-BETA run-config run-args)]
+
+
+    (println "RES: " (keys completed-ga-data))
+
 
     (print-end-time start iters-done next-step)
 
