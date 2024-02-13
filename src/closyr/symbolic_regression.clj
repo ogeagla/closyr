@@ -47,6 +47,35 @@
   (atom nil))
 
 
+(defn- config->log-steps
+  "Determine how often (every n iters) to log and update charts. Returns n."
+  [{:keys [iters initial-phenos]}
+   {:keys [input-xs-count]}]
+
+  (cond
+
+    (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 25
+    (and (< (count initial-phenos) 1000) (< input-xs-count 50) (> iters 100)) 20
+    (and (< (count initial-phenos) 1000) (< input-xs-count 100) (> iters 100)) 10
+    (and (< (count initial-phenos) 1000) (< input-xs-count 200) (> iters 100)) 5
+
+    (and (< (count initial-phenos) 2000) (< input-xs-count 25) (> iters 100)) 20
+    (and (< (count initial-phenos) 2000) (< input-xs-count 50) (> iters 100)) 10
+    (and (< (count initial-phenos) 2000) (< input-xs-count 100) (> iters 100)) 5
+    (and (< (count initial-phenos) 2000) (< input-xs-count 200) (> iters 100)) 5
+
+    (and (< (count initial-phenos) 5000) (< input-xs-count 25) (> iters 100)) 10
+    (and (< (count initial-phenos) 5000) (< input-xs-count 50) (> iters 100)) 5
+    (and (< (count initial-phenos) 5000) (< input-xs-count 100) (> iters 100)) 5
+    (and (< (count initial-phenos) 5000) (< input-xs-count 200) (> iters 100)) 2
+
+    (and (< (count initial-phenos) 50000) (< input-xs-count 25) (> iters 100)) 5
+    (and (< (count initial-phenos) 50000) (< input-xs-count 50) (> iters 100)) 5
+    (and (< (count initial-phenos) 50000) (< input-xs-count 100) (> iters 100)) 2
+    (and (< (count initial-phenos) 50000) (< input-xs-count 200) (> iters 100)) 2
+
+    :else 1))
+
 (defn- near-exact-solution
   [i old-scores]
   (log/info "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
@@ -387,34 +416,7 @@
     (dec i)))
 
 
-(defn config->log-steps
-  "Determine how often (every n iters) to log and update charts. Returns n."
-  [{:keys [iters initial-phenos]}
-   {:keys [input-xs-count]}]
 
-  (cond
-
-    (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 25
-    (and (< (count initial-phenos) 1000) (< input-xs-count 50) (> iters 100)) 20
-    (and (< (count initial-phenos) 1000) (< input-xs-count 100) (> iters 100)) 10
-    (and (< (count initial-phenos) 1000) (< input-xs-count 200) (> iters 100)) 5
-
-    (and (< (count initial-phenos) 2000) (< input-xs-count 25) (> iters 100)) 20
-    (and (< (count initial-phenos) 2000) (< input-xs-count 50) (> iters 100)) 10
-    (and (< (count initial-phenos) 2000) (< input-xs-count 100) (> iters 100)) 5
-    (and (< (count initial-phenos) 2000) (< input-xs-count 200) (> iters 100)) 5
-
-    (and (< (count initial-phenos) 5000) (< input-xs-count 25) (> iters 100)) 10
-    (and (< (count initial-phenos) 5000) (< input-xs-count 50) (> iters 100)) 5
-    (and (< (count initial-phenos) 5000) (< input-xs-count 100) (> iters 100)) 5
-    (and (< (count initial-phenos) 5000) (< input-xs-count 200) (> iters 100)) 2
-
-    (and (< (count initial-phenos) 50000) (< input-xs-count 25) (> iters 100)) 5
-    (and (< (count initial-phenos) 50000) (< input-xs-count 50) (> iters 100)) 5
-    (and (< (count initial-phenos) 50000) (< input-xs-count 100) (> iters 100)) 2
-    (and (< (count initial-phenos) 50000) (< input-xs-count 200) (> iters 100)) 2
-
-    :else 1))
 
 
 (defn- run-ga-iterations
@@ -617,28 +619,6 @@
       run-config)))
 
 
-(defn run-experiment
-  "Run a GA evolution experiment to search for function of best fit for input data.  The
-  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-
-  (let [symbolic-regression-search-fn (fn []
-                                        (run-from-inputs
-                                          run-config
-                                          (if use-gui?
-                                            (start-gui-and-get-input-data run-config)
-                                            (get-input-data run-config))))]
-    (log/info "-- Running! iters: " iters
-              "pop: " (count initial-phenos)
-              "muts: " (count initial-muts)
-              " --")
-    (if *use-flamechart*
-      ;; with flame graph analysis:
-      (in-flames symbolic-regression-search-fn)
-      ;; plain experiment:
-      (symbolic-regression-search-fn))))
-
-
 
 (defprotocol ISymbolicRegressionSolver
 
@@ -653,39 +633,60 @@
 
   ISymbolicRegressionSolver
 
-  (solve [this] (run-experiment this)))
+  (solve [this]
+    (let [symbolic-regression-search-fn (fn []
+                                          (run-from-inputs
+                                            this
+                                            (if use-gui?
+                                              (start-gui-and-get-input-data this)
+                                              (get-input-data this))))]
+      (log/info "-- Running! iters: " iters
+                "pop: " (count initial-phenos)
+                "muts: " (count initial-muts)
+                " --")
+      (if *use-flamechart*
+        ;; with flame graph analysis:
+        (in-flames symbolic-regression-search-fn)
+        ;; plain experiment:
+        (symbolic-regression-search-fn)))))
+
+(defn run-solver
+  "Run a GA evolution solver to search for function of best fit for input data.  The
+  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
+  (solve (map->SymbolicRegressionSolver run-config)))
+
+
 
 
 (defn run-app-without-gui
   "Run app without GUI and with fake placeholder input data"
   []
-  (solve
-    (map->SymbolicRegressionSolver
-      {:initial-phenos (ops-init/initial-phenotypes 100)
-       :initial-muts   (ops-init/initial-mutations)
-       :iters          20
-       :use-gui?       false
-       :input-xs-exprs (->> (range 50)
-                            (map (fn [i] (* Math/PI (/ i 15.0))))
-                            ops-common/doubles->exprs)
-       :input-ys-exprs (->> (range 50)
-                            (map (fn [i]
-                                   (+ 2.0
-                                      (/ i 10.0)
-                                      (Math/sin (* Math/PI (/ i 15.0))))))
-                            ops-common/doubles->exprs)})))
+  (run-solver
+    {:initial-phenos (ops-init/initial-phenotypes 100)
+     :initial-muts   (ops-init/initial-mutations)
+     :iters          20
+     :use-gui?       false
+     :input-xs-exprs (->> (range 50)
+                          (map (fn [i] (* Math/PI (/ i 15.0))))
+                          ops-common/doubles->exprs)
+     :input-ys-exprs (->> (range 50)
+                          (map (fn [i]
+                                 (+ 2.0
+                                    (/ i 10.0)
+                                    (Math/sin (* Math/PI (/ i 15.0))))))
+                          ops-common/doubles->exprs)}))
 
 
 (defn- run-app-with-gui
   []
-  (solve
-    (map->SymbolicRegressionSolver
-      {:initial-phenos (ops-init/initial-phenotypes 1000)
-       :initial-muts   (ops-init/initial-mutations)
-       :input-xs-exprs example-input-xs-exprs
-       :input-ys-exprs example-input-ys-exprs
-       :iters          200
-       :use-gui?       true})))
+  (run-solver
+    {:initial-phenos (ops-init/initial-phenotypes 1000)
+     :initial-muts   (ops-init/initial-mutations)
+     :input-xs-exprs example-input-xs-exprs
+     :input-ys-exprs example-input-ys-exprs
+     :iters          200
+     :use-gui?       true}))
 
 
 (defn- exit
@@ -709,7 +710,7 @@
                       :input-ys-exprs (if ys
                                         (ops-common/doubles->exprs ys)
                                         example-input-ys-exprs)}
-          result     (solve (map->SymbolicRegressionSolver run-config)) #_(run-experiment run-config)]
+          result     (run-solver run-config)]
       (log/info "CLI: Done!")
       (exit)
       result)))
