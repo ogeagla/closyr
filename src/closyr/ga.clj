@@ -17,7 +17,7 @@
    :crossover-fn crossover-fn})
 
 
-(def new-phen-modifier-sampler
+(def ^:private new-phen-modifier-sampler
   ;; 4 / 5 chance of mutation instead of crossover:
   [true true true true false])
 

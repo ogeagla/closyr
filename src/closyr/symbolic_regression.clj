@@ -27,12 +27,20 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:dynamic *sim->gui-chan* (chan))
-(def ^:dynamic *sim-stop-start-chan* (chan))
-(def ^:dynamic *gui-close-chan* (chan))
+(def ^:dynamic *sim->gui-chan*
+  "Put data here during iterations to update the GUI"
+  (chan))
+(def ^:dynamic *sim-stop-start-chan*
+  "Put data here from the GUI to start/stop/restart iterations"
+  (chan))
+(def ^:dynamic *gui-close-chan*
+  "Put data here to shut down the application"
+  (chan))
 
 
-(def ^:private sim-input-args* (atom nil))
+(def ^:private sim-input-args*
+  "Data from GUI to use in the iterations"
+  (atom nil))
 
 
 (defn- near-exact-solution
@@ -505,7 +513,10 @@
     (flames/stop! flames)))
 
 
-(def ^:dynamic *use-flamechart* false)
+(def ^:dynamic *use-flamechart*
+  "If enabled, the app will start a server that hosts an svg with contains the performance flamechart,
+  viewable at http://localhost:54321/flames.svg"
+  false)
 
 
 (defn run-experiment
@@ -536,6 +547,7 @@
 
 
 (defn run-app-without-gui
+  "Run app without GUI and with fake placeholder input data"
   []
   (run-experiment
     {:initial-phenos (ops-init/initial-phenotypes 100)
@@ -553,7 +565,7 @@
                           ops-common/doubles->exprs)}))
 
 
-(defn run-app-with-gui
+(defn- run-app-with-gui
   []
   (run-experiment
     {:initial-phenos (ops-init/initial-phenotypes 1000)
@@ -564,12 +576,13 @@
      :use-gui?       true}))
 
 
-(defn exit
+(defn- exit
   []
   #_(System/exit 0))
 
 
 (defn run-app-from-cli-args
+  "Run app from CLI args"
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   (binding [*use-flamechart* use-flamechart]

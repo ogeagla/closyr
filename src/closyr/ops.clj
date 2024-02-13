@@ -36,7 +36,9 @@
 (def ^:private sim-stats* (atom {}))
 
 
-(def ^:dynamic *log-steps* 1)
+(def ^:dynamic *log-steps*
+  "How many iterations between logging and sending info to GUI"
+  1)
 
 
 (def test-timer*
@@ -126,7 +128,9 @@
       (log/error "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
-(def ^:dynamic *long-running-mutation-thresh-ms* 5000)
+(def ^:dynamic *long-running-mutation-thresh-ms*
+  "If a mutation takes longer than this in ms, log info about it"
+  5000)
 
 (defn mutation-fn
   "Symbolic regression mutation"

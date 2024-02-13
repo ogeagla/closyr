@@ -1,11 +1,22 @@
 (ns closyr.log
-  (:require [clojure.pprint :as pprint])
-  (:import [ch.qos.logback.classic Level Logger]
-           [java.io StringWriter]
-           [org.slf4j LoggerFactory MDC]))
+  (:require
+    [clojure.pprint :as pprint])
+  (:import
+    (ch.qos.logback.classic
+      Level
+      Logger)
+    (java.io
+      StringWriter)
+    (org.slf4j
+      LoggerFactory
+      MDC)))
+
 
 (set! *warn-on-reflection* true)
-(def ^Logger logger (LoggerFactory/getLogger "closyr"))
+(def ^Logger logger
+  "The logger for the app"
+  (LoggerFactory/getLogger "closyr"))
+
 
 (defn set-log-level!
   "Pass keyword :error :warn :info :debug"
@@ -16,10 +27,11 @@
     :warn (.setLevel logger Level/WARN)
     :error (.setLevel logger Level/ERROR)))
 
-(defmacro with-logging-context [context & body]
+
+(defmacro with-logging-context
   "Use this to add a map to any logging wrapped in the macro. Macro can be nested.
-  (with-logging-context {:key \"value\"} (log/info \"yay\"))
-  "
+  (with-logging-context {:key \"value\"} (log/info \"yay\"))"
+  [context & body]
   `(let [wrapped-context# ~context
          ctx# (MDC/getCopyOfContextMap)]
      (try
@@ -31,21 +43,35 @@
            (MDC/setContextMap ctx#)
            (MDC/clear))))))
 
-(defmacro debug [& msg]
+
+(defmacro debug
+  "Log debug"
+  [& msg]
   `(.debug logger (print-str ~@msg)))
 
-(defmacro info [& msg]
+
+(defmacro info
+  "Log info"
+  [& msg]
   `(.info logger (print-str ~@msg)))
 
-(defmacro warn [& msg]
+
+(defmacro warn
+  "Log warn"
+  [& msg]
   `(.warn logger (print-str ~@msg)))
 
-(defmacro error [throwable & msg]
+
+(defmacro error
+  "Log error. Can be a throwable as first arg."
+  [throwable & msg]
   `(if (instance? Throwable ~throwable)
      (.error logger (print-str ~@msg) ~throwable)
      (.error logger (print-str ~throwable ~@msg))))
 
+
 (defmacro spy
+  "Log spy"
   [expr]
   `(let [a# ~expr
          w# (StringWriter.)]

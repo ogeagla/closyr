@@ -1,6 +1,4 @@
 (ns closyr.ui.plot
-  (:require
-    [clojure.string :as str])
   (:import
     (java.awt
       Color)
@@ -26,10 +24,10 @@
 
 
 
-(def color:plot-bg (Color. 57 57 57))
+(def ^:private color:plot-bg (Color. 57 57 57))
 
 
-(defn apply-style
+(defn- apply-style
   [^XYChart chart]
   (doto (.getStyler chart)
     (.setChartFontColor Color/WHITE)
@@ -44,6 +42,7 @@
 
 
 (defn make-plot:n-series
+  "Create a chart from coll of series data"
   ^XYChart [{:keys [x-axis-title y-axis-title chart-title
                     series
                     ^Integer width ^Integer height]

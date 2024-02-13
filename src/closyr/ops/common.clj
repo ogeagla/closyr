@@ -174,7 +174,9 @@
   "Map of fns to not attempt to simplify because they've taken too long in the past"
   (atom {}))
 
-(def ^:dynamic *long-simplify-thresh-ms* 2000)
+(def ^:dynamic *long-simplify-thresh-ms*
+  "Log if simplification took longer than this time in ms"
+  2000)
 
 
 (defn- check-simplify-timing
