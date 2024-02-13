@@ -819,25 +819,25 @@
 
 
 (defn- setup-ui-frame
-  [[{:keys [sim-stop-start-chan
-            ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
-            ^String series-best-fn-label ^String series-objective-fn-label update-loop
-            ^String series-scores-best-label
+  [{:keys [sim-stop-start-chan
+           ^List xs-best-fn ^List xs-objective-fn ^List ys-best-fn ^List ys-objective-fn
+           ^String series-best-fn-label ^String series-objective-fn-label update-loop
+           ^String series-scores-best-label
 
-            ^String series-scores-p99-label
-            ^String series-scores-p95-label
-            ^String series-scores-p90-label
+           ^String series-scores-p99-label
+           ^String series-scores-p95-label
+           ^String series-scores-p90-label
 
-            ^List xs-scores-best
-            ^List ys-scores-best
+           ^List xs-scores-best
+           ^List ys-scores-best
 
-            ^List xs-scores-p99
-            ^List ys-scores-p99
-            ^List xs-scores-p95
-            ^List ys-scores-p95
-            ^List xs-scores-p90
-            ^List ys-scores-p90]
-     :as   gui-data}]]
+           ^List xs-scores-p99
+           ^List ys-scores-p99
+           ^List xs-scores-p95
+           ^List ys-scores-p95
+           ^List xs-scores-p90
+           ^List ys-scores-p90]
+    :as   gui-data}]
   (let [my-frame                            (doto (JFrame. "CLOSYR")
                                               (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE)
                                               (set-app-icon))
@@ -858,17 +858,24 @@
         ^JTextField best-fn-selectable-text (doto (JTextField. "")
                                               (.setEditable false))
 
-        ^XYChart best-fn-chart              (plot/make-plot:2-series
-                                              series-best-fn-label
-                                              series-objective-fn-label
-                                              xs-best-fn
-                                              xs-objective-fn
-                                              ys-best-fn
-                                              ys-objective-fn)
+        ^XYChart best-fn-chart              (plot/make-plot:n-series
+                                              {:x-axis-title "X"
+                                               :y-axis-title "Y"
+                                               :chart-title  "Start to see functions..."
+                                               :series       [{:label  series-best-fn-label
+                                                               :xs     xs-best-fn
+                                                               :ys     ys-best-fn
+                                                               :marker SeriesMarkers/CIRCLE}
+
+                                                              {:label  series-objective-fn-label
+                                                               :xs     xs-objective-fn
+                                                               :ys     ys-objective-fn
+                                                               :marker SeriesMarkers/PLUS}]
+                                               :width        400
+                                               :height       200})
         best-fn-chart-panel                 (XChartPanel. best-fn-chart)
 
         ^XYChart scores-chart               (plot/make-plot:n-series
-
                                               {:x-axis-title "Iteration"
                                                :y-axis-title "Score"
                                                :chart-title  "No data to show"
@@ -1004,8 +1011,11 @@
   [gui-data]
   (SwingUtilities/invokeLater
     (fn []
-      (setup-theme)
-      (setup-ui-frame gui-data))))
+      (try
+        (setup-theme)
+        (setup-ui-frame gui-data)
+        (catch Exception e
+          (log/error "Error in GUI: " e))))))
 
 
 (defn- test-gui-1

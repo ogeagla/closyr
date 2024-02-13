@@ -60,23 +60,3 @@
 
     chart))
 
-
-(defn make-plot:2-series
-  ^XYChart [^String series-1-label
-            ^String series-2-label
-            ^List x-data-1
-            ^List x-data-2
-            ^List y-data-1
-            ^List y-data-2]
-  (let [^XYChart chart (doto (XYChart. 400 200 Styler$ChartTheme/GGPlot2)
-                         (.setTitle "Start To See Data...")
-                         (.setXAxisTitle "X")
-                         (.setYAxisTitle "Y"))]
-    (apply-style chart)
-
-    (doto (.addSeries chart (str/join (take 30 series-2-label)) x-data-2 y-data-2)
-      (.setMarker SeriesMarkers/CIRCLE))
-    (doto (.addSeries chart (str/join (take 30 series-1-label)) x-data-1 y-data-1)
-      (.setMarker SeriesMarkers/PLUS))
-    chart))
-
