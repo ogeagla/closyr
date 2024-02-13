@@ -47,11 +47,11 @@
 
 
 (defn- pop->chunks
-  [pop]
+  [all-pop]
   (cond
-    (>= (count pop) 10000) 200
-    (>= (count pop) 2000) 100
-    (>= (count pop) 500) 40
+    (>= (count all-pop) 10000) 200
+    (>= (count all-pop) 2000) 100
+    (>= (count all-pop) 500) 40
     :else 20))
 
 

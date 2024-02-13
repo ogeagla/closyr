@@ -58,4 +58,3 @@
         (.setMarker marker)))
 
     chart))
-
