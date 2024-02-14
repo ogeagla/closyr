@@ -439,9 +439,13 @@
     [this]
     "Initialize solver state")
 
-  (step
+  (run-iteration
     [this]
-    "Using current state as prior, run one evolution iteration")
+    "Run 1 iteration, return stop signal under certain conditions")
+
+  (solver-step
+    [this]
+    "Using current state as prior, run one GA solver evolution iteration")
 
   (next-state
     [this]
@@ -477,7 +481,7 @@
              :start-ms start)))
 
 
-  (step
+  (solver-step
     [this]
     (let [{:keys [iters log-steps]} run-config
           population  (:ga-result this)
@@ -509,6 +513,19 @@
         :recur)))
 
 
+  (run-iteration
+    [this]
+    (let [{iter-status :status iters-to-go :iters ga-result :ga-result
+           done-result :result
+           :as         res} (solver-step this)]
+      (if (= :done iter-status)
+        [false (end res done-result)]
+        (let [the-next-state (next-state res)]
+          (if (= :recur the-next-state)
+            [:recur res]
+            [false (end res the-next-state)])))))
+
+
   (end
     [this {:keys [next-step] :as return-value}]
     (print-end-time (:start-ms this) (- (:iters run-config) (:iters this)) next-step)
@@ -520,16 +537,11 @@
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    run-args]
 
-  (loop [rec0 (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
-    (let [{iter-status :status iters-to-go :iters ga-result :ga-result
-           done-result :result
-           :as         res} (step rec0)]
-      (if (= :done iter-status)
-        (end res done-result)
-        (let [the-next-state (next-state res)]
-          (if (= :recur the-next-state)
-            (recur res)
-            (end res the-next-state)))))))
+  (loop [solver-state (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
+    (let [[recur? next-solver-state] (run-iteration solver-state)]
+      (if recur?
+        (recur next-solver-state)
+        next-solver-state))))
 
 
 (defn- run-from-inputs
