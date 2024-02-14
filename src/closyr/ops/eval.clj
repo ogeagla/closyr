@@ -43,22 +43,15 @@
   (try
     (when-not util
       (log/warn "*** Warning: No util provided to evaluation engine! ***"))
-    (if (and
-          expr
-          expr-args
-          (not (.isNIL expr)))
+    (if (and expr
+             expr-args
+             (not (.isNIL expr)))
       (let [^IAST ast  (F/ast expr-args (ops-common/expr->fn pheno))
             ^IExpr res (.eval (or util (ops-common/new-util)) ast)]
         res)
       (log/warn "Warning: eval needs both expr and args, and expr cannot be NIL"))
-    (catch Exception e (log/error "Warning: Error in eval: " (str expr) " : " e))
-    ;(catch NullPointerException npe (log/error "Warning: NPE error in eval: " (str expr) " : " npe))
-    ;(catch ArgumentTypeException se (log/error "Warning: argument type error in eval: " (str expr) " : " se))
-    ;(catch SyntaxError se (log/error "Warning: syntax error in eval: " (str expr) " : " se))
-    ;(catch MathException me (log/error "Warning: math error in eval: " (str expr) " : " me))
-    ;(catch StackOverflowError soe (log/error "Warning: stack overflow error in eval: " (str expr) " : " soe))
-    ;(catch OutOfMemoryError oome (log/error "Warning: OOM error in eval: " (str expr) " : " oome))
-    ))
+    (catch Exception e (log/error "Warning: Error in eval: "
+                                  (str expr) " : " (or (.getMessage e) e)))))
 
 
 (defn eval-vec-pheno
@@ -94,7 +87,7 @@
                                arg0))))
                        (catch Exception e
                          (log/error "Error in evaling function on const xs vector: "
-                                  (str eval-p) " : " (.getMessage e))
+                                    (str eval-p) " : " (.getMessage e))
                          (throw e))))
                    (range input-xs-count)))]
         vs))))

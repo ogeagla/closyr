@@ -43,6 +43,14 @@
                   (catch Exception e nil))
              nil)))
 
+    (testing "when eval throws exception"
+      (is (= (with-redefs-fn {#'ops-common/expr->fn (fn [_] (throw (Exception. "Test exception")))}
+               (fn []
+                 (ops-eval/eval-phenotype-on-expr-args
+                   (ops-common/->phenotype x (F/Subtract x F/C1D2) (ops-common/new-util))
+                   (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0])))))
+             nil)))
+
     (testing "eval on nil expr defaults to y=x"
       (is (= (str (ops-eval/eval-phenotype-on-expr-args
                     (ops-common/->phenotype x F/NIL nil)
@@ -102,6 +110,15 @@
                    {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
                     :input-xs-count 1})))
              nil)))
+
+    (testing "with failing conversion throws exception"
+      (is (thrown? Exception
+            (with-redefs-fn {#'ops-common/expr->double (fn [_] (throw (Exception. "Test exception")))}
+              (fn []
+                (ops-eval/eval-vec-pheno
+                  (ops-common/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
+                  {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                   :input-xs-count 1}))))))
 
     (testing "can eval various fns for simple inputs 2"
       (is (= (mapv
