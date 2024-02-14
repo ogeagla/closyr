@@ -24,11 +24,12 @@
     (let [args* (atom nil)]
       (binding [ops/*print-top-n* 1]
         (is (=
-              (with-redefs-fn {#'symreg/run-ga-iterations (fn [run-config run-args]
-                                                            (reset! args*
-                                                                    [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
-                                                                     (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
-                                                            {:next-step :stop})
+              (with-redefs-fn {#'symreg/run-ga-iterations-using-record
+                               (fn [run-config run-args]
+                                 (reset! args*
+                                         [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
+                                          (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
+                                 {:next-step :stop})
                                #'symreg/config->log-steps (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
@@ -43,6 +44,7 @@
 
         (is (= @args*
                [{:iters     20
+                 :log-steps 200
                  :max-leafs 20
                  :use-gui?  false}
                 {:input-iters        20
@@ -57,11 +59,12 @@
     (let [args* (atom nil)]
       (binding [ops/*print-top-n* 1]
         (is (=
-              (with-redefs-fn {#'symreg/run-ga-iterations (fn [run-config run-args]
-                                                            (reset! args*
-                                                                    [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
-                                                                     (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
-                                                            {:next-step :stop})
+              (with-redefs-fn {#'symreg/run-ga-iterations-using-record
+                               (fn [run-config run-args]
+                                 (reset! args*
+                                         [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
+                                          (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
+                                 {:next-step :stop})
                                #'symreg/config->log-steps (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
@@ -72,6 +75,7 @@
 
         (is (= @args*
                [{:iters     20
+                 :log-steps 200
                  :max-leafs 40
                  :use-gui?  false}
                 {:input-iters        20
@@ -97,7 +101,7 @@
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
         (fn []
           (let [{:keys [final-population next-step iters-done]}
-                (symreg/run-experiment
+                (symreg/run-solver
                   {:input-phenos-count 100
                    :initial-muts       (ops-init/initial-mutations)
                    :iters              5
@@ -161,7 +165,7 @@
                                     (is (put! symreg/*sim->gui-chan* :next))
                                     true)]
 
-              (symreg/run-experiment
+              (symreg/run-solver
                 {:initial-phenos (ops-init/initial-phenotypes 20)
                  :initial-muts   (ops-init/initial-mutations)
                  :input-xs-exprs symreg/example-input-xs-exprs
@@ -226,7 +230,7 @@
                                   (is (put! symreg/*sim->gui-chan* :next))
                                   true)]
 
-            (symreg/run-experiment
+            (symreg/run-solver
               {:initial-phenos (ops-init/initial-phenotypes 20)
                :initial-muts   (ops-init/initial-mutations)
                :input-xs-exprs symreg/example-input-xs-exprs
@@ -241,13 +245,13 @@
 (deftest derive-log-steps
   (testing "with basic input"
     (is (=
-          (symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 0 10))}
-                                    {:input-xs-count 10})
+          (#'symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 0 10))}
+            {:input-xs-count 10})
           25))
 
     (is (=
-          (symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 0 10))}
-                                    {:input-xs-count 10})
+          (#'symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 0 10))}
+            {:input-xs-count 10})
           1))))
 
 

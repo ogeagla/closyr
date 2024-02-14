@@ -20,7 +20,9 @@
 (set! *warn-on-reflection* true)
 
 
-(def ^:private min-score -100000000)
+(def min-score
+  "The lowest score a function can have.  Used when errors occur."
+  -100000000)
 
 
 (def default-max-leafs

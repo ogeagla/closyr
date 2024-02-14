@@ -47,6 +47,34 @@
   (atom nil))
 
 
+(defn- config->log-steps
+  "Determine how often (every n iters) to log and update charts. Returns n."
+  [{:keys [iters initial-phenos]}
+   {:keys [input-xs-count]}]
+  (cond
+    (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 25
+    (and (< (count initial-phenos) 1000) (< input-xs-count 50) (> iters 100)) 20
+    (and (< (count initial-phenos) 1000) (< input-xs-count 100) (> iters 100)) 10
+    (and (< (count initial-phenos) 1000) (< input-xs-count 200) (> iters 100)) 5
+
+    (and (< (count initial-phenos) 2000) (< input-xs-count 25) (> iters 100)) 20
+    (and (< (count initial-phenos) 2000) (< input-xs-count 50) (> iters 100)) 10
+    (and (< (count initial-phenos) 2000) (< input-xs-count 100) (> iters 100)) 5
+    (and (< (count initial-phenos) 2000) (< input-xs-count 200) (> iters 100)) 5
+
+    (and (< (count initial-phenos) 5000) (< input-xs-count 25) (> iters 100)) 10
+    (and (< (count initial-phenos) 5000) (< input-xs-count 50) (> iters 100)) 5
+    (and (< (count initial-phenos) 5000) (< input-xs-count 100) (> iters 100)) 5
+    (and (< (count initial-phenos) 5000) (< input-xs-count 200) (> iters 100)) 2
+
+    (and (< (count initial-phenos) 50000) (< input-xs-count 25) (> iters 100)) 5
+    (and (< (count initial-phenos) 50000) (< input-xs-count 50) (> iters 100)) 5
+    (and (< (count initial-phenos) 50000) (< input-xs-count 100) (> iters 100)) 2
+    (and (< (count initial-phenos) 50000) (< input-xs-count 200) (> iters 100)) 2
+
+    :else 1))
+
+
 (defn- near-exact-solution
   [i old-scores]
   (log/info "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
@@ -387,67 +415,6 @@
     (dec i)))
 
 
-(defn config->log-steps
-  "Determine how often (every n iters) to log and update charts. Returns n."
-  [{:keys [iters initial-phenos]}
-   {:keys [input-xs-count]}]
-
-  (cond
-
-    (and (< (count initial-phenos) 1000) (< input-xs-count 25) (> iters 100)) 25
-    (and (< (count initial-phenos) 1000) (< input-xs-count 50) (> iters 100)) 20
-    (and (< (count initial-phenos) 1000) (< input-xs-count 100) (> iters 100)) 10
-    (and (< (count initial-phenos) 1000) (< input-xs-count 200) (> iters 100)) 5
-
-    (and (< (count initial-phenos) 2000) (< input-xs-count 25) (> iters 100)) 20
-    (and (< (count initial-phenos) 2000) (< input-xs-count 50) (> iters 100)) 10
-    (and (< (count initial-phenos) 2000) (< input-xs-count 100) (> iters 100)) 5
-    (and (< (count initial-phenos) 2000) (< input-xs-count 200) (> iters 100)) 5
-
-    (and (< (count initial-phenos) 5000) (< input-xs-count 25) (> iters 100)) 10
-    (and (< (count initial-phenos) 5000) (< input-xs-count 50) (> iters 100)) 5
-    (and (< (count initial-phenos) 5000) (< input-xs-count 100) (> iters 100)) 5
-    (and (< (count initial-phenos) 5000) (< input-xs-count 200) (> iters 100)) 2
-
-    (and (< (count initial-phenos) 50000) (< input-xs-count 25) (> iters 100)) 5
-    (and (< (count initial-phenos) 50000) (< input-xs-count 50) (> iters 100)) 5
-    (and (< (count initial-phenos) 50000) (< input-xs-count 100) (> iters 100)) 2
-    (and (< (count initial-phenos) 50000) (< input-xs-count 200) (> iters 100)) 2
-
-    :else 1))
-
-
-(defn- run-ga-iterations
-  "Run GA evolution iterations on initial population"
-  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
-   run-args]
-  (binding [ops/*log-steps* (config->log-steps run-config run-args)]
-    (log/info "Running with logging every n steps: " ops/*log-steps*)
-    (loop [pop (ga/initialize
-                 initial-phenos
-                 (partial ops/score-fn run-args run-config)
-                 (partial ops/mutation-fn run-config initial-muts)
-                 (partial ops/crossover-fn run-config initial-muts))
-           i   iters]
-      (if (zero? i)
-        {:iters-done       (- iters i)
-         :final-population pop
-         :next-step        :wait}
-        (let [should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
-          (if (and use-gui? should-return)
-            (if (= :stop should-return)
-              {:iters-done       (- iters i)
-               :final-population pop
-               :next-step        :stop}
-
-              {:iters-done       (- iters i)
-               :final-population pop
-               :next-step        :restart})
-            (let [{scores :pop-scores :as ga-result} (ga/evolve pop)]
-              (ops/report-iteration i iters ga-result run-args run-config)
-              (recur ga-result (next-iters i scores)))))))))
-
-
 (defn- print-end-time
   [start iters-done next-step]
   (log/info "-- Done! Next state: " next-step
@@ -466,6 +433,117 @@
     (reset! ops/test-timer* start)))
 
 
+(defprotocol ISolverStateController
+
+  (init
+    [this]
+    "Initialize solver state")
+
+  (run-iteration
+    [this]
+    "Run 1 iteration, return stop signal under certain conditions")
+
+  (solver-step
+    [this]
+    "Using current state as prior, run one GA solver evolution iteration")
+
+  (next-state
+    [this]
+    "Return what state the solver is in; right now this impl contains listeners for GUI input changes,
+    which is a somewhat inverted control flow")
+
+  (end
+    [this {:keys [next-step]}]
+    "Report timing/perf results"))
+
+
+(defrecord SolverStateController
+  [;; the chans? also these names are really really ambiguous and overloaded:
+   run-config
+   run-args]
+
+  ISolverStateController
+
+  (init
+    [this]
+    (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
+          start    (print-and-save-start-time iters initial-phenos)
+          init-pop (ga/initialize
+                     initial-phenos
+                     (partial ops/score-fn run-args run-config)
+                     (partial ops/mutation-fn run-config initial-muts)
+                     (partial ops/crossover-fn run-config initial-muts))]
+
+      (log/info "Running with logging every n steps: " (:log-steps run-config))
+
+      (assoc this :ga-result init-pop
+             :iters iters
+             :start-ms start)))
+
+
+  (solver-step
+    [this]
+    (let [{:keys [iters log-steps]} run-config
+          population  (:ga-result this)
+          iters-to-go (:iters this)]
+      (binding [ops/*log-steps* log-steps]
+        (if (zero? iters-to-go)
+          (assoc this :status :done :result {:iters-done       (- iters iters-to-go)
+                                             :final-population population
+                                             :next-step        :wait})
+          (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
+            (ops/report-iteration iters-to-go iters ga-result run-args run-config)
+            (assoc this :ga-result ga-result :iters (next-iters iters-to-go scores)))))))
+
+
+  (next-state
+    [this]
+    (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
+          iters-to-go   (:iters this)
+          population    (:ga-result this)
+          should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
+      (if (and use-gui? should-return)
+        (if (= :stop should-return)
+          {:iters-done       (- iters iters-to-go)
+           :final-population population
+           :next-step        :stop}
+          {:iters-done       (- iters iters-to-go)
+           :final-population population
+           :next-step        :restart})
+        :recur)))
+
+
+  (run-iteration
+    [this]
+    (let [{iter-status :status iters-to-go :iters ga-result :ga-result
+           done-result :result
+           :as         res} (solver-step this)]
+      (if (= :done iter-status)
+        [false (end res done-result)]
+        (let [the-next-state (next-state res)]
+          (if (= :recur the-next-state)
+            [:recur res]
+            [false (end res the-next-state)])))))
+
+
+  (end
+    [this {:keys [next-step] :as return-value}]
+    (print-end-time (:start-ms this) (- (:iters run-config) (:iters this)) next-step)
+    return-value))
+
+
+(defn- run-ga-iterations-using-record
+  "Run GA evolution iterations on initial population"
+  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
+   run-args]
+
+  (loop [solver-state (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
+    (let [[recur? next-solver-state] (run-iteration solver-state)]
+      (if recur?
+        (recur next-solver-state)
+        next-solver-state))))
+
+
 (defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
@@ -475,17 +553,20 @@
   (let [max-leafs      (or max-leafs cli-max-leafs)
         iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
-                         (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
+                         (ops-init/initial-phenotypes (/ input-phenos-count
+                                                         (count ops-init/initial-exprs)))
                          initial-phenos)
-        run-config     (assoc run-config :initial-phenos initial-phenos
+
+        run-config     (assoc run-config
+                              :initial-phenos initial-phenos
                               :iters iters
                               :max-leafs (or max-leafs ops/default-max-leafs))
-        start          (print-and-save-start-time iters initial-phenos)
 
-        {:keys [final-population next-step iters-done]
-         :as   completed-ga-data} (run-ga-iterations run-config run-args)]
+        run-config     (assoc run-config
+                              :log-steps (config->log-steps run-config run-args))
 
-    (print-end-time start iters-done next-step)
+        {:keys [next-step] :as completed-ga-data} (run-ga-iterations-using-record run-config run-args)]
+
 
     (case next-step
 
@@ -506,11 +587,12 @@
 
 
 (defn- in-flames
+  "Run a function wrapped in a flamegraph analysis server at http://localhost:54321/flames.svg"
   [f]
-  ;; http://localhost:54321/flames.svg
-  (let [flames (flames/start! {:port 54321, :host "localhost"})]
-    (f)
-    (flames/stop! flames)))
+  (let [flames (flames/start! {:port 54321, :host "localhost"})
+        result (f)]
+    (flames/stop! flames)
+    result))
 
 
 (def ^:dynamic *use-flamechart*
@@ -530,34 +612,15 @@
       run-config)))
 
 
-(defn run-experiment
-  "Run a GA evolution experiment to search for function of best fit for input data.  The
-  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-
-  (let [symbolic-regression-search-fn (fn []
-                                        (run-from-inputs
-                                          run-config
-                                          (if use-gui?
-                                            (start-gui-and-get-input-data run-config)
-                                            (get-input-data run-config))))]
-    (log/info "-- Running! iters: " iters
-              "pop: " (count initial-phenos)
-              "muts: " (count initial-muts)
-              " --")
-    (if *use-flamechart*
-      ;; with flame graph analysis:
-      (in-flames symbolic-regression-search-fn)
-      ;; plain experiment:
-      (symbolic-regression-search-fn))))
-
-
 (defprotocol ISymbolicRegressionSolver
 
   (solve
     [this]
-    "Run the entire solver lifecycle.  To truly utilize protocol/record, I need to make this interface
-    much more fine-grained."))
+    "Run the solver on either CLI of GUI args.  When using GUI, we block on getting a signal from the
+    GUI which indicates the user wants to start (and later stop/restart) the solver.  The GUI
+    would also provide all the parameters and inputs to the solver, like iterations count and
+    the objective data.  When running from the CLI, we use the provided inputs or some example data
+    and defaults."))
 
 
 (defrecord SymbolicRegressionSolver
@@ -565,39 +628,62 @@
 
   ISymbolicRegressionSolver
 
-  (solve [this] (run-experiment this)))
+  (solve
+    [this]
+    (let [symbolic-regression-solver-fn (fn []
+                                          (run-from-inputs this
+                                            (if use-gui?
+                                              (start-gui-and-get-input-data this)
+                                              (get-input-data this))))]
+      (if use-gui?
+        (log/info "-- Running from GUI --")
+        (log/info "-- Running from CLI."
+                  "iters: " iters
+                  "pop: " (count initial-phenos)
+                  "muts: " (count initial-muts) " --"))
+
+      (if *use-flamechart*
+        ;; with flame graph analysis:
+        (in-flames symbolic-regression-solver-fn)
+        ;; plain experiment:
+        (symbolic-regression-solver-fn)))))
+
+
+(defn run-solver
+  "Run a GA evolution solver to search for function of best fit for input data.  The
+  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
+  (solve (map->SymbolicRegressionSolver run-config)))
 
 
 (defn run-app-without-gui
   "Run app without GUI and with fake placeholder input data"
   []
-  (solve
-    (map->SymbolicRegressionSolver
-      {:initial-phenos (ops-init/initial-phenotypes 100)
-       :initial-muts   (ops-init/initial-mutations)
-       :iters          20
-       :use-gui?       false
-       :input-xs-exprs (->> (range 50)
-                            (map (fn [i] (* Math/PI (/ i 15.0))))
-                            ops-common/doubles->exprs)
-       :input-ys-exprs (->> (range 50)
-                            (map (fn [i]
-                                   (+ 2.0
-                                      (/ i 10.0)
-                                      (Math/sin (* Math/PI (/ i 15.0))))))
-                            ops-common/doubles->exprs)})))
+  (run-solver
+    {:initial-phenos (ops-init/initial-phenotypes 100)
+     :initial-muts   (ops-init/initial-mutations)
+     :iters          20
+     :use-gui?       false
+     :input-xs-exprs (->> (range 50)
+                          (map (fn [i] (* Math/PI (/ i 15.0))))
+                          ops-common/doubles->exprs)
+     :input-ys-exprs (->> (range 50)
+                          (map (fn [i]
+                                 (+ 2.0
+                                    (/ i 10.0)
+                                    (Math/sin (* Math/PI (/ i 15.0))))))
+                          ops-common/doubles->exprs)}))
 
 
 (defn- run-app-with-gui
   []
-  (solve
-    (map->SymbolicRegressionSolver
-      {:initial-phenos (ops-init/initial-phenotypes 1000)
-       :initial-muts   (ops-init/initial-mutations)
-       :input-xs-exprs example-input-xs-exprs
-       :input-ys-exprs example-input-ys-exprs
-       :iters          200
-       :use-gui?       true})))
+  (run-solver
+    {:initial-phenos (ops-init/initial-phenotypes 1000)
+     :initial-muts   (ops-init/initial-mutations)
+     :input-xs-exprs example-input-xs-exprs
+     :input-ys-exprs example-input-ys-exprs
+     :iters          200
+     :use-gui?       true}))
 
 
 (defn- exit
@@ -621,7 +707,7 @@
                       :input-ys-exprs (if ys
                                         (ops-common/doubles->exprs ys)
                                         example-input-ys-exprs)}
-          result     (solve (map->SymbolicRegressionSolver run-config)) #_(run-experiment run-config)]
+          result     (run-solver run-config)]
       (log/info "CLI: Done!")
       (exit)
       result)))
