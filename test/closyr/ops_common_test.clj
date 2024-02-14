@@ -38,6 +38,15 @@
              (str (:expr (ops-common/->phenotype x (F/Sin x) nil))))
            "Sin(x)")))
 
+  (testing "with expr throwing exception"
+    (is (=
+          (let [x (F/Dummy "x")]
+            (with-redefs-fn {#'ops-common/valid-expr-or-default (fn [variable iexpr]
+                                                                  (throw (Exception. "Test exception")))}
+              (fn []
+                (ops-common/->phenotype x (F/Sin x) nil))))
+          nil)))
+
   (testing "with valid expr 2"
     (is (= (let [x (F/Dummy "x")]
              (str (:expr (ops-common/->phenotype x x nil))))

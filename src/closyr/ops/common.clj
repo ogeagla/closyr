@@ -122,25 +122,28 @@
     (apply [this arg] (f arg))))
 
 
+(defn- ^IAST valid-expr-or-default
+  [^ISymbol variable ^IAST expr]
+  (if (or (.isNIL expr)
+          (and (.isBuiltInSymbol expr) (not (.isReal expr))))
+    (F/Times variable F/C1)
+    expr))
+
+
 (defn ->phenotype
   "Create a GA phenotype from an expr and symbol and other args"
-  ([{v :sym e :expr u :util}]
-   (->phenotype v e u))
-  ([^ISymbol variable ^IAST expr ^ExprEvaluator util]
-   (try
-     (let [^ExprEvaluator util (or util (new-util))
-           ^IAST expr          (if (or (.isNIL expr)
-                                       (and (.isBuiltInSymbol expr) (not (.isReal expr))))
-                                 (F/Times variable F/C1)
-                                 expr)
-           ^IAST expr          (.eval util expr)]
-       {:sym  variable
-        :util util
-        :id   (UUID/randomUUID)
-        :expr expr})
-     (catch Exception e
-       (log/error "Err creating pheno from expr/x: "
-                  (str expr) " / " (str variable) " : " (or (.getMessage e) e))))))
+  [^ISymbol variable ^IAST expr ^ExprEvaluator util]
+  (try
+    (let [^ExprEvaluator util (or util (new-util))
+          ^IAST expr          (valid-expr-or-default variable expr)
+          ^IAST expr          (.eval util expr)]
+      {:sym  variable
+       :util util
+       :id   (UUID/randomUUID)
+       :expr expr})
+    (catch Exception e
+      (log/error "Err creating pheno from expr/x: "
+                 (str expr) " / " (str variable) " : " (or (.getMessage e) e)))))
 
 
 (defn- inversely-proportional-to-leaf-size
