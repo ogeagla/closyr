@@ -4,6 +4,7 @@
     [closyr.dataset.prng :as prng]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
+    [closyr.ops.eval :as ops-eval]
     [closyr.ops.modify :as ops-modify])
   (:import
     (org.matheclipse.core.expression
@@ -24,7 +25,33 @@
                         {:max-leafs ops/default-max-leafs}
                         (let [x (F/Dummy "x")]
                           (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))
-          -3.0000147))))
+          -3.0000147)))
+
+  (testing "eval score on failing function"
+    (is (=
+          (with-redefs-fn {#'ops-eval/eval-vec-pheno (fn [_ _] nil)}
+            (fn []
+              (ops/score-fn {:input-ys-vec   [0 1 2]
+                             :input-xs-list  (ops-common/exprs->exprs-list
+                                               (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                             :input-xs-count 3}
+                            {:max-leafs ops/default-max-leafs}
+                            (let [x (F/Dummy "x")]
+                              (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))))
+          ops/min-score)))
+
+  (testing "eval score on throwing function"
+    (is (=
+          (with-redefs-fn {#'ops-eval/eval-vec-pheno (fn [_ _] (throw (Exception. "Test exception")))}
+            (fn []
+              (ops/score-fn {:input-ys-vec   [0 1 2]
+                             :input-xs-list  (ops-common/exprs->exprs-list
+                                               (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                             :input-xs-count 3}
+                            {:max-leafs ops/default-max-leafs}
+                            (let [x (F/Dummy "x")]
+                              (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))))
+          ops/min-score))))
 
 
 (deftest compute-score-from-actuals-and-expecteds-test

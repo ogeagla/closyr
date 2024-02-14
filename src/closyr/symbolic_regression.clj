@@ -553,16 +553,19 @@
   (let [max-leafs      (or max-leafs cli-max-leafs)
         iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
-                         (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
+                         (ops-init/initial-phenotypes (/ input-phenos-count
+                                                         (count ops-init/initial-exprs)))
                          initial-phenos)
-        run-config     (assoc run-config :initial-phenos initial-phenos
+
+        run-config     (assoc run-config
+                              :initial-phenos initial-phenos
                               :iters iters
                               :max-leafs (or max-leafs ops/default-max-leafs))
 
-        {:keys [final-population next-step iters-done]
-         :as   completed-ga-data} (run-ga-iterations-using-record
-                                    (assoc run-config :log-steps (config->log-steps run-config run-args))
-                                    run-args)]
+        run-config     (assoc run-config
+                              :log-steps (config->log-steps run-config run-args))
+
+        {:keys [next-step] :as completed-ga-data} (run-ga-iterations-using-record run-config run-args)]
 
 
     (case next-step
@@ -584,11 +587,12 @@
 
 
 (defn- in-flames
+  "Run a function wrapped in a flamegraph analysis server at http://localhost:54321/flames.svg"
   [f]
-  ;; http://localhost:54321/flames.svg
-  (let [flames (flames/start! {:port 54321, :host "localhost"})]
-    (f)
-    (flames/stop! flames)))
+  (let [flames (flames/start! {:port 54321, :host "localhost"})
+        result (f)]
+    (flames/stop! flames)
+    result))
 
 
 (def ^:dynamic *use-flamechart*
@@ -626,21 +630,23 @@
 
   (solve
     [this]
-    (let [symbolic-regression-search-fn (fn []
-                                          (run-from-inputs
-                                            this
+    (let [symbolic-regression-solver-fn (fn []
+                                          (run-from-inputs this
                                             (if use-gui?
                                               (start-gui-and-get-input-data this)
                                               (get-input-data this))))]
-      (log/info "-- Running! iters: " iters
-                "pop: " (count initial-phenos)
-                "muts: " (count initial-muts)
-                " --")
+      (if use-gui?
+        (log/info "-- Running from GUI --")
+        (log/info "-- Running from CLI."
+                  "iters: " iters
+                  "pop: " (count initial-phenos)
+                  "muts: " (count initial-muts) " --"))
+
       (if *use-flamechart*
         ;; with flame graph analysis:
-        (in-flames symbolic-regression-search-fn)
+        (in-flames symbolic-regression-solver-fn)
         ;; plain experiment:
-        (symbolic-regression-search-fn)))))
+        (symbolic-regression-solver-fn)))))
 
 
 (defn run-solver
