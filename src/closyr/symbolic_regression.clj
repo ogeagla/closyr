@@ -612,8 +612,11 @@
 
   (solve
     [this]
-    "Run the entire solver lifecycle.  To truly utilize protocol/record, I need to make this interface
-    much more fine-grained."))
+    "Run the solver on either CLI of GUI args.  When using GUI, we block on getting a signal from the
+    GUI which indicates the user wants to start (and later stop/restart) the solver.  The GUI
+    would also provide all the parameters and inputs to the solver, like iterations count and
+    the objective data.  When running from the CLI, we use the provided inputs or some example data
+    and defaults."))
 
 
 (defrecord SymbolicRegressionSolver
