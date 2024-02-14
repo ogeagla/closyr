@@ -245,12 +245,17 @@
 (deftest derive-log-steps
   (testing "with basic input"
     (is (=
-          (#'symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 0 10))}
+          (#'symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 10 0))}
             {:input-xs-count 10})
           25))
 
     (is (=
-          (#'symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 0 10))}
+          (#'symreg/config->log-steps {:iters 1000 :initial-phenos (vec (repeat 10000 0))}
+            {:input-xs-count 150})
+          2))
+
+    (is (=
+          (#'symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 10 0))}
             {:input-xs-count 10})
           1))))
 
