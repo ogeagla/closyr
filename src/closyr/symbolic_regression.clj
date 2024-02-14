@@ -477,7 +477,11 @@
   (next-state
     [this]
     "Return what state the solver is in; right now this impl contains listeners for GUI input changes,
-    which is a somewhat inverted control flow"))
+    which is a somewhat inverted control flow")
+
+  (end
+    [this {:keys [next-step]}]
+    "Report timing/perf results"))
 
 
 (defrecord SolverStateController
@@ -490,6 +494,7 @@
   (init
     [this]
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
+          start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
                      initial-phenos
                      (partial ops/score-fn run-args run-config)
@@ -498,17 +503,14 @@
 
       (log/info "Running with logging every n steps: " (:log-steps run-config))
 
-      (assoc this
-             :ga-result init-pop
-             :iters iters)))
+      (assoc this :ga-result init-pop
+                  :iters iters
+                  :start-ms start)))
 
 
   (step
     [this]
-
     (let [{:keys [iters log-steps]} run-config
-
-
           population  (:ga-result this)
           iters-to-go (:iters this)]
       (binding [ops/*log-steps* log-steps]
@@ -532,11 +534,16 @@
           {:iters-done       (- iters iters-to-go)
            :final-population population
            :next-step        :stop}
-
           {:iters-done       (- iters iters-to-go)
            :final-population population
            :next-step        :restart})
-        :recur))))
+        :recur)))
+
+
+  (end
+    [this {:keys [next-step] :as return-value}]
+    (print-end-time (:start-ms this) (- (:iters run-config) (:iters this)) next-step)
+    return-value))
 
 
 (defn- run-ga-iterations-using-record-BETA
@@ -549,11 +556,11 @@
            done-result :result
            :as         res} (step rec0)]
       (if (= :done iter-status)
-        done-result
+        (end res done-result)
         (let [the-next-state (next-state res)]
           (if (= :recur the-next-state)
             (recur res)
-            the-next-state))))))
+            (end res the-next-state)))))))
 
 
 (defn- run-from-inputs
@@ -568,16 +575,14 @@
                          (ops-init/initial-phenotypes (/ input-phenos-count (count ops-init/initial-exprs)))
                          initial-phenos)
         run-config     (assoc run-config :initial-phenos initial-phenos
-                              :iters iters
-                              :max-leafs (or max-leafs ops/default-max-leafs))
-        start          (print-and-save-start-time iters initial-phenos)
+                                         :iters iters
+                                         :max-leafs (or max-leafs ops/default-max-leafs))
 
         {:keys [final-population next-step iters-done]
          :as   completed-ga-data} (run-ga-iterations-using-record-BETA
                                     (assoc run-config :log-steps (config->log-steps run-config run-args))
                                     run-args)]
 
-    (print-end-time start iters-done next-step)
 
     (case next-step
 
