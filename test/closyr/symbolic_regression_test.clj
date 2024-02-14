@@ -25,11 +25,11 @@
       (binding [ops/*print-top-n* 1]
         (is (=
               (with-redefs-fn {#'symreg/run-ga-iterations-using-record-BETA (fn [run-config run-args]
-                                                            (reset! args*
-                                                                    [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
-                                                                     (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
-                                                            {:next-step :stop})
-                               #'symreg/config->log-steps (fn [_ _] 200)}
+                                                                              (reset! args*
+                                                                                      [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
+                                                                                       (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
+                                                                              {:next-step :stop})
+                               #'symreg/config->log-steps                   (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
                     {:iterations     20
@@ -58,11 +58,11 @@
       (binding [ops/*print-top-n* 1]
         (is (=
               (with-redefs-fn {#'symreg/run-ga-iterations-using-record-BETA (fn [run-config run-args]
-                                                            (reset! args*
-                                                                    [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
-                                                                     (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
-                                                            {:next-step :stop})
-                               #'symreg/config->log-steps (fn [_ _] 200)}
+                                                                              (reset! args*
+                                                                                      [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
+                                                                                       (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
+                                                                              {:next-step :stop})
+                               #'symreg/config->log-steps                   (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
                     {:population 30
@@ -242,12 +242,12 @@
   (testing "with basic input"
     (is (=
           (#'symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 0 10))}
-                                    {:input-xs-count 10})
+                                      {:input-xs-count 10})
           25))
 
     (is (=
           (#'symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 0 10))}
-                                    {:input-xs-count 10})
+                                      {:input-xs-count 10})
           1))))
 
 

@@ -74,6 +74,7 @@
 
     :else 1))
 
+
 (defn- near-exact-solution
   [i old-scores]
   (log/info "Perfect score! " i " top scores: " (reverse (take-last 10 (sort old-scores))))
@@ -414,21 +415,18 @@
     (dec i)))
 
 
-
-
-
 (defn- run-ga-iterations
   "Run GA evolution iterations on initial population"
   [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    run-args]
   (binding [ops/*log-steps* (config->log-steps run-config run-args)]
     (log/info "Running with logging every n steps: " ops/*log-steps*)
-    (loop [population (ga/initialize
-                 initial-phenos
-                 (partial ops/score-fn run-args run-config)
-                 (partial ops/mutation-fn run-config initial-muts)
-                 (partial ops/crossover-fn run-config initial-muts))
-           iters-to-go   iters]
+    (loop [population  (ga/initialize
+                         initial-phenos
+                         (partial ops/score-fn run-args run-config)
+                         (partial ops/mutation-fn run-config initial-muts)
+                         (partial ops/crossover-fn run-config initial-muts))
+           iters-to-go iters]
       (if (zero? iters-to-go)
         {:iters-done       (- iters iters-to-go)
          :final-population population
@@ -467,43 +465,53 @@
 
 
 (defprotocol ISolverStateController
-  (init [this])
-  (step [this])
-  #_(restart [this  run-config2 run-args2])
-  #_(stop [this])
-  (next-state [this])
-  )
+
+  (init
+    [this]
+    "Initialize solver state")
+
+  (step
+    [this]
+    "Using current state as prior, run one evolution iteration")
+
+  (next-state
+    [this]
+    "Return what state the solver is in; right now this impl contains listeners for GUI input changes,
+    which is a somewhat inverted control flow"))
+
 
 (defrecord SolverStateController
-  [
-   ;; the chans?
+  [;; the chans?
    run-config
    run-args]
 
   ISolverStateController
 
-  (init [this]
-    (let [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?]}run-config
-          run-config     (assoc run-config :log-steps (config->log-steps run-config run-args))
-          init-pop (ga/initialize
-                     initial-phenos
-                     (partial ops/score-fn run-args run-config)
-                     (partial ops/mutation-fn run-config initial-muts)
-                     (partial ops/crossover-fn run-config initial-muts))]
+  (init
+    [this]
+    (let [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?]} run-config
+          run-config (assoc run-config :log-steps (config->log-steps run-config run-args))
+          init-pop   (ga/initialize
+                       initial-phenos
+                       (partial ops/score-fn run-args run-config)
+                       (partial ops/mutation-fn run-config initial-muts)
+                       (partial ops/crossover-fn run-config initial-muts))]
 
       (log/info "Running with logging every n steps: " (:log-steps run-config))
 
-      ;(Thread/sleep 20000)
+      ;; (Thread/sleep 20000)
 
       (assoc this :ga-result init-pop :iters iters
-                  :run-config run-config :run-args run-args)))
+             :run-config run-config :run-args run-args)))
 
-  (step [this]
 
-    (let [{:keys [iters log-steps ] :as run-config} (or (:run-config this) run-config)
-          run-args (or (:run-args this) run-args)
+  (step
+    [this]
 
-          population (:ga-result this)
+    (let [{:keys [iters log-steps] :as run-config} (or (:run-config this) run-config)
+          run-args    (or (:run-args this) run-args)
+
+          population  (:ga-result this)
           iters-to-go (:iters this)]
       (binding [ops/*log-steps* log-steps]
         (if (zero? iters-to-go)
@@ -512,22 +520,15 @@
                                              :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
-            (assoc this :ga-result ga-result :iters (next-iters iters-to-go scores)
-                        )))
-        )
-      ))
+            (assoc this :ga-result ga-result :iters (next-iters iters-to-go scores)))))))
 
-  #_(restart [this run-config2 run-args2]
-    (init (assoc this :run-config run-config2 :run-args run-args2)))
 
-  #_(stop [this]
-    (:ga-result this))
-
-  (next-state [this]
+  (next-state
+    [this]
     (let [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config} (or (:run-config this) run-config)
-          run-args (or (:run-args this) run-args)
-          iters-to-go (:iters this)
-          population (:ga-result this)
+          run-args      (or (:run-args this) run-args)
+          iters-to-go   (:iters this)
+          population    (:ga-result this)
           should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
       (if (and use-gui? should-return)
         (if (= :stop should-return)
@@ -549,13 +550,14 @@
   (loop [rec0 (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
     (let [{iter-status :status iters-to-go :iters ga-result :ga-result
            done-result :result
-           :as res} (step rec0)]
+           :as         res} (step rec0)]
       (if (= :done iter-status)
         done-result
         (let [the-next-state (next-state res)]
           (if (= :recur the-next-state)
             (recur res)
             the-next-state))))))
+
 
 (defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
@@ -621,7 +623,6 @@
       run-config)))
 
 
-
 (defprotocol ISymbolicRegressionSolver
 
   (solve
@@ -635,7 +636,8 @@
 
   ISymbolicRegressionSolver
 
-  (solve [this]
+  (solve
+    [this]
     (let [symbolic-regression-search-fn (fn []
                                           (run-from-inputs
                                             this
@@ -652,13 +654,12 @@
         ;; plain experiment:
         (symbolic-regression-search-fn)))))
 
+
 (defn run-solver
   "Run a GA evolution solver to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
   (solve (map->SymbolicRegressionSolver run-config)))
-
-
 
 
 (defn run-app-without-gui
