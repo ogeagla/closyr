@@ -246,17 +246,17 @@
   (testing "with basic input"
     (is (=
           (#'symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 10 0))}
-            {:input-xs-count 10})
+                                      {:input-xs-count 10})
           25))
 
     (is (=
           (#'symreg/config->log-steps {:iters 1000 :initial-phenos (vec (repeat 10000 0))}
-            {:input-xs-count 150})
+                                      {:input-xs-count 150})
           2))
 
     (is (=
           (#'symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 10 0))}
-            {:input-xs-count 10})
+                                      {:input-xs-count 10})
           1))))
 
 
@@ -265,3 +265,24 @@
     (is (=
           (#'symreg/check-if-done 1 10 nil nil)
           nil))))
+
+
+(deftest run-args-checks-needed-params
+  (testing "insufficient args"
+    (is (thrown? Exception (#'symreg/->run-args {}))))
+
+  (testing "sufficient args"
+    (is (= (set (keys (#'symreg/->run-args {:input-xs-exprs     symreg/example-input-xs-exprs
+                                            :input-xs-vec       (range (count symreg/example-input-xs-exprs))
+                                            :input-ys-vec       (range (count symreg/example-input-xs-exprs))
+                                            :iters              1
+                                            :input-phenos-count 1})))
+           #{:extended-domain-args
+             :initial-phenos
+             :input-iters
+             :input-phenos-count
+             :input-xs-count
+             :input-xs-list
+             :input-xs-vec
+             :input-ys-vec
+             :max-leafs}))))
