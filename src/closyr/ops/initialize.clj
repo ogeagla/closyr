@@ -12,28 +12,29 @@
       ISymbol)))
 
 
-(def initial-exprs
+(defn initial-exprs
   "Initial exprs to use in GA evolution"
+  []
   (let [^ISymbol x ops-common/sym-x]
-    [x]
+    [(.times x F/C1)]
     #_[
-     ;F/C0
-     F/C1
-     x
-     x
-     x
-     ;x
-     ;(F/Times -1 (ops-common/->iexprs [x]))
-     (F/Times -1 (ops-common/->iexprs [x]))
-     (F/Times -1 (ops-common/->iexprs [x]))
-     (F/Times -1 (ops-common/->iexprs [x]))
-     ;; (F/Log x)
-     (F/Exp x)
-     (F/Sin x)
-     (F/Cos x)
-     ;; (F/Sqr x)
-     ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
-     ]))
+       ;F/C0
+       F/C1
+       x
+       x
+       x
+       ;x
+       ;(F/Times -1 (ops-common/->iexprs [x]))
+       (F/Times -1 (ops-common/->iexprs [x]))
+       (F/Times -1 (ops-common/->iexprs [x]))
+       (F/Times -1 (ops-common/->iexprs [x]))
+       ;; (F/Log x)
+       (F/Exp x)
+       (F/Sin x)
+       (F/Cos x)
+       ;; (F/Sqr x)
+       ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
+       ]))
 
 
 (defn initial-phenotypes
@@ -41,9 +42,7 @@
   [reps]
   (let [^ISymbol x ops-common/sym-x]
     (->>
-      (fn []
-        initial-exprs)
-      (repeatedly reps)
+      (repeatedly reps initial-exprs)
       (mapcat identity)
       (mapv (fn [^IExpr expr] (ops-common/->phenotype x expr nil))))))
 
@@ -543,20 +542,20 @@
                           ie))}
 
    #_{:op               :modify-ast-head
-    :label            "/->*"
-    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (ops-common/should-modify-ast-head leaf-count pheno)
-                                 (= F/Divide ie))
-                          F/Times
-                          ie))}
+      :label            "/->*"
+      :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                          (if (and (ops-common/should-modify-ast-head leaf-count pheno)
+                                   (= F/Divide ie))
+                            F/Times
+                            ie))}
 
    #_{:op               :modify-ast-head
-    :label            "/->+"
-    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (and (ops-common/should-modify-ast-head leaf-count pheno)
-                                 (= F/Divide ie))
-                          F/Plus
-                          ie))}
+      :label            "/->+"
+      :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                          (if (and (ops-common/should-modify-ast-head leaf-count pheno)
+                                   (= F/Divide ie))
+                            F/Plus
+                            ie))}
 
    {:op               :modify-branches
     :label            "b derivative"
@@ -566,14 +565,14 @@
                           ie))}
 
    #_{:op               :modify-branches
-    :label            "b simplify"
-    :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                        (if (> 9 (.leafCount ie) 4)
-                          (binding [ops-common/*simplify-max-leafs* 8]
-                            (try (:expr (ops-common/maybe-simplify (assoc pheno :expr ie)))
-                                 (catch Exception e
-                                   (log/error "Error in simplify branch: " e))))
-                          ie))}
+      :label            "b simplify"
+      :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
+                          (if (> 9 (.leafCount ie) 4)
+                            (binding [ops-common/*simplify-max-leafs* 8]
+                              (try (:expr (ops-common/maybe-simplify (assoc pheno :expr ie)))
+                                   (catch Exception e
+                                     (log/error "Error in simplify branch: " e))))
+                            ie))}
 
    {:op               :modify-branches
     :label            "b sin"

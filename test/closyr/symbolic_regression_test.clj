@@ -8,6 +8,8 @@
     [closyr.symbolic-regression :as symreg]))
 
 
+(alter-var-root #'symreg/*is-testing* (constantly true))
+
 (deftest end-iters-if-solution-found-test
   (testing "not solved"
     (is (=
