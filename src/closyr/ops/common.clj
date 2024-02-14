@@ -134,13 +134,11 @@
   "Create a GA phenotype from an expr and symbol and other args"
   [^ISymbol variable ^IAST expr ^ExprEvaluator util]
   (try
-    (let [^ExprEvaluator util (or util (new-util))
-          ^IAST expr          (valid-expr-or-default variable expr)
-          ^IAST expr          (.eval util expr)]
+    (let [^ExprEvaluator util (or util (new-util))]
       {:sym  variable
        :util util
        :id   (UUID/randomUUID)
-       :expr expr})
+       :expr (.eval util (valid-expr-or-default variable expr))})
     (catch Exception e
       (log/error "Err creating pheno from expr/x: "
                  (str expr) " / " (str variable) " : " (or (.getMessage e) e)))))
