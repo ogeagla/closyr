@@ -2,7 +2,9 @@
 
 ![icon_v5_qtr.png](resources%2Ficons%2Ficon_v5_qtr.png)
 
-A Symbolic Regression tool, written in Clojure.
+A Symbolic Regression tool to search for symbolic expressions which minimize residuals to an objective, written in Clojure.
+
+![gui_evolution_sample_Peek 2024-02-14 08-21.gif](screenshots%2Fgui_evolution_sample_Peek%202024-02-14%2008-21.gif)
 
 Warning: This is experimental software, with an unstable API. Expect breaking changes prior to a major release.
 
