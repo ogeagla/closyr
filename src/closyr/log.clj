@@ -16,7 +16,7 @@
 (set! *warn-on-reflection* true)
 
 
-(def log-level* (atom nil))
+(def ^:private log-level* (atom nil))
 
 
 (def ^Logger default-logger

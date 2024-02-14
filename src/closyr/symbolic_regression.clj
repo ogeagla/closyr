@@ -690,7 +690,7 @@
      :input-ys-exprs example-input-ys-exprs}))
 
 
-(def ^:dynamic *is-testing* false)
+(def ^:private ^:dynamic *is-testing* false)
 
 
 (defn- exit
