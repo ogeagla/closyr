@@ -631,10 +631,11 @@
   (solve
     [this]
     (let [symbolic-regression-solver-fn (fn []
-                                          (run-from-inputs this
-                                                           (if use-gui?
-                                                             (start-gui-and-get-input-data this)
-                                                             (get-input-data this))))]
+                                          (run-from-inputs
+                                            this
+                                            (if use-gui?
+                                              (start-gui-and-get-input-data this)
+                                              (get-input-data this))))]
       (if use-gui?
         (log/info "-- Running from GUI --")
         (log/info "-- Running from CLI."
@@ -653,9 +654,6 @@
   "Run a GA evolution solver to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-
-  ;; (clojure.pprint/pprint run-config)
-
   (solve (map->SymbolicRegressionSolver run-config)))
 
 
