@@ -532,37 +532,6 @@
             (end res the-next-state)))))))
 
 
-#_(defn- run-ga-iterations
-    "Run GA evolution iterations on initial population"
-    [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
-     run-args]
-    (binding [ops/*log-steps* (config->log-steps run-config run-args)]
-      (log/info "Running with logging every n steps: " ops/*log-steps*)
-      (loop [population  (ga/initialize
-                           initial-phenos
-                           (partial ops/score-fn run-args run-config)
-                           (partial ops/mutation-fn run-config initial-muts)
-                           (partial ops/crossover-fn run-config initial-muts))
-             iters-to-go iters]
-        (if (zero? iters-to-go)
-          {:iters-done       (- iters iters-to-go)
-           :final-population population
-           :next-step        :wait}
-          (let [should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
-            (if (and use-gui? should-return)
-              (if (= :stop should-return)
-                {:iters-done       (- iters iters-to-go)
-                 :final-population population
-                 :next-step        :stop}
-
-                {:iters-done       (- iters iters-to-go)
-                 :final-population population
-                 :next-step        :restart})
-              (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
-                (ops/report-iteration iters-to-go iters ga-result run-args run-config)
-                (recur ga-result (next-iters iters-to-go scores)))))))))
-
-
 (defn- run-from-inputs
   "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
