@@ -24,7 +24,7 @@
     (let [args* (atom nil)]
       (binding [ops/*print-top-n* 1]
         (is (=
-              (with-redefs-fn {#'symreg/run-ga-iterations-using-record-BETA
+              (with-redefs-fn {#'symreg/run-ga-iterations-using-record
                                (fn [run-config run-args]
                                  (reset! args*
                                          [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
@@ -59,7 +59,7 @@
     (let [args* (atom nil)]
       (binding [ops/*print-top-n* 1]
         (is (=
-              (with-redefs-fn {#'symreg/run-ga-iterations-using-record-BETA
+              (with-redefs-fn {#'symreg/run-ga-iterations-using-record
                                (fn [run-config run-args]
                                  (reset! args*
                                          [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
