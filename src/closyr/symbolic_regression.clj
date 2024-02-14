@@ -481,7 +481,7 @@
 
 
 (defrecord SolverStateController
-  [;; the chans?
+  [;; the chans? also these names are really really ambiguous and overloaded:
    run-config
    run-args]
 
@@ -489,27 +489,25 @@
 
   (init
     [this]
-    (let [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?]} run-config
-          run-config (assoc run-config :log-steps (config->log-steps run-config run-args))
-          init-pop   (ga/initialize
-                       initial-phenos
-                       (partial ops/score-fn run-args run-config)
-                       (partial ops/mutation-fn run-config initial-muts)
-                       (partial ops/crossover-fn run-config initial-muts))]
+    (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
+          init-pop (ga/initialize
+                     initial-phenos
+                     (partial ops/score-fn run-args run-config)
+                     (partial ops/mutation-fn run-config initial-muts)
+                     (partial ops/crossover-fn run-config initial-muts))]
 
       (log/info "Running with logging every n steps: " (:log-steps run-config))
 
-      ;; (Thread/sleep 20000)
-
-      (assoc this :ga-result init-pop :iters iters
-             :run-config run-config :run-args run-args)))
+      (assoc this
+             :ga-result init-pop
+             :iters iters)))
 
 
   (step
     [this]
 
-    (let [{:keys [iters log-steps] :as run-config} (or (:run-config this) run-config)
-          run-args    (or (:run-args this) run-args)
+    (let [{:keys [iters log-steps]} run-config
+
 
           population  (:ga-result this)
           iters-to-go (:iters this)]
@@ -525,8 +523,7 @@
 
   (next-state
     [this]
-    (let [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config} (or (:run-config this) run-config)
-          run-args      (or (:run-args this) run-args)
+    (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           iters-to-go   (:iters this)
           population    (:ga-result this)
           should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
@@ -576,7 +573,9 @@
         start          (print-and-save-start-time iters initial-phenos)
 
         {:keys [final-population next-step iters-done]
-         :as   completed-ga-data} (run-ga-iterations-using-record-BETA run-config run-args)]
+         :as   completed-ga-data} (run-ga-iterations-using-record-BETA
+                                    (assoc run-config :log-steps (config->log-steps run-config run-args))
+                                    run-args)]
 
     (print-end-time start iters-done next-step)
 
