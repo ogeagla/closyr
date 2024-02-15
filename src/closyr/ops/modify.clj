@@ -233,74 +233,27 @@
   "A coll whose random element is the number of modifications to apply in succession"
   (->>
     []
-    (concat (repeat 50 1))
-    (concat (repeat 30 2))
-    (concat (repeat 20 3))
-    (concat (repeat 15 4))
-    (concat (repeat 12 5))
-    (concat (repeat 10 6))
-    (concat (repeat 9 7))
-    (concat (repeat 8 8))
-    (concat (repeat 7 9))
-    (concat (repeat 6 10))
-    (concat (repeat 5 11))
-    (concat (repeat 4 12))
-    (concat (repeat 3 13))
-    (concat (repeat 2 14))
-    (concat (repeat 1 15))
-    (concat (repeat 1 16))
-    ;; (concat (repeat 1 16))
-    ;; (concat (repeat 2 17))
-    ;; (concat (repeat 1 18))
-    ;; (concat (repeat 1 19))
-    ;; (concat (repeat 1 20))
-
-    vec)
-  #_[1 1 1 1 1 1 1 1 1
-     1 1 1 1 1 1 1 1 1
-     1 1 1 1 1 1 1 1 1
-     1 1 1 1 1 1 1 1 1
-     2 2 2 2 2 2
-     2 2 2 2 2 2
-     2 2 2 2 2 2
-     2 2 2 2 2 2
-     3 3 3 3
-     3 3 3 3
-     3 3 3 3
-     3 3 3 3
-     4 4 4
-     4 4 4
-     4 4 4
-     4 4 4
-     5 5 5
-     5 5 5
-     5 5 5
-     5 5
-     6 6
-     6 6
-     6 6
-     6 6
-     7 7
-     7 7
-     7 7
-     7
-     8 8
-     8 8
-     8 8
-     9 9
-     9 9
-     9
-     10 10
-     10
-     11 11
-     11
-     12 12
-     13 13
-     14
-     15
-     16
-     17
-     18
-     19
-     20
-     ])
+    (concat (repeat 60 1))
+    (concat (repeat 40 2))
+    (concat (repeat 25 3))
+    (concat (repeat 20 4))
+    (concat (repeat 19 5))
+    (concat (repeat 18 6))
+    (concat (repeat 17 7))
+    (concat (repeat 16 8))
+    (concat (repeat 15 9))
+    (concat (repeat 14 10))
+    (concat (repeat 13 11))
+    (concat (repeat 12 12))
+    (concat (repeat 11 13))
+    (concat (repeat 10 14))
+    (concat (repeat 9 15))
+    (concat (repeat 8 16))
+    (concat (repeat 7 17))
+    (concat (repeat 6 18))
+    (concat (repeat 5 19))
+    (concat (repeat 4 20))
+    (concat (repeat 3 21))
+    (concat (repeat 2 22))
+    (concat (repeat 1 23))
+    vec))
