@@ -339,20 +339,18 @@
     :as   run-args}]
   (let [[{:keys [new-state] :as msg} ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
     (when (and msg (not= msg :continue))
-      (if (= :stop new-state)
-        :stop
-        (if (= :restart new-state)
-          (restart-with-new-inputs msg)
-          (do
-            (log/info "~~~ Parking updates due to Stop command ~~~")
-            (let [{:keys [new-state] :as msg} (<!! sim-stop-start-chan)]
-              (if (= :stop new-state)
-                :stop
-                (if (= :restart new-state)
-                  (restart-with-new-inputs msg)
-                  (do
-                    (log/info "~~~ Resuming updates ~~~")
-                    nil))))))))))
+      (case new-state
+        :stop :stop
+        :restart (restart-with-new-inputs msg)
+        :pause (do
+                 (log/info "~~~ Parking updates due to Stop command ~~~")
+                 (let [{:keys [new-state] :as msg} (<!! sim-stop-start-chan)]
+                   (case new-state
+                     :stop :stop
+                     :restart (restart-with-new-inputs msg)
+                     :start (do
+                              (log/info "~~~ Resuming updates ~~~")
+                              nil))))))))
 
 
 (defn- ->run-args
