@@ -602,12 +602,6 @@
     result))
 
 
-(def ^:dynamic *use-flamechart*
-  "If enabled, the app will start a server that hosts an svg with contains the performance flamechart,
-  viewable at http://localhost:54321/flames.svg"
-  false)
-
-
 (defn- get-input-data
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
   (->run-args
@@ -631,7 +625,7 @@
 
 
 (defrecord SymbolicRegressionSolver
-  [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? max-leafs]
+  [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart max-leafs]
 
   ISymbolicRegressionSolver
 
@@ -650,7 +644,7 @@
                   "pop: " (count initial-phenos)
                   "muts: " (count initial-muts) " --"))
 
-      (if *use-flamechart*
+      (if use-flamechart
         ;; with flame graph analysis:
         (in-flames symbolic-regression-solver-fn)
         ;; plain experiment:
@@ -672,6 +666,7 @@
      :initial-muts   (ops-init/initial-mutations)
      :iters          20
      :use-gui?       false
+     :use-flamechart false
      :input-xs-exprs (->> (range 50)
                           (map (fn [i] (* Math/PI (/ i 15.0))))
                           ops-common/doubles->exprs)
@@ -691,6 +686,7 @@
      :iters          100
      :use-gui?       true
      :max-leafs      ops/default-max-leafs
+     :use-flamechart false
      :input-xs-exprs example-input-xs-exprs
      :input-ys-exprs example-input-ys-exprs}))
 
@@ -709,26 +705,25 @@
   "Run app from CLI args"
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
-  (binding [*use-flamechart* use-flamechart]
-    (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
-                      :initial-muts   (ops-init/initial-mutations)
-                      :iters          iterations
-                      :use-gui?       (not headless)
-                      :max-leafs      max-leafs
-                      :input-xs-exprs (if xs
-                                        (ops-common/doubles->exprs xs)
-                                        example-input-xs-exprs)
-                      :input-ys-exprs (if ys
-                                        (ops-common/doubles->exprs ys)
-                                        example-input-ys-exprs)}
-          result     (run-solver run-config)]
-      (log/info "CLI: Done!")
-      (exit cli-opts)
-      result)))
+  (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
+                    :initial-muts   (ops-init/initial-mutations)
+                    :iters          iterations
+                    :use-gui?       (not headless)
+                    :max-leafs      max-leafs
+                    :use-flamechart use-flamechart
+                    :input-xs-exprs (if xs
+                                      (ops-common/doubles->exprs xs)
+                                      example-input-xs-exprs)
+                    :input-ys-exprs (if ys
+                                      (ops-common/doubles->exprs ys)
+                                      example-input-ys-exprs)}
+        result     (run-solver run-config)]
+    (log/info "CLI: Done!")
+    (exit cli-opts)
+    result))
 
 
 (comment (macroexpand-1 `(log/info "Hello")))
 (comment (log/info "Hello"))
 (comment (run-app-without-gui))
-(comment (binding [*use-flamechart* true] (run-app-with-gui)))
 (comment (run-app-with-gui))

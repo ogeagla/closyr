@@ -10,6 +10,7 @@
 
 (alter-var-root #'symreg/*is-testing* (constantly true))
 
+
 (deftest end-iters-if-solution-found-test
   (testing "not solved"
     (is (=
@@ -40,15 +41,16 @@
                      :headless       true
                      :xs             [0 1 2]
                      :ys             [1 4 19]
-                     :use-flamechart false
+                     :use-flamechart true
                      :max-leafs      20})))
               {:next-step :stop}))
 
         (is (= @args*
-               [{:iters     20
-                 :log-steps 200
-                 :max-leafs 20
-                 :use-gui?  false}
+               [{:iters          20
+                 :log-steps      200
+                 :max-leafs      20
+                 :use-gui?       false
+                 :use-flamechart true}
                 {:input-iters        20
                  :input-phenos-count nil
                  :input-xs-count     3
@@ -76,10 +78,11 @@
               {:next-step :stop}))
 
         (is (= @args*
-               [{:iters     20
-                 :log-steps 200
-                 :max-leafs 40
-                 :use-gui?  false}
+               [{:iters          20
+                 :log-steps      200
+                 :max-leafs      40
+                 :use-gui?       false
+                 :use-flamechart nil}
                 {:input-iters        20
                  :input-phenos-count nil
                  :input-xs-count     50
@@ -108,6 +111,7 @@
                    :initial-muts       (ops-init/initial-mutations)
                    :iters              5
                    :use-gui?           false
+                   :use-flamechart     true
                    :input-xs-exprs     (->> (range 50)
                                             (map (fn [i] (* Math/PI (/ i 15.0))))
                                             ops-common/doubles->exprs)
@@ -209,8 +213,17 @@
                                             {:new-state          :restart
                                              :input-data-x       [0 1 2 3 4]
                                              :input-data-y       [1 13 16 8 8]
-                                             :input-iters        500
+                                             :input-iters        1500
                                              :input-phenos-count 500}))
+
+                                  (<! (timeout 200))
+
+                                  (is (put! symreg/*sim-stop-start-chan*
+                                            {:new-state          :restart
+                                             :input-data-x       [0 1 2 3 4]
+                                             :input-data-y       [1 13 16 8 8]
+                                             :input-iters        5
+                                             :input-phenos-count 5}))
 
                                   (<! (timeout 200))
 
