@@ -51,3 +51,11 @@
              (count initial-pop)))
       (is (= @count*
              101)))))
+
+
+(deftest can-handle-exception-and-rethrow
+  (testing "error in scoring"
+    (with-redefs-fn {#'ga/with-score (fn [_ _] (throw (Exception.)))}
+      (fn []
+        (let [pop1 (ga/initialize initial-pop score-fn mutation-fn crossover-fn)]
+          (is (thrown? Exception (ga/evolve pop1))))))))

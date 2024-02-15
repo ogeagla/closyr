@@ -84,4 +84,5 @@
               :mutation-fn  mutation-fn
               :crossover-fn crossover-fn}))
     (catch Exception e
-      (log/error "Err in evolve: " e))))
+      (log/error "Err in evolve: " e)
+      (throw e))))

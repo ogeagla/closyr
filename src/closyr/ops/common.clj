@@ -188,7 +188,7 @@
     (go-loop [c 0]
       (when-not @done?*
         ;; wait sequence in ms looks like: 100, 316, 1000, ...
-        (<! (timeout (int (Math/pow (/ *long-simplify-thresh-ms* 200)
+        (<! (timeout (int (Math/pow (max 2.0 (/ *long-simplify-thresh-ms* 200))
                                     (+ 1.5 (/ c 4))))))
         (when (> c 6)
           (reset! report-done?* true)

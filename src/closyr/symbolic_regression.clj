@@ -249,7 +249,7 @@
 
   (go-loop [chart-iter 0]
 
-    (<! (timeout 50))
+    (<! (timeout 10))
 
     (when-let [sim-msg (<! sim->gui-chan)]
       (try
@@ -435,6 +435,8 @@
 
 (defprotocol ISolverStateController
 
+  "Interface which allows creation and iteration of the symbolic regression GA solver"
+
   (init
     [this]
     "Initialize solver state")
@@ -615,6 +617,8 @@
 
 (defprotocol ISymbolicRegressionSolver
 
+  "A top-level interface to start the solver using CLI or GUI args"
+
   (solve
     [this]
     "Run the solver on either CLI of GUI args.  When using GUI, we block on getting a signal from the
@@ -660,22 +664,15 @@
 
 (defn run-app-without-gui
   "Run app without GUI and with fake placeholder input data"
-  []
+  [xs ys]
   (run-solver
     {:initial-phenos (ops-init/initial-phenotypes 100)
      :initial-muts   (ops-init/initial-mutations)
      :iters          20
      :use-gui?       false
      :use-flamechart false
-     :input-xs-exprs (->> (range 50)
-                          (map (fn [i] (* Math/PI (/ i 15.0))))
-                          ops-common/doubles->exprs)
-     :input-ys-exprs (->> (range 50)
-                          (map (fn [i]
-                                 (+ 2.0
-                                    (/ i 10.0)
-                                    (Math/sin (* Math/PI (/ i 15.0))))))
-                          ops-common/doubles->exprs)}))
+     :input-xs-exprs (ops-common/doubles->exprs xs)
+     :input-ys-exprs (ops-common/doubles->exprs ys)}))
 
 
 (defn- run-app-with-gui
