@@ -249,7 +249,7 @@
 
   (go-loop [chart-iter 0]
 
-    (<! (timeout 50))
+    (<! (timeout 10))
 
     (when-let [sim-msg (<! sim->gui-chan)]
       (try

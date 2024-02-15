@@ -1,5 +1,7 @@
 # closyr
 
+[![Clojure CI](https://github.com/ogeagla/closyr/actions/workflows/clojure.yml/badge.svg?branch=master)](https://github.com/ogeagla/closyr/actions/workflows/clojure.yml)
+
 ![icon_v5_qtr.png](resources%2Ficons%2Ficon_v5_qtr.png)
 
 A Symbolic Regression tool to search for symbolic expressions which minimize residuals to an objective, written in Clojure.
