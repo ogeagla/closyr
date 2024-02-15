@@ -234,7 +234,7 @@
         res)
 
       (catch Exception e
-        (log/error "Err in eval simplify for fn: " (str expr) " : " e)
+        (log/error "Err in eval simplify for fn: " (str expr) " : " (or (.getMessage e) e))
         expr))))
 
 

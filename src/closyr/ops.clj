@@ -229,8 +229,9 @@
                                         (/ (sum len-deductions) (count len-deductions)))
                       :len-ded-min    (first len-deductions-sorted)
                       :len-ded-max    (last len-deductions-sorted)
-                      :len-ded-med    (nth len-deductions-sorted
-                                           (/ (count len-deductions-sorted) 2))})
+                      :len-ded-med    (when (seq len-deductions)
+                                        (nth len-deductions-sorted
+                                             (/ (count len-deductions-sorted) 2)))})
               (assoc :mutations
                      {:counts              (reverse (sort-by second cs))
                       :sz-in-mean-max-min  [(when (seq sz-in)
