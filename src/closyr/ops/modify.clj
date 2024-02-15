@@ -81,47 +81,40 @@
 (defmethod modify :modify-substitute
   [{:keys [label ^IExpr find-expr ^IExpr replace-expr] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (-> x-sym
-      (ops-common/->phenotype (.subs expr find-expr replace-expr) util)
-      (with-recent-mod-metadata modif)))
+  (ops-common/->phenotype x-sym (.subs expr find-expr replace-expr) util))
 
 
 (defmethod modify :modify-leafs
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->
+  (ops-common/->phenotype
     x-sym
-    (ops-common/->phenotype
-      (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-recent-mod-metadata modif)))
+    (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno)))
+    util))
 
 
 (defmethod modify :modify-branches
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->
+  (ops-common/->phenotype
     x-sym
-    (ops-common/->phenotype
-      (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-recent-mod-metadata modif)))
+    (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno)))
+    util))
 
 
 (defmethod modify :modify-ast-head
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->
+  (ops-common/->phenotype
     x-sym
-    (ops-common/->phenotype
-      (.replaceAll expr (tree-ast-head-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-recent-mod-metadata modif)))
+    (.replaceAll expr (tree-ast-head-modifier (partial leaf-modifier-fn (.leafCount expr) pheno)))
+    util))
 
 
 (defmethod modify :modify-fn
   [{:keys [label modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (-> x-sym
-      (ops-common/->phenotype (modifier-fn pheno) util)
-      (with-recent-mod-metadata modif)))
+  (ops-common/->phenotype x-sym (modifier-fn pheno) util))
 
 
 (defn- is-expr-function?
@@ -230,7 +223,7 @@
           count-to-go
 
           ;; use previous pheno if new one is invalid:
-          (if discount-mod? pheno new-pheno)
+          (if discount-mod? pheno (with-recent-mod-metadata new-pheno mod-to-apply))
 
           ;; record the mod applied:
           (if discount-mod? mods (into mods [(select-keys mod-to-apply [:label :op])])))))))
