@@ -54,6 +54,40 @@
                                   (str expr) " : " (or (.getMessage e) e)))))
 
 
+(defn- parseable-eval-result?
+  [eval-p]
+  (not (or (nil? eval-p)
+           (= "Indeterminate" (str eval-p)))))
+
+
+(defn- result-args->doubles
+  [^IExpr eval-p i]
+  (try
+    (let [^IExpr res (.getArg eval-p (inc i) F/Infinity)]
+      (if (.isReal res)
+        (ops-common/expr->double res)
+        Double/POSITIVE_INFINITY))
+    (catch Exception e
+      (log/error "Error in evaling function on input values: " (str eval-p) " : " e)
+      Double/POSITIVE_INFINITY)))
+
+
+(defn- result-args->constant-input
+  [^IExpr eval-p ^IExpr new-expr i]
+  (try
+    (let [^IExpr arg0 (.getArg eval-p 0 F/Infinity)]
+      (ops-common/expr->double
+        (if (.isReal new-expr)
+          new-expr
+          (if (.isBuiltInSymbol arg0)
+            eval-p
+            arg0))))
+    (catch Exception e
+      (log/error "Error in evaling function on const xs vector: "
+                 (str eval-p) " : " (.getMessage e))
+      (throw e))))
+
+
 (defn eval-vec-pheno
   "Evaluate a phenotype's expr on input xs/ys vecs"
   [p
@@ -61,36 +95,12 @@
     :as   run-args}]
   (let [^IExpr new-expr (:expr p)
         ^IExpr eval-p   (eval-phenotype-on-expr-args p input-xs-list)]
-    (when-not (or (nil? eval-p) (= "Indeterminate" (str eval-p)))
-      (let [vs (mapv
-                 (fn [i]
-                   (try
-                     (let [^IExpr res (.getArg eval-p (inc i) F/Infinity)]
-                       (if (.isReal res)
-                         (ops-common/expr->double res)
-                         Double/POSITIVE_INFINITY))
-                     (catch Exception e
-                       (log/error "Error in evaling function on input values: " (str eval-p) " : " e)
-                       Double/POSITIVE_INFINITY)))
-                 (range (dec (.size eval-p))))
-            vs (if (= input-xs-count (count vs))
-                 vs
-                 (mapv
-                   (fn [i]
-                     (try
-                       (let [^IExpr arg0 (.getArg eval-p 0 F/Infinity)]
-                         (ops-common/expr->double
-                           (if (.isReal new-expr)
-                             new-expr
-                             (if (.isBuiltInSymbol arg0)
-                               eval-p
-                               arg0))))
-                       (catch Exception e
-                         (log/error "Error in evaling function on const xs vector: "
-                                    (str eval-p) " : " (.getMessage e))
-                         (throw e))))
-                   (range input-xs-count)))]
-        vs))))
+    (when (parseable-eval-result? eval-p)
+      (mapv
+        (if (= input-xs-count (dec (.size eval-p)))
+          (partial result-args->doubles eval-p)
+          (partial result-args->constant-input eval-p new-expr))
+        (range input-xs-count)))))
 
 
 (defn- clamp-oversampled-ys
