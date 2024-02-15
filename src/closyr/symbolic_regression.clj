@@ -435,6 +435,8 @@
 
 (defprotocol ISolverStateController
 
+  "Interface which allows creation and iteration of the symbolic regression GA solver"
+
   (init
     [this]
     "Initialize solver state")
@@ -614,6 +616,8 @@
 
 
 (defprotocol ISymbolicRegressionSolver
+
+  "A top-level interface to start the solver using CLI or GUI args"
 
   (solve
     [this]
