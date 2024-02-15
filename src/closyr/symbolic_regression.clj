@@ -329,7 +329,7 @@
   [msg]
   (log/info "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
-  true)
+  :restart)
 
 
 (defn- check-gui-command-and-maybe-park
@@ -499,14 +499,16 @@
   (next-state
     [this]
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
-          iters-to-go   (:iters this)
-          population    (:ga-result this)
-          should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
-      (if (and use-gui? should-return)
-        (if (= :stop should-return)
+          iters-to-go         (:iters this)
+          population          (:ga-result this)
+          should-return-state (and use-gui? (check-gui-command-and-maybe-park run-args))]
+      (if (and use-gui? should-return-state)
+        (case should-return-state
+          :stop
           {:iters-done       (- iters iters-to-go)
            :final-population population
            :next-step        :stop}
+          :restart
           {:iters-done       (- iters iters-to-go)
            :final-population population
            :next-step        :restart})
