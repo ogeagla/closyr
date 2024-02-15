@@ -461,6 +461,12 @@
     "-1/10"
     "-11/10+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    [:modify-fn
+    "+1/100"
+    "-99/100+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
+   [:modify-fn
+    "-1/100"
+    "-101/100+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
+   [:modify-fn
     "+Sin"
     "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)+Sin(x)"]
    [:modify-fn
@@ -539,6 +545,12 @@
     "*10"
     "10*(-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x))"]
    [:modify-fn
+    "/100"
+    "1/100*(-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x))"]
+   [:modify-fn
+    "*100"
+    "100*(-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x))"]
+   [:modify-fn
     "*1.1"
     "1.1*(-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x))"]
    [:modify-fn
@@ -559,6 +571,12 @@
    [:modify-leafs
     "1/x"
     "-1+1/x+Cos(1/x)/Sqrt(1/x)-Sin(1/2-1/x)/x"]
+   [:modify-leafs
+    "x/100"
+    "-1+x/100+(10*Cos(x/100))/Sqrt(x)-1/100*x*Sin(1/2-x/100)"]
+   [:modify-leafs
+    "100*x"
+    "-1+100*x+Cos(100*x)/(10*Sqrt(x))-100*x*Sin(1/2-100*x)"]
    [:modify-leafs
     "-1*x"
     "-1-x+Cos(x)/Sqrt(-x)+x*Sin(1/2+x)"]
@@ -599,6 +617,12 @@
     "x-1/10"
     "-11/10+x+Cos(1/10-x)/Sqrt(-1/10+x)+(1/10-x)*Sin(3/5-x)"]
    [:modify-leafs
+    "x+1/100"
+    "-99/100+x+Cos(1/100+x)/Sqrt(1/100+x)-(1/100+x)*Sin(49/100-x)"]
+   [:modify-leafs
+    "x-1/100"
+    "-101/100+x+Cos(1/100-x)/Sqrt(-1/100+x)+(1/100-x)*Sin(51/100-x)"]
+   [:modify-leafs
     "c/2"
     "-1/2+x+Cos(x)/x^(1/4)-1/2*x*Sin(1/4-x/2)"]
    [:modify-leafs
@@ -622,6 +646,12 @@
    [:modify-leafs
     "1/c"
     "-1+x+Cos(x)/x^2-x*Sin(2-x)"]
+   [:modify-leafs
+    "c+1/100"
+    "-99/100+x+Cos(x)/x^(49/100)-99/100*x*Sin(51/100-99/100*x)"]
+   [:modify-leafs
+    "c-1/100"
+    "-101/100+x+Cos(x)/x^(51/100)-101/100*x*Sin(49/100-101/100*x)"]
    [:modify-leafs
     "c+1/2"
     "-1/2+x+Cos(x)-1/2*x*Sin(1-x/2)"]
@@ -655,18 +685,9 @@
    [:modify-ast-head
     "^->*"
     "-1+x-1/2*x*Cos(x)-x*Sin(1/2-x)"]
-   #_[:modify-ast-head
-      "/->*"
-      "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
-   #_[:modify-ast-head
-      "/->+"
-      "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    [:modify-branches
     "b derivative"
     "1-3/2*Cos(x)/x^(5/2)+15/8*Sin(x)/x^(7/2)-Sin(x)/(2*x^(3/2))"]
-   #_[:modify-branches
-      "b simplify"
-      "-1+x+Cos(x)/Sqrt(x)-x*Sin(1/2-x)"]
    [:modify-branches
     "b sin"
     "-Sin(1-x-Sin(Sin(1/Sqrt(x))*Sin(Cos(x)))+Sin(x*Sin(Sin(Sin(1/2-Sin(x))))))"]

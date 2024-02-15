@@ -114,7 +114,7 @@
         (is (= (count (:initial-phenos res))
                50))
         (is (= (count (:initial-muts res))
-               86))
+               96))
         (is (= (count (:input-xs-exprs res))
                50))
         (is (= (count (:input-ys-exprs res))
