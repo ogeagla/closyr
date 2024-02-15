@@ -126,6 +126,17 @@
   [:plus :times :divide12 :divide21 :minus12 :minus21])
 
 
+(defn- check-modification-result
+  [max-leafs ^IExpr new-expr ^IExpr prev-expr]
+  (let [new-leafs       (some-> new-expr (.leafCount))
+        new-is-invalid? (or (nil? new-leafs)
+                            (nil? new-expr)
+                            (> new-leafs max-leafs))
+        discount-mod?   (or new-is-invalid?
+                            (= (str prev-expr) (str new-expr)))]
+    [new-is-invalid? discount-mod?]))
+
+
 (defn crossover
   "Do phenotype crossover on their expr AST"
   [max-leafs
@@ -150,12 +161,7 @@
                              :exp12 (F/Power e1-part e2-part)
                              :exp21 (F/Power e2-part e1-part))
 
-          new-leafs        (some-> new-expr (.leafCount))
-          new-is-invalid?  (or (nil? new-leafs)
-                               (nil? new-expr)
-                               (> new-leafs max-leafs))
-          discount-mod?    (or new-is-invalid?
-                               (= (str e1) (str new-expr)))]
+          [new-is-invalid? discount-mod?] (check-modification-result max-leafs new-expr e1)]
 
       (if discount-mod?
         ;; keep last op:
@@ -185,7 +191,7 @@
          mods               []]
     (if (zero? mods-left-to-apply)
       {:new-pheno pheno :iters iters :mods mods}
-      (let [mod-to-apply    (rand-nth initial-muts)
+      (let [mod-to-apply (rand-nth initial-muts)
 
             ;; get the util from the discard:
             {^IExpr expr-prior :expr
@@ -205,17 +211,12 @@
                                                 " due to: " (or (.getMessage e) e)))
                                             pheno))
 
-            new-leafs       (some-> new-expr (.leafCount))
-            new-is-invalid? (or (nil? new-leafs)
-                                (nil? new-expr)
-                                (> new-leafs max-leafs))
-            discount-mod?   (or new-is-invalid?
-                                (= (str expr-prior) (str new-expr)))
+            [new-is-invalid? discount-mod?] (check-modification-result max-leafs new-expr expr-prior)
 
             ;; stop modification loop if too big or something went wrong:
-            count-to-go     (if new-is-invalid?
-                              0
-                              (dec mods-left-to-apply))]
+            count-to-go  (if new-is-invalid?
+                           0
+                           (dec mods-left-to-apply))]
         (recur
           ;; count the mod only if expr actually changed and new mod is valid:
           (if discount-mod? iters (inc iters))
