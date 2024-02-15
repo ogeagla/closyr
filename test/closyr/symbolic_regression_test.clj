@@ -102,6 +102,24 @@
                             (symreg/run-app-without-gui))))))
              100)))
 
+    (testing "with gui launcher"
+      (let [res (with-redefs-fn {#'symreg/run-solver (fn [args] args)}
+                  (fn []
+                    (#'symreg/run-app-with-gui)))]
+        (is (= (dissoc res :initial-phenos :initial-muts :input-xs-exprs :input-ys-exprs)
+               {:iters          100
+                :max-leafs      40
+                :use-flamechart false
+                :use-gui?       true}))
+        (is (= (count (:initial-phenos res))
+               50))
+        (is (= (count (:initial-muts res))
+               86))
+        (is (= (count (:input-xs-exprs res))
+               50))
+        (is (= (count (:input-ys-exprs res))
+               50))))
+
     (testing "with provided data"
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
         (fn []
