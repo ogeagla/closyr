@@ -9,7 +9,7 @@
 ;; https://en-human-begin.blogspot.com/2007/11/javas-icons-by-default.html
 ;; https://coderanch.com/t/571308/java/built-Java-icons
 
-(def all-icons
+(def ^:private all-icons
   ["Button.rolloverIconType"
    "Button.textIconGap"
    "CheckBox.textIconGap"
@@ -67,7 +67,7 @@
    "Tree.openIcon"])
 
 
-(defn get-builtin-icons
+(defn- get-builtin-icons
   []
   ;; Hashtable<Object,Object> defs = UIManager.getDefaults();
   ;;       Enumeration en = defs.keys();

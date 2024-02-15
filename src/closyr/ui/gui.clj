@@ -237,7 +237,7 @@
    brush-label:line   sketchpad-on-click:line-brush})
 
 
-(def selectable-input-fns
+(def ^:private selectable-input-fns
   (input-data/input-y-fns-data sketchpad-size* sketch-input-x-count*))
 
 
