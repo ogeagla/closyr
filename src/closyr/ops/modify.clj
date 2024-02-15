@@ -73,7 +73,9 @@
   (assoc p :last-op (op-short-str (select-keys modif [:op :label]))))
 
 
-(defmulti modify (fn [{:keys [op]} pheno] op))
+(defmulti modify
+  "Modify a phenotype using provided modification/mutation"
+  (fn [{:keys [op]} pheno] op))
 
 
 (defmethod modify :modify-substitute

@@ -151,7 +151,7 @@
     (let [exited* (atom nil)]
       (is (=
             (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 100)
-                             #'symreg/exit              (fn [] (reset! exited* true))}
+                             #'symreg/exit              (fn [_] (reset! exited* true))}
               (fn []
                 (some->
                   (core/-main "-t" "-p" "20" "-i" "10" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6")

@@ -554,7 +554,7 @@
         iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
                          (ops-init/initial-phenotypes (/ input-phenos-count
-                                                         (count ops-init/initial-exprs)))
+                                                         (count (ops-init/initial-exprs))))
                          initial-phenos)
 
         run-config     (assoc run-config
@@ -631,7 +631,8 @@
   (solve
     [this]
     (let [symbolic-regression-solver-fn (fn []
-                                          (run-from-inputs this
+                                          (run-from-inputs
+                                            this
                                             (if use-gui?
                                               (start-gui-and-get-input-data this)
                                               (get-input-data this))))]
@@ -678,17 +679,23 @@
 (defn- run-app-with-gui
   []
   (run-solver
-    {:initial-phenos (ops-init/initial-phenotypes 1000)
+    {:initial-phenos (ops-init/initial-phenotypes (/ 50 (count (ops-init/initial-exprs))))
      :initial-muts   (ops-init/initial-mutations)
+     :iters          100
+     :use-gui?       true
+     :max-leafs      ops/default-max-leafs
      :input-xs-exprs example-input-xs-exprs
-     :input-ys-exprs example-input-ys-exprs
-     :iters          200
-     :use-gui?       true}))
+     :input-ys-exprs example-input-ys-exprs}))
+
+
+(def ^:private ^:dynamic *is-testing* false)
 
 
 (defn- exit
-  []
-  #_(System/exit 0))
+  [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
+  (when (and headless (not *is-testing*))
+    (log/warn "System Exit 0")
+    (System/exit 0)))
 
 
 (defn run-app-from-cli-args
@@ -696,7 +703,7 @@
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   (binding [*use-flamechart* use-flamechart]
-    (let [run-config {:initial-phenos (ops-init/initial-phenotypes (/ population (count ops-init/initial-exprs)))
+    (let [run-config {:initial-phenos (ops-init/initial-phenotypes (/ population (count (ops-init/initial-exprs))))
                       :initial-muts   (ops-init/initial-mutations)
                       :iters          iterations
                       :use-gui?       (not headless)
@@ -709,10 +716,12 @@
                                         example-input-ys-exprs)}
           result     (run-solver run-config)]
       (log/info "CLI: Done!")
-      (exit)
+      (exit cli-opts)
       result)))
 
 
+(comment (macroexpand-1 `(log/info "Hello")))
+(comment (log/info "Hello"))
 (comment (run-app-without-gui))
 (comment (binding [*use-flamechart* true] (run-app-with-gui)))
 (comment (run-app-with-gui))
