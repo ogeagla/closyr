@@ -477,7 +477,7 @@
       (log/info "Running with logging every n steps: " (:log-steps run-config))
 
       (assoc this :ga-result init-pop
-             :iters iters
+             :iters-to-go iters
              :start-ms start)))
 
 
@@ -485,7 +485,7 @@
     [this]
     (let [{:keys [iters log-steps]} run-config
           population  (:ga-result this)
-          iters-to-go (:iters this)]
+          iters-to-go (:iters-to-go this)]
       (binding [ops/*log-steps* log-steps]
         (if (zero? iters-to-go)
           (assoc this :status :done :result {:iters-done       (- iters iters-to-go)
@@ -493,13 +493,13 @@
                                              :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
-            (assoc this :ga-result ga-result :iters (next-iters iters-to-go scores)))))))
+            (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 
 
   (next-state
     [this]
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
-          iters-to-go         (:iters this)
+          iters-to-go         (:iters-to-go this)
           population          (:ga-result this)
           should-return-state (and use-gui? (check-gui-command-and-maybe-park run-args))]
       (if (and use-gui? should-return-state)
@@ -517,7 +517,7 @@
 
   (run-iteration
     [this]
-    (let [{iter-status :status iters-to-go :iters ga-result :ga-result
+    (let [{iter-status :status iters-to-go :iters-to-go ga-result :ga-result
            done-result :result
            :as         res} (solver-step this)]
       (if (= :done iter-status)
@@ -530,7 +530,7 @@
 
   (end
     [this {:keys [next-step] :as return-value}]
-    (print-end-time (:start-ms this) (- (:iters run-config) (:iters this)) next-step)
+    (print-end-time (:start-ms this) (- (:iters run-config) (:iters-to-go this)) next-step)
     return-value))
 
 
