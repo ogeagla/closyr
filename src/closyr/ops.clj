@@ -169,7 +169,7 @@
    initial-muts
    p
    p-discard]
-  (let [crossover-result (ops-modify/crossover p p-discard)]
+  (let [crossover-result (ops-modify/crossover max-leafs p p-discard)]
     (when crossover-result
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or

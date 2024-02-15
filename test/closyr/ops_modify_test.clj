@@ -160,6 +160,7 @@
                                            {:sym  x
                                             :expr (.plus (F/num 1.0) x)})]
       (is (= iters 1))
+      (is (= (count mods) 1))
       (is (= (str (:expr new-pheno))
              (str (F/Cos (.plus (F/num 1.0) x)))))))
 
@@ -179,7 +180,8 @@
                                                 :expr x}
                                                {:sym  x
                                                 :expr x})))]
-      (is (= iters 2))
+      (is (= iters 0))
+      (is (= (count mods) 0))
       (is (= @div-by-zero* 2))
       (is (= (str (:expr new-pheno))
              (str x)))))
@@ -200,7 +202,8 @@
                                                 :expr x}
                                                {:sym  x
                                                 :expr x})))]
-      (is (= iters 2))
+      (is (= iters 0))
+      (is (= (count mods) 0))
       (is (= @div-by-zero* 0))
       (is (= (str (:expr new-pheno))
              (str x)))))
@@ -221,6 +224,7 @@
                                            {:sym  x
                                             :expr (.plus (F/num 1.0) x)})]
       (is (= iters 2))
+      (is (= (count mods) 2))
       (is (= (str (:expr new-pheno))
              "Cos(Cos(Cos(1.0+x)))"))))
 
@@ -302,6 +306,7 @@
                                                  {:sym  x
                                                   :expr (.plus (F/num 1.0) x)})]
             (is (= iters 5))
+            (is (= (count mods) 5))
             (is (= (str (:expr new-pheno))
                    "-Sqrt(x)+1.6*ArcCos(1.6*(1.5+x))"))))))))
 
@@ -315,6 +320,7 @@
           (testing "Can crossover mix of IExpr and IAST"
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr (F/Cos x)}
                             {:sym  x
@@ -322,6 +328,7 @@
                    (str (F/Plus x (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr (F/Plus F/C1 F/C1D3)}
                             {:sym  x
@@ -329,6 +336,7 @@
                    (str (F/Plus F/C1 (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))}
                             {:sym  x
@@ -336,6 +344,7 @@
                    (str (F/Plus F/E (F/Times x (F/Cos (F/Subtract F/C1D2 x)))))))
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr F/C1D2}
                             {:sym  x
@@ -343,6 +352,7 @@
                    (str (F/Plus F/C1D2 (F/Times x (F/Cos (F/Subtract F/C2 x)))))))
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr F/C1D2}
                             {:sym  x
@@ -356,11 +366,22 @@
           (testing "Can crossover mix of IExpr and IAST with Times"
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
-                   (str (F/Times F/C4 (F/Times x (F/Cos (F/Subtract F/C1D2 x))))))))))))
+                   (str (F/Times F/C4 (F/Times x (F/Cos (F/Subtract F/C1D2 x))))))))
+
+          (testing "Can crossover mix of IExpr and IAST with Times if under max-leafs"
+            (is (= (str (:expr
+                          (ops-modify/crossover
+                            1
+                            {:sym  x
+                             :expr F/C4}
+                            {:sym  x
+                             :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
+                   (str F/C4))))))))
 
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
@@ -370,6 +391,7 @@
           (testing "Can crossover mix of IExpr and IAST with Divide12"
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
@@ -384,6 +406,7 @@
           (testing "Can crossover mix of IExpr and IAST with Minus12"
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
@@ -398,6 +421,7 @@
           (testing "Can crossover mix of IExpr and IAST with Exp12"
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr F/C4}
                             {:sym  x
@@ -412,6 +436,7 @@
           (testing "Can crossover mix of IExpr and IAST with Exp21"
             (is (= (str (:expr
                           (ops-modify/crossover
+                            100
                             {:sym  x
                              :expr F/C4}
                             {:sym  x

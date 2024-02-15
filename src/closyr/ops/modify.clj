@@ -135,12 +135,11 @@
 
 (defn crossover
   "Do phenotype crossover on their expr AST"
-  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p} p-discard]
+  [max-leafs
+   {^IAST e1 :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p}
+   {^IAST e2 :expr :as p-discard}]
   (try
-    (let [^IExpr e1        (:expr p)
-          ^IExpr e2        (:expr p-discard)
-
-          ^IExpr e1-part   (if (is-expr-function? e1)
+    (let [^IExpr e1-part   (if (is-expr-function? e1)
                              (.getArg e1 (inc (rand-int (dec (.size e1)))) nil)
                              e1)
 
@@ -156,12 +155,24 @@
                              :plus (F/Plus e1-part e2-part)
                              :times (F/Times e1-part e2-part)
                              :exp12 (F/Power e1-part e2-part)
-                             :exp21 (F/Power e2-part e1-part))]
+                             :exp21 (F/Power e2-part e1-part))
 
-      (-> x-sym
-          (ops-common/->phenotype new-expr (:util p-discard))
-          (with-recent-mod-metadata {:label (name crossover-flavor)
-                                     :op    :modify-crossover})))
+          new-leafs        (some-> new-expr (.leafCount))
+          new-is-invalid?  (or (nil? new-leafs)
+                               (nil? new-expr)
+                               (> new-leafs max-leafs))
+          discount-mod?    (or new-is-invalid?
+                               (= (str e1) (str new-expr)))]
+
+      (if discount-mod?
+        ;; keep last op:
+        (merge p (ops-common/->phenotype x-sym e1 (:util p-discard)))
+
+        ;; record new last op:
+        (-> x-sym
+            (ops-common/->phenotype new-expr (:util p-discard))
+            (with-recent-mod-metadata {:label (name crossover-flavor)
+                                       :op    :modify-crossover}))))
     (catch Exception e
       (log/error "Error in ops/crossover: " (.getMessage e))
       nil)))
@@ -175,38 +186,54 @@
 (defn apply-modifications
   "Apply a sequence of modifications"
   [max-leafs mods-count initial-muts p-winner p-discard]
-  (loop [iters 0
-         c     mods-count
-         pheno p-winner
-         mods  []]
-    (if (zero? c)
+  (loop [iters              0
+         mods-left-to-apply mods-count
+         pheno              p-winner
+         mods               []]
+    (if (zero? mods-left-to-apply)
       {:new-pheno pheno :iters iters :mods mods}
-      (let [pheno           (if (zero? iters) (assoc pheno :util (:util p-discard)) pheno)
-            mod-to-apply    (rand-nth initial-muts)
-            new-pheno       (try
-                              (modify mod-to-apply pheno)
-                              (catch Exception e
-                                (if (= "Infinite expression 1/0 encountered." (.getMessage e))
-                                  (divided-by-zero)
-                                  (log/warn "Warning, mutation failed: " (:label mod-to-apply)
-                                            " on: " (type (:expr pheno)) " / " (str (:expr pheno))
-                                            " due to: " (or (.getMessage e) e)))
-                                pheno))
+      (let [mod-to-apply    (rand-nth initial-muts)
 
-            ^IExpr new-expr (:expr new-pheno)
+            ;; get the util from the discard:
+            {^IExpr expr-prior :expr
+             :as               pheno} (if (= mods-left-to-apply mods-count)
+                                        (assoc pheno :util (:util p-discard))
+                                        pheno)
+
+            {^IExpr new-expr :expr
+             :as             new-pheno} (try
+                                          (modify mod-to-apply pheno)
+                                          (catch Exception e
+                                            (if (= "Infinite expression 1/0 encountered." (.getMessage e))
+                                              (divided-by-zero)
+                                              (log/warn
+                                                "Warning, mutation failed: " (:label mod-to-apply)
+                                                " on: " (type expr-prior) " / " (str expr-prior)
+                                                " due to: " (or (.getMessage e) e)))
+                                            pheno))
+
             new-leafs       (some-> new-expr (.leafCount))
+            new-is-invalid? (or (nil? new-leafs)
+                                (nil? new-expr)
+                                (> new-leafs max-leafs))
+            discount-mod?   (or new-is-invalid?
+                                (= (str expr-prior) (str new-expr)))
 
             ;; stop modification loop if too big or something went wrong:
-            count-to-go     (if (or (nil? new-leafs)
-                                    (nil? new-expr)
-                                    (> new-leafs max-leafs))
+            count-to-go     (if new-is-invalid?
                               0
-                              (dec c))]
+                              (dec mods-left-to-apply))]
         (recur
-          (inc iters)
+          ;; count the mod only if expr actually changed and new mod is valid:
+          (if discount-mod? iters (inc iters))
+
           count-to-go
-          (if (and new-leafs new-expr) new-pheno pheno)
-          (into mods [(select-keys mod-to-apply [:label :op])]))))))
+
+          ;; use previous pheno if new one is invalid:
+          (if discount-mod? pheno new-pheno)
+
+          ;; record the mod applied:
+          (if discount-mod? mods (into mods [(select-keys mod-to-apply [:label :op])])))))))
 
 
 (def mutations-sampler
