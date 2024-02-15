@@ -142,7 +142,7 @@
    p-discard]
   (try
     (let [start   (Date.)
-          [new-pheno iters mods] (ops-modify/apply-modifications
+          {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
                                    max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
           diff-ms (ops-common/start-date->diff-ms start)]
 
@@ -169,7 +169,7 @@
    initial-muts
    p
    p-discard]
-  (let [crossover-result (ops-modify/crossover p p-discard)]
+  (let [crossover-result (ops-modify/crossover max-leafs p p-discard)]
     (when crossover-result
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or

@@ -81,47 +81,40 @@
 (defmethod modify :modify-substitute
   [{:keys [label ^IExpr find-expr ^IExpr replace-expr] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (-> x-sym
-      (ops-common/->phenotype (.subs expr find-expr replace-expr) util)
-      (with-recent-mod-metadata modif)))
+  (ops-common/->phenotype x-sym (.subs expr find-expr replace-expr) util))
 
 
 (defmethod modify :modify-leafs
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->
+  (ops-common/->phenotype
     x-sym
-    (ops-common/->phenotype
-      (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-recent-mod-metadata modif)))
+    (.replaceAll expr (tree-leaf-modifier (partial leaf-modifier-fn (.leafCount expr) pheno)))
+    util))
 
 
 (defmethod modify :modify-branches
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->
+  (ops-common/->phenotype
     x-sym
-    (ops-common/->phenotype
-      (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-recent-mod-metadata modif)))
+    (.replaceAll expr (tree-branch-modifier (partial leaf-modifier-fn (.leafCount expr) pheno)))
+    util))
 
 
 (defmethod modify :modify-ast-head
   [{:keys [label leaf-modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (->
+  (ops-common/->phenotype
     x-sym
-    (ops-common/->phenotype
-      (.replaceAll expr (tree-ast-head-modifier (partial leaf-modifier-fn (.leafCount expr) pheno))) util)
-    (with-recent-mod-metadata modif)))
+    (.replaceAll expr (tree-ast-head-modifier (partial leaf-modifier-fn (.leafCount expr) pheno)))
+    util))
 
 
 (defmethod modify :modify-fn
   [{:keys [label modifier-fn] :as modif}
    {^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as pheno}]
-  (-> x-sym
-      (ops-common/->phenotype (modifier-fn pheno) util)
-      (with-recent-mod-metadata modif)))
+  (ops-common/->phenotype x-sym (modifier-fn pheno) util))
 
 
 (defn- is-expr-function?
@@ -135,12 +128,11 @@
 
 (defn crossover
   "Do phenotype crossover on their expr AST"
-  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p} p-discard]
+  [max-leafs
+   {^IAST e1 :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p}
+   {^IAST e2 :expr :as p-discard}]
   (try
-    (let [^IExpr e1        (:expr p)
-          ^IExpr e2        (:expr p-discard)
-
-          ^IExpr e1-part   (if (is-expr-function? e1)
+    (let [^IExpr e1-part   (if (is-expr-function? e1)
                              (.getArg e1 (inc (rand-int (dec (.size e1)))) nil)
                              e1)
 
@@ -156,12 +148,24 @@
                              :plus (F/Plus e1-part e2-part)
                              :times (F/Times e1-part e2-part)
                              :exp12 (F/Power e1-part e2-part)
-                             :exp21 (F/Power e2-part e1-part))]
+                             :exp21 (F/Power e2-part e1-part))
 
-      (-> x-sym
-          (ops-common/->phenotype new-expr (:util p-discard))
-          (with-recent-mod-metadata {:label (name crossover-flavor)
-                                     :op    :modify-crossover})))
+          new-leafs        (some-> new-expr (.leafCount))
+          new-is-invalid?  (or (nil? new-leafs)
+                               (nil? new-expr)
+                               (> new-leafs max-leafs))
+          discount-mod?    (or new-is-invalid?
+                               (= (str e1) (str new-expr)))]
+
+      (if discount-mod?
+        ;; keep last op:
+        (merge p (ops-common/->phenotype x-sym e1 (:util p-discard)))
+
+        ;; record new last op:
+        (-> x-sym
+            (ops-common/->phenotype new-expr (:util p-discard))
+            (with-recent-mod-metadata {:label (name crossover-flavor)
+                                       :op    :modify-crossover}))))
     (catch Exception e
       (log/error "Error in ops/crossover: " (.getMessage e))
       nil)))
@@ -175,115 +179,81 @@
 (defn apply-modifications
   "Apply a sequence of modifications"
   [max-leafs mods-count initial-muts p-winner p-discard]
-  (loop [iters      0
-         c          mods-count
-         pheno      p-winner
-         first-run? true
-         mods       []]
-    (if (zero? c)
-      [pheno #_(maybe-simplify pheno)
-       iters
-       mods]
-      (let [pheno           (if first-run? (assoc pheno :util (:util p-discard)) pheno)
-            mod-to-apply    (rand-nth initial-muts)
-            new-pheno       (try
-                              (modify mod-to-apply pheno)
-                              (catch Exception e
-                                (if (= "Infinite expression 1/0 encountered." (.getMessage e))
-                                  (divided-by-zero)
-                                  (log/warn "Warning, mutation failed: " (:label mod-to-apply)
-                                            " on: " (type (:expr pheno)) " / " (str (:expr pheno))
-                                            " due to: " (or (.getMessage e) e)))
-                                pheno))
+  (loop [iters              0
+         mods-left-to-apply mods-count
+         pheno              p-winner
+         mods               []]
+    (if (zero? mods-left-to-apply)
+      {:new-pheno pheno :iters iters :mods mods}
+      (let [mod-to-apply    (rand-nth initial-muts)
 
-            ^IExpr new-expr (:expr new-pheno)
+            ;; get the util from the discard:
+            {^IExpr expr-prior :expr
+             :as               pheno} (if (= mods-left-to-apply mods-count)
+                                        (assoc pheno :util (:util p-discard))
+                                        pheno)
+
+            {^IExpr new-expr :expr
+             :as             new-pheno} (try
+                                          (modify mod-to-apply pheno)
+                                          (catch Exception e
+                                            (if (= "Infinite expression 1/0 encountered." (.getMessage e))
+                                              (divided-by-zero)
+                                              (log/warn
+                                                "Warning, mutation failed: " (:label mod-to-apply)
+                                                " on: " (type expr-prior) " / " (str expr-prior)
+                                                " due to: " (or (.getMessage e) e)))
+                                            pheno))
+
             new-leafs       (some-> new-expr (.leafCount))
+            new-is-invalid? (or (nil? new-leafs)
+                                (nil? new-expr)
+                                (> new-leafs max-leafs))
+            discount-mod?   (or new-is-invalid?
+                                (= (str expr-prior) (str new-expr)))
 
             ;; stop modification loop if too big or something went wrong:
-            count-to-go     (if (or (nil? new-leafs)
-                                    (nil? new-expr)
-                                    (> new-leafs max-leafs))
+            count-to-go     (if new-is-invalid?
                               0
-                              (dec c))]
+                              (dec mods-left-to-apply))]
         (recur
-          (inc iters)
+          ;; count the mod only if expr actually changed and new mod is valid:
+          (if discount-mod? iters (inc iters))
+
           count-to-go
-          (if (and new-leafs new-expr) new-pheno pheno)
-          false
-          (into mods [(select-keys mod-to-apply [:label :op])]))))))
+
+          ;; use previous pheno if new one is invalid:
+          (if discount-mod? pheno (with-recent-mod-metadata new-pheno mod-to-apply))
+
+          ;; record the mod applied:
+          (if discount-mod? mods (into mods [(select-keys mod-to-apply [:label :op])])))))))
 
 
 (def mutations-sampler
   "A coll whose random element is the number of modifications to apply in succession"
   (->>
     []
-    (concat (repeat 50 1))
-    (concat (repeat 30 2))
-    (concat (repeat 20 3))
-    (concat (repeat 15 4))
-    (concat (repeat 9 5))
-    (concat (repeat 8 6))
-    (concat (repeat 7 7))
-    (concat (repeat 6 8))
-    (concat (repeat 5 9))
-    (concat (repeat 4 10))
-    (concat (repeat 3 11))
-    (concat (repeat 2 12))
-    (concat (repeat 2 13))
-    (concat (repeat 1 14))
-    (concat (repeat 1 15))
-    ;; (concat (repeat 1 16))
-    ;; (concat (repeat 2 17))
-    ;; (concat (repeat 1 18))
-    ;; (concat (repeat 1 19))
-    ;; (concat (repeat 1 20))
-
-    vec)
-  #_[1 1 1 1 1 1 1 1 1
-     1 1 1 1 1 1 1 1 1
-     1 1 1 1 1 1 1 1 1
-     1 1 1 1 1 1 1 1 1
-     2 2 2 2 2 2
-     2 2 2 2 2 2
-     2 2 2 2 2 2
-     2 2 2 2 2 2
-     3 3 3 3
-     3 3 3 3
-     3 3 3 3
-     3 3 3 3
-     4 4 4
-     4 4 4
-     4 4 4
-     4 4 4
-     5 5 5
-     5 5 5
-     5 5 5
-     5 5
-     6 6
-     6 6
-     6 6
-     6 6
-     7 7
-     7 7
-     7 7
-     7
-     8 8
-     8 8
-     8 8
-     9 9
-     9 9
-     9
-     10 10
-     10
-     11 11
-     11
-     12 12
-     13 13
-     14
-     15
-     16
-     17
-     18
-     19
-     20
-     ])
+    (concat (repeat 60 1))
+    (concat (repeat 40 2))
+    (concat (repeat 25 3))
+    (concat (repeat 20 4))
+    (concat (repeat 19 5))
+    (concat (repeat 18 6))
+    (concat (repeat 17 7))
+    (concat (repeat 16 8))
+    (concat (repeat 15 9))
+    (concat (repeat 14 10))
+    (concat (repeat 13 11))
+    (concat (repeat 12 12))
+    (concat (repeat 11 13))
+    (concat (repeat 10 14))
+    (concat (repeat 9 15))
+    (concat (repeat 8 16))
+    (concat (repeat 7 17))
+    (concat (repeat 6 18))
+    (concat (repeat 5 19))
+    (concat (repeat 4 20))
+    (concat (repeat 3 21))
+    (concat (repeat 2 22))
+    (concat (repeat 1 23))
+    vec))

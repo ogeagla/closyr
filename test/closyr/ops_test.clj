@@ -89,7 +89,8 @@
 
 (deftest mutation-fn-test
   (testing "exception in modify"
-    (with-redefs-fn {#'ops-modify/apply-modifications (fn [_ _ _ _ _] (throw (Exception. "Testing failed apply modifications")))}
+    (with-redefs-fn {#'ops-modify/apply-modifications
+                     (fn [_ _ _ _ _] (throw (Exception. "Testing failed apply modifications")))}
       (fn []
         (is (=
               (ops/mutation-fn {:max-leafs 100} [] {} {})
@@ -98,19 +99,23 @@
   (testing "long running mod"
     (let [x (F/Dummy "x")]
       (binding [ops/*long-running-mutation-thresh-ms* 100]
-        (with-redefs-fn {#'ops-modify/apply-modifications (fn [max-leafs mods-count initial-muts p-winner p-discard]
-                                                            (Thread/sleep 500)
-                                                            [p-winner 1 []])}
+        (with-redefs-fn {#'ops-modify/apply-modifications
+                         (fn [max-leafs mods-count initial-muts p-winner p-discard]
+                           (Thread/sleep 500)
+                           {:new-pheno p-winner :iters 1 :mods []})}
           (fn []
             (is (=
-                  (str (:expr (ops/mutation-fn {:max-leafs 100}
-                                               [{:op               :modify-leafs
-                                                 :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                                     (if (= (.toString ie) "x")
-                                                                       (F/Sin ie)
-                                                                       ie))}]
-                                               (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1) nil)
-                                               (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil))))
+                  (str (:expr (ops/mutation-fn
+                                {:max-leafs 100}
+                                [{:op               :modify-leafs
+                                  :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                ^IExpr ie]
+                                                      (if (= (.toString ie) "x")
+                                                        (F/Sin ie)
+                                                        ie))}]
+                                (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1) nil)
+                                (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil))))
                   "-1+x^2"))))))))
 
 

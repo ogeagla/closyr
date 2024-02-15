@@ -49,10 +49,10 @@
 (defn- pop->chunks
   [all-pop]
   (cond
-    (>= (count all-pop) 10000) 200
-    (>= (count all-pop) 2000) 100
-    (>= (count all-pop) 500) 40
-    :else 20))
+    (>= (count all-pop) 10000) 100
+    (>= (count all-pop) 2000) 50
+    (>= (count all-pop) 500) 20
+    :else 10))
 
 
 (defn evolve
