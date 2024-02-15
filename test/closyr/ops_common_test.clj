@@ -107,6 +107,17 @@
              {:expr    "x"
               :simple? true}))))
 
+  (testing "with exception"
+    (with-redefs-fn {#'ops-common/simplify (fn [^IAST expr]
+                                             (throw (Exception. "Test Exception")))}
+      (fn []
+        (let [x (F/Dummy "x")]
+          (is (= (dissoc (update (ops-common/maybe-simplify {:expr (F/Log (F/ArcSin x)) :util (ops-common/new-util)})
+                         :expr str)
+                         :util)
+                 {:expr    "Log(ArcSin(x))"
+                  :simple? true}))))))
+
   (testing "simplify function too long"
     (let [x (F/Dummy "x")]
       (is (= (binding [ops-common/*simplify-max-leafs* 10]

@@ -130,9 +130,11 @@
       (log/error "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
+
 (def ^:dynamic *long-running-mutation-thresh-ms*
   "If a mutation takes longer than this in ms, log info about it"
   5000)
+
 
 (defn mutation-fn
   "Symbolic regression mutation"
@@ -143,7 +145,7 @@
   (try
     (let [start   (Date.)
           {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
-                                   max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
+                                           max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
           diff-ms (ops-common/start-date->diff-ms start)]
 
       (when (> diff-ms *long-running-mutation-thresh-ms*)
@@ -223,18 +225,22 @@
                      {:crossovers-count xcs})
               (assoc :scoring
                      {:len-deductions (count len-deductions)
-                      :len-ded-mean   (/ (sum len-deductions) (count len-deductions))
+                      :len-ded-mean   (when (seq len-deductions)
+                                        (/ (sum len-deductions) (count len-deductions)))
                       :len-ded-min    (first len-deductions-sorted)
                       :len-ded-max    (last len-deductions-sorted)
-                      :len-ded-med    (nth len-deductions-sorted
-                                           (/ (count len-deductions-sorted) 2))})
+                      :len-ded-med    (when (seq len-deductions)
+                                        (nth len-deductions-sorted
+                                             (/ (count len-deductions-sorted) 2)))})
               (assoc :mutations
                      {:counts              (reverse (sort-by second cs))
-                      :sz-in-mean-max-min  [(Math/round ^double (/ (sum sz-in) (count sz-in)))
+                      :sz-in-mean-max-min  [(when (seq sz-in)
+                                              (Math/round ^double (/ (sum sz-in) (count sz-in))))
                                             (last sz-in-sorted)
                                             (first sz-in-sorted)]
 
-                      :sz-out-mean-max-min [(Math/round ^double (/ (sum sz-out) (count sz-out)))
+                      :sz-out-mean-max-min [(when (seq sz-out)
+                                              (Math/round ^double (/ (sum sz-out) (count sz-out))))
                                             (last sz-out-sorted)
                                             (first sz-out-sorted)]}))]
       (str "muts:" (count sz-in) " min scores: " min-scores

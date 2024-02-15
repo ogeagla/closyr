@@ -10,6 +10,7 @@
 
 (alter-var-root #'symreg/*is-testing* (constantly true))
 
+
 (deftest end-iters-if-solution-found-test
   (testing "not solved"
     (is (=
@@ -40,15 +41,16 @@
                      :headless       true
                      :xs             [0 1 2]
                      :ys             [1 4 19]
-                     :use-flamechart false
+                     :use-flamechart true
                      :max-leafs      20})))
               {:next-step :stop}))
 
         (is (= @args*
-               [{:iters     20
-                 :log-steps 200
-                 :max-leafs 20
-                 :use-gui?  false}
+               [{:iters          20
+                 :log-steps      200
+                 :max-leafs      20
+                 :use-gui?       false
+                 :use-flamechart true}
                 {:input-iters        20
                  :input-phenos-count nil
                  :input-xs-count     3
@@ -76,10 +78,11 @@
               {:next-step :stop}))
 
         (is (= @args*
-               [{:iters     20
-                 :log-steps 200
-                 :max-leafs 40
-                 :use-gui?  false}
+               [{:iters          20
+                 :log-steps      200
+                 :max-leafs      40
+                 :use-gui?       false
+                 :use-flamechart nil}
                 {:input-iters        20
                  :input-phenos-count nil
                  :input-xs-count     50
@@ -99,6 +102,24 @@
                             (symreg/run-app-without-gui))))))
              100)))
 
+    (testing "with gui launcher"
+      (let [res (with-redefs-fn {#'symreg/run-solver (fn [args] args)}
+                  (fn []
+                    (#'symreg/run-app-with-gui)))]
+        (is (= (dissoc res :initial-phenos :initial-muts :input-xs-exprs :input-ys-exprs)
+               {:iters          100
+                :max-leafs      40
+                :use-flamechart false
+                :use-gui?       true}))
+        (is (= (count (:initial-phenos res))
+               50))
+        (is (= (count (:initial-muts res))
+               86))
+        (is (= (count (:input-xs-exprs res))
+               50))
+        (is (= (count (:input-ys-exprs res))
+               50))))
+
     (testing "with provided data"
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
         (fn []
@@ -108,6 +129,7 @@
                    :initial-muts       (ops-init/initial-mutations)
                    :iters              5
                    :use-gui?           false
+                   :use-flamechart     true
                    :input-xs-exprs     (->> (range 50)
                                             (map (fn [i] (* Math/PI (/ i 15.0))))
                                             ops-common/doubles->exprs)
@@ -209,8 +231,17 @@
                                             {:new-state          :restart
                                              :input-data-x       [0 1 2 3 4]
                                              :input-data-y       [1 13 16 8 8]
-                                             :input-iters        500
+                                             :input-iters        1500
                                              :input-phenos-count 500}))
+
+                                  (<! (timeout 200))
+
+                                  (is (put! symreg/*sim-stop-start-chan*
+                                            {:new-state          :restart
+                                             :input-data-x       [0 1 2 3 4]
+                                             :input-data-y       [1 13 16 8 8]
+                                             :input-iters        5
+                                             :input-phenos-count 5}))
 
                                   (<! (timeout 200))
 

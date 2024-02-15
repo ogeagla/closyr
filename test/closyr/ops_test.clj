@@ -64,6 +64,20 @@
               10)
              -1.500015))))
 
+  (testing "throws exception"
+    (let [x (F/Dummy "x")]
+      (is (= (with-redefs-fn
+               {#'ops/compute-residual (fn [_ _] (throw (Exception. "Test Exception")))}
+
+               (fn []
+                 (#'ops/compute-score-from-actuals-and-expecteds
+                  (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
+                  [0.5]
+                  [1.0]
+                  10)))
+
+             ops/min-score))))
+
   (testing "without length deduction"
     (with-redefs-fn {#'ops/length-deduction (fn [score leafs] score)}
       (fn []
