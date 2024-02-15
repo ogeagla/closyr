@@ -175,16 +175,13 @@
 (defn apply-modifications
   "Apply a sequence of modifications"
   [max-leafs mods-count initial-muts p-winner p-discard]
-  (loop [iters      0
-         c          mods-count
-         pheno      p-winner
-         first-run? true
-         mods       []]
+  (loop [iters 0
+         c     mods-count
+         pheno p-winner
+         mods  []]
     (if (zero? c)
-      [pheno #_(maybe-simplify pheno)
-       iters
-       mods]
-      (let [pheno           (if first-run? (assoc pheno :util (:util p-discard)) pheno)
+      {:new-pheno pheno :iters iters :mods mods}
+      (let [pheno           (if (zero? iters) (assoc pheno :util (:util p-discard)) pheno)
             mod-to-apply    (rand-nth initial-muts)
             new-pheno       (try
                               (modify mod-to-apply pheno)
@@ -209,7 +206,6 @@
           (inc iters)
           count-to-go
           (if (and new-leafs new-expr) new-pheno pheno)
-          false
           (into mods [(select-keys mod-to-apply [:label :op])]))))))
 
 

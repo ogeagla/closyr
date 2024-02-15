@@ -146,76 +146,82 @@
 (deftest apply-modifications-test
   (testing "single mod: modify-branches"
     (let [x (F/Dummy "x")
-          [pheno iters mods] (ops-modify/apply-modifications
-                               100
-                               1
-                               [{:op               :modify-branches
-                                 :label            "branch cos"
-                                 :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                     (F/Cos ie))}]
-                               {:sym  x
-                                :expr (.plus (F/num 1.0) x)}
-                               {:sym  x
-                                :expr (.plus (F/num 1.0) x)})]
+          {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
+                                           100
+                                           1
+                                           [{:op               :modify-branches
+                                             :label            "branch cos"
+                                             :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                           {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                           ^IExpr ie]
+                                                                 (F/Cos ie))}]
+                                           {:sym  x
+                                            :expr (.plus (F/num 1.0) x)}
+                                           {:sym  x
+                                            :expr (.plus (F/num 1.0) x)})]
       (is (= iters 1))
-      (is (= (str (:expr pheno))
+      (is (= (str (:expr new-pheno))
              (str (F/Cos (.plus (F/num 1.0) x)))))))
 
   (testing "single mod: divide by zero"
     (let [x            (F/Dummy "x")
           div-by-zero* (atom 0)
-          [pheno iters mods] (with-redefs-fn {#'ops-modify/divided-by-zero (fn [] (swap! div-by-zero* inc))}
-                               (fn []
-                                 (ops-modify/apply-modifications
-                                   100
-                                   2
-                                   [{:op          :modify-fn
-                                     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-                                                    (.divide expr F/C0))}]
-                                   {:sym  x
-                                    :expr x}
-                                   {:sym  x
-                                    :expr x})))]
+          {:keys [new-pheno iters mods]} (with-redefs-fn {#'ops-modify/divided-by-zero
+                                                          (fn [] (swap! div-by-zero* inc))}
+                                           (fn []
+                                             (ops-modify/apply-modifications
+                                               100
+                                               2
+                                               [{:op          :modify-fn
+                                                 :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                                (.divide expr F/C0))}]
+                                               {:sym  x
+                                                :expr x}
+                                               {:sym  x
+                                                :expr x})))]
       (is (= iters 2))
       (is (= @div-by-zero* 2))
-      (is (= (str (:expr pheno))
+      (is (= (str (:expr new-pheno))
              (str x)))))
 
   (testing "single mod: divide by nonsense"
     (let [x            (F/Dummy "x")
           div-by-zero* (atom 0)
-          [pheno iters mods] (with-redefs-fn {#'ops-modify/divided-by-zero (fn [] (swap! div-by-zero* inc))}
-                               (fn []
-                                 (ops-modify/apply-modifications
-                                   100
-                                   2
-                                   [{:op          :modify-fn
-                                     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-                                                    (.divide expr F/NIL))}]
-                                   {:sym  x
-                                    :expr x}
-                                   {:sym  x
-                                    :expr x})))]
+          {:keys [new-pheno iters mods]} (with-redefs-fn {#'ops-modify/divided-by-zero
+                                                          (fn [] (swap! div-by-zero* inc))}
+                                           (fn []
+                                             (ops-modify/apply-modifications
+                                               100
+                                               2
+                                               [{:op          :modify-fn
+                                                 :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                                (.divide expr F/NIL))}]
+                                               {:sym  x
+                                                :expr x}
+                                               {:sym  x
+                                                :expr x})))]
       (is (= iters 2))
       (is (= @div-by-zero* 0))
-      (is (= (str (:expr pheno))
+      (is (= (str (:expr new-pheno))
              (str x)))))
 
   (testing "multiple mods 1"
     (let [x (F/Dummy "x")
-          [pheno iters mods] (ops-modify/apply-modifications
-                               100
-                               2
-                               [{:op               :modify-branches
-                                 :label            "branch cos"
-                                 :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                     (F/Cos ie))}]
-                               {:sym  x
-                                :expr (.plus (F/num 1.0) x)}
-                               {:sym  x
-                                :expr (.plus (F/num 1.0) x)})]
+          {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
+                                           100
+                                           2
+                                           [{:op               :modify-branches
+                                             :label            "branch cos"
+                                             :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                           {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                           ^IExpr ie]
+                                                                 (F/Cos ie))}]
+                                           {:sym  x
+                                            :expr (.plus (F/num 1.0) x)}
+                                           {:sym  x
+                                            :expr (.plus (F/num 1.0) x)})]
       (is (= iters 2))
-      (is (= (str (:expr pheno))
+      (is (= (str (:expr new-pheno))
              "Cos(Cos(Cos(1.0+x)))"))))
 
 
@@ -225,23 +231,28 @@
                        #'prng/rand-nth (fn [coll] (nth coll (swap! rand* inc)))}
         (fn []
           (let [x (F/Dummy "x")
-                [pheno iters mods] (ops-modify/apply-modifications
-                                     100
-                                     2
-                                     [{:op               :modify-branches
-                                       :label            "branch cos"
-                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (F/Cos ie))}
-                                      {:op               :modify-branches
-                                       :label            "branch sin"
-                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (F/Sin ie))}]
-                                     {:sym  x
-                                      :expr (.plus (F/num 1.0) x)}
-                                     {:sym  x
-                                      :expr (.plus (F/num 1.0) x)})]
+                {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
+                                                 100
+                                                 2
+                                                 [{:op               :modify-branches
+                                                   :label            "branch cos"
+                                                   :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                                 {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                                 ^IExpr ie]
+                                                                       (F/Cos ie))}
+                                                  {:op               :modify-branches
+                                                   :label            "branch sin"
+                                                   :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                                 {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                                 ^IExpr ie]
+                                                                       (F/Sin ie))}]
+                                                 {:sym  x
+                                                  :expr (.plus (F/num 1.0) x)}
+                                                 {:sym  x
+                                                  :expr (.plus (F/num 1.0) x)})]
             (is (= iters 2))
-            (is (= (str (:expr pheno))
+            (is (= (count mods) 2))
+            (is (= (str (:expr new-pheno))
                    "Sin(Cos(Sin(1.0+x)))")))))))
 
 
@@ -251,39 +262,47 @@
                        #'prng/rand-nth (fn [coll] (nth coll (swap! rand* inc)))}
         (fn []
           (let [x (F/Dummy "x")
-                [pheno iters mods] (ops-modify/apply-modifications
-                                     100
-                                     5
-                                     [{:op               :modify-branches
-                                       :label            "branch cos"
-                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (F/Cos ie))}
-                                      {:op               :modify-branches
-                                       :label            "b*1.1"
-                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (F/Times ie (F/num 1.1)))}
-                                      {:op               :modify-ast-head
-                                       :label            "cos->acos"
-                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (if (= F/Cos ie)
-                                                             F/ArcCos
-                                                             ie))}
-                                      {:op               :modify-leafs
-                                       :label            "c+1/2"
-                                       :leaf-modifier-fn (fn ^IExpr [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno} ^IExpr ie]
-                                                           (if (.isNumber ie)
-                                                             (F/Plus ie (F/Divide 1 F/C2))
-                                                             ie))}
-                                      {:op          :modify-fn
-                                       :label       "-x^1/2"
-                                       :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-                                                      (F/Subtract expr (F/Sqrt x-sym)))}]
-                                     {:sym  x
-                                      :expr (.plus (F/num 1.0) x)}
-                                     {:sym  x
-                                      :expr (.plus (F/num 1.0) x)})]
+                {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
+                                                 100
+                                                 5
+                                                 [{:op               :modify-branches
+                                                   :label            "branch cos"
+                                                   :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                                 {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                                 ^IExpr ie]
+                                                                       (F/Cos ie))}
+                                                  {:op               :modify-branches
+                                                   :label            "b*1.1"
+                                                   :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                                 {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                                 ^IExpr ie]
+                                                                       (F/Times ie (F/num 1.1)))}
+                                                  {:op               :modify-ast-head
+                                                   :label            "cos->acos"
+                                                   :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                                 {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                                 ^IExpr ie]
+                                                                       (if (= F/Cos ie)
+                                                                         F/ArcCos
+                                                                         ie))}
+                                                  {:op               :modify-leafs
+                                                   :label            "c+1/2"
+                                                   :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                                                 {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                                                 ^IExpr ie]
+                                                                       (if (.isNumber ie)
+                                                                         (F/Plus ie (F/Divide 1 F/C2))
+                                                                         ie))}
+                                                  {:op          :modify-fn
+                                                   :label       "-x^1/2"
+                                                   :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
+                                                                  (F/Subtract expr (F/Sqrt x-sym)))}]
+                                                 {:sym  x
+                                                  :expr (.plus (F/num 1.0) x)}
+                                                 {:sym  x
+                                                  :expr (.plus (F/num 1.0) x)})]
             (is (= iters 5))
-            (is (= (str (:expr pheno))
+            (is (= (str (:expr new-pheno))
                    "-Sqrt(x)+1.6*ArcCos(1.6*(1.5+x))"))))))))
 
 

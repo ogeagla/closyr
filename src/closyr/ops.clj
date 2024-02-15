@@ -142,7 +142,7 @@
    p-discard]
   (try
     (let [start   (Date.)
-          [new-pheno iters mods] (ops-modify/apply-modifications
+          {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
                                    max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
           diff-ms (ops-common/start-date->diff-ms start)]
 
