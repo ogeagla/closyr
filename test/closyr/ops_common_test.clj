@@ -84,9 +84,9 @@
 
 (deftest simplify-with-slow-functions
   (testing "simplify takes a long time logs the slow fn"
-    (binding [ops-common/*long-simplify-thresh-ms* 500]
+    (binding [ops-common/*long-simplify-thresh-ms* 10]
       (with-redefs-fn {#'ops-common/simplify (fn [^IAST expr]
-                                               (Thread/sleep 600)
+                                               (Thread/sleep 10)
                                                (F/Simplify expr))}
         (fn []
           (let [x (F/Dummy "x")]

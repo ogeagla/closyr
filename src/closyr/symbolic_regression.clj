@@ -664,22 +664,15 @@
 
 (defn run-app-without-gui
   "Run app without GUI and with fake placeholder input data"
-  []
+  [xs ys]
   (run-solver
     {:initial-phenos (ops-init/initial-phenotypes 100)
      :initial-muts   (ops-init/initial-mutations)
      :iters          20
      :use-gui?       false
      :use-flamechart false
-     :input-xs-exprs (->> (range 50)
-                          (map (fn [i] (* Math/PI (/ i 15.0))))
-                          ops-common/doubles->exprs)
-     :input-ys-exprs (->> (range 50)
-                          (map (fn [i]
-                                 (+ 2.0
-                                    (/ i 10.0)
-                                    (Math/sin (* Math/PI (/ i 15.0))))))
-                          ops-common/doubles->exprs)}))
+     :input-xs-exprs (ops-common/doubles->exprs xs)
+     :input-ys-exprs (ops-common/doubles->exprs ys)}))
 
 
 (defn- run-app-with-gui

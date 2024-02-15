@@ -99,7 +99,7 @@
                       (:final-population
                         (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
                           (fn []
-                            (symreg/run-app-without-gui))))))
+                            (symreg/run-app-without-gui [1 2 3] [6 12 99]))))))
              100)))
 
     (testing "with gui launcher"
@@ -219,13 +219,13 @@
                                   (<! (timeout 100))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :pause}))
-                                  (<! (timeout 200))
+                                  (<! (timeout 100))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :start}))
                                   (<! (timeout 100))
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :pause}))
-                                  (<! (timeout 200))
+                                  (<! (timeout 100))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state          :restart
@@ -234,7 +234,7 @@
                                              :input-iters        1500
                                              :input-phenos-count 500}))
 
-                                  (<! (timeout 200))
+                                  (<! (timeout 100))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state          :restart
@@ -243,7 +243,7 @@
                                              :input-iters        5
                                              :input-phenos-count 5}))
 
-                                  (<! (timeout 200))
+                                  (<! (timeout 100))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state          :restart
@@ -252,7 +252,7 @@
                                              :input-iters        300
                                              :input-phenos-count 400}))
 
-                                  (<! (timeout 200))
+                                  (<! (timeout 100))
 
                                   (is (put! symreg/*sim-stop-start-chan*
                                             {:new-state :stop}))

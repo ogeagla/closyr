@@ -115,7 +115,7 @@
       (binding [ops/*long-running-mutation-thresh-ms* 100]
         (with-redefs-fn {#'ops-modify/apply-modifications
                          (fn [max-leafs mods-count initial-muts p-winner p-discard]
-                           (Thread/sleep 500)
+                           (Thread/sleep 200)
                            {:new-pheno p-winner :iters 1 :mods []})}
           (fn []
             (is (=
