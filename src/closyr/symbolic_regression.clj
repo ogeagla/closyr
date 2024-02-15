@@ -544,17 +544,16 @@
         next-solver-state))))
 
 
-(defn- run-from-inputs
-  "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
+(defn- merge-cli-and-gui-args
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count max-leafs input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
+
   (let [max-leafs      (or max-leafs cli-max-leafs)
         iters          (or input-iters iters)
         initial-phenos (if input-phenos-count
-                         (ops-init/initial-phenotypes (/ input-phenos-count
-                                                         (count (ops-init/initial-exprs))))
+                         (ops-init/initial-phenotypes input-phenos-count)
                          initial-phenos)
 
         run-config     (assoc run-config
@@ -563,10 +562,18 @@
                               :max-leafs (or max-leafs ops/default-max-leafs))
 
         run-config     (assoc run-config
-                              :log-steps (config->log-steps run-config run-args))
+                              :log-steps (config->log-steps run-config run-args))]
+    run-config))
 
+
+(defn- run-from-inputs
+  "Run GA as symbolic regression engine on input/output (x/y) dataset using initial functions and mutations"
+  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
+   {:keys [input-iters input-phenos-count max-leafs input-xs-list input-xs-count input-ys-vec
+           sim-stop-start-chan sim->gui-chan]
+    :as   run-args}]
+  (let [run-config (merge-cli-and-gui-args run-config run-args)
         {:keys [next-step] :as completed-ga-data} (run-ga-iterations-using-record run-config run-args)]
-
 
     (case next-step
 
@@ -679,7 +686,7 @@
 (defn- run-app-with-gui
   []
   (run-solver
-    {:initial-phenos (ops-init/initial-phenotypes (/ 50 (count (ops-init/initial-exprs))))
+    {:initial-phenos (ops-init/initial-phenotypes 50)
      :initial-muts   (ops-init/initial-mutations)
      :iters          100
      :use-gui?       true
@@ -703,7 +710,7 @@
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   (binding [*use-flamechart* use-flamechart]
-    (let [run-config {:initial-phenos (ops-init/initial-phenotypes (/ population (count (ops-init/initial-exprs))))
+    (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
                       :initial-muts   (ops-init/initial-mutations)
                       :iters          iterations
                       :use-gui?       (not headless)

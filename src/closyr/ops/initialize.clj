@@ -16,33 +16,15 @@
   "Initial exprs to use in GA evolution"
   []
   (let [^ISymbol x ops-common/sym-x]
-    [(.times x F/C1)]
-    #_[
-       ;F/C0
-       F/C1
-       x
-       x
-       x
-       ;x
-       ;(F/Times -1 (ops-common/->iexprs [x]))
-       (F/Times -1 (ops-common/->iexprs [x]))
-       (F/Times -1 (ops-common/->iexprs [x]))
-       (F/Times -1 (ops-common/->iexprs [x]))
-       ;; (F/Log x)
-       (F/Exp x)
-       (F/Sin x)
-       (F/Cos x)
-       ;; (F/Sqr x)
-       ;; (F/Times -1 (->iexprs [(F/Sqr x)]))
-       ]))
+    [(.times x F/C1)]))
 
 
 (defn initial-phenotypes
   "Initial exprs scaled up in quantity to use in GA evolution"
-  [reps]
+  [p-count]
   (let [^ISymbol x ops-common/sym-x]
     (->>
-      (repeatedly reps initial-exprs)
+      (repeatedly (/ p-count (count (initial-exprs))) initial-exprs)
       (mapcat identity)
       (mapv (fn [^IExpr expr] (ops-common/->phenotype x expr nil))))))
 
