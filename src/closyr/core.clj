@@ -3,9 +3,9 @@
   (:require
     [clojure.string :as str]
     [clojure.tools.cli :as cli]
+    [closyr.symbolic-regression :as symreg]
     [closyr.util.csv :as input-csv]
-    [closyr.util.log :as log]
-    [closyr.symbolic-regression :as symreg])
+    [closyr.util.log :as log])
   (:import
     (java.io
       File)))

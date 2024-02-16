@@ -2,12 +2,12 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [closyr.ga :as ga]
-    [closyr.util.log :as log]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
-    [closyr.util.spec :as specs]
     [closyr.ui.gui :as gui]
+    [closyr.util.log :as log]
+    [closyr.util.spec :as specs]
     [flames.core :as flames]
     [malli.core :as m]
     [seesaw.core :as ss])

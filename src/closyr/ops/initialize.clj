@@ -1,7 +1,7 @@
 (ns closyr.ops.initialize
   (:require
-    [closyr.util.log :as log]
     [closyr.ops.common :as ops-common]
+    [closyr.util.log :as log]
     [closyr.util.spec :as specs])
   (:import
     (org.matheclipse.core.expression

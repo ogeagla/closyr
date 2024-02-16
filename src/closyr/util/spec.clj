@@ -32,14 +32,14 @@
 
 
 #_(defn- disable-validate-instrumentation!
-  "Turn off all schema checks"
-  []
-  (alter-var-root #'*check-schema* (constantly false))
-  (mi/unstrument!
-    {:filters [(apply mi/-filter-ns (concat (keys (m/function-schemas))
-                                            ['closyr.util.spec-test
-                                             'cursive.tests.runner
-                                             'user]))]}))
+    "Turn off all schema checks"
+    []
+    (alter-var-root #'*check-schema* (constantly false))
+    (mi/unstrument!
+      {:filters [(apply mi/-filter-ns (concat (keys (m/function-schemas))
+                                              ['closyr.util.spec-test
+                                               'cursive.tests.runner
+                                               'user]))]}))
 
 
 (def GAPhenotype
@@ -106,10 +106,10 @@
    [:input-xs-list some?]
    [:input-xs-count pos-int?]])
 
+
 (def ScoreFnArgs
   [:map
    {:closed false}
-
    [:input-ys-vec [:vector number?]]
    [:input-xs-list some?]
    [:input-xs-count pos-int?]])
