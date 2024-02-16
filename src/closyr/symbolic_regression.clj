@@ -329,7 +329,7 @@
   [msg]
   (log/info "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
-  true)
+  :restart)
 
 
 (defn- check-gui-command-and-maybe-park
@@ -339,20 +339,18 @@
     :as   run-args}]
   (let [[{:keys [new-state] :as msg} ch] (alts!! [sim-stop-start-chan] :default :continue :priority true)]
     (when (and msg (not= msg :continue))
-      (if (= :stop new-state)
-        :stop
-        (if (= :restart new-state)
-          (restart-with-new-inputs msg)
-          (do
-            (log/info "~~~ Parking updates due to Stop command ~~~")
-            (let [{:keys [new-state] :as msg} (<!! sim-stop-start-chan)]
-              (if (= :stop new-state)
-                :stop
-                (if (= :restart new-state)
-                  (restart-with-new-inputs msg)
-                  (do
-                    (log/info "~~~ Resuming updates ~~~")
-                    nil))))))))))
+      (case new-state
+        :stop :stop
+        :restart (restart-with-new-inputs msg)
+        :pause (do
+                 (log/info "~~~ Parking updates due to Stop command ~~~")
+                 (let [{:keys [new-state] :as msg} (<!! sim-stop-start-chan)]
+                   (case new-state
+                     :stop :stop
+                     :restart (restart-with-new-inputs msg)
+                     :start (do
+                              (log/info "~~~ Resuming updates ~~~")
+                              nil))))))))
 
 
 (defn- ->run-args
@@ -479,7 +477,7 @@
       (log/info "Running with logging every n steps: " (:log-steps run-config))
 
       (assoc this :ga-result init-pop
-             :iters iters
+             :iters-to-go iters
              :start-ms start)))
 
 
@@ -487,7 +485,7 @@
     [this]
     (let [{:keys [iters log-steps]} run-config
           population  (:ga-result this)
-          iters-to-go (:iters this)]
+          iters-to-go (:iters-to-go this)]
       (binding [ops/*log-steps* log-steps]
         (if (zero? iters-to-go)
           (assoc this :status :done :result {:iters-done       (- iters iters-to-go)
@@ -495,20 +493,22 @@
                                              :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
-            (assoc this :ga-result ga-result :iters (next-iters iters-to-go scores)))))))
+            (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 
 
   (next-state
     [this]
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
-          iters-to-go   (:iters this)
-          population    (:ga-result this)
-          should-return (and use-gui? (check-gui-command-and-maybe-park run-args))]
-      (if (and use-gui? should-return)
-        (if (= :stop should-return)
+          iters-to-go         (:iters-to-go this)
+          population          (:ga-result this)
+          should-return-state (and use-gui? (check-gui-command-and-maybe-park run-args))]
+      (if (and use-gui? should-return-state)
+        (case should-return-state
+          :stop
           {:iters-done       (- iters iters-to-go)
            :final-population population
            :next-step        :stop}
+          :restart
           {:iters-done       (- iters iters-to-go)
            :final-population population
            :next-step        :restart})
@@ -517,7 +517,7 @@
 
   (run-iteration
     [this]
-    (let [{iter-status :status iters-to-go :iters ga-result :ga-result
+    (let [{iter-status :status iters-to-go :iters-to-go ga-result :ga-result
            done-result :result
            :as         res} (solver-step this)]
       (if (= :done iter-status)
@@ -530,7 +530,7 @@
 
   (end
     [this {:keys [next-step] :as return-value}]
-    (print-end-time (:start-ms this) (- (:iters run-config) (:iters this)) next-step)
+    (print-end-time (:start-ms this) (- (:iters run-config) (:iters-to-go this)) next-step)
     return-value))
 
 
@@ -676,16 +676,18 @@
 
 
 (defn- run-app-with-gui
-  []
-  (run-solver
-    {:initial-phenos (ops-init/initial-phenotypes 50)
-     :initial-muts   (ops-init/initial-mutations)
-     :iters          100
-     :use-gui?       true
-     :max-leafs      ops/default-max-leafs
-     :use-flamechart false
-     :input-xs-exprs example-input-xs-exprs
-     :input-ys-exprs example-input-ys-exprs}))
+  ([]
+   (run-app-with-gui {:use-flamechart false}))
+  ([{:keys [use-flamechart]}]
+   (run-solver
+     {:initial-phenos (ops-init/initial-phenotypes 50)
+      :initial-muts   (ops-init/initial-mutations)
+      :iters          100
+      :use-gui?       true
+      :max-leafs      ops/default-max-leafs
+      :use-flamechart use-flamechart
+      :input-xs-exprs example-input-xs-exprs
+      :input-ys-exprs example-input-ys-exprs})))
 
 
 (def ^:private ^:dynamic *is-testing* false)
@@ -723,4 +725,5 @@
 (comment (macroexpand-1 `(log/info "Hello")))
 (comment (log/info "Hello"))
 (comment (run-app-without-gui))
+(comment (run-app-with-gui {:use-flamechart true}))
 (comment (run-app-with-gui))
