@@ -307,13 +307,8 @@
     input-phenos-count :input-phenos-count
     max-leafs          :max-leafs}]
 
-  (let [input-xs-exprs (if input-data-x
-                         (ops-common/doubles->exprs input-data-x)
-                         example-input-xs-exprs)
-        input-ys-exprs (if input-data-y
-                         (ops-common/doubles->exprs input-data-y)
-                         example-input-ys-exprs)
-
+  (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
+        input-ys-exprs (ops-common/doubles->exprs input-data-y)
         input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)
         input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)]
 

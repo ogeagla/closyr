@@ -111,6 +111,17 @@
                     :input-xs-count 1})))
              nil)))
 
+
+    (testing "with failing get-arg handles error"
+      (is (=
+            (with-redefs-fn {#'ops-eval/get-arg (fn [_ _ _] (throw (Exception. "Test exception")))}
+              (fn []
+                (ops-eval/eval-vec-pheno
+                  (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
+                  {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                   :input-xs-count 1})))
+            [##Inf])))
+
     (testing "with failing conversion throws exception"
       (is (thrown? Exception
             (with-redefs-fn {#'ops-common/expr->double (fn [_] (throw (Exception. "Test exception")))}
