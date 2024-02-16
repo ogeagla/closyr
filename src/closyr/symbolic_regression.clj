@@ -452,7 +452,7 @@
   [:sequential #'GAPhenotype])
 
 
-(def ^:private Mutation
+(def ^:private GAMutation
   [:map
    {:closed true}
    [:op :keyword]
@@ -468,7 +468,7 @@
    {:closed true}
    [:iters pos-int?]
    [:initial-phenos #'GAPopulation]
-   [:initial-muts [:sequential #'Mutation]]
+   [:initial-muts [:sequential #'GAMutation]]
    [:use-gui? :boolean]
    [:max-leafs pos-int?]
    [:input-phenos-count {:optional true} pos-int?]
