@@ -467,6 +467,22 @@
    [:max-leafs [:maybe pos-int?]]])
 
 
+(def GAPhenotype
+  [:map
+   {:closed true}
+   [:id :uuid]
+   [:sym any?]
+   [:expr any?]
+   [:score double?]
+   [:util any?]
+   [:last-op {:optional true} :string]
+   [:mods-applied {:optional true} :int]])
+
+
+(def GAPopulation
+  [:sequential #'GAPhenotype])
+
+
 (defprotocol ISolverStateController
 
   "Interface which allows creation and iteration of the symbolic regression GA solver"
@@ -530,6 +546,7 @@
                                              :final-population population
                                              :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
+            (specs/check-schema! "ga-population" GAPopulation (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
             (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 
