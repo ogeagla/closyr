@@ -64,7 +64,12 @@
    :ns closyr.ops,
    :name compute-residual}},
  closyr.symbolic-regression
- {run-ga-iterations-using-record
+ {run-app-from-cli-args
+  {:schema
+   [:=> [:cat #'closyr.symbolic-regression/CLIArgs] #'closyr.symbolic-regression/SolverRunResults],
+   :ns closyr.symbolic-regression,
+   :name run-app-from-cli-args},
+  run-ga-iterations-using-record
   {:schema
    [:=> [:cat #'closyr.symbolic-regression/SolverRunConfig #'closyr.symbolic-regression/SolverRunArgs] #'closyr.symbolic-regression/SolverRunResults],
    :ns closyr.symbolic-regression,

@@ -778,8 +778,22 @@
     (System/exit 0)))
 
 
+(def ^:private CLIArgs
+  [:map
+   {:closed true}
+   [:log-level {:optional true} keyword?]
+   [:iterations any?]
+   [:population any?]
+   [:headless any?]
+   [:xs {:optional true} any?]
+   [:ys {:optional true} any?]
+   [:use-flamechart {:optional true} any?]
+   [:max-leafs {:optional true} any?]])
+
+
 (defn run-app-from-cli-args
   "Run app from CLI args"
+  {:malli/schema [:=> [:cat #'CLIArgs] #'SolverRunResults]}
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
