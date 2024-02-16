@@ -5,7 +5,8 @@
     [clojure.string :as str]
     [closyr.dataset.prng :refer :all]
     [closyr.log :as log]
-    [closyr.ops.common :as ops-common])
+    [closyr.ops.common :as ops-common]
+    [closyr.spec :as specs])
   (:import
     (java.util.function
       Function)
@@ -184,6 +185,23 @@
 
 (defn apply-modifications
   "Apply a sequence of modifications"
+  {:malli/schema
+   [:=>
+
+    ;; inputs:
+    [:cat
+     pos-int?
+     int?
+     [:sequential #'specs/GAMutation]
+     #'specs/GAPhenotype
+     #'specs/GAPhenotype]
+
+    ;; outputs:
+    [:map {:closed true}
+     [:new-pheno #'specs/GAPhenotype]
+     [:iters int?]
+     [:mods [:sequential #'specs/GAMutation]]]]}
+
   [max-leafs mods-count initial-muts p-winner p-discard]
   (loop [iters              0
          mods-left-to-apply mods-count
@@ -260,3 +278,6 @@
     ;; (concat (repeat 1 24))
     ;; (concat (repeat 1 25))
     vec))
+
+
+(specs/instrument-all!)

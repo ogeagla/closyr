@@ -33,8 +33,8 @@
 (def GAPhenotype
   [:map
    {:closed true}
-   [:id :uuid]
-   [:sym any?]
+   [:id {:optional true} :uuid]
+   [:sym some?]
    [:expr {:optional true} any?]
    [:score {:optional true} number?]
    [:util {:optional true} any?]
@@ -50,7 +50,7 @@
   [:map
    {:closed true}
    [:op :keyword]
-   [:label :string]
+   [:label {:optional true} :string]
    [:leaf-modifier-fn {:optional true} fn?]
    [:modifier-fn {:optional true} fn?]
    [:find-expr {:optional true} some?]

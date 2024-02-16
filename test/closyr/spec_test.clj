@@ -67,6 +67,12 @@
    [:=> [:cat #'closyr.spec/GAPhenotype #'closyr.spec/SolverEvalArgs] [:or [:vector number?] nil?]],
    :ns closyr.ops.eval,
    :name eval-vec-pheno}},
+ closyr.ops.modify
+ {apply-modifications
+  {:schema
+   [:=> [:cat pos-int? int? [:sequential #'closyr.spec/GAMutation] #'closyr.spec/GAPhenotype #'closyr.spec/GAPhenotype] [:map {:closed true} [:new-pheno #'closyr.spec/GAPhenotype] [:iters int?] [:mods [:sequential #'closyr.spec/GAMutation]]]],
+   :ns closyr.ops.modify,
+   :name apply-modifications}},
  closyr.ops
  {compute-residual
   {:schema [:=> [:cat number? number?] number?],
