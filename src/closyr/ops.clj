@@ -284,6 +284,7 @@
 
       (reset! test-timer* (Date.))
       (log/info i "-step pop size: " pop-size
+                " points: " (count input-ys-vec)
                 " max leafs: " max-leafs
                 " took secs: " took-s
                 " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
