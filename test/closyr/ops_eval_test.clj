@@ -140,6 +140,16 @@
                   {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))
                    :input-xs-count 1}))))))
 
+    (testing "with failing conversion handles error"
+      (is (=
+            (with-redefs-fn {#'ops-eval/get-arg (fn [_ _ _] (F/num 0.1))}
+              (fn []
+                (ops-eval/eval-vec-pheno
+                  (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
+                  {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))
+                   :input-xs-count 1})))
+            [0.1])))
+
     (testing "can eval various fns for simple inputs 2"
       (is (= (mapv
                ops-common/expr->double
