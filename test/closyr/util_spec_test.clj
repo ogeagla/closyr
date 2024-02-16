@@ -65,7 +65,7 @@
         (is (=
               (reduce + 0 (map (fn [[k v]] (count v)) ss))
               ;; the number of total defns which have malli/schema metadata in entire src:
-              10))))))
+              11))))))
 
 
 #_(deftest check-can-uninstrument

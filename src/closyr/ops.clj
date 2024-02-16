@@ -95,7 +95,9 @@
   (* (abs score) (min 0.1 (* 0.0000001 leafs leafs))))
 
 
-(defn- compute-score-from-actuals-and-expecteds
+(defn compute-score-from-actuals-and-expecteds
+  "Compute overall score for fn given some actual and expected ys"
+  {:malli/schema [:=> [:cat #'specs/GAPhenotype [:vector number?] [:vector number?] number?] number?]}
   [pheno f-of-xs input-ys-vec leafs]
   (try
     (let [abs-resids       (map compute-residual input-ys-vec f-of-xs)
