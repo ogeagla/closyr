@@ -145,8 +145,11 @@
   "Symbolic regression mutation"
   {:malli/schema
    [:=>
+
     [:cat [:map {:closed false} [:max-leafs number?]] [:sequential #'specs/GAMutation] #'specs/GAPhenotype #'specs/GAPhenotype]
-    [:maybe #'specs/GAPhenotype]]}
+
+    #'specs/GAPhenotype]}
+
   [{:keys [max-leafs]}
    initial-muts
    p-winner
@@ -170,7 +173,8 @@
 
       (assoc new-pheno :mods-applied iters))
     (catch Exception e
-      (log/error "Err in mutation: " (or (.getMessage e) e)))))
+      (log/error "Err in mutation: " (or (.getMessage e) e))
+      (assoc p-winner :util (:util p-discard)))))
 
 
 (defn crossover-fn

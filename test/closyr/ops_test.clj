@@ -108,7 +108,7 @@
                        (fn [_ _ _ _ _] (throw (Exception. "Testing failed apply modifications")))}
         (fn []
           (is (=
-                (ops/mutation-fn
+                (str (:expr (ops/mutation-fn
                   {:max-leafs 100}
                   [{:op               :modify-leafs
                     :leaf-modifier-fn (fn ^IExpr [leaf-count
@@ -118,8 +118,8 @@
                                           (F/Sin ie)
                                           ie))}]
                   (ops-common/->phenotype x (F/Subtract x F/C1) nil)
-                  (ops-common/->phenotype x (F/Plus x F/C1D2) nil))
-                nil))))))
+                  (ops-common/->phenotype x (F/Plus x F/C1D2) nil))))
+                "-1+x"))))))
 
   (testing "long running mod"
     (let [x (F/Dummy "x")]
