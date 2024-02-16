@@ -3,8 +3,8 @@
   (:require
     [clojure.string :as str]
     [clojure.tools.cli :as cli]
-    [closyr.dataset.csv :as input-csv]
-    [closyr.log :as log]
+    [closyr.util.csv :as input-csv]
+    [closyr.util.log :as log]
     [closyr.symbolic-regression :as symreg])
   (:import
     (java.io

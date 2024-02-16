@@ -2,11 +2,11 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [closyr.ga :as ga]
-    [closyr.log :as log]
+    [closyr.util.log :as log]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
-    [closyr.spec :as specs]
+    [closyr.util.spec :as specs]
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
     [malli.core :as m]
@@ -499,7 +499,7 @@
                           :final-population population
                           :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
-            (specs/validate! "GAPopulation" specs/GAPopulation (:pop ga-result))
+            (specs/validate! "GAPopulation" specs/GAPopulationPhenotypes (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
             (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 

@@ -1,7 +1,7 @@
-(ns closyr.spec
+(ns closyr.util.spec
   (:require
     [clojure.pprint :as pp]
-    [closyr.log :as log]
+    [closyr.util.log :as log]
     [malli.core :as m]
     [malli.error :as me]
     [malli.instrument :as mi]))
@@ -37,7 +37,7 @@
   (alter-var-root #'*check-schema* (constantly false))
   (mi/unstrument!
     {:filters [(apply mi/-filter-ns (concat (keys (m/function-schemas))
-                                            ['closyr.spec-test
+                                            ['closyr.util.spec-test
                                              'cursive.tests.runner
                                              'user]))]}))
 
@@ -54,8 +54,8 @@
    [:mods-applied {:optional true} :int]])
 
 
-(def GAPopulation
-  [:sequential #'GAPhenotype])
+(def GAPopulationPhenotypes
+  [:vector #'GAPhenotype])
 
 
 (def GAMutation
@@ -73,7 +73,7 @@
   [:map
    {:closed true}
    [:iters pos-int?]
-   [:initial-phenos #'GAPopulation]
+   [:initial-phenos #'GAPopulationPhenotypes]
    [:initial-muts [:sequential #'GAMutation]]
    [:use-gui? :boolean]
    [:max-leafs pos-int?]

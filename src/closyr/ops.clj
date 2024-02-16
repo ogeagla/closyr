@@ -3,12 +3,12 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
-    [closyr.dataset.prng :refer :all]
-    [closyr.log :as log]
+    [closyr.util.prng :refer :all]
+    [closyr.util.log :as log]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.modify :as ops-modify]
-    [closyr.spec :as specs])
+    [closyr.util.spec :as specs])
   (:import
     (java.text
       DecimalFormat)

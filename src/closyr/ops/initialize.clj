@@ -1,7 +1,8 @@
 (ns closyr.ops.initialize
   (:require
-    [closyr.log :as log]
-    [closyr.ops.common :as ops-common])
+    [closyr.util.log :as log]
+    [closyr.ops.common :as ops-common]
+    [closyr.util.spec :as specs])
   (:import
     (org.matheclipse.core.expression
       AST
@@ -21,6 +22,7 @@
 
 (defn initial-phenotypes
   "Initial exprs scaled up in quantity to use in GA evolution"
+  {:malli/schema [:=> [:cat pos-int?] #'specs/GAPopulationPhenotypes]}
   [p-count]
   (let [^ISymbol x ops-common/sym-x]
     (->>
@@ -31,6 +33,7 @@
 
 (defn initial-mutations
   "All mutations to use in GA evolutions"
+  {:malli/schema [:=> [:cat] [:vector #'specs/GAMutation]]}
   []
   [{:op          :modify-fn
     :label       "Derivative"
@@ -61,8 +64,8 @@
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (F/Plus expr (F/Divide 1 F/C100)))}
 
-   {:op         :modify-fn
-    :label      "-1/100"
+   {:op          :modify-fn
+    :label       "-1/100"
     :modifier-fn (fn ^IExpr [{^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
                    (F/Subtract expr (F/Divide 1 F/C100)))}
 
@@ -659,3 +662,6 @@
                         (if (ops-common/should-modify-branch leaf-count pheno)
                           (F/Subtract ie (F/num 0.1))
                           ie))}])
+
+
+(specs/instrument-all!)

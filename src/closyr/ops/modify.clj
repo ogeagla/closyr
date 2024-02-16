@@ -3,10 +3,10 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str]
-    [closyr.dataset.prng :refer :all]
-    [closyr.log :as log]
+    [closyr.util.prng :refer :all]
+    [closyr.util.log :as log]
     [closyr.ops.common :as ops-common]
-    [closyr.spec :as specs])
+    [closyr.util.spec :as specs])
   (:import
     (java.util.function
       Function)

@@ -1,4 +1,4 @@
-(ns closyr.dataset.prng
+(ns closyr.util.prng
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:import
     (clojure.lang

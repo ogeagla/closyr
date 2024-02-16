@@ -2,7 +2,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.test :refer :all]
-    [closyr.dataset.prng :as prng]
+    [closyr.util.prng :as prng]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
     [closyr.ops.modify :as ops-modify])

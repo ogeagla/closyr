@@ -2,9 +2,9 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [clojure.java.io :as io]
-    [closyr.dataset.csv :as input-csv]
+    [closyr.util.csv :as input-csv]
     [closyr.dataset.inputs :as input-data]
-    [closyr.log :as log]
+    [closyr.util.log :as log]
     [closyr.ui.plot :as plot]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]

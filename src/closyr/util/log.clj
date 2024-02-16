@@ -1,4 +1,4 @@
-(ns closyr.log
+(ns closyr.util.log
   (:require
     [clojure.pprint :as pprint]
     [clojure.string :as str])

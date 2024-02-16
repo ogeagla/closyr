@@ -1,7 +1,7 @@
 (ns closyr.ops-test
   (:require
     [clojure.test :refer :all]
-    [closyr.dataset.prng :as prng]
+    [closyr.util.prng :as prng]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]

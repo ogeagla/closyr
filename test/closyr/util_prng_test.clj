@@ -1,7 +1,7 @@
-(ns closyr.dataset-prng-test
+(ns closyr.util-prng-test
   (:require
     [clojure.test :refer :all]
-    [closyr.dataset.prng :as prng]))
+    [closyr.util.prng :as prng]))
 
 
 (defn- test-rand-int-gen

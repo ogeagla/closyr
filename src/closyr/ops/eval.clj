@@ -1,8 +1,8 @@
 (ns closyr.ops.eval
   (:require
-    [closyr.log :as log]
+    [closyr.util.log :as log]
     [closyr.ops.common :as ops-common]
-    [closyr.spec :as specs])
+    [closyr.util.spec :as specs])
   (:import
     (org.matheclipse.core.eval
       EvalControlledCallable
