@@ -455,7 +455,7 @@
 (defn- settings-max-leafs-on-change
   [^MouseEvent e]
   (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
-    (swap! experiment-settings* assoc :max-leafs (Double/parseDouble b))
+    (swap! experiment-settings* assoc :max-leafs (Integer/parseInt b))
     (log/info "max leafs changed to " b)))
 
 

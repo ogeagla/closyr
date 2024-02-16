@@ -436,6 +436,22 @@
     (reset! ops/test-timer* start)))
 
 
+(def ^:private GAPhenotype
+  [:map
+   {:closed true}
+   [:id :uuid]
+   [:sym any?]
+   [:expr any?]
+   [:score {:optional true} number?]
+   [:util any?]
+   [:last-op {:optional true} :string]
+   [:mods-applied {:optional true} :int]])
+
+
+(def ^:private GAPopulation
+  [:sequential #'GAPhenotype])
+
+
 (def ^:private Mutation
   [:map
    {:closed true}
@@ -451,7 +467,7 @@
   [:map
    {:closed true}
    [:iters pos-int?]
-   [:initial-phenos [:sequential map?]]
+   [:initial-phenos #'GAPopulation]
    [:initial-muts [:sequential #'Mutation]]
    [:use-gui? :boolean]
    [:max-leafs pos-int?]
@@ -476,22 +492,6 @@
    [:initial-phenos [:maybe [:sequential map?]]]
    [:input-phenos-count [:maybe pos-int?]]
    [:max-leafs [:maybe pos-int?]]])
-
-
-(def ^:private GAPhenotype
-  [:map
-   {:closed true}
-   [:id :uuid]
-   [:sym any?]
-   [:expr any?]
-   [:score number?]
-   [:util any?]
-   [:last-op {:optional true} :string]
-   [:mods-applied {:optional true} :int]])
-
-
-(def ^:private GAPopulation
-  [:sequential #'GAPhenotype])
 
 
 (defprotocol ISolverStateController
