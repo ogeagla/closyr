@@ -29,3 +29,75 @@
     (mi/collect!)
     (mi/instrument!)))
 
+
+(def GAPhenotype
+  [:map
+   {:closed true}
+   [:id :uuid]
+   [:sym any?]
+   [:expr {:optional true} any?]
+   [:score {:optional true} number?]
+   [:util {:optional true} any?]
+   [:last-op {:optional true} :string]
+   [:mods-applied {:optional true} :int]])
+
+
+(def GAPopulation
+  [:sequential #'GAPhenotype])
+
+
+(def GAMutation
+  [:map
+   {:closed true}
+   [:op :keyword]
+   [:label :string]
+   [:leaf-modifier-fn {:optional true} fn?]
+   [:modifier-fn {:optional true} fn?]
+   [:find-expr {:optional true} some?]
+   [:replace-expr {:optional true} some?]])
+
+
+(def SolverRunConfig
+  [:map
+   {:closed true}
+   [:iters pos-int?]
+   [:initial-phenos #'GAPopulation]
+   [:initial-muts [:sequential #'GAMutation]]
+   [:use-gui? :boolean]
+   [:max-leafs pos-int?]
+   [:input-phenos-count {:optional true} pos-int?]
+   [:log-steps pos-int?]
+   [:use-flamechart [:maybe :boolean]]
+   [:input-xs-exprs [:sequential some?]]
+   [:input-ys-exprs [:sequential some?]]])
+
+
+(def SolverRunArgs
+  [:map
+   {:closed true}
+   [:sim->gui-chan {:optional true} some?]
+   [:sim-stop-start-chan {:optional true} some?]
+   [:extended-domain-args map?]
+   [:input-xs-list some?]
+   [:input-xs-count pos-int?]
+   [:input-xs-vec [:vector double?]]
+   [:input-ys-vec [:vector double?]]
+   [:input-iters pos-int?]
+   [:initial-phenos [:maybe [:sequential map?]]]
+   [:input-phenos-count [:maybe pos-int?]]
+   [:max-leafs [:maybe pos-int?]]])
+
+
+(def SolverEvalArgs
+  [:map
+   {:closed false}
+   [:input-xs-list some?]
+   [:input-xs-count pos-int?]])
+
+
+(def SolverRunResults
+  [:map
+   {:closed true}
+   [:iters-done number?]
+   [:final-population map?]
+   [:next-step :keyword]])

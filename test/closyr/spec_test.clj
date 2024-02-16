@@ -3,7 +3,6 @@
     [clojure.pprint :as pp]
     [clojure.test :refer :all]
     [closyr.spec :as specs]
-    [closyr.symbolic-regression :as symreg]
     [malli.core :as m]))
 
 
@@ -12,21 +11,21 @@
     (is (thrown? Exception
           (specs/check-schema!
             "test-pheno"
-            #'symreg/GAPhenotype
+            #'specs/GAPhenotype
             {}))))
 
   (testing "GAMutation failure case"
     (is (thrown? Exception
           (specs/check-schema!
             "test-mutation"
-            #'symreg/GAMutation
+            #'specs/GAMutation
             {}))))
 
   (testing "GAPopulation failure case"
     (is (thrown? Exception
           (specs/check-schema!
             "test-pop"
-            #'symreg/GAPopulation
+            #'specs/GAPopulation
             {}))))
 
 
@@ -34,21 +33,21 @@
     (is (thrown? Exception
           (specs/check-schema!
             "test-solver-run-config"
-            #'symreg/SolverRunConfig
+            #'specs/SolverRunConfig
             {}))))
 
   (testing "SolverRunArgs failure case"
     (is (thrown? Exception
           (specs/check-schema!
             "test-solver-run-args"
-            #'symreg/SolverRunArgs
+            #'specs/SolverRunArgs
             {}))))
 
   (testing "SolverRunResults failure case"
     (is (thrown? Exception
           (specs/check-schema!
             "test-solver-run-results"
-            #'symreg/SolverRunResults
+            #'specs/SolverRunResults
             {})))))
 
 
@@ -58,6 +57,16 @@
   {:schema [:=> [:cat [:sequential number?]] map?],
    :ns closyr.ops.common,
    :name extend-xs}},
+ closyr.ops.eval
+ {eval-phenotype-on-expr-args
+  {:schema [:=> [:cat #'closyr.spec/GAPhenotype some?] any?],
+   :ns closyr.ops.eval,
+   :name eval-phenotype-on-expr-args},
+  eval-vec-pheno
+  {:schema
+   [:=> [:cat #'closyr.spec/GAPhenotype #'closyr.spec/SolverEvalArgs] [:or [:vector number?] nil?]],
+   :ns closyr.ops.eval,
+   :name eval-vec-pheno}},
  closyr.ops
  {compute-residual
   {:schema [:=> [:cat number? number?] number?],
@@ -66,12 +75,12 @@
  closyr.symbolic-regression
  {run-app-from-cli-args
   {:schema
-   [:=> [:cat #'closyr.symbolic-regression/CLIArgs] #'closyr.symbolic-regression/SolverRunResults],
+   [:=> [:cat #'closyr.symbolic-regression/CLIArgs] #'closyr.spec/SolverRunResults],
    :ns closyr.symbolic-regression,
    :name run-app-from-cli-args},
   run-ga-iterations-using-record
   {:schema
-   [:=> [:cat #'closyr.symbolic-regression/SolverRunConfig #'closyr.symbolic-regression/SolverRunArgs] #'closyr.symbolic-regression/SolverRunResults],
+   [:=> [:cat #'closyr.spec/SolverRunConfig #'closyr.spec/SolverRunArgs] #'closyr.spec/SolverRunResults],
    :ns closyr.symbolic-regression,
    :name run-ga-iterations-using-record}}}
 ")
@@ -81,5 +90,7 @@
 
   (testing "All default defns"
     (is (=
-          (with-out-str (pp/pprint (m/function-schemas)))
+          (do
+            (require 'closyr.symbolic-regression)
+            (with-out-str (pp/pprint (m/function-schemas))))
           all-specs))))

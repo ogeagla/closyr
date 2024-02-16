@@ -10,9 +10,6 @@
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
     [malli.core :as m]
-    [malli.experimental :as mx]
-    [malli.generator :as mg]
-    [malli.instrument :as mi]
     [seesaw.core :as ss])
   (:import
     (java.util
@@ -26,9 +23,7 @@
       JTextField)
     (org.knowm.xchart
       XChartPanel
-      XYChart)
-    (org.matheclipse.core.interfaces
-      IExpr)))
+      XYChart)))
 
 
 (set! *warn-on-reflection* true)
@@ -438,72 +433,6 @@
     (reset! ops/test-timer* start)))
 
 
-(def ^:private GAPhenotype
-  [:map
-   {:closed true}
-   [:id :uuid]
-   [:sym any?]
-   [:expr any?]
-   [:score {:optional true} number?]
-   [:util any?]
-   [:last-op {:optional true} :string]
-   [:mods-applied {:optional true} :int]])
-
-
-(def ^:private GAPopulation
-  [:sequential #'GAPhenotype])
-
-
-(def ^:private GAMutation
-  [:map
-   {:closed true}
-   [:op :keyword]
-   [:label :string]
-   [:leaf-modifier-fn {:optional true} fn?]
-   [:modifier-fn {:optional true} fn?]
-   [:find-expr {:optional true} some?]
-   [:replace-expr {:optional true} some?]])
-
-
-(def ^:private SolverRunConfig
-  [:map
-   {:closed true}
-   [:iters pos-int?]
-   [:initial-phenos #'GAPopulation]
-   [:initial-muts [:sequential #'GAMutation]]
-   [:use-gui? :boolean]
-   [:max-leafs pos-int?]
-   [:input-phenos-count {:optional true} pos-int?]
-   [:log-steps pos-int?]
-   [:use-flamechart [:maybe :boolean]]
-   [:input-xs-exprs [:sequential some?]]
-   [:input-ys-exprs [:sequential some?]]])
-
-
-(def ^:private SolverRunArgs
-  [:map
-   {:closed true}
-   [:sim->gui-chan {:optional true} some?]
-   [:sim-stop-start-chan {:optional true} some?]
-   [:extended-domain-args map?]
-   [:input-xs-list some?]
-   [:input-xs-count pos-int?]
-   [:input-xs-vec [:vector double?]]
-   [:input-ys-vec [:vector double?]]
-   [:input-iters pos-int?]
-   [:initial-phenos [:maybe [:sequential map?]]]
-   [:input-phenos-count [:maybe pos-int?]]
-   [:max-leafs [:maybe pos-int?]]])
-
-
-(def ^:private SolverRunResults
-  [:map
-   {:closed true}
-   [:iters-done number?]
-   [:final-population map?]
-   [:next-step :keyword]])
-
-
 (defprotocol ISolverStateController
 
   "Interface which allows creation and iteration of the symbolic regression GA solver"
@@ -539,8 +468,8 @@
 
   (init
     [this]
-    (specs/check-schema! "SolverRunConfig" SolverRunConfig run-config)
-    (specs/check-schema! "SolverRunArgs" SolverRunArgs run-args)
+    (specs/check-schema! "SolverRunConfig" specs/SolverRunConfig run-config)
+    (specs/check-schema! "SolverRunArgs" specs/SolverRunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
@@ -570,7 +499,7 @@
                           :final-population population
                           :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
-            (specs/check-schema! "GAPopulation" GAPopulation (:pop ga-result))
+            (specs/check-schema! "GAPopulation" specs/GAPopulation (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
             (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 
@@ -615,7 +544,7 @@
 
 (defn run-ga-iterations-using-record
   "Run GA evolution iterations on initial population"
-  {:malli/schema [:=> [:cat #'SolverRunConfig #'SolverRunArgs] #'SolverRunResults]}
+  {:malli/schema [:=> [:cat #'specs/SolverRunConfig #'specs/SolverRunArgs] #'specs/SolverRunResults]}
   [run-config run-args]
   (loop [solver-state (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
     (let [[recur? next-solver-state] (run-iteration solver-state)]
@@ -793,7 +722,7 @@
 
 (defn run-app-from-cli-args
   "Run app from CLI args"
-  {:malli/schema [:=> [:cat #'CLIArgs] #'SolverRunResults]}
+  {:malli/schema [:=> [:cat #'CLIArgs] #'specs/SolverRunResults]}
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
