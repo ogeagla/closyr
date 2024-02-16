@@ -12,14 +12,15 @@
   true)
 
 
-(defn check-schema!
+(defn validate!
   "Check that an object o is compliant with schema s with name n, or throw exception"
   [n s o]
   (when (and *check-schema* (not (m/validate s o)))
     (let [explained (me/humanize (m/explain s o))]
       (log/error "Error in input schema: " n)
       (pp/pprint [n explained])
-      (throw (Exception. (str "Error, input failed schema: " [n explained]))))))
+      (throw (Exception. (str "Error, input failed schema: " [n explained])))))
+  true)
 
 
 (defn instrument-all!
@@ -28,6 +29,17 @@
   (when *check-schema*
     (mi/collect!)
     (mi/instrument!)))
+
+
+#_(defn- disable-validate-instrumentation!
+  "Turn off all schema checks"
+  []
+  (alter-var-root #'*check-schema* (constantly false))
+  (mi/unstrument!
+    {:filters [(apply mi/-filter-ns (concat (keys (m/function-schemas))
+                                            ['closyr.spec-test
+                                             'cursive.tests.runner
+                                             'user]))]}))
 
 
 (def GAPhenotype

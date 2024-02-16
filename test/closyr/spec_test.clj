@@ -3,27 +3,28 @@
     [clojure.pprint :as pp]
     [clojure.test :refer :all]
     [closyr.spec :as specs]
-    [malli.core :as m]))
+    [malli.core :as m]
+    [malli.instrument :as mi]))
 
 
 (deftest defined-schemas
   (testing "GAPhenotype failure case"
     (is (thrown? Exception
-          (specs/check-schema!
+          (specs/validate!
             "test-pheno"
             #'specs/GAPhenotype
             {}))))
 
   (testing "GAMutation failure case"
     (is (thrown? Exception
-          (specs/check-schema!
+          (specs/validate!
             "test-mutation"
             #'specs/GAMutation
             {}))))
 
   (testing "GAPopulation failure case"
     (is (thrown? Exception
-          (specs/check-schema!
+          (specs/validate!
             "test-pop"
             #'specs/GAPopulation
             {}))))
@@ -31,21 +32,21 @@
 
   (testing "SolverRunConfig failure case"
     (is (thrown? Exception
-          (specs/check-schema!
+          (specs/validate!
             "test-solver-run-config"
             #'specs/SolverRunConfig
             {}))))
 
   (testing "SolverRunArgs failure case"
     (is (thrown? Exception
-          (specs/check-schema!
+          (specs/validate!
             "test-solver-run-args"
             #'specs/SolverRunArgs
             {}))))
 
   (testing "SolverRunResults failure case"
     (is (thrown? Exception
-          (specs/check-schema!
+          (specs/validate!
             "test-solver-run-results"
             #'specs/SolverRunResults
             {})))))
@@ -92,6 +93,17 @@
 ")
 
 
+(def ^:private all-instrumented
+  "(#'closyr.ops.common/extend-xs
+ #'closyr.ops.eval/eval-phenotype-on-expr-args
+ #'closyr.ops.eval/eval-vec-pheno
+ #'closyr.ops.modify/apply-modifications
+ #'closyr.ops/compute-residual
+ #'closyr.symbolic-regression/run-app-from-cli-args
+ #'closyr.symbolic-regression/run-ga-iterations-using-record)
+")
+
+
 (deftest check-instrumented
 
   (testing "All default defns"
@@ -100,3 +112,24 @@
             (require 'closyr.symbolic-regression)
             (with-out-str (pp/pprint (m/function-schemas))))
           all-specs))))
+
+
+#_(deftest check-can-uninstrument
+  (testing "Can de-instrument"
+    (let [_ (#'specs/disable-validate-instrumentation!)]
+      (mi/unstrument!)
+
+
+
+      (is (= (specs/validate!
+               "test-solver-run-results"
+               #'specs/SolverRunResults
+               {})
+             true))
+
+      (is (= (#'ops/compute-residual nil nil)
+             ops/max-resid))
+
+
+      (is (= (ops-common/extend-xs [0.1 "a"])
+             [])))))
