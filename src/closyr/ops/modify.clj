@@ -3,9 +3,9 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str]
-    [closyr.util.prng :refer :all]
-    [closyr.util.log :as log]
     [closyr.ops.common :as ops-common]
+    [closyr.util.log :as log]
+    [closyr.util.prng :refer :all]
     [closyr.util.spec :as specs])
   (:import
     (java.util.function
@@ -255,23 +255,23 @@
     (concat (repeat 40 1))
     (concat (repeat 30 2))
     (concat (repeat 20 3))
-    (concat (repeat 18 4))
-    (concat (repeat 16 5))
-    (concat (repeat 15 6))
-    (concat (repeat 14 7))
-    (concat (repeat 13 8))
-    (concat (repeat 12 9))
-    (concat (repeat 11 10))
-    (concat (repeat 10 11))
-    (concat (repeat 9 12))
-    (concat (repeat 8 13))
-    (concat (repeat 7 14))
-    (concat (repeat 6 15))
-    (concat (repeat 5 16))
-    (concat (repeat 4 17))
-    (concat (repeat 3 18))
-    (concat (repeat 2 19))
-    (concat (repeat 1 20))
+    (concat (repeat 15 4))
+    (concat (repeat 12 5))
+    (concat (repeat 10 6))
+    (concat (repeat 9 7))
+    (concat (repeat 8 8))
+    (concat (repeat 7 9))
+    (concat (repeat 6 10))
+    (concat (repeat 5 11))
+    (concat (repeat 4 12))
+    (concat (repeat 3 13))
+    (concat (repeat 2 14))
+    (concat (repeat 1 15))
+    ;; (concat (repeat 5 16))
+    ;; (concat (repeat 4 17))
+    ;; (concat (repeat 3 18))
+    ;; (concat (repeat 2 19))
+    ;; (concat (repeat 1 20))
     ;; (concat (repeat 3 21))
     ;; (concat (repeat 2 22))
     ;; (concat (repeat 1 23))
