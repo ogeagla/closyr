@@ -1,5 +1,6 @@
 (ns closyr.spec
   (:require
+    [clojure.pprint :as pp]
     [closyr.log :as log]
     [malli.core :as m]))
 
@@ -13,8 +14,8 @@
   "Check that an object o is compliant with schema s with name n, or throw exception"
   [n s o]
   (when (and *check-schema* (not (m/validate s o)))
-    (log/error (str "Error in input schema: " n))
-    (clojure.pprint/pprint (:errors (m/explain s o)))
+    (log/error "Error in input schema: " n)
+    (pp/pprint (:errors (m/explain s o)))
     (throw (Exception. (str "Error, input failed schema: " n)))))
 
 
