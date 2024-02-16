@@ -6,6 +6,7 @@
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
+    [closyr.spec :as specs]
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
     [malli.core :as m]
@@ -492,14 +493,6 @@
     "Report timing/perf results"))
 
 
-(defn check-schema!
-  [n s o]
-  (when-not (m/validate s o)
-    (log/error (str "Error in input schema: " n))
-    (clojure.pprint/pprint (:errors (m/explain s o)))
-    (throw (Exception. (str "Error, input failed schema: " n)))))
-
-
 (defrecord SolverStateController
   [;; the chans? also these names are really really ambiguous and overloaded:
    run-config
@@ -509,8 +502,8 @@
 
   (init
     [this]
-    (check-schema! "run-config" RunConfig run-config)
-    (check-schema! "run-args" RunArgs run-args)
+    (specs/check-schema! "run-config" RunConfig run-config)
+    (specs/check-schema! "run-args" RunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
