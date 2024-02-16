@@ -436,12 +436,23 @@
     (reset! ops/test-timer* start)))
 
 
+(def ^:private Mutation
+  [:map
+   {:closed true}
+   [:op :keyword]
+   [:label :string]
+   [:leaf-modifier-fn {:optional true} fn?]
+   [:modifier-fn {:optional true} fn?]
+   [:find-expr {:optional true} some?]
+   [:replace-expr {:optional true} some?]])
+
+
 (def ^:private RunConfig
   [:map
    {:closed true}
    [:iters pos-int?]
    [:initial-phenos [:sequential map?]]
-   [:initial-muts [:sequential map?]]
+   [:initial-muts [:sequential #'Mutation]]
    [:use-gui? :boolean]
    [:max-leafs pos-int?]
    [:input-phenos-count {:optional true} pos-int?]
