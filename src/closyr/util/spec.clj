@@ -42,23 +42,23 @@
                                                'user]))]}))
 
 
-(def GAPhenotype
+(def ^:private GAPhenotype
   [:map
    {:closed true}
    [:id {:optional true} :uuid]
    [:sym some?]
-   [:expr {:optional true} any?]
+   [:expr {:optional true} some?]
    [:score {:optional true} number?]
    [:util {:optional true} any?]
    [:last-op {:optional true} :string]
    [:mods-applied {:optional true} :int]])
 
 
-(def GAPopulationPhenotypes
+(def ^:private GAPopulationPhenotypes
   [:vector #'GAPhenotype])
 
 
-(def GAMutation
+(def ^:private GAMutation
   [:map
    {:closed true}
    [:op :keyword]
@@ -69,7 +69,7 @@
    [:replace-expr {:optional true} some?]])
 
 
-(def SolverRunConfig
+(def ^:private SolverRunConfig
   [:map
    {:closed true}
    [:iters pos-int?]
@@ -84,7 +84,7 @@
    [:input-ys-exprs [:sequential some?]]])
 
 
-(def SolverRunArgs
+(def ^:private SolverRunArgs
   [:map
    {:closed true}
    [:sim->gui-chan {:optional true} some?]
@@ -100,14 +100,14 @@
    [:max-leafs [:maybe pos-int?]]])
 
 
-(def SolverEvalArgs
+(def ^:private SolverEvalArgs
   [:map
    {:closed false}
    [:input-xs-list some?]
    [:input-xs-count pos-int?]])
 
 
-(def ScoreFnArgs
+(def ^:private ScoreFnArgs
   [:map
    {:closed false}
    [:input-ys-vec [:vector number?]]
@@ -115,7 +115,7 @@
    [:input-xs-count pos-int?]])
 
 
-(def SolverRunResults
+(def ^:private SolverRunResults
   [:map
    {:closed true}
    [:iters-done number?]

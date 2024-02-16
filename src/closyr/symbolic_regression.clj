@@ -468,8 +468,8 @@
 
   (init
     [this]
-    (specs/validate! "SolverRunConfig" specs/SolverRunConfig run-config)
-    (specs/validate! "SolverRunArgs" specs/SolverRunArgs run-args)
+    (specs/validate! "SolverRunConfig" #'specs/SolverRunConfig run-config)
+    (specs/validate! "SolverRunArgs" #'specs/SolverRunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
@@ -499,7 +499,7 @@
                           :final-population population
                           :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
-            (specs/validate! "GAPopulation" specs/GAPopulationPhenotypes (:pop ga-result))
+            (specs/validate! "GAPopulation" #'specs/GAPopulationPhenotypes (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
             (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 
