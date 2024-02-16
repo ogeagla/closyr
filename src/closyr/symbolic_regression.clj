@@ -465,7 +465,7 @@
    [:replace-expr {:optional true} some?]])
 
 
-(def ^:private RunConfig
+(def ^:private SolverRunConfig
   [:map
    {:closed true}
    [:iters pos-int?]
@@ -480,7 +480,7 @@
    [:input-ys-exprs [:sequential some?]]])
 
 
-(def ^:private RunArgs
+(def ^:private SolverRunArgs
   [:map
    {:closed true}
    [:sim->gui-chan {:optional true} some?]
@@ -496,7 +496,7 @@
    [:max-leafs [:maybe pos-int?]]])
 
 
-(def ^:private RunResults
+(def ^:private SolverRunResults
   [:map
    {:closed true}
    [:iters-done number?]
@@ -539,8 +539,8 @@
 
   (init
     [this]
-    (specs/check-schema! "run-config" RunConfig run-config)
-    (specs/check-schema! "run-args" RunArgs run-args)
+    (specs/check-schema! "SolverRunConfig" SolverRunConfig run-config)
+    (specs/check-schema! "SolverRunArgs" SolverRunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
@@ -551,7 +551,8 @@
 
       (log/info "Running with logging every n steps: " (:log-steps run-config))
 
-      (assoc this :ga-result init-pop
+      (assoc this
+             :ga-result init-pop
              :iters-to-go iters
              :start-ms start)))
 
@@ -563,11 +564,13 @@
           iters-to-go (:iters-to-go this)]
       (binding [ops/*log-steps* log-steps]
         (if (zero? iters-to-go)
-          (assoc this :status :done :result {:iters-done       (- iters iters-to-go)
-                                             :final-population population
-                                             :next-step        :wait})
+          (assoc this
+                 :status :done
+                 :result {:iters-done       (- iters iters-to-go)
+                          :final-population population
+                          :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
-            (specs/check-schema! "ga-population" GAPopulation (:pop ga-result))
+            (specs/check-schema! "GAPopulation" GAPopulation (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
             (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 
@@ -612,7 +615,7 @@
 
 (defn run-ga-iterations-using-record
   "Run GA evolution iterations on initial population"
-  {:malli/schema [:=> [:cat #'RunConfig #'RunArgs] #'RunResults]}
+  {:malli/schema [:=> [:cat #'SolverRunConfig #'SolverRunArgs] #'SolverRunResults]}
   [run-config run-args]
   (loop [solver-state (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
     (let [[recur? next-solver-state] (run-iteration solver-state)]

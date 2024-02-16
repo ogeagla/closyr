@@ -7,12 +7,48 @@
     [malli.core :as m]))
 
 
-(deftest ga-phenotypes
-  (testing "failure case"
+(deftest defined-schemas
+  (testing "GAPhenotype failure case"
     (is (thrown? Exception
           (specs/check-schema!
             "test-pheno"
             #'symreg/GAPhenotype
+            {}))))
+
+  (testing "GAMutation failure case"
+    (is (thrown? Exception
+          (specs/check-schema!
+            "test-mutation"
+            #'symreg/GAMutation
+            {}))))
+
+  (testing "GAPopulation failure case"
+    (is (thrown? Exception
+          (specs/check-schema!
+            "test-pop"
+            #'symreg/GAPopulation
+            {}))))
+
+
+  (testing "SolverRunConfig failure case"
+    (is (thrown? Exception
+          (specs/check-schema!
+            "test-solver-run-config"
+            #'symreg/SolverRunConfig
+            {}))))
+
+  (testing "SolverRunArgs failure case"
+    (is (thrown? Exception
+          (specs/check-schema!
+            "test-solver-run-args"
+            #'symreg/SolverRunArgs
+            {}))))
+
+  (testing "SolverRunResults failure case"
+    (is (thrown? Exception
+          (specs/check-schema!
+            "test-solver-run-results"
+            #'symreg/SolverRunResults
             {})))))
 
 
@@ -30,7 +66,7 @@
  closyr.symbolic-regression
  {run-ga-iterations-using-record
   {:schema
-   [:=> [:cat #'closyr.symbolic-regression/RunConfig #'closyr.symbolic-regression/RunArgs] #'closyr.symbolic-regression/RunResults],
+   [:=> [:cat #'closyr.symbolic-regression/SolverRunConfig #'closyr.symbolic-regression/SolverRunArgs] #'closyr.symbolic-regression/SolverRunResults],
    :ns closyr.symbolic-regression,
    :name run-ga-iterations-using-record}}}
 ")
