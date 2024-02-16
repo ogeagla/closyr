@@ -7,7 +7,8 @@
     [closyr.log :as log]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
-    [closyr.ops.modify :as ops-modify])
+    [closyr.ops.modify :as ops-modify]
+    [closyr.spec :as specs])
   (:import
     (java.text
       DecimalFormat)
@@ -74,7 +75,9 @@
       (and (number? n) (Double/isNaN n))))
 
 
-(defn- compute-residual
+(defn compute-residual
+  "Compute the residual (difference) between 2 number (y-values)"
+  {:malli/schema [:=> [:cat number? number?] number?]}
   [expected actual]
   (let [res (if (not-finite? actual)
               max-resid
@@ -303,3 +306,6 @@
                              :best-p95-score        (:score best-p95-v)
                              :best-p90-score        (:score best-p90-v)}))))
   (reset! sim-stats* {}))
+
+
+(specs/instrument-all!)

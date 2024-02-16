@@ -10,7 +10,9 @@
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
     [malli.core :as m]
+    [malli.experimental :as mx]
     [malli.generator :as mg]
+    [malli.instrument :as mi]
     [seesaw.core :as ss])
   (:import
     (java.util
@@ -494,6 +496,14 @@
    [:max-leafs [:maybe pos-int?]]])
 
 
+(def ^:private RunResults
+  [:map
+   {:closed true}
+   [:iters-done number?]
+   [:final-population map?]
+   [:next-step :keyword]])
+
+
 (defprotocol ISolverStateController
 
   "Interface which allows creation and iteration of the symbolic regression GA solver"
@@ -600,11 +610,10 @@
     return-value))
 
 
-(defn- run-ga-iterations-using-record
+(defn run-ga-iterations-using-record
   "Run GA evolution iterations on initial population"
-  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
-   run-args]
-
+  {:malli/schema [:=> [:cat #'RunConfig #'RunArgs] #'RunResults]}
+  [run-config run-args]
   (loop [solver-state (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
     (let [[recur? next-solver-state] (run-iteration solver-state)]
       (if recur?
@@ -788,6 +797,11 @@
     result))
 
 
+;; todo: feel kind of hacky to have to call this in ?every? ns that has defn schema
+(specs/instrument-all!)
+
+
+(comment (println "FN SCHEMAS: " (m/function-schemas)))
 (comment (macroexpand-1 `(log/info "Hello")))
 (comment (log/info "Hello"))
 (comment (run-app-without-gui))
