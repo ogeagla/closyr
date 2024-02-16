@@ -473,7 +473,7 @@
    [:id :uuid]
    [:sym any?]
    [:expr any?]
-   [:score double?]
+   [:score number?]
    [:util any?]
    [:last-op {:optional true} :string]
    [:mods-applied {:optional true} :int]])
