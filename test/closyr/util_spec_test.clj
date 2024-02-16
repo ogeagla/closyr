@@ -1,10 +1,11 @@
 (ns closyr.util-spec-test
   (:require
-    [clojure.pprint :as pp]
+    [clojure.string :as str]
     [clojure.test :refer :all]
     [closyr.util.spec :as specs]
     [malli.core :as m]
-    [malli.instrument :as mi]))
+    [malli.instrument :as mi]
+    [malli.transform :as mt]))
 
 
 (deftest defined-schemas
@@ -65,7 +66,17 @@
         (is (=
               (reduce + 0 (map (fn [[k v]] (count v)) ss))
               ;; the number of total defns which have malli/schema metadata in entire src:
-              10))))))
+              14))))))
+
+
+#_(deftest decode-test
+    (testing "example"
+      (is (=
+            (m/decode
+              [:vector {:decode/string #(str/split % #",")} int?]
+              "1,2,3,4"
+              (mt/string-transformer))
+            [1 2 3 4]))))
 
 
 #_(deftest check-can-uninstrument
@@ -87,3 +98,4 @@
 
         (is (= (ops-common/extend-xs [0.1 "a"])
                [])))))
+

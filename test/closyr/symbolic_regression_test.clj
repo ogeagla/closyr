@@ -1,11 +1,14 @@
 (ns closyr.symbolic-regression-test
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!!]]
+    [clojure.pprint :as pp]
     [clojure.test :refer :all]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
-    [closyr.symbolic-regression :as symreg])
+    [closyr.symbolic-regression :as symreg]
+    [closyr.util.spec :as specs]
+    [malli.core :as m])
   (:import
     (java.awt
       GraphicsEnvironment)))
@@ -291,17 +294,20 @@
 (deftest derive-log-steps
   (testing "with basic input"
     (is (=
-          (#'symreg/config->log-steps {:iters 100000 :initial-phenos (vec (repeat 10 0))}
+          (#'symreg/config->log-steps {:iters          100000
+                                       :initial-phenos (vec (repeat 10 0))}
                                       {:input-xs-count 10})
           25))
 
     (is (=
-          (#'symreg/config->log-steps {:iters 1000 :initial-phenos (vec (repeat 10000 0))}
+          (#'symreg/config->log-steps {:iters          1000
+                                       :initial-phenos (vec (repeat 10000 0))}
                                       {:input-xs-count 150})
           2))
 
     (is (=
-          (#'symreg/config->log-steps {:iters 10 :initial-phenos (vec (repeat 10 0))}
+          (#'symreg/config->log-steps {:iters          10
+                                       :initial-phenos (vec (repeat 10 0))}
                                       {:input-xs-count 10})
           1))))
 
@@ -319,8 +325,8 @@
 
   (testing "sufficient args"
     (is (= (set (keys (#'symreg/->run-args {:input-xs-exprs     symreg/example-input-xs-exprs
-                                            :input-xs-vec       (range (count symreg/example-input-xs-exprs))
-                                            :input-ys-vec       (range (count symreg/example-input-xs-exprs))
+                                            :input-xs-vec       (vec (range (count symreg/example-input-xs-exprs)))
+                                            :input-ys-vec       (vec (range (count symreg/example-input-xs-exprs)))
                                             :iters              1
                                             :input-phenos-count 1})))
            #{:extended-domain-args

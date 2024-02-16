@@ -2,12 +2,12 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [closyr.ga :as ga]
-    [closyr.util.log :as log]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
-    [closyr.util.spec :as specs]
     [closyr.ui.gui :as gui]
+    [closyr.util.log :as log]
+    [closyr.util.spec :as specs]
     [flames.core :as flames]
     [malli.core :as m]
     [seesaw.core :as ss])
@@ -355,7 +355,9 @@
                               nil))))))))
 
 
-(defn- ->run-args
+(defn ->run-args
+  "Generate one-time computed args for solver"
+  {:malli/schema [:=> [:cat map?] #'specs/SolverRunArgs]}
   [{input-xs-exprs     :input-xs-exprs
     input-xs-vec       :input-xs-vec
     input-ys-vec       :input-ys-vec
@@ -468,8 +470,8 @@
 
   (init
     [this]
-    (specs/validate! "SolverRunConfig" specs/SolverRunConfig run-config)
-    (specs/validate! "SolverRunArgs" specs/SolverRunArgs run-args)
+    (specs/validate! "SolverRunConfig" #'specs/SolverRunConfig run-config)
+    (specs/validate! "SolverRunArgs" #'specs/SolverRunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
@@ -499,7 +501,7 @@
                           :final-population population
                           :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
-            (specs/validate! "GAPopulation" specs/GAPopulationPhenotypes (:pop ga-result))
+            (specs/validate! "GAPopulation" #'specs/GAPopulationPhenotypes (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
             (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 

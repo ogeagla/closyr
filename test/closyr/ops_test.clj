@@ -1,11 +1,11 @@
 (ns closyr.ops-test
   (:require
     [clojure.test :refer :all]
-    [closyr.util.prng :as prng]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
-    [closyr.ops.modify :as ops-modify])
+    [closyr.ops.modify :as ops-modify]
+    [closyr.util.prng :as prng])
   (:import
     (org.matheclipse.core.expression
       F)
@@ -26,6 +26,17 @@
                         (let [x (F/Dummy "x")]
                           (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))
           -3.0000147)))
+
+  (testing "eval score on too big fn"
+    (is (=
+          (ops/score-fn {:input-ys-vec   [0 1 2]
+                         :input-xs-list  (ops-common/exprs->exprs-list
+                                           (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                         :input-xs-count 3}
+                        {:max-leafs 0}
+                        (let [x (F/Dummy "x")]
+                          (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))
+          ops/min-score)))
 
   (testing "eval score on failing function"
     (is (=
@@ -103,12 +114,23 @@
 
 (deftest mutation-fn-test
   (testing "exception in modify"
-    (with-redefs-fn {#'ops-modify/apply-modifications
-                     (fn [_ _ _ _ _] (throw (Exception. "Testing failed apply modifications")))}
-      (fn []
-        (is (=
-              (ops/mutation-fn {:max-leafs 100} [] {} {})
-              nil)))))
+    (let [x (F/Dummy "x")]
+      (with-redefs-fn {#'ops-modify/apply-modifications
+                       (fn [_ _ _ _ _] (throw (Exception. "Testing failed apply modifications")))}
+        (fn []
+          (is (=
+                (str (:expr (ops/mutation-fn
+                              {:max-leafs 100}
+                              [{:op               :modify-leafs
+                                :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                              {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                              ^IExpr ie]
+                                                    (if (= (.toString ie) "x")
+                                                      (F/Sin ie)
+                                                      ie))}]
+                              (ops-common/->phenotype x (F/Subtract x F/C1) nil)
+                              (ops-common/->phenotype x (F/Plus x F/C1D2) nil))))
+                "-1+x"))))))
 
   (testing "long running mod"
     (let [x (F/Dummy "x")]
@@ -138,6 +160,7 @@
                    #'prng/rand-nth (fn [coll] (first coll))}
     (fn []
       (with-redefs [ops-modify/crossover-sampler [:plus]]
+
         (testing "simple crossover"
           (let [x (F/Dummy "x")]
             (is (=
@@ -146,7 +169,24 @@
                                 []
                                 (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1) nil)
                                 (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil))))
-                  "x^2+Sin(x)"))))))))
+                  "x^2+Sin(x)")))))))
+
+
+  (with-redefs-fn {#'prng/rand-int        (fn [maxv] (dec maxv))
+                   #'prng/rand-nth        (fn [coll] (first coll))
+                   #'ops-modify/crossover (fn [_ _ _] nil)}
+    (fn []
+      (with-redefs [ops-modify/crossover-sampler [:plus]]
+
+        (testing "simple crossover failure"
+          (let [x (F/Dummy "x")]
+            (is (=
+                  (str (:expr (ops/crossover-fn
+                                {:max-leafs ops/default-max-leafs}
+                                []
+                                (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1) nil)
+                                (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil))))
+                  "-1+x^2"))))))))
 
 
 (deftest compute-residuals

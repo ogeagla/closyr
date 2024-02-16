@@ -150,7 +150,7 @@
      #'specs/GAPhenotype]
 
     ;; outputs:
-    #'specs/GAPhenotype]}
+    [:maybe #'specs/GAPhenotype]]}
   [max-leafs
    {^IAST e1 :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p}
    {^IAST e2 :expr :as p-discard}]

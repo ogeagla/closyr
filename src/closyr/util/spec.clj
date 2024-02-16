@@ -32,33 +32,33 @@
 
 
 #_(defn- disable-validate-instrumentation!
-  "Turn off all schema checks"
-  []
-  (alter-var-root #'*check-schema* (constantly false))
-  (mi/unstrument!
-    {:filters [(apply mi/-filter-ns (concat (keys (m/function-schemas))
-                                            ['closyr.util.spec-test
-                                             'cursive.tests.runner
-                                             'user]))]}))
+    "Turn off all schema checks"
+    []
+    (alter-var-root #'*check-schema* (constantly false))
+    (mi/unstrument!
+      {:filters [(apply mi/-filter-ns (concat (keys (m/function-schemas))
+                                              ['closyr.util.spec-test
+                                               'cursive.tests.runner
+                                               'user]))]}))
 
 
-(def GAPhenotype
+(def ^:private GAPhenotype
   [:map
    {:closed true}
    [:id {:optional true} :uuid]
    [:sym some?]
-   [:expr {:optional true} any?]
+   [:expr {:optional true} some?]
    [:score {:optional true} number?]
    [:util {:optional true} any?]
    [:last-op {:optional true} :string]
    [:mods-applied {:optional true} :int]])
 
 
-(def GAPopulationPhenotypes
+(def ^:private GAPopulationPhenotypes
   [:vector #'GAPhenotype])
 
 
-(def GAMutation
+(def ^:private GAMutation
   [:map
    {:closed true}
    [:op :keyword]
@@ -69,7 +69,7 @@
    [:replace-expr {:optional true} some?]])
 
 
-(def SolverRunConfig
+(def ^:private SolverRunConfig
   [:map
    {:closed true}
    [:iters pos-int?]
@@ -84,7 +84,7 @@
    [:input-ys-exprs [:sequential some?]]])
 
 
-(def SolverRunArgs
+(def ^:private SolverRunArgs
   [:map
    {:closed true}
    [:sim->gui-chan {:optional true} some?]
@@ -92,22 +92,30 @@
    [:extended-domain-args map?]
    [:input-xs-list some?]
    [:input-xs-count pos-int?]
-   [:input-xs-vec [:vector double?]]
-   [:input-ys-vec [:vector double?]]
+   [:input-xs-vec [:vector number?]]
+   [:input-ys-vec [:vector number?]]
    [:input-iters pos-int?]
    [:initial-phenos [:maybe [:sequential map?]]]
    [:input-phenos-count [:maybe pos-int?]]
    [:max-leafs [:maybe pos-int?]]])
 
 
-(def SolverEvalArgs
+(def ^:private SolverEvalArgs
   [:map
    {:closed false}
    [:input-xs-list some?]
    [:input-xs-count pos-int?]])
 
 
-(def SolverRunResults
+(def ^:private ScoreFnArgs
+  [:map
+   {:closed false}
+   [:input-ys-vec [:vector number?]]
+   [:input-xs-list some?]
+   [:input-xs-count pos-int?]])
+
+
+(def ^:private SolverRunResults
   [:map
    {:closed true}
    [:iters-done number?]

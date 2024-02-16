@@ -2,10 +2,10 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.test :refer :all]
-    [closyr.util.prng :as prng]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
-    [closyr.ops.modify :as ops-modify])
+    [closyr.ops.modify :as ops-modify]
+    [closyr.util.prng :as prng])
   (:import
     (org.matheclipse.core.expression
       F)
@@ -382,6 +382,22 @@
                             {:sym  x
                              :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})))
                    (str F/C4))))))))
+
+
+  (with-redefs-fn {#'prng/rand-int                        (fn [maxv] (dec maxv))
+                   #'prng/rand-nth                        (fn [coll] (last coll))
+                   #'ops-modify/check-modification-result (fn [_ _ _] (throw (Exception. "Test exception")))}
+    (fn []
+      (with-redefs [ops-modify/crossover-sampler [:times]]
+        (let [x (F/Dummy "x")]
+          (testing "Crossover failure"
+            (is (= (ops-modify/crossover
+                     100
+                     {:sym  x
+                      :expr F/C4}
+                     {:sym  x
+                      :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})
+                   nil)))))))
 
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
