@@ -106,6 +106,14 @@
    [:input-xs-list some?]
    [:input-xs-count pos-int?]])
 
+(def ScoreFnArgs
+  [:map
+   {:closed false}
+
+   [:input-ys-vec [:vector number?]]
+   [:input-xs-list some?]
+   [:input-xs-count pos-int?]])
+
 
 (def SolverRunResults
   [:map

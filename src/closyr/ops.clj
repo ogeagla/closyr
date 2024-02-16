@@ -3,11 +3,11 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
-    [closyr.util.prng :refer :all]
-    [closyr.util.log :as log]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.modify :as ops-modify]
+    [closyr.util.log :as log]
+    [closyr.util.prng :refer :all]
     [closyr.util.spec :as specs])
   (:import
     (java.text
@@ -118,8 +118,8 @@
 
 (defn score-fn
   "Symbolic regression scoring"
-  [{:keys [input-xs-list input-xs-count input-ys-vec
-           sim-stop-start-chan sim->gui-chan]
+  {:malli/schema [:=> [:cat #'specs/ScoreFnArgs [:map {:closed false} [:max-leafs number?]] #'specs/GAPhenotype] number?]}
+  [{:keys [input-xs-list input-xs-count input-ys-vec]
     :as   run-args}
    {:keys [max-leafs]}
    pheno]
@@ -143,6 +143,10 @@
 
 (defn mutation-fn
   "Symbolic regression mutation"
+  {:malli/schema
+   [:=>
+    [:cat [:map {:closed false} [:max-leafs number?]] [:sequential #'specs/GAMutation] #'specs/GAPhenotype #'specs/GAPhenotype]
+    [:maybe #'specs/GAPhenotype]]}
   [{:keys [max-leafs]}
    initial-muts
    p-winner
@@ -172,7 +176,7 @@
 (defn crossover-fn
   "Symbolic regression crossover"
   [{:keys [max-leafs]
-    :as   run-args}
+    :as   run-config}
    initial-muts
    p
    p-discard]
@@ -181,7 +185,7 @@
       (swap! sim-stats* update-in [:crossovers :counts] #(inc (or % 0))))
     (or
       crossover-result
-      (mutation-fn run-args initial-muts p p-discard))))
+      (mutation-fn run-config initial-muts p p-discard))))
 
 
 (defn- sort-population

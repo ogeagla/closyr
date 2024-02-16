@@ -103,12 +103,23 @@
 
 (deftest mutation-fn-test
   (testing "exception in modify"
-    (with-redefs-fn {#'ops-modify/apply-modifications
-                     (fn [_ _ _ _ _] (throw (Exception. "Testing failed apply modifications")))}
-      (fn []
-        (is (=
-              (ops/mutation-fn {:max-leafs 100} [] {} {})
-              nil)))))
+    (let [x (F/Dummy "x")]
+      (with-redefs-fn {#'ops-modify/apply-modifications
+                       (fn [_ _ _ _ _] (throw (Exception. "Testing failed apply modifications")))}
+        (fn []
+          (is (=
+                (ops/mutation-fn
+                  {:max-leafs 100}
+                  [{:op               :modify-leafs
+                    :leaf-modifier-fn (fn ^IExpr [leaf-count
+                                                  {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}
+                                                  ^IExpr ie]
+                                        (if (= (.toString ie) "x")
+                                          (F/Sin ie)
+                                          ie))}]
+                  (ops-common/->phenotype x (F/Subtract x F/C1) nil)
+                  (ops-common/->phenotype x (F/Plus x F/C1D2) nil))
+                nil))))))
 
   (testing "long running mod"
     (let [x (F/Dummy "x")]
