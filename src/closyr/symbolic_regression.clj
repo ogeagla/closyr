@@ -676,16 +676,18 @@
 
 
 (defn- run-app-with-gui
-  []
-  (run-solver
-    {:initial-phenos (ops-init/initial-phenotypes 50)
-     :initial-muts   (ops-init/initial-mutations)
-     :iters          100
-     :use-gui?       true
-     :max-leafs      ops/default-max-leafs
-     :use-flamechart false
-     :input-xs-exprs example-input-xs-exprs
-     :input-ys-exprs example-input-ys-exprs}))
+  ([]
+   (run-app-with-gui {:use-flamechart false}))
+  ([{:keys [use-flamechart]}]
+   (run-solver
+     {:initial-phenos (ops-init/initial-phenotypes 50)
+      :initial-muts   (ops-init/initial-mutations)
+      :iters          100
+      :use-gui?       true
+      :max-leafs      ops/default-max-leafs
+      :use-flamechart use-flamechart
+      :input-xs-exprs example-input-xs-exprs
+      :input-ys-exprs example-input-ys-exprs})))
 
 
 (def ^:private ^:dynamic *is-testing* false)
@@ -723,4 +725,5 @@
 (comment (macroexpand-1 `(log/info "Hello")))
 (comment (log/info "Hello"))
 (comment (run-app-without-gui))
+(comment (run-app-with-gui {:use-flamechart true}))
 (comment (run-app-with-gui))
