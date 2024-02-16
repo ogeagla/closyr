@@ -439,32 +439,32 @@
 (def RunConfig
   [:map
    {:closed true}
-   [:iters :int]
+   [:iters pos-int?]
    [:initial-phenos [:sequential map?]]
    [:initial-muts [:sequential map?]]
    [:use-gui? :boolean]
-   [:max-leafs :int]
-   [:input-phenos-count {:optional true} :int]
-   [:log-steps :int]
+   [:max-leafs pos-int?]
+   [:input-phenos-count {:optional true} pos-int?]
+   [:log-steps pos-int?]
    [:use-flamechart [:maybe :boolean]]
-   [:input-xs-exprs [:sequential any?]]
-   [:input-ys-exprs [:sequential any?]]])
+   [:input-xs-exprs [:sequential some?]]
+   [:input-ys-exprs [:sequential some?]]])
 
 
 (def RunArgs
   [:map
    {:closed true}
-   [:sim->gui-chan {:optional true} any?]
-   [:sim-stop-start-chan {:optional true} any?]
+   [:sim->gui-chan {:optional true} some?]
+   [:sim-stop-start-chan {:optional true} some?]
    [:extended-domain-args map?]
-   [:input-xs-list any?]
-   [:input-xs-count :int]
+   [:input-xs-list some?]
+   [:input-xs-count pos-int?]
    [:input-xs-vec [:vector double?]]
    [:input-ys-vec [:vector double?]]
-   [:input-iters :int]
+   [:input-iters pos-int?]
    [:initial-phenos [:maybe [:sequential map?]]]
-   [:input-phenos-count [:maybe :int]]
-   [:max-leafs [:maybe :int]]])
+   [:input-phenos-count [:maybe pos-int?]]
+   [:max-leafs [:maybe pos-int?]]])
 
 
 (defprotocol ISolverStateController
