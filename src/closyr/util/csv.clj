@@ -1,8 +1,8 @@
-(ns closyr.dataset.csv
+(ns closyr.util.csv
   (:require
     [clojure.data.csv :as csv]
     [clojure.java.io :as io]
-    [closyr.log :as log]))
+    [closyr.util.log :as log]))
 
 
 (set! *warn-on-reflection* true)

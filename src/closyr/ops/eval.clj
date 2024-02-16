@@ -1,7 +1,8 @@
 (ns closyr.ops.eval
   (:require
-    [closyr.log :as log]
-    [closyr.ops.common :as ops-common])
+    [closyr.util.log :as log]
+    [closyr.ops.common :as ops-common]
+    [closyr.util.spec :as specs])
   (:import
     (org.matheclipse.core.eval
       EvalControlledCallable
@@ -38,6 +39,7 @@
 
 (defn ^IExpr eval-phenotype-on-expr-args
   "Eval an expr at every point in the args"
+  {:malli/schema [:=> [:cat #'specs/GAPhenotype some?] any?]}
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
@@ -90,8 +92,9 @@
 
 (defn eval-vec-pheno
   "Evaluate a phenotype's expr on input xs/ys vecs"
+  {:malli/schema [:=> [:cat #'specs/GAPhenotype #'specs/SolverEvalArgs] [:or [:vector number?] nil?]]}
   [p
-   {:keys [input-xs-list input-xs-count input-ys-vec]
+   {:keys [input-xs-list input-xs-count]
     :as   run-args}]
   (let [^IExpr new-expr (:expr p)
         ^IExpr eval-p   (eval-phenotype-on-expr-args p input-xs-list)]
@@ -164,3 +167,6 @@
 
     {:xs xs
      :ys evaluated-ys}))
+
+
+(specs/instrument-all!)

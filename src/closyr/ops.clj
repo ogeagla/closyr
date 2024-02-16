@@ -3,11 +3,12 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
-    [closyr.dataset.prng :refer :all]
-    [closyr.log :as log]
+    [closyr.util.prng :refer :all]
+    [closyr.util.log :as log]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
-    [closyr.ops.modify :as ops-modify])
+    [closyr.ops.modify :as ops-modify]
+    [closyr.util.spec :as specs])
   (:import
     (java.text
       DecimalFormat)
@@ -74,7 +75,9 @@
       (and (number? n) (Double/isNaN n))))
 
 
-(defn- compute-residual
+(defn compute-residual
+  "Compute the residual (difference) between 2 number (y-values)"
+  {:malli/schema [:=> [:cat number? number?] number?]}
   [expected actual]
   (let [res (if (not-finite? actual)
               max-resid
@@ -281,6 +284,7 @@
 
       (reset! test-timer* (Date.))
       (log/info i "-step pop size: " pop-size
+                " points: " (count input-ys-vec)
                 " max leafs: " max-leafs
                 " took secs: " took-s
                 " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
@@ -303,3 +307,6 @@
                              :best-p95-score        (:score best-p95-v)
                              :best-p90-score        (:score best-p90-v)}))))
   (reset! sim-stats* {}))
+
+
+(specs/instrument-all!)

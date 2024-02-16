@@ -5,6 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/core.async "1.6.681"]
+                 [metosin/malli "0.14.0"]
 
                  [org.clojure/tools.cli "1.0.219"]
 

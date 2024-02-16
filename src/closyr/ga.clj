@@ -1,8 +1,8 @@
 (ns closyr.ga
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
-    [closyr.log :as log]
-    [closyr.dataset.prng :refer :all]))
+    [closyr.util.log :as log]
+    [closyr.util.prng :refer :all]))
 
 
 (set! *warn-on-reflection* true)

@@ -35,7 +35,9 @@
                                  (reset! args*
                                          [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
                                           (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
-                                 {:next-step :stop})
+                                 {:iters-done       123
+                                  :final-population {}
+                                  :next-step        :stop})
                                #'symreg/config->log-steps (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
@@ -46,7 +48,9 @@
                      :ys             [1 4 19]
                      :use-flamechart true
                      :max-leafs      20})))
-              {:next-step :stop}))
+              {:iters-done       123
+               :final-population {}
+               :next-step        :stop}))
 
         (is (= @args*
                [{:iters          20
@@ -71,14 +75,18 @@
                                  (reset! args*
                                          [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
                                           (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
-                                 {:next-step :stop})
+                                 {:iters-done       123
+                                  :final-population {}
+                                  :next-step        :stop})
                                #'symreg/config->log-steps (fn [_ _] 200)}
                 (fn []
                   (symreg/run-app-from-cli-args
                     {:population 30
                      :iterations 20
                      :headless   true})))
-              {:next-step :stop}))
+              {:iters-done       123
+               :final-population {}
+               :next-step        :stop}))
 
         (is (= @args*
                [{:iters          20

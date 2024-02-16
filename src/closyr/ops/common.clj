@@ -2,8 +2,9 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
-    [closyr.dataset.prng :refer :all]
-    [closyr.log :as log])
+    [closyr.util.prng :refer :all]
+    [closyr.util.log :as log]
+    [closyr.util.spec :as specs])
   (:import
     (java.util
       Date
@@ -257,6 +258,7 @@
 
 (defn extend-xs
   "Add extra xs on either side of the provided range"
+  {:malli/schema [:=> [:cat [:sequential number?]] map?]}
   [input-xs-vec]
   (let [x-min                (first input-xs-vec)
         x-max                (last input-xs-vec)
@@ -284,3 +286,6 @@
      :x-head-list x-head-list
      :x-tail      x-tail
      :x-tail-list x-tail-list}))
+
+
+(specs/instrument-all!)

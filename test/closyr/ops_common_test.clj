@@ -98,6 +98,19 @@
                    {"1/5+Sin(ArcSin(x))" 1}))))))))
 
 
+(deftest simplify-with-ignore-presets
+  (testing "simplify ignore"
+    (reset! ops-common/do-not-simplify-fns* {"x" 1})
+    (let [x (F/Dummy "x")]
+      (is (= (update (ops-common/maybe-simplify {:expr x})
+                     :expr str)
+             {:expr    "x"
+              :simple? true}))
+      (is (= @ops-common/do-not-simplify-fns*
+             {"x" 2})))
+    (reset! ops-common/do-not-simplify-fns* {})))
+
+
 (deftest simplify-test
   (testing "simplify trig compose"
     (let [x (F/Dummy "x")]
@@ -113,7 +126,7 @@
       (fn []
         (let [x (F/Dummy "x")]
           (is (= (dissoc (update (ops-common/maybe-simplify {:expr (F/Log (F/ArcSin x)) :util (ops-common/new-util)})
-                         :expr str)
+                                 :expr str)
                          :util)
                  {:expr    "Log(ArcSin(x))"
                   :simple? true}))))))
@@ -131,17 +144,6 @@
                                                        (F/Plus (F/Sqrt x)))})
                        :expr str))
              {:expr "1+Sqrt(x)+Cos(x)+Sin(x)+2*(Cos(ArcSin(x))+Tan(ArcSin(x)))"}))))
-
-  (testing "simplify ignore"
-    (reset! ops-common/do-not-simplify-fns* {"x" 1})
-    (let [x (F/Dummy "x")]
-      (is (= (update (ops-common/maybe-simplify {:expr x})
-                     :expr str)
-             {:expr    "x"
-              :simple? true}))
-      (is (= @ops-common/do-not-simplify-fns*
-             {"x" 2})))
-    (reset! ops-common/do-not-simplify-fns* {}))
 
   (testing "simplify sum"
     (let [x (F/Dummy "x")]

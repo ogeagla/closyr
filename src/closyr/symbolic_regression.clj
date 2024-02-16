@@ -2,12 +2,14 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [closyr.ga :as ga]
-    [closyr.log :as log]
+    [closyr.util.log :as log]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
+    [closyr.util.spec :as specs]
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
+    [malli.core :as m]
     [seesaw.core :as ss])
   (:import
     (java.util
@@ -466,6 +468,8 @@
 
   (init
     [this]
+    (specs/validate! "SolverRunConfig" specs/SolverRunConfig run-config)
+    (specs/validate! "SolverRunArgs" specs/SolverRunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
@@ -476,7 +480,8 @@
 
       (log/info "Running with logging every n steps: " (:log-steps run-config))
 
-      (assoc this :ga-result init-pop
+      (assoc this
+             :ga-result init-pop
              :iters-to-go iters
              :start-ms start)))
 
@@ -488,10 +493,13 @@
           iters-to-go (:iters-to-go this)]
       (binding [ops/*log-steps* log-steps]
         (if (zero? iters-to-go)
-          (assoc this :status :done :result {:iters-done       (- iters iters-to-go)
-                                             :final-population population
-                                             :next-step        :wait})
+          (assoc this
+                 :status :done
+                 :result {:iters-done       (- iters iters-to-go)
+                          :final-population population
+                          :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
+            (specs/validate! "GAPopulation" specs/GAPopulationPhenotypes (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
             (assoc this :ga-result ga-result :iters-to-go (next-iters iters-to-go scores)))))))
 
@@ -534,11 +542,10 @@
     return-value))
 
 
-(defn- run-ga-iterations-using-record
+(defn run-ga-iterations-using-record
   "Run GA evolution iterations on initial population"
-  [{:keys [iters initial-phenos initial-muts use-gui?] :as run-config}
-   run-args]
-
+  {:malli/schema [:=> [:cat #'specs/SolverRunConfig #'specs/SolverRunArgs] #'specs/SolverRunResults]}
+  [run-config run-args]
   (loop [solver-state (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
     (let [[recur? next-solver-state] (run-iteration solver-state)]
       (if recur?
@@ -700,8 +707,22 @@
     (System/exit 0)))
 
 
+(def ^:private CLIArgs
+  [:map
+   {:closed true}
+   [:log-level {:optional true} keyword?]
+   [:iterations any?]
+   [:population any?]
+   [:headless any?]
+   [:xs {:optional true} any?]
+   [:ys {:optional true} any?]
+   [:use-flamechart {:optional true} any?]
+   [:max-leafs {:optional true} any?]])
+
+
 (defn run-app-from-cli-args
   "Run app from CLI args"
+  {:malli/schema [:=> [:cat #'CLIArgs] #'specs/SolverRunResults]}
   [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
@@ -722,6 +743,11 @@
     result))
 
 
+;; todo: feel kind of hacky to have to call this in ?every? ns that has defn schema
+(specs/instrument-all!)
+
+
+(comment (println "FN SCHEMAS: " (m/function-schemas)))
 (comment (macroexpand-1 `(log/info "Hello")))
 (comment (log/info "Hello"))
 (comment (run-app-without-gui))
