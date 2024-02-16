@@ -54,11 +54,18 @@
 
 (deftest check-instrumented
   (testing "All default defns"
-    (is (=
-          (do
-            (require 'closyr.symbolic-regression)
-            (count (m/function-schemas)))
-          6))))
+    (do
+      (require 'closyr.symbolic-regression)
+      (let [ss (m/function-schemas)]
+        (is (=
+              (count ss)
+              ;; the number of ns which contain defns which have malli/schema metadata in entire src:
+              6))
+
+        (is (=
+              (reduce + 0 (map (fn [[k v]] (count v)) ss))
+              ;; the number of total defns which have malli/schema metadata in entire src:
+              10))))))
 
 
 #_(deftest check-can-uninstrument

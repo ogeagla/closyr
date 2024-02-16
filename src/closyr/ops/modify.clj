@@ -140,6 +140,17 @@
 
 (defn crossover
   "Do phenotype crossover on their expr AST"
+  {:malli/schema
+   [:=>
+
+    ;; inputs:
+    [:cat
+     pos-int?
+     #'specs/GAPhenotype
+     #'specs/GAPhenotype]
+
+    ;; outputs:
+    #'specs/GAPhenotype]}
   [max-leafs
    {^IAST e1 :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util :as p}
    {^IAST e2 :expr :as p-discard}]
@@ -191,7 +202,7 @@
     ;; inputs:
     [:cat
      pos-int?
-     int?
+     pos-int?
      [:sequential #'specs/GAMutation]
      #'specs/GAPhenotype
      #'specs/GAPhenotype]
