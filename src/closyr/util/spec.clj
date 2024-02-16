@@ -121,3 +121,25 @@
    [:iters-done number?]
    [:final-population map?]
    [:next-step :keyword]])
+
+
+(def ^:private SolverGUIInputArgs
+  [:map
+   {:closed true}
+   [:input-xs-exprs some?]
+   [:input-xs-vec [:vector number?]]
+   [:input-ys-vec [:vector number?]]
+   [:input-iters pos-int?]
+   [:input-phenos-count pos-int?]
+   [:max-leafs [:maybe pos-int?]]])
+
+
+(def ^:private SolverGUIMessage
+  [:map
+   {:closed true}
+   [:new-state keyword?]
+   [:input-data-x [:vector number?]]
+   [:input-data-y [:vector number?]]
+   [:input-iters pos-int?]
+   [:input-phenos-count pos-int?]
+   [:max-leafs {:optional true} [:maybe pos-int?]]])

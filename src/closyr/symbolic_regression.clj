@@ -299,7 +299,9 @@
      :sim-stop-start-chan sim-stop-start-chan}))
 
 
-(defn- update-plot-input-data
+(defn update-plot-input-data
+  "Get new data from GUI and generate necessary solver inputs"
+  {:malli/schema [:=> [:cat #'specs/SolverGUIMessage] #'specs/SolverGUIInputArgs]}
   [{new-state          :new-state
     input-data-x       :input-data-x
     input-data-y       :input-data-y
@@ -317,9 +319,7 @@
                              :input-ys-vec       input-ys-vec
                              :input-iters        input-iters
                              :input-phenos-count input-phenos-count
-                             :max-leafs          max-leafs})
-
-    @sim-input-args*))
+                             :max-leafs          max-leafs})))
 
 
 (defn- restart-with-new-inputs
