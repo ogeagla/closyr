@@ -8,6 +8,8 @@
     [closyr.ops.initialize :as ops-init]
     [closyr.ui.gui :as gui]
     [flames.core :as flames]
+    [malli.core :as m]
+    [malli.generator :as mg]
     [seesaw.core :as ss])
   (:import
     (java.util
@@ -21,7 +23,9 @@
       JTextField)
     (org.knowm.xchart
       XChartPanel
-      XYChart)))
+      XYChart)
+    (org.matheclipse.core.interfaces
+      IExpr)))
 
 
 (set! *warn-on-reflection* true)
@@ -431,6 +435,37 @@
     (reset! ops/test-timer* start)))
 
 
+(def RunConfig
+  [:map
+   {:closed true}
+   [:iters :int]
+   [:initial-phenos [:sequential map?]]
+   [:initial-muts [:sequential map?]]
+   [:use-gui? :boolean]
+   [:max-leafs :int]
+   [:input-phenos-count {:optional true} :int]
+   [:log-steps :int]
+   [:use-flamechart [:maybe :boolean]]
+   [:input-xs-exprs [:sequential any?]]
+   [:input-ys-exprs [:sequential any?]]])
+
+
+(def RunArgs
+  [:map
+   {:closed true}
+   [:sim->gui-chan {:optional true} any?]
+   [:sim-stop-start-chan {:optional true} any?]
+   [:extended-domain-args map?]
+   [:input-xs-list any?]
+   [:input-xs-count :int]
+   [:input-xs-vec [:vector double?]]
+   [:input-ys-vec [:vector double?]]
+   [:input-iters :int]
+   [:initial-phenos [:maybe [:sequential map?]]]
+   [:input-phenos-count [:maybe :int]]
+   [:max-leafs [:maybe :int]]])
+
+
 (defprotocol ISolverStateController
 
   "Interface which allows creation and iteration of the symbolic regression GA solver"
@@ -457,6 +492,14 @@
     "Report timing/perf results"))
 
 
+(defn check-schema!
+  [n s o]
+  (when-not (m/validate s o)
+    (log/error (str "Error in input schema: " n))
+    (clojure.pprint/pprint (:errors (m/explain s o)))
+    (throw (Exception. (str "Error, input failed schema: " n)))))
+
+
 (defrecord SolverStateController
   [;; the chans? also these names are really really ambiguous and overloaded:
    run-config
@@ -466,6 +509,8 @@
 
   (init
     [this]
+    (check-schema! "run-config" RunConfig run-config)
+    (check-schema! "run-args" RunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
           start    (print-and-save-start-time iters initial-phenos)
           init-pop (ga/initialize
