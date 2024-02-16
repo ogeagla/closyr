@@ -5,7 +5,10 @@
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
-    [closyr.symbolic-regression :as symreg]))
+    [closyr.symbolic-regression :as symreg])
+  (:import
+    (java.awt
+      GraphicsEnvironment)))
 
 
 (alter-var-root #'symreg/*is-testing* (constantly true))
@@ -202,77 +205,79 @@
 
 
 (deftest can-run-experiment-gui:start-restart-stop
-  (binding [ops/*print-top-n* 1]
-    (testing "gui can start and restart experiments; NOTE: do not run this while in headless mode, eg on CI"
-      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 500)}
-        (fn []
-          (let [control-process (go
-                                  (<! (timeout 200))
+  (when (not (GraphicsEnvironment/isHeadless))
+    (binding [ops/*print-top-n* 1]
+      (testing "gui can start and restart experiments; NOTE: do not run this while in headless mode, eg on CI"
+        (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 500)}
+          (fn []
+            (let [control-process
+                  (go
+                    (<! (timeout 200))
 
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state          :start
-                                             :input-data-x       [0 1 2 3 4]
-                                             :input-data-y       [1 3 6 18 8]
-                                             :input-iters        200
-                                             :input-phenos-count 500}))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state          :start
+                               :input-data-x       [0 1 2 3 4]
+                               :input-data-y       [1 3 6 18 8]
+                               :input-iters        200
+                               :input-phenos-count 500}))
 
-                                  (<! (timeout 100))
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state :pause}))
-                                  (<! (timeout 100))
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state :start}))
-                                  (<! (timeout 100))
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state :pause}))
-                                  (<! (timeout 100))
+                    (<! (timeout 100))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state :pause}))
+                    (<! (timeout 100))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state :start}))
+                    (<! (timeout 100))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state :pause}))
+                    (<! (timeout 100))
 
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state          :restart
-                                             :input-data-x       [0 1 2 3 4]
-                                             :input-data-y       [1 13 16 8 8]
-                                             :input-iters        1500
-                                             :input-phenos-count 500}))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state          :restart
+                               :input-data-x       [0 1 2 3 4]
+                               :input-data-y       [1 13 16 8 8]
+                               :input-iters        1500
+                               :input-phenos-count 500}))
 
-                                  (<! (timeout 100))
+                    (<! (timeout 100))
 
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state          :restart
-                                             :input-data-x       [0 1 2 3 4]
-                                             :input-data-y       [1 13 16 8 8]
-                                             :input-iters        5
-                                             :input-phenos-count 5}))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state          :restart
+                               :input-data-x       [0 1 2 3 4]
+                               :input-data-y       [1 13 16 8 8]
+                               :input-iters        5
+                               :input-phenos-count 5}))
 
-                                  (<! (timeout 100))
+                    (<! (timeout 100))
 
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state          :restart
-                                             :input-data-x       [0 1 2 3 4]
-                                             :input-data-y       [11 3 6 18 8]
-                                             :input-iters        300
-                                             :input-phenos-count 400}))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state          :restart
+                               :input-data-x       [0 1 2 3 4]
+                               :input-data-y       [11 3 6 18 8]
+                               :input-iters        300
+                               :input-phenos-count 400}))
 
-                                  (<! (timeout 100))
+                    (<! (timeout 100))
 
-                                  (is (put! symreg/*sim-stop-start-chan*
-                                            {:new-state :stop}))
+                    (is (put! symreg/*sim-stop-start-chan*
+                              {:new-state :stop}))
 
-                                  (<! (timeout 100))
+                    (<! (timeout 100))
 
-                                  (is (put! symreg/*gui-close-chan* :close-please))
-                                  (is (put! symreg/*sim->gui-chan* :next))
-                                  true)]
+                    (is (put! symreg/*gui-close-chan* :close-please))
+                    (is (put! symreg/*sim->gui-chan* :next))
+                    true)]
 
-            (symreg/run-solver
-              {:initial-phenos (ops-init/initial-phenotypes 20)
-               :initial-muts   (ops-init/initial-mutations)
-               :input-xs-exprs symreg/example-input-xs-exprs
-               :input-ys-exprs symreg/example-input-ys-exprs
-               :iters          20
-               :use-gui?       true})
+              (symreg/run-solver
+                {:initial-phenos (ops-init/initial-phenotypes 20)
+                 :initial-muts   (ops-init/initial-mutations)
+                 :input-xs-exprs symreg/example-input-xs-exprs
+                 :input-ys-exprs symreg/example-input-ys-exprs
+                 :iters          20
+                 :use-gui?       true})
 
 
-            (is (= (<!! control-process) true))))))))
+              (is (= (<!! control-process) true)))))))))
 
 
 (deftest derive-log-steps
