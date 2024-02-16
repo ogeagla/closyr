@@ -436,7 +436,7 @@
     (reset! ops/test-timer* start)))
 
 
-(def RunConfig
+(def ^:private RunConfig
   [:map
    {:closed true}
    [:iters pos-int?]
@@ -451,7 +451,7 @@
    [:input-ys-exprs [:sequential some?]]])
 
 
-(def RunArgs
+(def ^:private RunArgs
   [:map
    {:closed true}
    [:sim->gui-chan {:optional true} some?]
@@ -467,7 +467,7 @@
    [:max-leafs [:maybe pos-int?]]])
 
 
-(def GAPhenotype
+(def ^:private GAPhenotype
   [:map
    {:closed true}
    [:id :uuid]
@@ -479,7 +479,7 @@
    [:mods-applied {:optional true} :int]])
 
 
-(def GAPopulation
+(def ^:private GAPopulation
   [:sequential #'GAPhenotype])
 
 
