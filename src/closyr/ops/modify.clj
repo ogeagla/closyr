@@ -145,7 +145,7 @@
 
     ;; inputs:
     [:cat
-     pos-int?
+     #'specs/MaxLeafs
      #'specs/GAPhenotype
      #'specs/GAPhenotype]
 
@@ -201,7 +201,7 @@
 
     ;; inputs:
     [:cat
-     pos-int?
+     #'specs/MaxLeafs
      pos-int?
      [:sequential #'specs/GAMutation]
      #'specs/GAPhenotype

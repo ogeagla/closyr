@@ -23,7 +23,7 @@
 
 (defn initial-phenotypes
   "Initial exprs scaled up in quantity to use in GA evolution"
-  {:malli/schema [:=> [:cat pos-int?] #'specs/GAPopulationPhenotypes]}
+  {:malli/schema [:=> [:cat #'specs/PopulationCount] #'specs/GAPopulationPhenotypes]}
   [p-count]
   (let [^ISymbol x ops-common/sym-x]
     (->>
