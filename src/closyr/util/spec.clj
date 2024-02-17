@@ -94,18 +94,6 @@
                                                (F/Times x (F/Times x x))]))))}}))
 
 
-(comment
-  (do
-    (println "--------")
-    (pp/pprint [:fn-expr-1 (m/explain #'SymbolicExpr 123)])
-    (pp/pprint [:fn-eval-1 (m/explain #'SymbolicEvaluator 123)])
-    (pp/pprint [:fn-expr-2 (me/humanize (m/explain #'SymbolicExpr 0))])
-    (pp/pprint [:fn-eval-2 (me/humanize (m/explain #'SymbolicEvaluator 0))])
-    (pp/pprint ["gen expr" (str (mg/generate #'SymbolicExpr))])
-    (pp/pprint ["gen util" (str (mg/generate #'SymbolicEvaluator))])
-    (println "--------")))
-
-
 (def ^:private NumberVector
   [:vector number?])
 
