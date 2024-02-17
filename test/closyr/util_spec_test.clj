@@ -187,4 +187,3 @@
 
         (is (= (ops-common/extend-xs [0.1 "a"])
                [])))))
-
