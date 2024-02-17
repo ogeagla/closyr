@@ -255,14 +255,14 @@
 (def ^:private CLIArgs
   [:map
    {:closed true}
-   [:log-level {:optional true} keyword?]
-   [:iterations any?]
-   [:population any?]
-   [:headless any?]
-   [:xs {:optional true} any?]
-   [:ys {:optional true} any?]
-   [:use-flamechart {:optional true} any?]
-   [:max-leafs {:optional true} any?]])
+   [:log-level {:optional true} [:maybe [:enum :error :warn :info :debug]]]
+   [:iterations pos-int?]
+   [:population pos-int?]
+   [:headless boolean?]
+   [:xs {:optional true} [:maybe #'NumberVector]]
+   [:ys {:optional true} [:maybe #'NumberVector]]
+   [:use-flamechart {:optional true} boolean?]
+   [:max-leafs {:optional true} pos-int?]])
 
 
 (def ^:private ModificationsResult
