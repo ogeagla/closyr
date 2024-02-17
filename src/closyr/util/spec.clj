@@ -167,8 +167,8 @@
    [:input-phenos-count {:optional true} pos-int?]
    [:log-steps pos-int?]
    [:use-flamechart [:maybe :boolean]]
-   [:input-xs-exprs [:sequential some?]]
-   [:input-ys-exprs [:sequential some?]]])
+   [:input-xs-exprs [:vector #'SymbolicExpr]]
+   [:input-ys-exprs [:vector #'SymbolicExpr]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -233,7 +233,7 @@
 (def ^:private SolverGUIInputArgs
   [:map
    {:closed true}
-   [:input-xs-exprs some?]
+   [:input-xs-exprs [:vector #'SymbolicExpr]]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
    [:input-iters pos-int?]
