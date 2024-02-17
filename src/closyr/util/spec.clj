@@ -45,6 +45,7 @@
 (def ^:private NumberVector
   [:vector number?])
 
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
@@ -87,12 +88,22 @@
    [:input-ys-exprs [:sequential some?]]])
 
 
+(def ^:private ExtendedDomainArgs
+  [:map
+   {:closed true}
+   [:xs #'NumberVector]
+   [:x-head #'NumberVector]
+   [:x-head-list some?]
+   [:x-tail #'NumberVector]
+   [:x-tail-list some?]])
+
+
 (def ^:private SolverRunArgs
   [:map
    {:closed true}
    [:sim->gui-chan {:optional true} some?]
    [:sim-stop-start-chan {:optional true} some?]
-   [:extended-domain-args map?]
+   [:extended-domain-args #'ExtendedDomainArgs]
    [:input-xs-list some?]
    [:input-xs-count pos-int?]
    [:input-xs-vec #'NumberVector]
@@ -118,11 +129,21 @@
    [:input-xs-count pos-int?]])
 
 
+(def ^:private GAPopulation
+  [:map
+   {:closed true}
+   [:pop #'GAPopulationPhenotypes]
+   [:score-fn fn?]
+   [:pop-scores #'NumberVector]
+   [:mutation-fn fn?]
+   [:crossover-fn fn?]])
+
+
 (def ^:private SolverRunResults
   [:map
    {:closed true}
    [:iters-done number?]
-   [:final-population map?]
+   [:final-population #'GAPopulation]
    [:next-step [:enum :wait :stop :restart]]])
 
 

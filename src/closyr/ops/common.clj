@@ -267,11 +267,11 @@
         extra-pts            (* x-range-pct-extend (count input-xs-vec))
         x-range-extend-pt-sz (/ (* x-range-pct-extend x-range-sz) extra-pts)
 
-        x-head               (reverse
-                               (mapv
-                                 (fn [i]
-                                   (- x-min (* (inc i) x-range-extend-pt-sz)))
-                                 (range extra-pts)))
+        x-head               (vec (reverse
+                                    (mapv
+                                      (fn [i]
+                                        (- x-min (* (inc i) x-range-extend-pt-sz)))
+                                      (range extra-pts))))
 
         x-tail               (mapv
                                (fn [i]
@@ -280,7 +280,7 @@
 
         x-tail-list          (exprs->exprs-list (doubles->exprs x-tail))
         x-head-list          (exprs->exprs-list (doubles->exprs x-head))
-        xs                   (concat x-head input-xs-vec x-tail)]
+        xs                   (vec (concat x-head input-xs-vec x-tail))]
     {:xs          xs
      :x-head      x-head
      :x-head-list x-head-list
