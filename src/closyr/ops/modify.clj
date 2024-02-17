@@ -145,7 +145,7 @@
 
     ;; inputs:
     [:cat
-     pos-int?
+     #'specs/MaxLeafs
      #'specs/GAPhenotype
      #'specs/GAPhenotype]
 
@@ -201,17 +201,14 @@
 
     ;; inputs:
     [:cat
-     pos-int?
+     #'specs/MaxLeafs
      pos-int?
      [:sequential #'specs/GAMutation]
      #'specs/GAPhenotype
      #'specs/GAPhenotype]
 
     ;; outputs:
-    [:map {:closed true}
-     [:new-pheno #'specs/GAPhenotype]
-     [:iters int?]
-     [:mods [:sequential #'specs/GAMutation]]]]}
+    #'specs/ModificationsResult]}
 
   [max-leafs mods-count initial-muts p-winner p-discard]
   (loop [iters              0

@@ -15,7 +15,11 @@
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
-      IExpr)))
+      IExpr
+      ISymbol)))
+
+
+(set! *warn-on-reflection* true)
 
 
 (def ^:dynamic *check-schema*
@@ -51,6 +55,33 @@
                                               ['closyr.util.spec-test
                                                'cursive.tests.runner
                                                'user]))]}))
+
+
+(def iexpr-array-class
+  "Class for IExpr[]"
+  (Class/forName "[Lorg.matheclipse.core.interfaces.IExpr;"))
+
+
+(def ^:private PrimitiveArrayOfIExpr
+  (m/-simple-schema
+    {:type            :user/iexpr-array
+     :pred            #(instance? iexpr-array-class %)
+     :type-properties {:error/fn      (fn [error _] (str "should be a IExpr[], got " (:value error)))
+                       :error/message "should be IExpr[]"
+                       :gen/gen       (gen/elements [(into-array IExpr [F/C1 F/CN1 (F/Sin (F/Dummy "x"))])])}}))
+
+
+#_(def ^:private PrimitiveArrayOfIExpr
+    some?)
+
+
+(def ^:private SymbolicVariable
+  (m/-simple-schema
+    {:type            :user/symbolic-variable
+     :pred            #(instance? ISymbol %)
+     :type-properties {:error/fn      (fn [error _] (str "should be an ISymbol, got " (:value error)))
+                       :error/message "should be ISymbol"
+                       :gen/gen       (gen/elements [(F/Dummy "x")])}}))
 
 
 (def ^:private SymbolicEvaluator
@@ -98,11 +129,27 @@
   [:vector number?])
 
 
+(def ^:private MaxLeafs
+  [:int {:min 1 :max 500}])
+
+
+(def ^:private Iterations
+  [:int {:min 1 :max 1000000}])
+
+
+(def ^:private PointsCount
+  [:int {:min 1 :max 10000}])
+
+
+(def ^:private PopulationCount
+  [:int {:min 1 :max 10000}])
+
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
    [:id {:optional true} :uuid]
-   [:sym some?]
+   [:sym #'SymbolicVariable]
    [:expr {:optional true} #'SymbolicExpr]
    [:score {:optional true} number?]
    [:util {:optional true} [:maybe #'SymbolicEvaluator]]
@@ -114,30 +161,38 @@
   [:vector #'GAPhenotype])
 
 
+(def ^:private GAMutationOps
+  [:enum :modify-substitute :modify-fn :modify-leafs :modify-branches :modify-ast-head])
+
+
+(def ^:private GAMutationLabel
+  :string)
+
+
 (def ^:private GAMutation
   [:map
    {:closed true}
-   [:op [:enum :modify-substitute :modify-fn :modify-leafs :modify-branches :modify-ast-head]]
-   [:label {:optional true} :string]
+   [:op #'GAMutationOps]
+   [:label {:optional true} #'GAMutationLabel]
    [:leaf-modifier-fn {:optional true} fn?]
    [:modifier-fn {:optional true} fn?]
-   [:find-expr {:optional true} some?]
-   [:replace-expr {:optional true} some?]])
+   [:find-expr {:optional true} #'SymbolicExpr]
+   [:replace-expr {:optional true} #'SymbolicExpr]])
 
 
 (def ^:private SolverRunConfig
   [:map
    {:closed true}
-   [:iters pos-int?]
+   [:iters #'Iterations]
    [:initial-phenos #'GAPopulationPhenotypes]
    [:initial-muts [:sequential #'GAMutation]]
    [:use-gui? :boolean]
-   [:max-leafs pos-int?]
-   [:input-phenos-count {:optional true} pos-int?]
+   [:max-leafs #'MaxLeafs]
+   [:input-phenos-count {:optional true} #'PopulationCount]
    [:log-steps pos-int?]
    [:use-flamechart [:maybe :boolean]]
-   [:input-xs-exprs [:sequential some?]]
-   [:input-ys-exprs [:sequential some?]]])
+   [:input-xs-exprs [:vector #'SymbolicExpr]]
+   [:input-ys-exprs [:vector #'SymbolicExpr]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -145,9 +200,9 @@
    {:closed true}
    [:xs #'NumberVector]
    [:x-head #'NumberVector]
-   [:x-head-list some?]
+   [:x-head-list #'PrimitiveArrayOfIExpr]
    [:x-tail #'NumberVector]
-   [:x-tail-list some?]])
+   [:x-tail-list #'PrimitiveArrayOfIExpr]])
 
 
 (def ^:private SolverRunArgs
@@ -156,29 +211,29 @@
    [:sim->gui-chan {:optional true} some?]
    [:sim-stop-start-chan {:optional true} some?]
    [:extended-domain-args #'ExtendedDomainArgs]
-   [:input-xs-list some?]
-   [:input-xs-count pos-int?]
+   [:input-xs-list #'PrimitiveArrayOfIExpr]
+   [:input-xs-count #'PointsCount]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
-   [:input-iters pos-int?]
+   [:input-iters #'Iterations]
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
-   [:input-phenos-count [:maybe pos-int?]]
-   [:max-leafs [:maybe pos-int?]]])
+   [:input-phenos-count [:maybe #'PopulationCount]]
+   [:max-leafs [:maybe #'MaxLeafs]]])
 
 
 (def ^:private SolverEvalArgs
   [:map
    {:closed false}
-   [:input-xs-list some?]
-   [:input-xs-count pos-int?]])
+   [:input-xs-list #'PrimitiveArrayOfIExpr]
+   [:input-xs-count #'PointsCount]])
 
 
 (def ^:private ScoreFnArgs
   [:map
    {:closed false}
    [:input-ys-vec #'NumberVector]
-   [:input-xs-list some?]
-   [:input-xs-count pos-int?]])
+   [:input-xs-list #'PrimitiveArrayOfIExpr]
+   [:input-xs-count #'PointsCount]])
 
 
 (def ^:private GAPopulation
@@ -202,12 +257,12 @@
 (def ^:private SolverGUIInputArgs
   [:map
    {:closed true}
-   [:input-xs-exprs some?]
+   [:input-xs-exprs [:vector #'SymbolicExpr]]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
-   [:input-iters pos-int?]
-   [:input-phenos-count pos-int?]
-   [:max-leafs [:maybe pos-int?]]])
+   [:input-iters #'Iterations]
+   [:input-phenos-count #'PopulationCount]
+   [:max-leafs [:maybe #'MaxLeafs]]])
 
 
 (def ^:private SolverGUIMessage
@@ -216,6 +271,26 @@
    [:new-state [:enum :start :pause :stop :restart]]
    [:input-data-x #'NumberVector]
    [:input-data-y #'NumberVector]
-   [:input-iters pos-int?]
-   [:input-phenos-count pos-int?]
-   [:max-leafs {:optional true} [:maybe pos-int?]]])
+   [:input-iters #'Iterations]
+   [:input-phenos-count #'PopulationCount]
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
+
+
+(def ^:private CLIArgs
+  [:map
+   {:closed true}
+   [:log-level {:optional true} [:maybe [:enum :error :warn :info :debug]]]
+   [:iterations #'Iterations]
+   [:population #'PopulationCount]
+   [:headless boolean?]
+   [:xs {:optional true} [:maybe #'NumberVector]]
+   [:ys {:optional true} [:maybe #'NumberVector]]
+   [:use-flamechart {:optional true} boolean?]
+   [:max-leafs {:optional true} #'MaxLeafs]])
+
+
+(def ^:private ModificationsResult
+  [:map {:closed true}
+   [:new-pheno #'GAPhenotype]
+   [:iters int?]
+   [:mods [:sequential #'GAMutation]]])

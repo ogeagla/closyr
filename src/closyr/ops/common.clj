@@ -67,6 +67,7 @@
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->exprs-list
   "Turn a coll of exprs into a primitive IExpr array List"
+  {:malli/schema [:=> [:cat [:vector #'specs/SymbolicExpr]] #'specs/PrimitiveArrayOfIExpr]}
   [exprs]
   (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
         (into-array IExpr exprs)
@@ -206,6 +207,10 @@
 
 (defn- ^IAST simplify
   [^IAST expr]
+  #_(F/FullSimplify
+      (F/Simplify
+        expr
+        assume-x-gt-zero))
   (F/Simplify expr))
 
 
@@ -221,10 +226,6 @@
     (try
       (check-simplify-timing expr done?*)
       (let [^IAST new-expr (simplify expr)
-            #_(F/FullSimplify
-                (F/Simplify
-                  expr
-                  assume-x-gt-zero))
             res            (.eval (or util (new-util)) new-expr)
             diff-ms        (start-date->diff-ms start)]
         (reset! done?* true)
@@ -242,7 +243,6 @@
 (defn ^IAST maybe-simplify
   "Maybe simplify pheno expr"
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
-
   (if (and (<= (.leafCount expr) *simplify-max-leafs*)
            (not simple?)
            (< (rand) *simplify-probability-sampler*))
@@ -258,7 +258,7 @@
 
 (defn extend-xs
   "Add extra xs on either side of the provided range"
-  {:malli/schema [:=> [:cat [:sequential number?]] map?]}
+  {:malli/schema [:=> [:cat #'specs/NumberVector] #'specs/ExtendedDomainArgs]}
   [input-xs-vec]
   (let [x-min                (first input-xs-vec)
         x-max                (last input-xs-vec)

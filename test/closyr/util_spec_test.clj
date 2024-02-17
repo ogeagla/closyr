@@ -15,7 +15,8 @@
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
-      IExpr)))
+      IExpr
+      ISymbol)))
 
 
 (deftest generates-custom-types
@@ -36,6 +37,42 @@
     (is (=
           (me/humanize (m/explain #'specs/SymbolicExpr 0))
           ["should be an IExpr, got 0"])))
+
+  (testing "valid Expr[]"
+    (is (instance?
+          specs/iexpr-array-class
+          (mg/generate #'specs/PrimitiveArrayOfIExpr)))
+
+    (is (=
+          (m/explain #'specs/PrimitiveArrayOfIExpr (into-array IExpr [F/C1 F/CN1 (F/Sin (F/Dummy "x"))]))
+          nil)))
+
+  (testing "invalid Expr[]"
+    (is (=
+          (-> (m/explain #'specs/PrimitiveArrayOfIExpr 123) :errors count)
+          1))
+
+    (is (=
+          (me/humanize (m/explain #'specs/PrimitiveArrayOfIExpr 0))
+          ["should be a IExpr[], got 0"])))
+
+  (testing "valid Symbol"
+    (is (instance?
+          ISymbol
+          (mg/generate #'specs/SymbolicVariable)))
+
+    (is (=
+          (m/explain #'specs/SymbolicVariable (F/Dummy "x"))
+          nil)))
+
+  (testing "invalid Symbol"
+    (is (=
+          (-> (m/explain #'specs/SymbolicVariable 123) :errors count)
+          1))
+
+    (is (=
+          (me/humanize (m/explain #'specs/SymbolicVariable 0))
+          ["should be an ISymbol, got 0"])))
 
   (testing "valid Evaluator"
     (is (=
@@ -118,7 +155,7 @@
         (is (=
               (reduce + 0 (map (fn [[k v]] (count v)) ss))
               ;; the number of total defns which have malli/schema metadata in entire src:
-              16))))))
+              17))))))
 
 
 #_(deftest decode-test
@@ -150,4 +187,3 @@
 
         (is (= (ops-common/extend-xs [0.1 "a"])
                [])))))
-
