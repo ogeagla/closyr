@@ -42,6 +42,9 @@
                                                'user]))]}))
 
 
+(def ^:private NumberVector
+  [:vector number?])
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
@@ -61,7 +64,7 @@
 (def ^:private GAMutation
   [:map
    {:closed true}
-   [:op :keyword]
+   [:op [:enum :modify-substitute :modify-fn :modify-leafs :modify-branches :modify-ast-head]]
    [:label {:optional true} :string]
    [:leaf-modifier-fn {:optional true} fn?]
    [:modifier-fn {:optional true} fn?]
@@ -92,10 +95,10 @@
    [:extended-domain-args map?]
    [:input-xs-list some?]
    [:input-xs-count pos-int?]
-   [:input-xs-vec [:vector number?]]
-   [:input-ys-vec [:vector number?]]
+   [:input-xs-vec #'NumberVector]
+   [:input-ys-vec #'NumberVector]
    [:input-iters pos-int?]
-   [:initial-phenos [:maybe [:sequential map?]]]
+   [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe pos-int?]]
    [:max-leafs [:maybe pos-int?]]])
 
@@ -110,7 +113,7 @@
 (def ^:private ScoreFnArgs
   [:map
    {:closed false}
-   [:input-ys-vec [:vector number?]]
+   [:input-ys-vec #'NumberVector]
    [:input-xs-list some?]
    [:input-xs-count pos-int?]])
 
@@ -120,15 +123,15 @@
    {:closed true}
    [:iters-done number?]
    [:final-population map?]
-   [:next-step :keyword]])
+   [:next-step [:enum :wait :stop :restart]]])
 
 
 (def ^:private SolverGUIInputArgs
   [:map
    {:closed true}
    [:input-xs-exprs some?]
-   [:input-xs-vec [:vector number?]]
-   [:input-ys-vec [:vector number?]]
+   [:input-xs-vec #'NumberVector]
+   [:input-ys-vec #'NumberVector]
    [:input-iters pos-int?]
    [:input-phenos-count pos-int?]
    [:max-leafs [:maybe pos-int?]]])
@@ -137,9 +140,9 @@
 (def ^:private SolverGUIMessage
   [:map
    {:closed true}
-   [:new-state keyword?]
-   [:input-data-x [:vector number?]]
-   [:input-data-y [:vector number?]]
+   [:new-state [:enum :start :pause :stop :restart]]
+   [:input-data-x #'NumberVector]
+   [:input-data-y #'NumberVector]
    [:input-iters pos-int?]
    [:input-phenos-count pos-int?]
    [:max-leafs {:optional true} [:maybe pos-int?]]])
