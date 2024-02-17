@@ -1,10 +1,21 @@
 (ns closyr.util.spec
   (:require
     [clojure.pprint :as pp]
+    [clojure.test.check.generators :as gen]
     [closyr.util.log :as log]
     [malli.core :as m]
     [malli.error :as me]
-    [malli.instrument :as mi]))
+    [malli.generator :as mg]
+    [malli.instrument :as mi]
+    [malli.transform :as mt])
+  (:import
+    (org.matheclipse.core.eval
+      EvalEngine
+      ExprEvaluator)
+    (org.matheclipse.core.expression
+      F)
+    (org.matheclipse.core.interfaces
+      IExpr)))
 
 
 (def ^:dynamic *check-schema*
@@ -42,14 +53,59 @@
                                                'user]))]}))
 
 
+(def ^:private SymbolicEvaluator
+  (m/-simple-schema
+    {:type            :user/symbolic-evaluator
+     :pred            #(instance? ExprEvaluator %)
+     :type-properties {:error/fn      (fn [error _] (str "should be an ExprEvaluator, got " (:value error)))
+                       :error/message "should be ExprEvaluator"
+                       :gen/gen       (gen/let [f1 (gen/large-integer* {:min 1 :max 100})]
+                                        (gen/return
+                                          (ExprEvaluator.
+                                            (doto (EvalEngine. true)
+                                              (.setQuietMode true))
+                                            true
+                                            0)))}}))
+
+
+(def ^:private SymbolicExpr
+  (m/-simple-schema
+    {:type            :user/symbolic-expr
+     :pred            #(instance? IExpr %)
+     :type-properties {:error/fn      (fn [error _] (str "should be an IExpr, got " (:value error)))
+                       :error/message "should be IExpr"
+                       :gen/gen       (gen/let [f1 (gen/large-integer* {:min -1000 :max 1000})
+                                                f2 (gen/double* {:min -1000.0 :max 1000.0})]
+                                        (let [x (F/Dummy "x")]
+                                          (gen/elements
+                                            (mapv
+                                              (fn [^IExpr expr]
+                                                (F/Times (F/num (float f2))
+                                                         (F/Plus expr (F/num (float f1)))))
+                                              [x
+                                               (F/Sin x)
+                                               (F/Cos x)
+                                               (F/Exp x)
+                                               (F/Log x)
+                                               (F/Sqrt x)
+                                               (F/Times x F/C2)
+                                               (F/Plus x F/C5)
+                                               (F/Times x x)
+                                               (F/Times x (F/Times x x))]))))}}))
+
+
+(def ^:private NumberVector
+  [:vector number?])
+
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
    [:id {:optional true} :uuid]
    [:sym some?]
-   [:expr {:optional true} some?]
+   [:expr {:optional true} #'SymbolicExpr]
    [:score {:optional true} number?]
-   [:util {:optional true} any?]
+   [:util {:optional true} [:maybe #'SymbolicEvaluator]]
    [:last-op {:optional true} :string]
    [:mods-applied {:optional true} :int]])
 
@@ -61,7 +117,7 @@
 (def ^:private GAMutation
   [:map
    {:closed true}
-   [:op :keyword]
+   [:op [:enum :modify-substitute :modify-fn :modify-leafs :modify-branches :modify-ast-head]]
    [:label {:optional true} :string]
    [:leaf-modifier-fn {:optional true} fn?]
    [:modifier-fn {:optional true} fn?]
@@ -84,18 +140,28 @@
    [:input-ys-exprs [:sequential some?]]])
 
 
+(def ^:private ExtendedDomainArgs
+  [:map
+   {:closed true}
+   [:xs #'NumberVector]
+   [:x-head #'NumberVector]
+   [:x-head-list some?]
+   [:x-tail #'NumberVector]
+   [:x-tail-list some?]])
+
+
 (def ^:private SolverRunArgs
   [:map
    {:closed true}
    [:sim->gui-chan {:optional true} some?]
    [:sim-stop-start-chan {:optional true} some?]
-   [:extended-domain-args map?]
+   [:extended-domain-args #'ExtendedDomainArgs]
    [:input-xs-list some?]
    [:input-xs-count pos-int?]
-   [:input-xs-vec [:vector number?]]
-   [:input-ys-vec [:vector number?]]
+   [:input-xs-vec #'NumberVector]
+   [:input-ys-vec #'NumberVector]
    [:input-iters pos-int?]
-   [:initial-phenos [:maybe [:sequential map?]]]
+   [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe pos-int?]]
    [:max-leafs [:maybe pos-int?]]])
 
@@ -110,14 +176,46 @@
 (def ^:private ScoreFnArgs
   [:map
    {:closed false}
-   [:input-ys-vec [:vector number?]]
+   [:input-ys-vec #'NumberVector]
    [:input-xs-list some?]
    [:input-xs-count pos-int?]])
+
+
+(def ^:private GAPopulation
+  [:map
+   {:closed true}
+   [:pop #'GAPopulationPhenotypes]
+   [:score-fn fn?]
+   [:pop-scores #'NumberVector]
+   [:mutation-fn fn?]
+   [:crossover-fn fn?]])
 
 
 (def ^:private SolverRunResults
   [:map
    {:closed true}
    [:iters-done number?]
-   [:final-population map?]
-   [:next-step :keyword]])
+   [:final-population #'GAPopulation]
+   [:next-step [:enum :wait :stop :restart]]])
+
+
+(def ^:private SolverGUIInputArgs
+  [:map
+   {:closed true}
+   [:input-xs-exprs some?]
+   [:input-xs-vec #'NumberVector]
+   [:input-ys-vec #'NumberVector]
+   [:input-iters pos-int?]
+   [:input-phenos-count pos-int?]
+   [:max-leafs [:maybe pos-int?]]])
+
+
+(def ^:private SolverGUIMessage
+  [:map
+   {:closed true}
+   [:new-state [:enum :start :pause :stop :restart]]
+   [:input-data-x #'NumberVector]
+   [:input-data-y #'NumberVector]
+   [:input-iters pos-int?]
+   [:input-phenos-count pos-int?]
+   [:max-leafs {:optional true} [:maybe pos-int?]]])

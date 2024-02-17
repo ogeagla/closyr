@@ -4,8 +4,60 @@
     [clojure.test :refer :all]
     [closyr.util.spec :as specs]
     [malli.core :as m]
+    [malli.error :as me]
+    [malli.generator :as mg]
     [malli.instrument :as mi]
-    [malli.transform :as mt]))
+    [malli.transform :as mt])
+  (:import
+    (org.matheclipse.core.eval
+      EvalEngine
+      ExprEvaluator)
+    (org.matheclipse.core.expression
+      F)
+    (org.matheclipse.core.interfaces
+      IExpr)))
+
+
+(deftest generates-custom-types
+  (testing "valid Expr"
+    (is (instance?
+          IExpr
+          (mg/generate #'specs/SymbolicExpr)))
+
+    (is (=
+          (m/explain #'specs/SymbolicExpr F/C1)
+          nil)))
+
+  (testing "invalid Expr"
+    (is (=
+          (-> (m/explain #'specs/SymbolicExpr 123) :errors count)
+          1))
+
+    (is (=
+          (me/humanize (m/explain #'specs/SymbolicExpr 0))
+          ["should be an IExpr, got 0"])))
+
+  (testing "valid Evaluator"
+    (is (=
+          (class (mg/generate #'specs/SymbolicEvaluator))
+          ExprEvaluator))
+
+    (is (=
+          (m/explain #'specs/SymbolicEvaluator (ExprEvaluator.
+                                                 (doto (EvalEngine. true)
+                                                   (.setQuietMode true))
+                                                 true
+                                                 0))
+          nil)))
+
+  (testing "invalid Evaluator"
+    (is (=
+          (-> (m/explain #'specs/SymbolicEvaluator 123) :errors count)
+          1))
+
+    (is (=
+          (me/humanize (m/explain #'specs/SymbolicEvaluator 0))
+          ["should be an ExprEvaluator, got 0"]))))
 
 
 (deftest defined-schemas
@@ -66,7 +118,7 @@
         (is (=
               (reduce + 0 (map (fn [[k v]] (count v)) ss))
               ;; the number of total defns which have malli/schema metadata in entire src:
-              14))))))
+              16))))))
 
 
 #_(deftest decode-test

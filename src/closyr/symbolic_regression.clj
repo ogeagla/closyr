@@ -299,7 +299,9 @@
      :sim-stop-start-chan sim-stop-start-chan}))
 
 
-(defn- update-plot-input-data
+(defn update-plot-input-data
+  "Get new data from GUI and generate necessary solver inputs"
+  {:malli/schema [:=> [:cat #'specs/SolverGUIMessage] #'specs/SolverGUIInputArgs]}
   [{new-state          :new-state
     input-data-x       :input-data-x
     input-data-y       :input-data-y
@@ -307,13 +309,8 @@
     input-phenos-count :input-phenos-count
     max-leafs          :max-leafs}]
 
-  (let [input-xs-exprs (if input-data-x
-                         (ops-common/doubles->exprs input-data-x)
-                         example-input-xs-exprs)
-        input-ys-exprs (if input-data-y
-                         (ops-common/doubles->exprs input-data-y)
-                         example-input-ys-exprs)
-
+  (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
+        input-ys-exprs (ops-common/doubles->exprs input-data-y)
         input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)
         input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)]
 
@@ -322,12 +319,12 @@
                              :input-ys-vec       input-ys-vec
                              :input-iters        input-iters
                              :input-phenos-count input-phenos-count
-                             :max-leafs          max-leafs})
-
-    @sim-input-args*))
+                             :max-leafs          max-leafs})))
 
 
-(defn- restart-with-new-inputs
+(defn restart-with-new-inputs
+  "Get new inputs and restart solver"
+  {:malli/schema [:=> [:cat #'specs/SolverGUIMessage] keyword?]}
   [msg]
   (log/info "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)

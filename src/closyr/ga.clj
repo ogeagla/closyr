@@ -72,7 +72,7 @@
                                        (partition-all 2 pop-chunk))))
                          (mapcat identity))
 
-          pop-scores   (pmap first new-pop-data)
+          pop-scores   (vec (pmap first new-pop-data))
           new-pop      (->> (pmap second new-pop-data)
                             (mapcat identity)
                             (vec))]

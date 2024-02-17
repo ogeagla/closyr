@@ -62,22 +62,28 @@
            (= "Indeterminate" (str eval-p)))))
 
 
+(defn- ^IExpr get-arg
+  [^IExpr expr i ^IExpr default]
+  (.getArg expr i default))
+
+
 (defn- result-args->doubles
   [^IExpr eval-p i]
   (try
-    (let [^IExpr res (.getArg eval-p (inc i) F/Infinity)]
+    (let [^IExpr res (get-arg eval-p (inc i) F/Infinity)]
       (if (.isReal res)
         (ops-common/expr->double res)
         Double/POSITIVE_INFINITY))
     (catch Exception e
-      (log/error "Error in evaling function on input values: " (str eval-p) " : " e)
+      (log/error "Error in evaling function on input values: "
+                 (str eval-p) " : " (or (.getMessage e) e))
       Double/POSITIVE_INFINITY)))
 
 
 (defn- result-args->constant-input
   [^IExpr eval-p ^IExpr new-expr i]
   (try
-    (let [^IExpr arg0 (.getArg eval-p 0 F/Infinity)]
+    (let [^IExpr arg0 (get-arg eval-p 0 F/Infinity)]
       (ops-common/expr->double
         (if (.isReal new-expr)
           new-expr

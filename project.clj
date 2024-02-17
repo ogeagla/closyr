@@ -18,7 +18,7 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
-                 [ch.qos.logback/logback-classic "1.4.14"]
+                 [ch.qos.logback/logback-classic "1.5.0"]
                  [org.slf4j/jcl-over-slf4j "2.0.12"]
 
                  [org.slf4j/slf4j-api "2.0.12"]
