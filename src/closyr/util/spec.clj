@@ -219,3 +219,16 @@
    [:input-iters pos-int?]
    [:input-phenos-count pos-int?]
    [:max-leafs {:optional true} [:maybe pos-int?]]])
+
+
+(def ^:private CLIArgs
+  [:map
+   {:closed true}
+   [:log-level {:optional true} keyword?]
+   [:iterations any?]
+   [:population any?]
+   [:headless any?]
+   [:xs {:optional true} any?]
+   [:ys {:optional true} any?]
+   [:use-flamechart {:optional true} any?]
+   [:max-leafs {:optional true} any?]])
