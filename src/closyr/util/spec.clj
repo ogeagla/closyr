@@ -133,6 +133,18 @@
   [:int {:min 1 :max 500}])
 
 
+(def ^:private Iterations
+  [:int {:min 1 :max 1000000}])
+
+
+(def ^:private PointsCount
+  [:int {:min 1 :max 10000}])
+
+
+(def ^:private PopulationCount
+  [:int {:min 1 :max 10000}])
+
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
@@ -163,12 +175,12 @@
 (def ^:private SolverRunConfig
   [:map
    {:closed true}
-   [:iters pos-int?]
+   [:iters #'Iterations]
    [:initial-phenos #'GAPopulationPhenotypes]
    [:initial-muts [:sequential #'GAMutation]]
    [:use-gui? :boolean]
    [:max-leafs #'MaxLeafs]
-   [:input-phenos-count {:optional true} pos-int?]
+   [:input-phenos-count {:optional true} #'PopulationCount]
    [:log-steps pos-int?]
    [:use-flamechart [:maybe :boolean]]
    [:input-xs-exprs [:vector #'SymbolicExpr]]
@@ -192,12 +204,12 @@
    [:sim-stop-start-chan {:optional true} some?]
    [:extended-domain-args #'ExtendedDomainArgs]
    [:input-xs-list #'PrimitiveArrayOfIExpr]
-   [:input-xs-count pos-int?]
+   [:input-xs-count #'PointsCount]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
-   [:input-iters pos-int?]
+   [:input-iters #'Iterations]
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
-   [:input-phenos-count [:maybe pos-int?]]
+   [:input-phenos-count [:maybe #'PopulationCount]]
    [:max-leafs [:maybe #'MaxLeafs]]])
 
 
@@ -205,7 +217,7 @@
   [:map
    {:closed false}
    [:input-xs-list #'PrimitiveArrayOfIExpr]
-   [:input-xs-count pos-int?]])
+   [:input-xs-count #'PointsCount]])
 
 
 (def ^:private ScoreFnArgs
@@ -213,7 +225,7 @@
    {:closed false}
    [:input-ys-vec #'NumberVector]
    [:input-xs-list #'PrimitiveArrayOfIExpr]
-   [:input-xs-count pos-int?]])
+   [:input-xs-count #'PointsCount]])
 
 
 (def ^:private GAPopulation
@@ -240,8 +252,8 @@
    [:input-xs-exprs [:vector #'SymbolicExpr]]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
-   [:input-iters pos-int?]
-   [:input-phenos-count pos-int?]
+   [:input-iters #'Iterations]
+   [:input-phenos-count #'PopulationCount]
    [:max-leafs [:maybe #'MaxLeafs]]])
 
 
@@ -251,8 +263,8 @@
    [:new-state [:enum :start :pause :stop :restart]]
    [:input-data-x #'NumberVector]
    [:input-data-y #'NumberVector]
-   [:input-iters pos-int?]
-   [:input-phenos-count pos-int?]
+   [:input-iters #'Iterations]
+   [:input-phenos-count #'PopulationCount]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
 
 
@@ -260,8 +272,8 @@
   [:map
    {:closed true}
    [:log-level {:optional true} [:maybe [:enum :error :warn :info :debug]]]
-   [:iterations pos-int?]
-   [:population pos-int?]
+   [:iterations #'Iterations]
+   [:population #'PopulationCount]
    [:headless boolean?]
    [:xs {:optional true} [:maybe #'NumberVector]]
    [:ys {:optional true} [:maybe #'NumberVector]]
