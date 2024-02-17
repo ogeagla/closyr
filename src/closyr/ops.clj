@@ -97,7 +97,7 @@
 
 (defn compute-score-from-actuals-and-expecteds
   "Compute overall score for fn given some actual and expected ys"
-  {:malli/schema [:=> [:cat #'specs/GAPhenotype [:vector number?] [:vector number?] number?] number?]}
+  {:malli/schema [:=> [:cat #'specs/GAPhenotype #'specs/NumberVector #'specs/NumberVector number?] number?]}
   [pheno f-of-xs input-ys-vec leafs]
   (try
     (let [abs-resids       (map compute-residual input-ys-vec f-of-xs)

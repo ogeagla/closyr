@@ -258,7 +258,7 @@
 
 (defn extend-xs
   "Add extra xs on either side of the provided range"
-  {:malli/schema [:=> [:cat [:sequential number?]] map?]}
+  {:malli/schema [:=> [:cat #'specs/NumberVector] map?]}
   [input-xs-vec]
   (let [x-min                (first input-xs-vec)
         x-max                (last input-xs-vec)

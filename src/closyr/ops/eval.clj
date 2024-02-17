@@ -39,7 +39,7 @@
 
 (defn ^IExpr eval-phenotype-on-expr-args
   "Eval an expr at every point in the args"
-  {:malli/schema [:=> [:cat #'specs/GAPhenotype some?] any?]}
+  {:malli/schema [:=> [:cat #'specs/GAPhenotype #'specs/PrimitiveArrayOfIExpr] [:maybe #'specs/SymbolicExpr]]}
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
@@ -98,7 +98,7 @@
 
 (defn eval-vec-pheno
   "Evaluate a phenotype's expr on input xs/ys vecs"
-  {:malli/schema [:=> [:cat #'specs/GAPhenotype #'specs/SolverEvalArgs] [:or [:vector number?] nil?]]}
+  {:malli/schema [:=> [:cat #'specs/GAPhenotype #'specs/SolverEvalArgs] [:maybe #'specs/NumberVector]]}
   [p
    {:keys [input-xs-list input-xs-count]
     :as   run-args}]

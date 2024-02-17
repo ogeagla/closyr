@@ -98,6 +98,10 @@
   [:vector number?])
 
 
+(def ^:private PrimitiveArrayOfIExpr
+  some?)
+
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
