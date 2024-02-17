@@ -129,6 +129,10 @@
   [:vector number?])
 
 
+(def ^:private MaxLeafs
+  [:int {:min 1 :max 500}])
+
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
@@ -152,8 +156,8 @@
    [:label {:optional true} :string]
    [:leaf-modifier-fn {:optional true} fn?]
    [:modifier-fn {:optional true} fn?]
-   [:find-expr {:optional true} some?]
-   [:replace-expr {:optional true} some?]])
+   [:find-expr {:optional true} #'SymbolicExpr]
+   [:replace-expr {:optional true} #'SymbolicExpr]])
 
 
 (def ^:private SolverRunConfig
@@ -163,7 +167,7 @@
    [:initial-phenos #'GAPopulationPhenotypes]
    [:initial-muts [:sequential #'GAMutation]]
    [:use-gui? :boolean]
-   [:max-leafs pos-int?]
+   [:max-leafs #'MaxLeafs]
    [:input-phenos-count {:optional true} pos-int?]
    [:log-steps pos-int?]
    [:use-flamechart [:maybe :boolean]]
@@ -176,9 +180,9 @@
    {:closed true}
    [:xs #'NumberVector]
    [:x-head #'NumberVector]
-   [:x-head-list some?]
+   [:x-head-list #'PrimitiveArrayOfIExpr]
    [:x-tail #'NumberVector]
-   [:x-tail-list some?]])
+   [:x-tail-list #'PrimitiveArrayOfIExpr]])
 
 
 (def ^:private SolverRunArgs
@@ -187,20 +191,20 @@
    [:sim->gui-chan {:optional true} some?]
    [:sim-stop-start-chan {:optional true} some?]
    [:extended-domain-args #'ExtendedDomainArgs]
-   [:input-xs-list some?]
+   [:input-xs-list #'PrimitiveArrayOfIExpr]
    [:input-xs-count pos-int?]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
    [:input-iters pos-int?]
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe pos-int?]]
-   [:max-leafs [:maybe pos-int?]]])
+   [:max-leafs [:maybe #'MaxLeafs]]])
 
 
 (def ^:private SolverEvalArgs
   [:map
    {:closed false}
-   [:input-xs-list some?]
+   [:input-xs-list #'PrimitiveArrayOfIExpr]
    [:input-xs-count pos-int?]])
 
 
@@ -208,7 +212,7 @@
   [:map
    {:closed false}
    [:input-ys-vec #'NumberVector]
-   [:input-xs-list some?]
+   [:input-xs-list #'PrimitiveArrayOfIExpr]
    [:input-xs-count pos-int?]])
 
 
@@ -238,7 +242,7 @@
    [:input-ys-vec #'NumberVector]
    [:input-iters pos-int?]
    [:input-phenos-count pos-int?]
-   [:max-leafs [:maybe pos-int?]]])
+   [:max-leafs [:maybe #'MaxLeafs]]])
 
 
 (def ^:private SolverGUIMessage
@@ -249,7 +253,7 @@
    [:input-data-y #'NumberVector]
    [:input-iters pos-int?]
    [:input-phenos-count pos-int?]
-   [:max-leafs {:optional true} [:maybe pos-int?]]])
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
 
 
 (def ^:private CLIArgs
@@ -262,7 +266,7 @@
    [:xs {:optional true} [:maybe #'NumberVector]]
    [:ys {:optional true} [:maybe #'NumberVector]]
    [:use-flamechart {:optional true} boolean?]
-   [:max-leafs {:optional true} pos-int?]])
+   [:max-leafs {:optional true} #'MaxLeafs]])
 
 
 (def ^:private ModificationsResult
@@ -270,4 +274,3 @@
    [:new-pheno #'GAPhenotype]
    [:iters int?]
    [:mods [:sequential #'GAMutation]]])
-

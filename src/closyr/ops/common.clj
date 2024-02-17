@@ -67,6 +67,7 @@
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->exprs-list
   "Turn a coll of exprs into a primitive IExpr array List"
+  {:malli/schema [:=> [:cat [:vector #'specs/SymbolicExpr]] #'specs/PrimitiveArrayOfIExpr]}
   [exprs]
   (let [^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs-arr
         (into-array IExpr exprs)
