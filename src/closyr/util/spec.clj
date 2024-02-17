@@ -232,3 +232,11 @@
    [:ys {:optional true} any?]
    [:use-flamechart {:optional true} any?]
    [:max-leafs {:optional true} any?]])
+
+
+(def ^:private ModificationsResult
+  [:map {:closed true}
+   [:new-pheno #'GAPhenotype]
+   [:iters int?]
+   [:mods [:sequential #'GAMutation]]])
+

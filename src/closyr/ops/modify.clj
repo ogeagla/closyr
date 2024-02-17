@@ -208,10 +208,7 @@
      #'specs/GAPhenotype]
 
     ;; outputs:
-    [:map {:closed true}
-     [:new-pheno #'specs/GAPhenotype]
-     [:iters int?]
-     [:mods [:sequential #'specs/GAMutation]]]]}
+    #'specs/ModificationsResult]}
 
   [max-leafs mods-count initial-muts p-winner p-discard]
   (loop [iters              0
