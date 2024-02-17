@@ -265,6 +265,23 @@
    [:max-leafs [:maybe #'MaxLeafs]]])
 
 
+(def ^:private SolverInputArgs
+  [:map
+   {:closed true}
+   [:use-flamechart {:optional true} [:maybe :boolean]]
+   [:use-gui? {:optional true} [:maybe :boolean]]
+   [:initial-muts {:optional true} [:sequential #'GAMutation]]
+   [:initial-phenos {:optional true} [:maybe #'GAPopulationPhenotypes]]
+   [:input-xs-exprs {:optional true} [:vector #'SymbolicExpr]]
+   [:input-ys-exprs {:optional true} [:vector #'SymbolicExpr]]
+   [:input-xs-vec {:optional true} #'NumberVector]
+   [:input-ys-vec {:optional true} #'NumberVector]
+   [:input-iters {:optional true} [:maybe #'Iterations]]
+   [:iters {:optional true} [:maybe #'Iterations]]
+   [:input-phenos-count {:optional true} #'PopulationCount]
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
+
+
 (def ^:private SolverGUIMessage
   [:map
    {:closed true}

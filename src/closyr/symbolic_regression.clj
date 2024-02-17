@@ -354,7 +354,7 @@
 
 (defn ->run-args
   "Generate one-time computed args for solver"
-  {:malli/schema [:=> [:cat map?] #'specs/SolverRunArgs]}
+  {:malli/schema [:=> [:cat #'specs/SolverInputArgs] #'specs/SolverRunArgs]}
   [{input-xs-exprs     :input-xs-exprs
     input-xs-vec       :input-xs-vec
     input-ys-vec       :input-ys-vec

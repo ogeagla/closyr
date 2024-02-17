@@ -153,7 +153,7 @@
                    :initial-muts       (ops-init/initial-mutations)
                    :iters              5
                    :use-gui?           false
-                   :use-flamechart     true
+                   :use-flamechart     false
                    :input-xs-exprs     (->> (range 50)
                                             (map (fn [i] (* Math/PI (/ i 15.0))))
                                             ops-common/doubles->exprs)
