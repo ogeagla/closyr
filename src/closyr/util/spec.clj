@@ -161,11 +161,19 @@
   [:vector #'GAPhenotype])
 
 
+(def ^:private GAMutationOps
+  [:enum :modify-substitute :modify-fn :modify-leafs :modify-branches :modify-ast-head])
+
+
+(def ^:private GAMutationLabel
+  :string)
+
+
 (def ^:private GAMutation
   [:map
    {:closed true}
-   [:op [:enum :modify-substitute :modify-fn :modify-leafs :modify-branches :modify-ast-head]]
-   [:label {:optional true} :string]
+   [:op #'GAMutationOps]
+   [:label {:optional true} #'GAMutationLabel]
    [:leaf-modifier-fn {:optional true} fn?]
    [:modifier-fn {:optional true} fn?]
    [:find-expr {:optional true} #'SymbolicExpr]
