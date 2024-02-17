@@ -26,9 +26,9 @@
                  [org.apache.logging.log4j/log4j-api "2.22.1"]
 
                  [org.matheclipse/matheclipse-core "3.1.0-SNAPSHOT"
-                  :exclusions [org.slf4j/slf4j-api]]
+                  :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]
                  [org.matheclipse/matheclipse-gpl "3.1.0-SNAPSHOT"
-                  :exclusions [org.slf4j/slf4j-api]]]
+                  :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]]
 
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
                                    :releases  false
