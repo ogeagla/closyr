@@ -15,7 +15,8 @@
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
-      IExpr)))
+      IExpr
+      ISymbol)))
 
 
 (set! *warn-on-reflection* true)
@@ -54,6 +55,15 @@
                                               ['closyr.util.spec-test
                                                'cursive.tests.runner
                                                'user]))]}))
+
+
+(def ^:private SymbolicVariable
+  (m/-simple-schema
+    {:type            :user/symbolic-variable
+     :pred            #(instance? ISymbol %)
+     :type-properties {:error/fn      (fn [error _] (str "should be an ISymbol, got " (:value error)))
+                       :error/message "should be ISymbol"
+                       :gen/gen       (gen/elements [(F/Dummy "x")])}}))
 
 
 (def ^:private SymbolicEvaluator
@@ -109,7 +119,7 @@
   [:map
    {:closed true}
    [:id {:optional true} :uuid]
-   [:sym some?]
+   [:sym #'SymbolicVariable]
    [:expr {:optional true} #'SymbolicExpr]
    [:score {:optional true} number?]
    [:util {:optional true} [:maybe #'SymbolicEvaluator]]

@@ -15,7 +15,8 @@
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
-      IExpr)))
+      IExpr
+      ISymbol)))
 
 
 (deftest generates-custom-types
@@ -36,6 +37,24 @@
     (is (=
           (me/humanize (m/explain #'specs/SymbolicExpr 0))
           ["should be an IExpr, got 0"])))
+
+  (testing "valid Symbol"
+    (is (instance?
+          ISymbol
+          (mg/generate #'specs/SymbolicVariable)))
+
+    (is (=
+          (m/explain #'specs/SymbolicVariable (F/Dummy "x"))
+          nil)))
+
+  (testing "invalid Symbol"
+    (is (=
+          (-> (m/explain #'specs/SymbolicVariable 123) :errors count)
+          1))
+
+    (is (=
+          (me/humanize (m/explain #'specs/SymbolicVariable 0))
+          ["should be an ISymbol, got 0"])))
 
   (testing "valid Evaluator"
     (is (=
