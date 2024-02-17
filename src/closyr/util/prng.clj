@@ -10,9 +10,9 @@
       Random)))
 
 
-;; from https://github.com/trystan/random-seed
 (set! *warn-on-reflection* true)
 
+;; from https://github.com/trystan/random-seed
 (def ^:private ^Random rng (new Random))
 
 

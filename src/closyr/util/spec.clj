@@ -18,6 +18,9 @@
       IExpr)))
 
 
+(set! *warn-on-reflection* true)
+
+
 (def ^:dynamic *check-schema*
   "Toggle checking schema and potentially throwing exceptions"
   true)

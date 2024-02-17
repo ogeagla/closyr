@@ -3,6 +3,7 @@
     [closyr.dataset.prime-10000 :as data-primes]
     [closyr.dataset.prime-counting :as data-prime-counting]))
 
+(set! *warn-on-reflection* true)
 
 (defn y->gui-coord-y
   "Translate actual Y to a GUI Y coordinate (scale, translate, flip upside down)"

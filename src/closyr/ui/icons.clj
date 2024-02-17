@@ -5,6 +5,7 @@
     (javax.swing
       UIManager)))
 
+(set! *warn-on-reflection* true)
 
 ;; https://en-human-begin.blogspot.com/2007/11/javas-icons-by-default.html
 ;; https://coderanch.com/t/571308/java/built-Java-icons

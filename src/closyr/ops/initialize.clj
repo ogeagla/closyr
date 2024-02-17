@@ -12,6 +12,7 @@
       IExpr
       ISymbol)))
 
+(set! *warn-on-reflection* true)
 
 (defn initial-exprs
   "Initial exprs to use in GA evolution"
