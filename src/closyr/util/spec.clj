@@ -57,6 +57,24 @@
                                                'user]))]}))
 
 
+(def iexpr-array-class
+  "Class for IExpr[]"
+  (Class/forName "[Lorg.matheclipse.core.interfaces.IExpr;"))
+
+
+(def ^:private PrimitiveArrayOfIExpr
+  (m/-simple-schema
+    {:type            :user/iexpr-array
+     :pred            #(instance? iexpr-array-class %)
+     :type-properties {:error/fn      (fn [error _] (str "should be a IExpr[], got " (:value error)))
+                       :error/message "should be IExpr[]"
+                       :gen/gen       (gen/elements [(into-array IExpr [F/C1 F/CN1 (F/Sin (F/Dummy "x"))])])}}))
+
+
+#_(def ^:private PrimitiveArrayOfIExpr
+    some?)
+
+
 (def ^:private SymbolicVariable
   (m/-simple-schema
     {:type            :user/symbolic-variable
@@ -109,10 +127,6 @@
 
 (def ^:private NumberVector
   [:vector number?])
-
-
-(def ^:private PrimitiveArrayOfIExpr
-  some?)
 
 
 (def ^:private GAPhenotype

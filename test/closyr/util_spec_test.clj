@@ -38,6 +38,24 @@
           (me/humanize (m/explain #'specs/SymbolicExpr 0))
           ["should be an IExpr, got 0"])))
 
+  (testing "valid Expr[]"
+    (is (instance?
+          specs/iexpr-array-class
+          (mg/generate #'specs/PrimitiveArrayOfIExpr)))
+
+    (is (=
+          (m/explain #'specs/PrimitiveArrayOfIExpr (into-array IExpr [F/C1 F/CN1 (F/Sin (F/Dummy "x"))]))
+          nil)))
+
+  (testing "invalid Expr[]"
+    (is (=
+          (-> (m/explain #'specs/PrimitiveArrayOfIExpr 123) :errors count)
+          1))
+
+    (is (=
+          (me/humanize (m/explain #'specs/PrimitiveArrayOfIExpr 0))
+          ["should be a IExpr[], got 0"])))
+
   (testing "valid Symbol"
     (is (instance?
           ISymbol
