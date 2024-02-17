@@ -322,7 +322,9 @@
                              :max-leafs          max-leafs})))
 
 
-(defn- restart-with-new-inputs
+(defn restart-with-new-inputs
+  "Get new inputs and restart solver"
+  {:malli/schema [:=> [:cat #'specs/SolverGUIMessage] keyword?]}
   [msg]
   (log/info "~~~ Restarting experiment! ~~~")
   (update-plot-input-data msg)
