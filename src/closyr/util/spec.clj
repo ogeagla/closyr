@@ -274,10 +274,10 @@
    [:initial-phenos {:optional true} [:maybe #'GAPopulationPhenotypes]]
    [:input-xs-exprs {:optional true} [:vector #'SymbolicExpr]]
    [:input-ys-exprs {:optional true} [:vector #'SymbolicExpr]]
-   [:input-xs-vec {:optional true} #'NumberVector]
-   [:input-ys-vec {:optional true} #'NumberVector]
-   [:input-iters {:optional true} [:maybe #'Iterations]]
-   [:iters {:optional true} [:maybe #'Iterations]]
+   [:input-xs-vec #'NumberVector]
+   [:input-ys-vec #'NumberVector]
+   [:input-iters {:optional true} #'Iterations]
+   [:iters {:optional true} #'Iterations]
    [:input-phenos-count {:optional true} #'PopulationCount]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
 
