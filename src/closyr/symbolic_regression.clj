@@ -44,7 +44,7 @@
   (chan))
 
 
-(def ^:private sim-input-args*
+(def sim-input-args*
   "Data from GUI to use in the iterations"
   (atom nil))
 
@@ -158,7 +158,7 @@
         true))))
 
 
-(defn- repaint-gui
+(defn- update-gui-with-solver-data
   [chart-iter
    {:keys [^XYChart best-fn-chart
            ^XYChart scores-chart
@@ -256,7 +256,7 @@
     (when-let [sim-msg (<! sim->gui-chan)]
       (try
 
-        (repaint-gui chart-iter ui-elements conf sim-msg)
+        (update-gui-with-solver-data chart-iter ui-elements conf sim-msg)
 
         (catch Exception e
           (log/error "Err in redrawing GUI: " (.getMessage e))

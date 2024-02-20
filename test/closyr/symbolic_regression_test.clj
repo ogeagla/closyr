@@ -167,7 +167,12 @@
                    100))
 
             (is (= iters-done
-                   5))))))
+                   5))
+
+            (is (= (set (keys @symreg/sim-input-args*))
+                   #{:input-xs-exprs
+                     :input-xs-vec
+                     :input-ys-vec}))))))
 
     (testing "with provided data using record"
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
@@ -192,7 +197,12 @@
                    100))
 
             (is (= iters-done
-                   5))))))))
+                   5))
+
+            (is (= (set (keys @symreg/sim-input-args*))
+                   #{:input-xs-exprs
+                     :input-xs-vec
+                     :input-ys-vec}))))))))
 
 
 #_(deftest can-run-experiment-gui:start-stop
@@ -242,6 +252,9 @@
                                :input-iters        200
                                :input-phenos-count 500}))
 
+                    (is (= (set (keys @symreg/sim-input-args*))
+                           #{:input-xs-vec :input-ys-vec}))
+
                     (<! (timeout 100))
                     (is (put! symreg/*sim-stop-start-chan*
                               {:new-state :pause}))
@@ -279,6 +292,14 @@
                                :input-phenos-count 400}))
 
                     (<! (timeout 100))
+
+                    (is (= (set (keys @symreg/sim-input-args*))
+                           #{:input-iters
+                             :input-phenos-count
+                             :input-xs-exprs
+                             :input-xs-vec
+                             :input-ys-vec
+                             :max-leafs}))
 
                     (is (put! symreg/*sim-stop-start-chan*
                               {:new-state :stop}))
