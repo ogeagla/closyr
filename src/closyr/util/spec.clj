@@ -142,7 +142,7 @@
 
 
 (def ^:private PopulationCount
-  [:int {:min 1 :max 10000}])
+  [:int {:min 1 :max 100000}])
 
 
 (def ^:private GAPhenotype
@@ -263,6 +263,23 @@
    [:input-iters #'Iterations]
    [:input-phenos-count #'PopulationCount]
    [:max-leafs [:maybe #'MaxLeafs]]])
+
+
+(def ^:private SolverInputArgs
+  [:map
+   {:closed true}
+   [:use-flamechart {:optional true} [:maybe :boolean]]
+   [:use-gui? {:optional true} [:maybe :boolean]]
+   [:initial-muts {:optional true} [:sequential #'GAMutation]]
+   [:initial-phenos {:optional true} [:maybe #'GAPopulationPhenotypes]]
+   [:input-xs-exprs {:optional true} [:vector #'SymbolicExpr]]
+   [:input-ys-exprs {:optional true} [:vector #'SymbolicExpr]]
+   [:input-xs-vec #'NumberVector]
+   [:input-ys-vec #'NumberVector]
+   [:input-iters {:optional true} #'Iterations]
+   [:iters {:optional true} #'Iterations]
+   [:input-phenos-count {:optional true} #'PopulationCount]
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
 
 
 (def ^:private SolverGUIMessage

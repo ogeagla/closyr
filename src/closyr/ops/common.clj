@@ -146,7 +146,7 @@
                  (str expr) " / " (str variable) " : " (or (.getMessage e) e)))))
 
 
-(defn- inversely-proportional-to-leaf-size
+(defn- probability-inversely-proportional-to-leaf-size
   [leaf-count scalar]
   (let [leaf-scalar (min 1.0
                          (max 0.005
@@ -159,19 +159,22 @@
 (defn should-modify-leaf
   "Based on probability, check if should modify leaf"
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (inversely-proportional-to-leaf-size leaf-count 1.5))
+  (probability-inversely-proportional-to-leaf-size
+    leaf-count 1.5))
 
 
 (defn should-modify-branch
   "Based on probability, check if should modify branch"
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (inversely-proportional-to-leaf-size leaf-count 0.5))
+  (probability-inversely-proportional-to-leaf-size
+    leaf-count 0.5))
 
 
 (defn should-modify-ast-head
   "Based on probability, check if should modify AST head"
   [leaf-count {^IAST expr :expr ^ISymbol x-sym :sym :as pheno}]
-  (inversely-proportional-to-leaf-size leaf-count 0.25))
+  (probability-inversely-proportional-to-leaf-size
+    leaf-count 0.25))
 
 
 (def do-not-simplify-fns*
@@ -186,20 +189,20 @@
 
 (defn- check-simplify-timing
   [^IAST expr done?*]
-  (let [report-done?* (atom false)]
+  (let [report-slow-operation?* (atom false)]
     (go-loop [c 0]
       (when-not @done?*
         ;; wait sequence in ms looks like: 100, 316, 1000, ...
         (<! (timeout (int (Math/pow (max 2.0 (/ *long-simplify-thresh-ms* 200))
                                     (+ 1.5 (/ c 4))))))
         (when (> c 6)
-          (reset! report-done?* true)
+          (reset! report-slow-operation?* true)
           (swap! do-not-simplify-fns* assoc (str expr) 1)
           (log/warn "Warning: simplify taking a long time: " c
                     " " (.leafCount expr) " : " (str expr)
                     " total slow fns: " (count @do-not-simplify-fns*)))
         (recur (inc c))))
-    (when @report-done?*
+    (when @report-slow-operation?*
       (log/warn "Warning: simplify took a long time: "
                 " : " (str expr)
                 " total slow fns: " (count @do-not-simplify-fns*)))))
@@ -243,8 +246,8 @@
 (defn ^IAST maybe-simplify
   "Maybe simplify pheno expr"
   [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id simple? :simple? :as pheno}]
-  (if (and (<= (.leafCount expr) *simplify-max-leafs*)
-           (not simple?)
+  (if (and (not simple?)
+           (<= (.leafCount expr) *simplify-max-leafs*)
            (< (rand) *simplify-probability-sampler*))
     (let [start              (Date.)
           done?*             (atom false)
