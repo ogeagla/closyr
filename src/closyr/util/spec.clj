@@ -142,7 +142,7 @@
 
 
 (def ^:private PopulationCount
-  [:int {:min 1 :max 10000}])
+  [:int {:min 1 :max 100000}])
 
 
 (def ^:private GAPhenotype

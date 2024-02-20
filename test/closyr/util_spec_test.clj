@@ -19,6 +19,39 @@
       ISymbol)))
 
 
+(deftest inputs-from-gui-spec
+  (testing "GUI input data"
+    (is (= (me/humanize
+             (m/explain #'specs/SolverGUIMessage
+                        {:max-leafs          20,
+                         :input-iters        10000,
+                         :input-phenos-count 50000,
+                         :new-state          :start,
+                         :input-data-x
+                         [0.0
+                          1.6331994645247656
+                          3.2931726907630523
+                          4.953145917001338
+                          6.613119143239625
+                          8.273092369477911
+                          9.933065595716197
+                          11.593038821954485
+                          13.25301204819277
+                          14.912985274431056],
+                         :input-data-y
+                         [2.3704663212435237
+                          3.2253886010362693
+                          3.7694300518134716
+                          3.9248704663212437
+                          1.1269430051813476
+                          -5.090673575129534
+                          1.204663212435233
+                          2.215025906735751
+                          1.5155440414507773
+                          6.955958549222798]}))
+           nil))))
+
+
 (deftest generates-custom-types
   (testing "valid Expr"
     (is (instance?
