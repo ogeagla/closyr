@@ -7,9 +7,9 @@
                  [org.clojure/core.async "1.6.681"]
                  [metosin/malli "0.14.0"]
 
-                 [org.clojure/tools.cli "1.0.219"]
+                 [org.clojure/tools.cli "1.1.230"]
 
-                 [org.clojure/data.csv "1.0.1"]
+                 [org.clojure/data.csv "1.1.0"]
 
                  [seesaw/seesaw "1.5.0"]
                  [flames "0.5.0"]
