@@ -172,7 +172,9 @@
             (is (= (set (keys @symreg/sim-input-args*))
                    #{:input-xs-exprs
                      :input-xs-vec
-                     :input-ys-vec}))))))
+                     :input-ys-vec}))
+
+            (reset! symreg/sim-input-args* {})))))
 
     (testing "with provided data using record"
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
@@ -202,7 +204,9 @@
             (is (= (set (keys @symreg/sim-input-args*))
                    #{:input-xs-exprs
                      :input-xs-vec
-                     :input-ys-vec}))))))))
+                     :input-ys-vec}))
+
+            (reset! symreg/sim-input-args* {})))))))
 
 
 #_(deftest can-run-experiment-gui:start-stop
