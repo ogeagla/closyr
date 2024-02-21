@@ -127,7 +127,7 @@
              100)))
 
     (testing "with gui launcher"
-      (let [res (with-redefs-fn {#'symreg/run-solver (fn [args] args)}
+      (let [res (with-redefs-fn {#'symreg/run-find-formula (fn [args] args)}
                   (fn []
                     (#'symreg/run-app-with-gui)))]
         (is (= (dissoc res :initial-phenos :initial-muts :input-xs-exprs :input-ys-exprs)
@@ -149,7 +149,7 @@
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
         (fn []
           (let [{:keys [final-population next-step iters-done]}
-                (symreg/run-solver
+                (symreg/run-find-formula
                   {:input-phenos-count 100
                    :initial-muts       (ops-init/initial-mutations)
                    :iters              5
@@ -225,7 +225,7 @@
                                     (is (put! symreg/*sim->gui-chan* :next))
                                     true)]
 
-              (symreg/run-solver
+              (symreg/run-find-formula
                 {:initial-phenos (ops-init/initial-phenotypes 20)
                  :initial-muts   (ops-init/initial-mutations)
                  :input-xs-exprs symreg/example-input-xs-exprs
@@ -314,7 +314,7 @@
                     (is (put! symreg/*sim->gui-chan* :next))
                     true)]
 
-              (symreg/run-solver
+              (symreg/run-find-formula
                 {:initial-phenos (ops-init/initial-phenotypes 20)
                  :initial-muts   (ops-init/initial-mutations)
                  :input-xs-exprs symreg/example-input-xs-exprs

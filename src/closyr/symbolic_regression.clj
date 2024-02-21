@@ -661,7 +661,7 @@
         (symbolic-regression-solver-fn)))))
 
 
-(defn run-solver
+(defn run-find-formula
   "Run a GA evolution solver to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
@@ -671,7 +671,7 @@
 (defn run-app-without-gui
   "Run app without GUI and with fake placeholder input data"
   [xs ys]
-  (run-solver
+  (run-find-formula
     {:initial-phenos (ops-init/initial-phenotypes 100)
      :initial-muts   (ops-init/initial-mutations)
      :iters          20
@@ -685,7 +685,7 @@
   ([]
    (run-app-with-gui {:use-flamechart false}))
   ([{:keys [use-flamechart]}]
-   (run-solver
+   (run-find-formula
      {:initial-phenos (ops-init/initial-phenotypes 50)
       :initial-muts   (ops-init/initial-mutations)
       :iters          100
@@ -723,7 +723,7 @@
                     :input-ys-exprs (if ys
                                       (ops-common/doubles->exprs ys)
                                       example-input-ys-exprs)}
-        result     (run-solver run-config)]
+        result     (run-find-formula run-config)]
     (log/info "CLI: Done!")
     (exit cli-opts)
     result))
