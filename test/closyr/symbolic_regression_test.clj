@@ -34,7 +34,7 @@
       (binding [ops/*print-top-n* 1]
         (is (=
               (dissoc
-                (with-redefs-fn {#'symreg/run-ga-iterations-using-record
+                (with-redefs-fn {#'symreg/run-solver-ga-iterations
                                  (fn [run-config run-args]
                                    (reset! args*
                                            [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
@@ -79,7 +79,7 @@
       (binding [ops/*print-top-n* 1]
         (is (=
               (dissoc
-                (with-redefs-fn {#'symreg/run-ga-iterations-using-record
+                (with-redefs-fn {#'symreg/run-solver-ga-iterations
                                  (fn [run-config run-args]
                                    (reset! args*
                                            [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
@@ -181,7 +181,7 @@
         (fn []
           (let [{:keys [final-population next-step iters-done]}
                 (symreg/solve
-                  (symreg/map->SymbolicRegressionSolver
+                  (symreg/map->SymbolicRegressionFindFormula
                     {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              5
