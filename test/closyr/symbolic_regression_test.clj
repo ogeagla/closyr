@@ -145,6 +145,7 @@
                50))))
 
     (testing "with provided data"
+      (reset! symreg/sim-input-args* {})
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
         (fn []
           (let [{:keys [final-population next-step iters-done]}
@@ -172,11 +173,10 @@
             (is (= (set (keys @symreg/sim-input-args*))
                    #{:input-xs-exprs
                      :input-xs-vec
-                     :input-ys-vec}))
-
-            (reset! symreg/sim-input-args* {})))))
+                     :input-ys-vec}))))))
 
     (testing "with provided data using record"
+      (reset! symreg/sim-input-args* {})
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
         (fn []
           (let [{:keys [final-population next-step iters-done]}
@@ -204,9 +204,7 @@
             (is (= (set (keys @symreg/sim-input-args*))
                    #{:input-xs-exprs
                      :input-xs-vec
-                     :input-ys-vec}))
-
-            (reset! symreg/sim-input-args* {})))))))
+                     :input-ys-vec}))))))))
 
 
 #_(deftest can-run-experiment-gui:start-stop
@@ -243,10 +241,15 @@
   (when (not (GraphicsEnvironment/isHeadless))
     (binding [ops/*print-top-n* 1]
       (testing "gui can start and restart experiments; NOTE: do not run this while in headless mode, eg on CI"
+        (reset! symreg/sim-input-args* {})
         (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 500)}
           (fn []
             (let [control-process
                   (go
+
+                    (is (= (set (keys @symreg/sim-input-args*))
+                           #{}))
+
                     (<! (timeout 200))
 
                     (is (put! symreg/*sim-stop-start-chan*
@@ -255,9 +258,6 @@
                                :input-data-y       [1 3 6 18 8]
                                :input-iters        200
                                :input-phenos-count 500}))
-
-                    (is (= (set (keys @symreg/sim-input-args*))
-                           #{:input-xs-vec :input-ys-vec}))
 
                     (<! (timeout 100))
                     (is (put! symreg/*sim-stop-start-chan*
