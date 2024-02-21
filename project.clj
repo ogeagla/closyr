@@ -22,8 +22,8 @@
                  [org.slf4j/jcl-over-slf4j "2.0.12"]
 
                  [org.slf4j/slf4j-api "2.0.12"]
-                 [org.apache.logging.log4j/log4j-core "2.22.1"]
-                 [org.apache.logging.log4j/log4j-api "2.22.1"]
+                 [org.apache.logging.log4j/log4j-core "2.23.0"]
+                 [org.apache.logging.log4j/log4j-api "2.23.0"]
 
                  [org.matheclipse/matheclipse-core "3.1.0-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]
