@@ -33,6 +33,7 @@
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
                                    :releases  false
                                    :snapshots true}}
+  :java-source-paths ["src/main/java"]
   :main ^:skip-aot closyr.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
