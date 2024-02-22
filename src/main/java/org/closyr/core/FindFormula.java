@@ -5,7 +5,7 @@ import org.matheclipse.core.eval.interfaces.AbstractFunctionEvaluator;
 import org.matheclipse.core.interfaces.IAST;
 import org.matheclipse.core.interfaces.IExpr;
 
-public class FindFunction extends AbstractFunctionEvaluator {
+public class FindFormula extends AbstractFunctionEvaluator {
 
     /**
      * {@inheritDoc}
