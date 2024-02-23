@@ -432,7 +432,7 @@
     (reset! ops/test-timer* start)))
 
 
-(defprotocol ISolverStateController
+(defprotocol IIterativeGASolver
 
   "Interface which allows creation and iteration of the symbolic regression GA solver"
 
@@ -458,12 +458,12 @@
     "Report timing/perf results"))
 
 
-(defrecord SolverStateController
+(defrecord IterativeGASolver
   [;; the chans? also these names are really really ambiguous and overloaded:
    run-config
    run-args]
 
-  ISolverStateController
+  IIterativeGASolver
 
   (init
     [this]
@@ -541,11 +541,11 @@
     return-value))
 
 
-(defn run-ga-iterations-using-record
+(defn run-solver-ga-iterations
   "Run GA evolution iterations on initial population"
   {:malli/schema [:=> [:cat #'specs/SolverRunConfig #'specs/SolverRunArgs] #'specs/SolverRunResults]}
   [run-config run-args]
-  (loop [solver-state (init (map->SolverStateController {:run-config run-config :run-args run-args}))]
+  (loop [solver-state (init (map->IterativeGASolver {:run-config run-config :run-args run-args}))]
     (let [[recur? next-solver-state] (run-iteration solver-state)]
       (if recur?
         (recur next-solver-state)
@@ -581,7 +581,7 @@
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
   (let [run-config (merge-cli-and-gui-args run-config run-args)
-        {:keys [next-step] :as completed-ga-data} (run-ga-iterations-using-record run-config run-args)]
+        {:keys [next-step] :as completed-ga-data} (run-solver-ga-iterations run-config run-args)]
 
     (case next-step
 
@@ -621,7 +621,7 @@
       run-config)))
 
 
-(defprotocol ISymbolicRegressionSolver
+(defprotocol ISymbolicRegressionFindFormula
 
   "A top-level interface to start the solver using CLI or GUI args"
 
@@ -634,10 +634,10 @@
     and defaults."))
 
 
-(defrecord SymbolicRegressionSolver
+(defrecord SymbolicRegressionFindFormula
   [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart max-leafs]
 
-  ISymbolicRegressionSolver
+  ISymbolicRegressionFindFormula
 
   (solve
     [this]
@@ -661,17 +661,17 @@
         (symbolic-regression-solver-fn)))))
 
 
-(defn run-solver
+(defn run-find-formula
   "Run a GA evolution solver to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-  (solve (map->SymbolicRegressionSolver run-config)))
+  (solve (map->SymbolicRegressionFindFormula run-config)))
 
 
 (defn run-app-without-gui
   "Run app without GUI and with fake placeholder input data"
   [xs ys]
-  (run-solver
+  (run-find-formula
     {:initial-phenos (ops-init/initial-phenotypes 100)
      :initial-muts   (ops-init/initial-mutations)
      :iters          20
@@ -685,7 +685,7 @@
   ([]
    (run-app-with-gui {:use-flamechart false}))
   ([{:keys [use-flamechart]}]
-   (run-solver
+   (run-find-formula
      {:initial-phenos (ops-init/initial-phenotypes 50)
       :initial-muts   (ops-init/initial-mutations)
       :iters          100
@@ -723,7 +723,7 @@
                     :input-ys-exprs (if ys
                                       (ops-common/doubles->exprs ys)
                                       example-input-ys-exprs)}
-        result     (run-solver run-config)]
+        result     (run-find-formula run-config)]
     (log/info "CLI: Done!")
     (exit cli-opts)
     result))
