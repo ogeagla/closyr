@@ -36,6 +36,14 @@
   :java-source-paths ["src/main/java"]
   :main ^:skip-aot closyr.core
   :target-path "target/%s"
+
+  ;; JVM tuning for better GA performance
+  :jvm-opts ["-Xmx4g"                                   ; Max heap size
+             "-XX:+UseG1GC"                             ; G1 garbage collector (better for large heaps)
+             "-XX:MaxGCPauseMillis=100"                 ; Target max GC pause
+             "-XX:+UseStringDeduplication"]            ; Reduce memory for duplicate strings
+  ;; Note: direct-linking only in uberjar profile (breaks dynamic var rebinding in tests)
+
   :profiles {:uberjar {:aot      :all
                        :manifest {"Multi-Release" true}
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
