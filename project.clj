@@ -38,10 +38,25 @@
   :target-path "target/%s"
 
   ;; JVM tuning for better GA performance
-  :jvm-opts ["-Xmx4g"                                   ; Max heap size
-             "-XX:+UseG1GC"                             ; G1 garbage collector (better for large heaps)
+  :jvm-opts ["-Xms4g"                                   ; Initial heap = max (avoid resizing)
+             "-Xmx4g"                                   ; Max heap size
+
+
+             ;"-XX:+UseG1GC"                             ; G1 garbage collector (better for large heaps)
+
+             ;"-XX:+UseZGC"
+             ;"-XX:+ZGenerational"
+
+             "-XX:+UseParallelGC"
+
+
              "-XX:MaxGCPauseMillis=100"                 ; Target max GC pause
-             "-XX:+UseStringDeduplication"]            ; Reduce memory for duplicate strings
+             "-XX:+UseStringDeduplication"             ; Reduce memory for duplicate strings
+             "-XX:+AlwaysPreTouch"                     ; Pre-touch memory pages at startup
+             "-XX:+UseNUMA"                            ; Optimize for NUMA architectures
+             "-XX:+OptimizeStringConcat"              ; Optimize string concatenation
+             "-XX:AutoBoxCacheMax=20000"              ; Cache more Integer objects (reduce boxing overhead)
+             "-XX:+DisableExplicitGC"]                ; Ignore System.gc() calls
   ;; Note: direct-linking only in uberjar profile (breaks dynamic var rebinding in tests)
 
   :profiles {:uberjar {:aot      :all

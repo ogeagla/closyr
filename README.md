@@ -35,11 +35,11 @@ Use the application via GUI or in the terminal.
 There are 4 ways to run the application.  See next section for details about the options you can provide when running the app.
 
 
-### Run the provided realase JAR
+### Run the provided release JAR
 
-Requirements: Java
+Requirements: Java, Leiningen
 
-
+    $ lein uberjar
     $ java -jar closyr-0.1.0-SNAPSHOT-standalone.jar ...options here...
 
 
@@ -72,11 +72,11 @@ Requirements: Java, Leiningen
 
 
     $ lein uberjar
-    $ java -jar target/uberjar/closyr-0.1.0-standalone.jar
+    $ java -jar target/uberjar/closyr-0.1.0-SNAPSHOT-standalone.jar
 
 You can also provide the same command-line options to `java` command, like:
 
-    $ java -jar target/uberjar/closyr-0.1.0-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
+    $ java -jar target/uberjar/closyr-0.1.0-SNAPSHOT-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
 
 ## Options
 | Short, Long Option      | Required?       | Example | Default | Description                                                                                                                   |

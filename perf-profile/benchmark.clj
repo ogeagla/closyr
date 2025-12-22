@@ -5,10 +5,10 @@
             [closyr.ops :as ops]
             [closyr.ga :as ga]))
 
-(defn benchmark-evolution [pop-size n-iters]
+(defn benchmark-evolution [pop-size n-iters max-leafs xs-max]
   (let [phenos (ops-init/initial-phenotypes pop-size)
         muts (ops-init/initial-mutations)
-        xs (vec (range 0.1 10.0 0.2))
+        xs (vec (range 0.1 xs-max 0.2))
         ys (mapv #(+ (* % %) (Math/sin %)) xs)
         input-xs-list (ops-common/exprs->exprs-list (ops-common/doubles->exprs xs))
         run-args {:input-xs-list  input-xs-list
@@ -16,7 +16,7 @@
                   :input-xs-vec   xs
                   :input-ys-vec   ys
                   :input-ys-arr   (double-array ys)}
-        run-config {:max-leafs 40}
+        run-config {:max-leafs max-leafs}
         score-fn (partial ops/score-fn run-args run-config)
         mut-fn (partial ops/mutation-fn run-config muts)
         cross-fn (partial ops/crossover-fn run-config muts)
@@ -40,12 +40,22 @@
 
 (println "\n=== Evolution Benchmark ===\n")
 
-(doseq [pop-size [10 50 100 500 1000 2000 4000 10000 50000]]
-  (let [result (benchmark-evolution pop-size 10)]
-    (printf "Pop %4d: %6.1f ms/iter, %8.0f phenos/sec\n"
-            pop-size
-            (:ms-per-iter result)
-            (:phenos-per-sec result))))
+(def results* (atom []))
+
+(doseq [pop-size [10 100 500 1000 20000]]
+  (swap! results* concat ["\n"])
+  (doseq [xs-max [5.0 20.0]]
+    (doseq [max-leafs [40 120]]
+      (let [result (benchmark-evolution pop-size 10 max-leafs xs-max)]
+        (swap! results* concat [(format "Pop %4d, XsMax %4f, MaxLeafs %4d: %6.1f ms/iter, %8.0f phenos/sec\n"
+                                        pop-size
+                                        xs-max
+                                        max-leafs
+                                        (:ms-per-iter result)
+                                        (:phenos-per-sec result))])))))
 
 (println "\n=== Done ===")
+(println "\n=== Results ===")
+(println @results*)
+
 (System/exit 0)
