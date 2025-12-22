@@ -92,7 +92,7 @@ You can also provide the same command-line options to `java` command, like:
 
 ## Example Screenshots
 
-On successful application start, you can start an run a search.  You might see something like this when done:
+On successful application start, you can start and run a search.  You might see something like this when done:
 
 ![gui_done_2024-02-12_08-44.png](screenshots%2Fgui_done_2024-02-12_08-44.png)
 
