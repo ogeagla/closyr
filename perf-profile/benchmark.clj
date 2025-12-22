@@ -47,3 +47,4 @@
             (:phenos-per-sec result))))
 
 (println "\n=== Done ===")
+(System/exit 0)

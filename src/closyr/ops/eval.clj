@@ -57,9 +57,11 @@
 
 
 (defn- parseable-eval-result?
-  [eval-p]
-  (not (or (nil? eval-p)
-           (= "Indeterminate" (str eval-p)))))
+  "Check if eval result is valid (not nil or Indeterminate).
+   Uses direct object comparison instead of expensive string conversion."
+  [^IExpr eval-p]
+  (and (some? eval-p)
+       (not (identical? eval-p F/Indeterminate))))
 
 
 (defn- ^IExpr get-arg
