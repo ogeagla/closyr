@@ -215,6 +215,7 @@
    [:input-xs-count #'PointsCount]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
+   [:input-ys-arr {:optional true} some?]
    [:input-iters #'Iterations]
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe #'PopulationCount]]
@@ -232,6 +233,7 @@
   [:map
    {:closed false}
    [:input-ys-vec #'NumberVector]
+   [:input-ys-arr {:optional true} some?]
    [:input-xs-list #'PrimitiveArrayOfIExpr]
    [:input-xs-count #'PointsCount]])
 

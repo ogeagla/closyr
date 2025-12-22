@@ -377,6 +377,7 @@
    :input-xs-count       (count input-xs-exprs)
    :input-xs-vec         input-xs-vec
    :input-ys-vec         input-ys-vec
+   :input-ys-arr         (double-array input-ys-vec)
    :input-iters          (or input-iters iters)
    :initial-phenos       initial-phenos
    :input-phenos-count   input-phenos-count
@@ -736,6 +737,6 @@
 (comment (println "FN SCHEMAS: " (m/function-schemas)))
 (comment (macroexpand-1 `(log/info "Hello")))
 (comment (log/info "Hello"))
-(comment (run-app-without-gui))
+(comment (run-app-without-gui [1 2 3] [6 12 99]))
 (comment (run-app-with-gui {:use-flamechart true}))
 (comment (run-app-with-gui))

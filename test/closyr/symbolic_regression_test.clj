@@ -38,7 +38,7 @@
                                  (fn [run-config run-args]
                                    (reset! args*
                                            [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
-                                            (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
+                                            (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list :input-ys-arr)])
                                    {:iters-done       123
                                     :final-population {:pop          []
                                                        :score-fn     #()
@@ -83,7 +83,7 @@
                                  (fn [run-config run-args]
                                    (reset! args*
                                            [(dissoc run-config :initial-muts :initial-phenos :input-xs-exprs :input-ys-exprs)
-                                            (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list)])
+                                            (dissoc run-args :extended-domain-args :initial-phenos :input-xs-list :input-ys-arr)])
                                    {:iters-done       123
                                     :final-population {:pop          []
                                                        :score-fn     #()
@@ -371,5 +371,6 @@
              :input-xs-count
              :input-xs-list
              :input-xs-vec
+             :input-ys-arr
              :input-ys-vec
              :max-leafs}))))

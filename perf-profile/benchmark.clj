@@ -14,7 +14,8 @@
         run-args {:input-xs-list  input-xs-list
                   :input-xs-count (count xs)
                   :input-xs-vec   xs
-                  :input-ys-vec   ys}
+                  :input-ys-vec   ys
+                  :input-ys-arr   (double-array ys)}
         run-config {:max-leafs 40}
         score-fn (partial ops/score-fn run-args run-config)
         mut-fn (partial ops/mutation-fn run-config muts)
@@ -39,7 +40,7 @@
 
 (println "\n=== Evolution Benchmark ===\n")
 
-(doseq [pop-size [10 50 100 500 1000 2000 4000 10000]]
+(doseq [pop-size [10 50 100 500 1000 2000 4000 10000 50000]]
   (let [result (benchmark-evolution pop-size 10)]
     (printf "Pop %4d: %6.1f ms/iter, %8.0f phenos/sec\n"
             pop-size
