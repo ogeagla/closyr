@@ -3,11 +3,11 @@
   :url "http://example.com/FIXME"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.11.1"]
-                 [org.clojure/core.async "1.6.681"]
-                 [metosin/malli "0.17.0"]
+  :dependencies [[org.clojure/clojure "1.12.4"]
+                 [org.clojure/core.async "1.8.741"]
+                 [metosin/malli "0.20.0"]
 
-                 [org.clojure/tools.cli "1.1.230"]
+                 [org.clojure/tools.cli "1.2.245"]
 
                  [org.clojure/data.csv "1.1.0"]
 
@@ -18,12 +18,12 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
-                 [ch.qos.logback/logback-classic "1.5.0"]
-                 [org.slf4j/jcl-over-slf4j "2.0.12"]
+                 [ch.qos.logback/logback-classic "1.5.23"]
+                 [org.slf4j/jcl-over-slf4j "2.0.17"]
 
-                 [org.slf4j/slf4j-api "2.0.12"]
-                 [org.apache.logging.log4j/log4j-core "2.23.0"]
-                 [org.apache.logging.log4j/log4j-api "2.23.0"]
+                 [org.slf4j/slf4j-api "2.0.17"]
+                 [org.apache.logging.log4j/log4j-core "2.25.3"]
+                 [org.apache.logging.log4j/log4j-api "2.25.3"]
 
                  [org.matheclipse/matheclipse-core "3.1.0-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]
