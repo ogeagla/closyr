@@ -321,7 +321,7 @@
                              :input-ys-vec       input-ys-vec
                              :input-iters        input-iters
                              :input-phenos-count input-phenos-count
-                             :random-seed         random-seed
+                             :random-seed        random-seed
                              :max-leafs          max-leafs})))
 
 
@@ -399,7 +399,7 @@
 
 (defn- start-gui-and-get-input-data
   "Initialize and show GUI, then park and wait on user input to start"
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs] :as run-config}]
+  [{:keys [iters initial-phenos initial-muts random-seed input-xs-exprs input-ys-exprs] :as run-config}]
 
   ;; these are the data shown in the plots before the experiment is started:
   (reset! sim-input-args* {:input-xs-vec (ops-common/exprs->doubles input-xs-exprs)
@@ -429,11 +429,13 @@
 
 
 (defn- print-and-save-start-time
-  [iters initial-phenos]
+  [iters initial-phenos run-config]
   (let [start (Date.)]
     (log/info "-- Start " start
               "iters: " iters
               " pop size: " (count initial-phenos)
+              " random seed: " (:random-seed run-config)
+              " deterministic mode: " ga/*deterministic-mode*
               " --")
     (reset! ops/test-timer* start)))
 
@@ -476,7 +478,7 @@
     (specs/validate! "SolverRunConfig" #'specs/SolverRunConfig run-config)
     (specs/validate! "SolverRunArgs" #'specs/SolverRunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
-          start    (print-and-save-start-time iters initial-phenos)
+          start    (print-and-save-start-time iters initial-phenos run-config)
           init-pop (ga/initialize
                      initial-phenos
                      (partial ops/score-fn run-args run-config)
@@ -551,11 +553,17 @@
   "Run GA evolution iterations on initial population"
   {:malli/schema [:=> [:cat #'specs/SolverRunConfig #'specs/SolverRunArgs] #'specs/SolverRunResults]}
   [run-config run-args]
-  (loop [solver-state (init (map->IterativeGASolver {:run-config run-config :run-args run-args}))]
-    (let [[recur? next-solver-state] (run-iteration solver-state)]
-      (if recur?
-        (recur next-solver-state)
-        next-solver-state))))
+  (binding [ga/*deterministic-mode* (some? (:random-seed run-config))]
+    ;; Set the random seed if provided
+    (when (:random-seed run-config)
+      (log/warn "15 Deterministic mode enabled with seed:" (:random-seed run-config)
+                "- CPU parallelism disabled for reproducibility")
+      (prng/set-random-seed! (:random-seed run-config)))
+    (loop [solver-state (init (map->IterativeGASolver {:run-config run-config :run-args run-args}))]
+      (let [[recur? next-solver-state] (run-iteration solver-state)]
+        (if recur?
+          (recur next-solver-state)
+          next-solver-state)))))
 
 
 (defn- merge-cli-and-gui-args
@@ -670,7 +678,7 @@
 (defn run-find-formula
   "Run a GA evolution solver to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? random-seed] :as run-config}]
   (binding [ga/*deterministic-mode* (some? (:random-seed run-config))]
     ;; Set the random seed if provided
     (when (:random-seed run-config)

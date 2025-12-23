@@ -111,7 +111,7 @@
   (atom {:max-leafs          40
          :input-iters        100
          :input-phenos-count 2000
-         :random-seed        nil}))
+         :random-seed        123}))
 
 
 (def ^:private amount->number
