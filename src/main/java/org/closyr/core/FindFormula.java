@@ -1,10 +1,10 @@
 package org.closyr.core;
 
-import clojure.java.api.Clojure;
-import clojure.lang.IFn;
-import clojure.lang.IPersistentMap;
-import clojure.lang.Keyword;
-import clojure.lang.PersistentVector;
+import org.closyr.api.FormulaConfigBuilder;
+import org.closyr.api.FormulaFinder;
+import org.closyr.api.IFormulaConfig;
+import org.closyr.api.IFormulaResult;
+import org.closyr.api.IFormulaSolution;
 import org.matheclipse.core.eval.EvalEngine;
 import org.matheclipse.core.eval.interfaces.AbstractFunctionOptionEvaluator;
 import org.matheclipse.core.eval.interfaces.IFunctionEvaluator;
@@ -16,7 +16,6 @@ import org.matheclipse.core.interfaces.ISymbol;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -38,15 +37,14 @@ import java.util.Map;
  *   System.out.println("Best formula: " + result.getFormulaString());
  *   System.out.println("Score: " + result.getScore());
  * </pre>
+ *
+ * <p>Or use the newer API directly:</p>
+ * <pre>
+ *   import org.closyr.api.*;
+ *   IFormulaResult result = FormulaFinder.find(xs, ys);
+ * </pre>
  */
 public class FindFormula extends AbstractFunctionOptionEvaluator {
-
-    private static volatile boolean clojureInitialized = false;
-    private static IFn runAppWithoutGuiFn;
-    private static IFn initialPhenotypesFn;
-    private static IFn initialMutationsFn;
-    private static IFn doublesToExprsFn;
-    private static IFn runFindFormulaFn;
 
     /**
      * Result of a symbolic regression run.
@@ -162,35 +160,19 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         public int getIterations() { return iterations; }
         public int getPopulationSize() { return populationSize; }
         public int getMaxLeafs() { return maxLeafs; }
+
+        /** Convert to IFormulaConfig for the new API */
+        IFormulaConfig toFormulaConfig() {
+            return FormulaConfigBuilder.builder()
+                    .iterations(iterations)
+                    .populationSize(populationSize)
+                    .maxLeafs(maxLeafs)
+                    .build();
+        }
     }
 
     public FindFormula() {
         // empty constructor for Symja
-    }
-
-    /**
-     * Initialize the Clojure runtime and load required namespaces.
-     * This is called automatically but can be called explicitly to warm up.
-     */
-    public static synchronized void initializeClojure() {
-        if (clojureInitialized) {
-            return;
-        }
-
-        // Require the necessary Clojure namespaces
-        IFn require = Clojure.var("clojure.core", "require");
-        require.invoke(Clojure.read("closyr.symbolic-regression"));
-        require.invoke(Clojure.read("closyr.ops.initialize"));
-        require.invoke(Clojure.read("closyr.ops.common"));
-
-        // Get references to the Clojure functions we need
-        runAppWithoutGuiFn = Clojure.var("closyr.symbolic-regression", "run-app-without-gui");
-        runFindFormulaFn = Clojure.var("closyr.symbolic-regression", "run-find-formula");
-        initialPhenotypesFn = Clojure.var("closyr.ops.initialize", "initial-phenotypes");
-        initialMutationsFn = Clojure.var("closyr.ops.initialize", "initial-mutations");
-        doublesToExprsFn = Clojure.var("closyr.ops.common", "doubles->exprs");
-
-        clojureInitialized = true;
     }
 
     /**
@@ -213,112 +195,39 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
      * @return Result containing the best formula found
      */
     public static Result findFormula(double[] xs, double[] ys, Config config) {
-        if (xs == null || ys == null) {
-            throw new IllegalArgumentException("xs and ys arrays cannot be null");
-        }
-        if (xs.length != ys.length) {
-            throw new IllegalArgumentException("xs and ys arrays must have the same length");
-        }
-        if (xs.length < 2) {
-            throw new IllegalArgumentException("At least 2 data points are required");
-        }
+        // Delegate to the new API
+        IFormulaConfig formulaConfig = config.toFormulaConfig();
+        IFormulaResult apiResult = FormulaFinder.find(xs, ys, formulaConfig);
 
-        initializeClojure();
-
-        // Convert Java arrays to Clojure vectors
-        List<Double> xsList = new ArrayList<>(xs.length);
-        List<Double> ysList = new ArrayList<>(ys.length);
-        for (int i = 0; i < xs.length; i++) {
-            xsList.add(xs[i]);
-            ysList.add(ys[i]);
-        }
-        PersistentVector xsVec = PersistentVector.create(xsList);
-        PersistentVector ysVec = PersistentVector.create(ysList);
-
-        // Convert to IExpr vectors
-        Object xsExprs = doublesToExprsFn.invoke(xsVec);
-        Object ysExprs = doublesToExprsFn.invoke(ysVec);
-
-        // Create initial population and mutations
-        Object initialPhenos = initialPhenotypesFn.invoke(config.getPopulationSize());
-        Object initialMuts = initialMutationsFn.invoke();
-
-        // Build the run configuration map
-        Keyword initialPhenosKey = Keyword.intern("initial-phenos");
-        Keyword initialMutsKey = Keyword.intern("initial-muts");
-        Keyword itersKey = Keyword.intern("iters");
-        Keyword useGuiKey = Keyword.intern("use-gui?");
-        Keyword useFlamechartKey = Keyword.intern("use-flamechart");
-        Keyword inputXsExprsKey = Keyword.intern("input-xs-exprs");
-        Keyword inputYsExprsKey = Keyword.intern("input-ys-exprs");
-        Keyword maxLeafsKey = Keyword.intern("max-leafs");
-
-        IFn hashMap = Clojure.var("clojure.core", "hash-map");
-        Object runConfig = hashMap.invoke(
-                initialPhenosKey, initialPhenos,
-                initialMutsKey, initialMuts,
-                itersKey, config.getIterations(),
-                useGuiKey, false,
-                useFlamechartKey, false,
-                maxLeafsKey, config.getMaxLeafs(),
-                inputXsExprsKey, xsExprs,
-                inputYsExprsKey, ysExprs
-        );
-
-        // Run the solver
-        Object result = runFindFormulaFn.invoke(runConfig);
-
-        // Extract results from the Clojure map
-        return extractResult(result);
+        // Convert to legacy Result format
+        return convertResult(apiResult);
     }
 
-    @SuppressWarnings("unchecked")
-    private static Result extractResult(Object result) {
-        if (!(result instanceof IPersistentMap)) {
-            throw new RuntimeException("Unexpected result type from Clojure: " + result.getClass());
+    /**
+     * Convert from the new API result to the legacy Result format.
+     */
+    private static Result convertResult(IFormulaResult apiResult) {
+        List<Solution> solutions = new ArrayList<>();
+
+        for (IFormulaSolution apiSolution : apiResult.getAllSolutions()) {
+            solutions.add(new Solution(
+                    apiSolution.getFormula(),
+                    apiSolution.getScore(),
+                    apiSolution.getExpr()
+            ));
         }
 
-        IPersistentMap resultMap = (IPersistentMap) result;
-
-        Keyword itersDoneKey = Keyword.intern("iters-done");
-        Keyword finalPopulationKey = Keyword.intern("final-population");
-        Keyword popKey = Keyword.intern("pop");
-        Keyword exprKey = Keyword.intern("expr");
-        Keyword scoreKey = Keyword.intern("score");
-
-        int itersDone = ((Number) resultMap.valAt(itersDoneKey)).intValue();
-        IPersistentMap finalPopulation = (IPersistentMap) resultMap.valAt(finalPopulationKey);
-        Object pop = finalPopulation.valAt(popKey);
-
-        List<Solution> allSolutions = new ArrayList<>();
-
-        if (pop instanceof Iterable) {
-            for (Object phenotype : (Iterable<?>) pop) {
-                if (phenotype instanceof IPersistentMap) {
-                    IPersistentMap phenoMap = (IPersistentMap) phenotype;
-                    Object exprObj = phenoMap.valAt(exprKey);
-                    Object scoreObj = phenoMap.valAt(scoreKey);
-
-                    IExpr expr = (exprObj instanceof IExpr) ? (IExpr) exprObj : null;
-                    String formulaStr = (expr != null) ? expr.toString() : "unknown";
-                    double score = (scoreObj instanceof Number) ? ((Number) scoreObj).doubleValue() : Double.NEGATIVE_INFINITY;
-
-                    allSolutions.add(new Solution(formulaStr, score, expr));
-                }
-            }
-        }
-
-        // Sort by score (descending - higher/closer to 0 is better)
-        allSolutions.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
-
-        Solution best = allSolutions.isEmpty() ? new Solution("x", Double.NEGATIVE_INFINITY, null) : allSolutions.get(0);
+        IFormulaSolution best = apiResult.getBestSolution();
+        String bestFormula = best != null ? best.getFormula() : "x";
+        double bestScore = best != null ? best.getScore() : Double.NEGATIVE_INFINITY;
+        IExpr bestExpr = best != null ? best.getExpr() : null;
 
         return new Result(
-                best.getFormulaString(),
-                best.getScore(),
-                best.getFormulaExpr(),
-                itersDone,
-                allSolutions
+                bestFormula,
+                bestScore,
+                bestExpr,
+                apiResult.getIterationsDone(),
+                solutions
         );
     }
 
@@ -371,13 +280,10 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
             IExpr formulaExpr = result.getFormulaExpr();
 
             if (formulaExpr != null) {
-                // Substitute the Symja variable for our internal 'x'
-                // The formula uses a dummy symbol 'x', we need to map it to the user's variable
                 return formulaExpr;
             }
         } catch (Exception e) {
-            System.out.println("FindFormula: " + e.getMessage());
-//            engine.printMessage("FindFormula: " + e.getMessage());
+            System.err.println("FindFormula: " + e.getMessage());
         }
 
         return F.NIL;

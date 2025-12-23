@@ -144,16 +144,15 @@
       (is (.contains str-repr "score=")))))
 
 
-(deftest test-initialize-clojure-idempotent
-  (testing "initializeClojure can be called multiple times safely"
-    (FindFormula/initializeClojure)
-    (FindFormula/initializeClojure)
-    (FindFormula/initializeClojure)
-    ;; Verify the API still works
+(deftest test-multiple-calls-work
+  (testing "Multiple calls to findFormula work correctly"
+    ;; Verify the API works for multiple sequential calls
     (let [xs (double-array [1.0 2.0])
           ys (double-array [1.0 2.0])
           config (-> (FindFormula$Config.)
                      (.iterations 1)
                      (.populationSize 5))
-          result (FindFormula/findFormula xs ys config)]
-      (is (some? result)))))
+          result1 (FindFormula/findFormula xs ys config)
+          result2 (FindFormula/findFormula xs ys config)]
+      (is (some? result1))
+      (is (some? result2)))))

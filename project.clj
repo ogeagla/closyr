@@ -60,6 +60,10 @@
              "-XX:+DisableExplicitGC"]                ; Ignore System.gc() calls
   ;; Note: direct-linking only in uberjar profile (breaks dynamic var rebinding in tests)
 
+  ;; AOT compile API namespaces for Java interop
+  :aot [closyr.api.types
+        closyr.api.finder]
+
   :profiles {:uberjar {:aot      :all
                        :manifest {"Multi-Release" true}
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
