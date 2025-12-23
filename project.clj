@@ -69,7 +69,8 @@
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
              :test {:dependencies [[org.junit.jupiter/junit-jupiter-api "5.10.2"]
                                    [org.junit.jupiter/junit-jupiter-engine "5.10.2"]
-                                   [org.junit.platform/junit-platform-launcher "1.10.2"]]}}
+                                   [org.junit.platform/junit-platform-launcher "1.10.2"]
+                                   [org.junit.platform/junit-platform-console-standalone "1.10.2"]]}}
 
   :plugins [[lein-cloverage "1.2.4"]
             [lein-vanity "0.2.0"]
