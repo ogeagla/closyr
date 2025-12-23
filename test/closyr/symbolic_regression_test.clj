@@ -242,14 +242,12 @@
     (binding [ops/*print-top-n* 1]
       (testing "gui can start and restart experiments; NOTE: do not run this while in headless mode, eg on CI"
         (reset! symreg/sim-input-args* {})
+        ;; Verify initial state before launching async processes
+        (is (= (set (keys @symreg/sim-input-args*)) #{}))
         (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 500)}
           (fn []
             (let [control-process
                   (go
-
-                    (is (= (set (keys @symreg/sim-input-args*))
-                           #{}))
-
                     (<! (timeout 200))
 
                     (is (put! symreg/*sim-stop-start-chan*
