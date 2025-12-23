@@ -1,4 +1,5 @@
 (ns closyr.ui.gui
+  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [clojure.java.io :as io]
@@ -6,6 +7,7 @@
     [closyr.ui.plot :as plot]
     [closyr.util.csv :as input-csv]
     [closyr.util.log :as log]
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
     [seesaw.behave :as sb]
     [seesaw.border :as sbr]
     [seesaw.core :as ss]
@@ -108,7 +110,8 @@
 (def ^:private experiment-settings*
   (atom {:max-leafs          40
          :input-iters        100
-         :input-phenos-count 2000}))
+         :input-phenos-count 2000
+         :random-seed        nil}))
 
 
 (def ^:private amount->number
@@ -945,7 +948,12 @@
                                               (.add btns-row)
                                               (.add status-row))
 
-        settings-container                  (doto (panel-grid {:rows 2 :cols 1})
+        random-seed-panel                   (doto (panel-grid
+                                                    {:rows 1 :cols 1 :border (radio-controls-border "Random Seed")})
+                                              (.add (JLabel. "HI")))
+
+        settings-container                  (doto (panel-grid {:rows 3 :cols 1})
+                                              ; (.add random-seed-panel) ;; TODO: implement numerical text input, show perf warning when deterministic mode, provide a way to go back to parallel mode (unset random seed)
                                               (.add settings-panel)
                                               (.add input-fn-container))
 
@@ -1061,7 +1069,7 @@
                    (log/info "Test GUI: Resuming: " (<! sim-stop-start-chan)))))
              (.add xs-best-fn (.size xs-best-fn))
              (.add ys-best-fn (.size xs-best-fn))
-             (.add ys-objective-fn (* 10.0 (Math/random)))
+             (.add ys-objective-fn (* 10.0 (rand)))
 
              (.updateXYSeries best-fn-chart series-best-fn-label xs-best-fn ys-best-fn nil)
              (.updateXYSeries best-fn-chart series-objective-fn-label xs-best-fn ys-objective-fn nil)

@@ -5,7 +5,8 @@
     [clojure.tools.cli :as cli]
     [closyr.symbolic-regression :as symreg]
     [closyr.util.csv :as input-csv]
-    [closyr.util.log :as log])
+    [closyr.util.log :as log]
+    [closyr.util.prng :as prng])
   (:import
     (java.io
       File)))
@@ -76,6 +77,11 @@
    ["-c" "--use-flamechart" "Use flamechart to monitor perf (http://localhost:54321/flames.svg)"
     :default false
     :id :use-flamechart]
+
+   ["-s" "--seed SEED" "Random seed for reproducible results"
+    :default nil
+    :parse-fn #(Long/parseLong %)
+    :id :seed]
 
    #_["-v" nil "Verbosity level"
       :id :verbosity

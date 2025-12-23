@@ -97,7 +97,8 @@
 
 (deftype FormulaConfig [^int iterations
                         ^int population-size
-                        ^int max-leafs]
+                        ^int max-leafs
+                        ^long random-seed]
 
   IFormulaConfig
 
@@ -107,12 +108,15 @@
 
   (getMaxLeafs [_] max-leafs)
 
+  (getRandomSeed [_] random-seed)
+
   Object
 
   (toString [_]
     (str "FormulaConfig{iterations=" iterations
          ", populationSize=" population-size
-         ", maxLeafs=" max-leafs "}")))
+         ", maxLeafs=" max-leafs
+         ", randomSeed=" random-seed "}")))
 
 
 (defn config
@@ -121,16 +125,19 @@
    Options:
      :iterations      - Number of GA iterations (default: 20)
      :population-size - Population size (default: 100)
-     :max-leafs       - Max expression tree leaves (default: 40)"
+     :max-leafs       - Max expression tree leaves (default: 40)
+     :random-seed     - Random seed for reproducibility (default: -1, meaning no seed)"
   ([]
    (config {}))
-  ([{:keys [iterations population-size max-leafs]
+  ([{:keys [iterations population-size max-leafs random-seed]
      :or   {iterations      20
             population-size 100
-            max-leafs       40}}]
+            max-leafs       40
+            random-seed     -1}}]
    (FormulaConfig. (int iterations)
                    (int population-size)
-                   (int max-leafs))))
+                   (int max-leafs)
+                   (long random-seed))))
 
 
 (defn config->map
@@ -138,4 +145,5 @@
   [^IFormulaConfig cfg]
   {:iterations      (.getIterations cfg)
    :population-size (.getPopulationSize cfg)
-   :max-leafs       (.getMaxLeafs cfg)})
+   :max-leafs       (.getMaxLeafs cfg)
+   :random-seed     (.getRandomSeed cfg)})

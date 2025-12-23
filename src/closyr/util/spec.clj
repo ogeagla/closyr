@@ -144,6 +144,9 @@
 (def ^:private PopulationCount
   [:int {:min 1 :max 100000}])
 
+(def ^:private RandomSeed
+  [:int {:min Integer/MIN_VALUE :max Integer/MAX_VALUE}])
+
 
 (def ^:private GAPhenotype
   [:map
@@ -189,6 +192,7 @@
    [:use-gui? :boolean]
    [:max-leafs #'MaxLeafs]
    [:input-phenos-count {:optional true} #'PopulationCount]
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:log-steps pos-int?]
    [:use-flamechart [:maybe :boolean]]
    [:input-xs-exprs [:vector #'SymbolicExpr]]
@@ -219,6 +223,7 @@
    [:input-iters #'Iterations]
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe #'PopulationCount]]
+   [:random-seed {:optional true} [:maybe #'PopulationCount]]
    [:max-leafs [:maybe #'MaxLeafs]]])
 
 
@@ -264,6 +269,7 @@
    [:input-ys-vec #'NumberVector]
    [:input-iters #'Iterations]
    [:input-phenos-count #'PopulationCount]
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs [:maybe #'MaxLeafs]]])
 
 
@@ -281,6 +287,7 @@
    [:input-iters {:optional true} #'Iterations]
    [:iters {:optional true} #'Iterations]
    [:input-phenos-count {:optional true} #'PopulationCount]
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
 
 
@@ -292,6 +299,7 @@
    [:input-data-y #'NumberVector]
    [:input-iters #'Iterations]
    [:input-phenos-count #'PopulationCount]
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
 
 
@@ -305,7 +313,8 @@
    [:xs {:optional true} [:maybe #'NumberVector]]
    [:ys {:optional true} [:maybe #'NumberVector]]
    [:use-flamechart {:optional true} boolean?]
-   [:max-leafs {:optional true} #'MaxLeafs]])
+   [:max-leafs {:optional true} #'MaxLeafs]
+   [:seed {:optional true} [:maybe #'RandomSeed]]])
 
 
 (def ^:private ModificationsResult

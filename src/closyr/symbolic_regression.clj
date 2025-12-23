@@ -7,6 +7,7 @@
     [closyr.ops.initialize :as ops-init]
     [closyr.ui.gui :as gui]
     [closyr.util.log :as log]
+    [closyr.util.prng :as prng]
     [closyr.util.spec :as specs]
     [flames.core :as flames]
     [malli.core :as m]
@@ -307,6 +308,7 @@
     input-data-y       :input-data-y
     input-iters        :input-iters
     input-phenos-count :input-phenos-count
+    random-seed        :random-seed
     max-leafs          :max-leafs}]
 
   (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
@@ -319,6 +321,7 @@
                              :input-ys-vec       input-ys-vec
                              :input-iters        input-iters
                              :input-phenos-count input-phenos-count
+                             :random-seed         random-seed
                              :max-leafs          max-leafs})))
 
 
@@ -361,6 +364,7 @@
     input-iters        :input-iters
     iters              :iters
     input-phenos-count :input-phenos-count
+    random-seed        :random-seed
     max-leafs          :max-leafs
     initial-phenos     :initial-phenos}]
 
@@ -381,6 +385,7 @@
    :input-iters          (or input-iters iters)
    :initial-phenos       initial-phenos
    :input-phenos-count   input-phenos-count
+   :random-seed          random-seed
    :max-leafs            max-leafs})
 
 
@@ -555,7 +560,7 @@
 
 (defn- merge-cli-and-gui-args
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
-   {:keys [input-iters input-phenos-count max-leafs input-xs-list input-xs-count input-ys-vec
+   {:keys [input-iters input-phenos-count random-seed max-leafs input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan]
     :as   run-args}]
 
@@ -567,6 +572,7 @@
 
         run-config     (assoc run-config
                               :initial-phenos initial-phenos
+                              :random-seed random-seed
                               :iters iters
                               :max-leafs (or max-leafs ops/default-max-leafs))
 
@@ -583,23 +589,29 @@
     :as   run-args}]
   (let [run-config (merge-cli-and-gui-args run-config run-args)
         {:keys [next-step] :as completed-ga-data} (run-solver-ga-iterations run-config run-args)]
+    (binding [ga/*deterministic-mode* (some? (:random-seed run-config))]
+      ;; Set the random seed if provided
+      (when (:random-seed run-config)
+        (log/warn "Deterministic mode enabled with seed:" (:random-seed run-config)
+                  "- CPU parallelism disabled for reproducibility")
+        (prng/set-random-seed! (:random-seed run-config)))
 
-    (case next-step
+      (case next-step
 
-      :stop
-      completed-ga-data
+        :stop
+        completed-ga-data
 
-      :wait
-      (if use-gui?
-        (do (log/info "-- Waiting for GUI input to start again --")
-            (if-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
-              (recur run-config (merge run-args new-gui-args))
-              completed-ga-data))
-        completed-ga-data)
+        :wait
+        (if use-gui?
+          (do (log/info "-- Waiting for GUI input to start again --")
+              (if-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
+                (run-from-inputs run-config (merge run-args new-gui-args))
+                completed-ga-data))
+          completed-ga-data)
 
-      :restart
-      (do (log/info "-- Restarting... --")
-          (recur run-config (merge run-args (->run-args @sim-input-args*)))))))
+        :restart
+        (do (log/info "-- Restarting... --")
+            (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))))))
 
 
 (defn- in-flames
@@ -710,24 +722,32 @@
 (defn run-app-from-cli-args
   "Run app from CLI args"
   {:malli/schema [:=> [:cat #'specs/CLIArgs] #'specs/SolverRunResults]}
-  [{:keys [iterations population headless xs ys use-flamechart max-leafs] :as cli-opts}]
+  [{:keys [iterations population headless xs ys use-flamechart max-leafs seed] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
-  (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
-                    :initial-muts   (ops-init/initial-mutations)
-                    :iters          iterations
-                    :use-gui?       (not headless)
-                    :max-leafs      max-leafs
-                    :use-flamechart use-flamechart
-                    :input-xs-exprs (if xs
-                                      (ops-common/doubles->exprs xs)
-                                      example-input-xs-exprs)
-                    :input-ys-exprs (if ys
-                                      (ops-common/doubles->exprs ys)
-                                      example-input-ys-exprs)}
-        result     (run-find-formula run-config)]
-    (log/info "CLI: Done!")
-    (exit cli-opts)
-    result))
+  ;; Run with deterministic mode if seed is set (disables parallel execution)
+  (binding [ga/*deterministic-mode* (some? seed)]
+    ;; Set the random seed if provided
+    (when seed
+      (log/warn "Deterministic mode enabled with seed:" seed
+                "- CPU parallelism disabled for reproducibility")
+      (prng/set-random-seed! seed))
+    (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
+                      :initial-muts   (ops-init/initial-mutations)
+                      :iters          iterations
+                      :use-gui?       (not headless)
+                      :random-seed    seed
+                      :max-leafs      max-leafs
+                      :use-flamechart use-flamechart
+                      :input-xs-exprs (if xs
+                                        (ops-common/doubles->exprs xs)
+                                        example-input-xs-exprs)
+                      :input-ys-exprs (if ys
+                                        (ops-common/doubles->exprs ys)
+                                        example-input-ys-exprs)}
+          result     (run-find-formula run-config)]
+      (log/info "CLI: Done!")
+      (exit cli-opts)
+      result)))
 
 
 ;; todo: feel kind of hacky to have to call this in ?every? ns that has defn schema

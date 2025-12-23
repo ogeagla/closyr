@@ -1,7 +1,9 @@
 (ns closyr.dataset.inputs
+  (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [closyr.dataset.prime-10000 :as data-primes]
-    [closyr.dataset.prime-counting :as data-prime-counting]))
+    [closyr.dataset.prime-counting :as data-prime-counting]
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]))
 
 (set! *warn-on-reflection* true)
 

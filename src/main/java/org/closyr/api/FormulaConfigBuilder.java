@@ -17,6 +17,7 @@ public class FormulaConfigBuilder {
     private int iterations = 20;
     private int populationSize = 100;
     private int maxLeafs = 40;
+    private long randomSeed = -1L;
 
     private FormulaConfigBuilder() {
     }
@@ -53,10 +54,19 @@ public class FormulaConfigBuilder {
     }
 
     /**
+     * Set the random seed for reproducible results.
+     * Use -1 for non-deterministic behavior (default).
+     */
+    public FormulaConfigBuilder randomSeed(long randomSeed) {
+        this.randomSeed = randomSeed;
+        return this;
+    }
+
+    /**
      * Build the configuration.
      */
     public IFormulaConfig build() {
-        return new SimpleFormulaConfig(iterations, populationSize, maxLeafs);
+        return new SimpleFormulaConfig(iterations, populationSize, maxLeafs, randomSeed);
     }
 
     /**
@@ -66,11 +76,13 @@ public class FormulaConfigBuilder {
         private final int iterations;
         private final int populationSize;
         private final int maxLeafs;
+        private final long randomSeed;
 
-        SimpleFormulaConfig(int iterations, int populationSize, int maxLeafs) {
+        SimpleFormulaConfig(int iterations, int populationSize, int maxLeafs, long randomSeed) {
             this.iterations = iterations;
             this.populationSize = populationSize;
             this.maxLeafs = maxLeafs;
+            this.randomSeed = randomSeed;
         }
 
         @Override
@@ -89,10 +101,16 @@ public class FormulaConfigBuilder {
         }
 
         @Override
+        public long getRandomSeed() {
+            return randomSeed;
+        }
+
+        @Override
         public String toString() {
             return "FormulaConfig{iterations=" + iterations +
                     ", populationSize=" + populationSize +
-                    ", maxLeafs=" + maxLeafs + "}";
+                    ", maxLeafs=" + maxLeafs +
+                    ", randomSeed=" + randomSeed + "}";
         }
     }
 }

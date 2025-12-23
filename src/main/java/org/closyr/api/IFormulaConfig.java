@@ -19,4 +19,12 @@ public interface IFormulaConfig {
      * Get the maximum number of leaf nodes allowed in expression trees.
      */
     int getMaxLeafs();
+
+    /**
+     * Get the random seed for reproducible results.
+     * A value of -1 means no seed is set (non-deterministic).
+     */
+    default long getRandomSeed() {
+        return -1L;
+    }
 }

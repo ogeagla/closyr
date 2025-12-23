@@ -8,6 +8,20 @@
 (set! *warn-on-reflection* true)
 
 
+(def ^:dynamic *deterministic-mode*
+  "When true, uses sequential map instead of pmap for deterministic results.
+   Set to true when using a seeded PRNG for reproducibility."
+  false)
+
+
+(defn- maybe-pmap
+  "Uses pmap for parallel execution unless *deterministic-mode* is true."
+  [f coll]
+  (if *deterministic-mode*
+    (mapv f coll)
+    (pmap f coll)))
+
+
 (defn initialize
   "Initialize GA population and functions"
   [initial-pop score-fn mutation-fn crossover-fn]
@@ -62,18 +76,18 @@
   (try
     (let [pop-shuff    (->>
                          pop
-                         (pmap (partial with-score score-fn))
+                         (maybe-pmap (partial with-score score-fn))
                          (shuffle))
 
           new-pop-data (->>
                          (partition-all (pop->chunks pop) pop-shuff)
-                         (pmap (fn [pop-chunk]
-                                 (mapv (partial compete config)
-                                       (partition-all 2 pop-chunk))))
+                         (maybe-pmap (fn [pop-chunk]
+                                       (mapv (partial compete config)
+                                             (partition-all 2 pop-chunk))))
                          (mapcat identity))
 
-          pop-scores   (vec (pmap first new-pop-data))
-          new-pop      (->> (pmap second new-pop-data)
+          pop-scores   (vec (maybe-pmap first new-pop-data))
+          new-pop      (->> (maybe-pmap second new-pop-data)
                             (mapcat identity)
                             (vec))]
 

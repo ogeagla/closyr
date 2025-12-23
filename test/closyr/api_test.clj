@@ -216,3 +216,71 @@
           str-repr (.toString solution)]
       (is (.contains str-repr "FormulaSolution"))
       (is (.contains str-repr "formula")))))
+
+
+;; ============================================================================
+;; Deterministic seed tests
+;; ============================================================================
+
+(deftest test-random-seed-produces-deterministic-results
+  (testing "Running solver with same seed produces identical results"
+    (let [xs (double-array [1.0 2.0 3.0 4.0 5.0])
+          ys (double-array [2.0 4.0 6.0 8.0 10.0])
+          seed 42
+          config (-> (FormulaConfigBuilder/builder)
+                     (.iterations 3)
+                     (.populationSize 20)
+                     (.randomSeed seed)
+                     (.build))
+          ;; Run solver twice with same seed
+          result1 (FormulaFinder/find xs ys config)
+          result2 (FormulaFinder/find xs ys config)
+          best1 (.getBestSolution result1)
+          best2 (.getBestSolution result2)]
+      ;; Results should be identical
+      (is (= (.getFormula best1) (.getFormula best2))
+          "Same seed should produce identical formulas")
+      (is (= (.getScore best1) (.getScore best2))
+          "Same seed should produce identical scores")
+      (is (= (.getLeafCount best1) (.getLeafCount best2))
+          "Same seed should produce identical leaf counts"))))
+
+
+(deftest test-different-seeds-produce-different-results
+  (testing "Running solver with different seeds produces different results"
+    (let [xs (double-array [1.0 2.0 3.0 4.0 5.0])
+          ys (double-array [1.0 4.0 9.0 16.0 25.0])
+          config1 (-> (FormulaConfigBuilder/builder)
+                      (.iterations 3)
+                      (.populationSize 20)
+                      (.randomSeed 123)
+                      (.build))
+          config2 (-> (FormulaConfigBuilder/builder)
+                      (.iterations 3)
+                      (.populationSize 20)
+                      (.randomSeed 456)
+                      (.build))
+          result1 (FormulaFinder/find xs ys config1)
+          result2 (FormulaFinder/find xs ys config2)
+          best1 (.getBestSolution result1)
+          best2 (.getBestSolution result2)
+          ;; Get all solution formulas to compare
+          all-formulas1 (set (map #(.getFormula %) (.getAllSolutions result1)))
+          all-formulas2 (set (map #(.getFormula %) (.getAllSolutions result2)))]
+      ;; The full population should differ between runs with different seeds
+      (is (not= all-formulas1 all-formulas2)
+          "Different seeds should produce different populations"))))
+
+
+(deftest test-config-builder-with-seed
+  (testing "FormulaConfigBuilder accepts random seed"
+    (let [config (-> (FormulaConfigBuilder/builder)
+                     (.randomSeed 12345)
+                     (.build))]
+      (is (= 12345 (.getRandomSeed config))))))
+
+
+(deftest test-clojure-config-with-seed
+  (testing "Clojure config accepts random seed"
+    (let [config (types/config {:random-seed 98765})]
+      (is (= 98765 (.getRandomSeed config))))))

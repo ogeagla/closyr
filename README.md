@@ -63,8 +63,92 @@ Which is the same as:
 Requirements: Java, Leiningen (I will provide a deps file if enough interest)
 
 
-    (require '[closyr.symbolic-regression :as symreg]) 
+    (require '[closyr.symbolic-regression :as symreg])
     (symreg/run-app-with-gui)
+
+### Java API
+
+You can use closyr as a library from Java or any JVM language. The Java API provides a clean interface layered on top of the Clojure implementation:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Your Java Application                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Java API (org.closyr.api)                        │
+│  ┌─────────────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
+│  │  FormulaFinder  │  │  FormulaConfig   │  │  IFormulaResult        │  │
+│  │  .find(xs, ys)  │  │  .iterations()   │  │  .getBestSolution()    │  │
+│  │  .create()      │  │  .populationSize │  │  .getAllSolutions()    │  │
+│  │                 │  │  .randomSeed()   │  │  .getIterationsRun()   │  │
+│  └─────────────────┘  └──────────────────┘  └────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Clojure Implementation Layer                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  closyr.api.finder  ──▶  closyr.symbolic-regression             │    │
+│  │         │                         │                              │    │
+│  │         ▼                         ▼                              │    │
+│  │  closyr.api.types        closyr.ga (genetic algorithm)          │    │
+│  │                                   │                              │    │
+│  │                                   ▼                              │    │
+│  │                          closyr.ops (mutations/crossover)       │    │
+│  │                                   │                              │    │
+│  │                                   ▼                              │    │
+│  │                          Symja (symbolic math engine)           │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Java Usage Example
+
+```java
+import org.closyr.api.*;
+
+public class Example {
+    public static void main(String[] args) {
+        // Input data points
+        double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
+        double[] ys = {2.0, 4.0, 6.0, 8.0, 10.0};
+
+        // Simple usage with defaults
+        IFormulaResult result = FormulaFinder.find(xs, ys);
+
+        // Or with custom configuration
+        IFormulaConfig config = FormulaConfigBuilder.builder()
+            .iterations(50)
+            .populationSize(100)
+            .maxLeafs(40)
+            .randomSeed(42)  // Optional: for reproducible results
+            .build();
+
+        result = FormulaFinder.find(xs, ys, config);
+
+        // Get the best formula found
+        IFormulaSolution best = result.getBestSolution();
+        System.out.println("Formula: " + best.getFormula());
+        System.out.println("Score: " + best.getScore());
+    }
+}
+```
+
+#### Reproducible Results in Java
+
+Use `randomSeed()` in the config builder for reproducible results:
+
+```java
+IFormulaConfig config = FormulaConfigBuilder.builder()
+    .iterations(20)
+    .populationSize(50)
+    .randomSeed(12345)  // Same seed = same results
+    .build();
+```
+
+**Warning:** Setting a random seed enables **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution.
 
 ### Build and run JAR
 
@@ -81,14 +165,25 @@ You can also provide the same command-line options to `java` command, like:
 ## Options
 | Short, Long Option      | Required?       | Example | Default | Description                                                                                                                   |
 |-------------------------|-----------------|---------|---------|-------------------------------------------------------------------------------------------------------------------------------|
-| `-t`,`--headless`       | no              | `-t`    | `false` | run without GUI, in terminal only                                                                                             |     
-| `-c`,`--use-flamechart` | no              | `-c`    | `false` | run with flamecharts, run then visit http://localhost:54321/flames.svg                                                        |     
-| `-p`,`--population`     | no              | `100`   | `20`    | size of population which will evolve; the number of functions we create and modify                                            |    
-| `-i`,`--iterations`     | no              | `50`    | `10`    | number of iterations to run for                                                                                               |    
-| `-l`,`--max-leafs`      | no              | `40`    | `40`    | max number of AST tree leafs in candidate functions                                                                           |    
-| `-x`,`--xs`             | no, unless `ys` | `1,3,4` | random  | the xs for the points in the dataset to fit against; if provided, must also provide `ys` and be the same count                | 
-| `-y`,`--ys`             | no, unless `xs` | `2,4,8` | random  | the ys for the points in the dataset to fit against; if provided, must also provide `xs` and be the same count                |    
-| `-f`,`--infile`         | no              | `f.csv` |         | A CSV file. Contains either 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset |  
+| `-t`,`--headless`       | no              | `-t`    | `false` | run without GUI, in terminal only                                                                                             |
+| `-c`,`--use-flamechart` | no              | `-c`    | `false` | run with flamecharts, run then visit http://localhost:54321/flames.svg                                                        |
+| `-p`,`--population`     | no              | `100`   | `20`    | size of population which will evolve; the number of functions we create and modify                                            |
+| `-i`,`--iterations`     | no              | `50`    | `10`    | number of iterations to run for                                                                                               |
+| `-l`,`--max-leafs`      | no              | `40`    | `40`    | max number of AST tree leafs in candidate functions                                                                           |
+| `-x`,`--xs`             | no, unless `ys` | `1,3,4` | random  | the xs for the points in the dataset to fit against; if provided, must also provide `ys` and be the same count                |
+| `-y`,`--ys`             | no, unless `xs` | `2,4,8` | random  | the ys for the points in the dataset to fit against; if provided, must also provide `xs` and be the same count                |
+| `-f`,`--infile`         | no              | `f.csv` |         | A CSV file. Contains either 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset |
+| `-s`,`--seed`           | no              | `42`    |         | Random seed for reproducible results. **Warning:** Enables deterministic mode which disables CPU parallelism                  |
+
+### Reproducible Results with Random Seed
+
+You can use the `-s` or `--seed` option to get reproducible results:
+
+    $ lein run -t -p 20 -i 5 -x 1,2,3,4,5 -y 2,4,6,8,10 -s 42
+
+Running the same command with the same seed will produce identical results.
+
+**Warning:** When a random seed is set, the solver enters **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution times for large populations.  
 
 ## Example Screenshots
 

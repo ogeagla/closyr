@@ -3,12 +3,11 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [closyr.util.log :as log]
-    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
+    [closyr.util.prng :as prng :refer [rand rand-int rand-nth shuffle]]
     [closyr.util.spec :as specs])
   (:import
     (java.util
-      Date
-      UUID)
+      Date)
     (java.util.function
       Function)
     (org.matheclipse.core.eval
@@ -139,7 +138,7 @@
     (let [^ExprEvaluator util (or util (new-util))]
       {:sym  variable
        :util util
-       :id   (UUID/randomUUID)
+       :id   (prng/random-uuid)
        :expr (.eval util (valid-expr-or-default variable expr))})
     (catch Exception e
       (log/error "Err creating pheno from expr/x: "

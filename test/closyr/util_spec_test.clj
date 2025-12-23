@@ -26,6 +26,7 @@
                         {:max-leafs          20,
                          :input-iters        10000,
                          :input-phenos-count 50000,
+                         :random-seed        -1,
                          :new-state          :start,
                          :input-data-x
                          [0.0

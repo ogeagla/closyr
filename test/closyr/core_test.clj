@@ -26,7 +26,8 @@
            :iterations     200
            :population     1000
            :xs             [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
-           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]})))
+           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
+           :seed           nil})))
 
 
   (testing "if xs, also needs ys"
@@ -70,7 +71,8 @@
            :population     1000,
            :use-flamechart false,
            :iterations     200,
-           :max-leafs      40})))
+           :max-leafs      40
+           :seed           nil})))
 
 
   (testing "handles valid short options w csv data"
@@ -85,7 +87,8 @@
            :iterations     200
            :population     1000
            :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]})))
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
+           :seed           nil})))
 
   (testing "handles valid long options w data inline"
     (is (=
@@ -99,7 +102,8 @@
            :iterations     200
            :population     1000
            :xs             [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
-           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]})))
+           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
+           :seed           nil})))
 
 
   (testing "handles valid long options w csv data with columns"
@@ -114,7 +118,8 @@
            :iterations     200
            :population     1000
            :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]})))
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
+           :seed           nil})))
 
 
   (testing "handles valid long options w csv data with columns with in order y,x"
@@ -129,7 +134,8 @@
            :iterations     200
            :population     1000
            :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0 30.0 45.0 55.0 60.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]})))
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]
+           :seed           nil})))
 
   (testing "handles valid long options w csv data without columns"
     (is (=
@@ -143,7 +149,8 @@
            :iterations     200
            :population     1000
            :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]}))))
+           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
+           :seed           nil}))))
 
 
 (deftest main-test
