@@ -39,27 +39,19 @@
         population-size (.getPopulationSize cfg)
         max-leafs (.getMaxLeafs cfg)
         random-seed (.getRandomSeed cfg)
-        use-seed? (>= random-seed 0)]
+        run-config {:initial-phenos (ops-init/initial-phenotypes population-size)
+                    :initial-muts   (ops-init/initial-mutations)
+                    :iters          iterations
+                    :use-gui?       false
+                    :use-flamechart false
+                    :max-leafs      max-leafs
+                    :random-seed    random-seed
+                    :input-xs-exprs (ops-common/doubles->exprs xs-vec)
+                    :input-ys-exprs (ops-common/doubles->exprs ys-vec)}
 
-    ;; Set the random seed if provided (>= 0 means seed is set)
-    (when use-seed?
-      (log/warn "Deterministic mode enabled with seed:" random-seed
-                "- CPU parallelism disabled for reproducibility")
-      (prng/set-random-seed! random-seed))
+        result (symreg/run-find-formula run-config)]
 
-    ;; Run with deterministic mode if seed is set (disables parallel execution)
-    (binding [ga/*deterministic-mode* use-seed?]
-      (let [run-config {:initial-phenos (ops-init/initial-phenotypes population-size)
-                        :initial-muts   (ops-init/initial-mutations)
-                        :iters          iterations
-                        :use-gui?       false
-                        :use-flamechart false
-                        :max-leafs      max-leafs
-                        :input-xs-exprs (ops-common/doubles->exprs xs-vec)
-                        :input-ys-exprs (ops-common/doubles->exprs ys-vec)}
-
-            result (symreg/run-find-formula run-config)]
-        (types/->formula-result result)))))
+    (types/->formula-result result)))
 
 
 (defn validate-inputs

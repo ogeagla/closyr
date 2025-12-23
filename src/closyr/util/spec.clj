@@ -223,7 +223,7 @@
    [:input-iters #'Iterations]
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe #'PopulationCount]]
-   [:random-seed {:optional true} [:maybe #'PopulationCount]]
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs [:maybe #'MaxLeafs]]])
 
 

@@ -589,29 +589,22 @@
     :as   run-args}]
   (let [run-config (merge-cli-and-gui-args run-config run-args)
         {:keys [next-step] :as completed-ga-data} (run-solver-ga-iterations run-config run-args)]
-    (binding [ga/*deterministic-mode* (some? (:random-seed run-config))]
-      ;; Set the random seed if provided
-      (when (:random-seed run-config)
-        (log/warn "Deterministic mode enabled with seed:" (:random-seed run-config)
-                  "- CPU parallelism disabled for reproducibility")
-        (prng/set-random-seed! (:random-seed run-config)))
+    (case next-step
 
-      (case next-step
+      :stop
+      completed-ga-data
 
-        :stop
-        completed-ga-data
+      :wait
+      (if use-gui?
+        (do (log/info "-- Waiting for GUI input to start again --")
+            (if-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
+              (run-from-inputs run-config (merge run-args new-gui-args))
+              completed-ga-data))
+        completed-ga-data)
 
-        :wait
-        (if use-gui?
-          (do (log/info "-- Waiting for GUI input to start again --")
-              (if-let [new-gui-args (wait-and-get-gui-args sim-stop-start-chan)]
-                (run-from-inputs run-config (merge run-args new-gui-args))
-                completed-ga-data))
-          completed-ga-data)
-
-        :restart
-        (do (log/info "-- Restarting... --")
-            (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*))))))))
+      :restart
+      (do (log/info "-- Restarting... --")
+          (run-from-inputs run-config (merge run-args (->run-args @sim-input-args*)))))))
 
 
 (defn- in-flames
@@ -648,7 +641,7 @@
 
 
 (defrecord SymbolicRegressionFindFormula
-  [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart max-leafs]
+  [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart max-leafs random-seed]
 
   ISymbolicRegressionFindFormula
 
@@ -678,7 +671,14 @@
   "Run a GA evolution solver to search for function of best fit for input data.  The
   word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
   [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui?] :as run-config}]
-  (solve (map->SymbolicRegressionFindFormula run-config)))
+  (binding [ga/*deterministic-mode* (some? (:random-seed run-config))]
+    ;; Set the random seed if provided
+    (when (:random-seed run-config)
+      (log/warn "2 Deterministic mode enabled with seed:" (:random-seed run-config)
+                "- CPU parallelism disabled for reproducibility")
+      (prng/set-random-seed! (:random-seed run-config)))
+
+    (solve (map->SymbolicRegressionFindFormula run-config))))
 
 
 (defn run-app-without-gui
@@ -725,29 +725,23 @@
   [{:keys [iterations population headless xs ys use-flamechart max-leafs seed] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   ;; Run with deterministic mode if seed is set (disables parallel execution)
-  (binding [ga/*deterministic-mode* (some? seed)]
-    ;; Set the random seed if provided
-    (when seed
-      (log/warn "Deterministic mode enabled with seed:" seed
-                "- CPU parallelism disabled for reproducibility")
-      (prng/set-random-seed! seed))
-    (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
-                      :initial-muts   (ops-init/initial-mutations)
-                      :iters          iterations
-                      :use-gui?       (not headless)
-                      :random-seed    seed
-                      :max-leafs      max-leafs
-                      :use-flamechart use-flamechart
-                      :input-xs-exprs (if xs
-                                        (ops-common/doubles->exprs xs)
-                                        example-input-xs-exprs)
-                      :input-ys-exprs (if ys
-                                        (ops-common/doubles->exprs ys)
-                                        example-input-ys-exprs)}
-          result     (run-find-formula run-config)]
-      (log/info "CLI: Done!")
-      (exit cli-opts)
-      result)))
+  (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
+                    :initial-muts   (ops-init/initial-mutations)
+                    :iters          iterations
+                    :use-gui?       (not headless)
+                    :random-seed    seed
+                    :max-leafs      max-leafs
+                    :use-flamechart use-flamechart
+                    :input-xs-exprs (if xs
+                                      (ops-common/doubles->exprs xs)
+                                      example-input-xs-exprs)
+                    :input-ys-exprs (if ys
+                                      (ops-common/doubles->exprs ys)
+                                      example-input-ys-exprs)}
+        result     (run-find-formula run-config)]
+    (log/info "CLI: Done!")
+    (exit cli-opts)
+    result))
 
 
 ;; todo: feel kind of hacky to have to call this in ?every? ns that has defn schema
