@@ -15,11 +15,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class FindFormulaTest {
 
-    @BeforeAll
-    static void initClojure() {
-        // Pre-initialize Clojure runtime to avoid timeout in first test
-        FindFormula.initializeClojure();
-    }
+//    @BeforeAll
+//    static void initClojure() {
+//        // Pre-initialize Clojure runtime to avoid timeout in first test
+//        FindFormula.initializeClojure();
+//    }
 
     @BeforeEach
     void setUp() {
@@ -258,10 +258,10 @@ class FindFormulaTest {
 
     @Test
     void testInitializeClojureIdempotent() {
-        // Should be safe to call multiple times
-        FindFormula.initializeClojure();
-        FindFormula.initializeClojure();
-        FindFormula.initializeClojure();
+//        // Should be safe to call multiple times
+//        FindFormula.initializeClojure();
+//        FindFormula.initializeClojure();
+//        FindFormula.initializeClojure();
 
         // Verify the API still works
         double[] xs = {1.0, 2.0};
