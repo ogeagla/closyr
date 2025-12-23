@@ -753,7 +753,7 @@
         ^JTextField seed-field     (doto (JTextField. 10)
                                      (.setToolTipText "Enter a number for deterministic mode, or leave empty for parallel mode"))
 
-        ^JButton clear-btn         (doto (ss/button :text "Clear (Parallel)")
+        ^JButton clear-btn         (doto ^JButton (ss/button :text "Clear (Parallel)")
                                      (.setToolTipText "Clear seed to return to parallel (non-deterministic) mode"))
 
         ^JLabel warning-label      (doto (JLabel. "")
