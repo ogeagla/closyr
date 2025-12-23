@@ -111,7 +111,7 @@
   (atom {:max-leafs          40
          :input-iters        100
          :input-phenos-count 2000
-         :random-seed        123}))
+         :random-seed        nil}))
 
 
 (def ^:private amount->number
@@ -720,6 +720,77 @@
     xs-container))
 
 
+(defn- parse-seed-value
+  "Parse text as a Long seed value. Returns nil for empty/invalid input."
+  [^String text]
+  (when (and text (not (empty? (.trim text))))
+    (try
+      (Long/parseLong (.trim text))
+      (catch NumberFormatException _
+        nil))))
+
+
+(defn- update-seed-warning-visibility!
+  "Update the visibility and text of the warning label based on seed value."
+  [^JLabel warning-label seed-value]
+  (if seed-value
+    (do
+      (.setText warning-label "Deterministic mode: slower single-threaded")
+      (.setVisible warning-label true))
+    (do
+      (.setText warning-label "")
+      (.setVisible warning-label false))))
+
+
+(defn- ^JPanel random-seed-panel
+  "Create a panel for random seed input with performance warning and clear button."
+  []
+  (let [^JPanel container          (panel-grid {:rows 1 :cols 1 :border (radio-controls-border "Random Seed")})
+        ^JPanel inner-panel        (doto (JPanel.)
+                                     (.setLayout (FlowLayout. FlowLayout/LEFT 5 2)))
+
+        ^JLabel seed-label         (JLabel. "Seed:")
+        ^JTextField seed-field     (doto (JTextField. 10)
+                                     (.setToolTipText "Enter a number for deterministic mode, or leave empty for parallel mode"))
+
+        ^JButton clear-btn         (doto (ss/button :text "Clear (Parallel)")
+                                     (.setToolTipText "Clear seed to return to parallel (non-deterministic) mode"))
+
+        ^JLabel warning-label      (doto (JLabel. "")
+                                     (.setForeground (Color. 255 180 0))
+                                     (.setVisible false))
+
+        update-seed!               (fn [seed-value]
+                                     (swap! experiment-settings* assoc :random-seed seed-value)
+                                     (update-seed-warning-visibility! warning-label seed-value)
+                                     (log/info "Random seed changed to:" seed-value
+                                               (if seed-value "(deterministic mode)" "(parallel mode)")))]
+
+    ;; Listen for text changes in the seed field
+    (ss/listen seed-field
+               :document
+               (fn [^AbstractDocument$DefaultDocumentEvent e]
+                 (let [doc       (.getDocument e)
+                       doc-txt   (.getText doc 0 (.getLength doc))
+                       new-seed  (parse-seed-value doc-txt)]
+                   (update-seed! new-seed))))
+
+    ;; Clear button resets to parallel mode
+    (ss/listen clear-btn
+               :mouse-clicked
+               (fn [^MouseEvent _]
+                 (.setText seed-field "")
+                 (update-seed! nil)))
+
+    ;; Build the panel
+    (.add inner-panel seed-label)
+    (.add inner-panel seed-field)
+    (.add inner-panel clear-btn)
+    (.add inner-panel warning-label)
+    (.add container inner-panel)
+    container))
+
+
 (defn- update-replace-drawing-widget
   [draw-container]
   (reset!
@@ -948,12 +1019,10 @@
                                               (.add btns-row)
                                               (.add status-row))
 
-        random-seed-panel                   (doto (panel-grid
-                                                    {:rows 1 :cols 1 :border (radio-controls-border "Random Seed")})
-                                              (.add (JLabel. "HI")))
+        ^JPanel random-seed-panel-widget    (random-seed-panel)
 
         settings-container                  (doto (panel-grid {:rows 3 :cols 1})
-                                              ; (.add random-seed-panel) ;; TODO: implement numerical text input, show perf warning when deterministic mode, provide a way to go back to parallel mode (unset random seed)
+                                              (.add random-seed-panel-widget)
                                               (.add settings-panel)
                                               (.add input-fn-container))
 
