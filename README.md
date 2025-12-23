@@ -66,90 +66,6 @@ Requirements: Java, Leiningen (I will provide a deps file if enough interest)
     (require '[closyr.symbolic-regression :as symreg])
     (symreg/run-app-with-gui)
 
-### Java API
-
-You can use closyr as a library from Java or any JVM language. The Java API provides a clean interface layered on top of the Clojure implementation:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           Your Java Application                         │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        Java API (org.closyr.api)                        │
-│  ┌─────────────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
-│  │  FormulaFinder  │  │  FormulaConfig   │  │  IFormulaResult        │  │
-│  │  .find(xs, ys)  │  │  .iterations()   │  │  .getBestSolution()    │  │
-│  │  .create()      │  │  .populationSize │  │  .getAllSolutions()    │  │
-│  │                 │  │  .randomSeed()   │  │  .getIterationsRun()   │  │
-│  └─────────────────┘  └──────────────────┘  └────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    Clojure Implementation Layer                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  closyr.api.finder  ──▶  closyr.symbolic-regression             │    │
-│  │         │                         │                              │    │
-│  │         ▼                         ▼                              │    │
-│  │  closyr.api.types        closyr.ga (genetic algorithm)          │    │
-│  │                                   │                              │    │
-│  │                                   ▼                              │    │
-│  │                          closyr.ops (mutations/crossover)       │    │
-│  │                                   │                              │    │
-│  │                                   ▼                              │    │
-│  │                          Symja (symbolic math engine)           │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-#### Java Usage Example
-
-```java
-import org.closyr.api.*;
-
-public class Example {
-    public static void main(String[] args) {
-        // Input data points
-        double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
-        double[] ys = {2.0, 4.0, 6.0, 8.0, 10.0};
-
-        // Simple usage with defaults
-        IFormulaResult result = FormulaFinder.find(xs, ys);
-
-        // Or with custom configuration
-        IFormulaConfig config = FormulaConfigBuilder.builder()
-            .iterations(50)
-            .populationSize(100)
-            .maxLeafs(40)
-            .randomSeed(42)  // Optional: for reproducible results
-            .build();
-
-        result = FormulaFinder.find(xs, ys, config);
-
-        // Get the best formula found
-        IFormulaSolution best = result.getBestSolution();
-        System.out.println("Formula: " + best.getFormula());
-        System.out.println("Score: " + best.getScore());
-    }
-}
-```
-
-#### Reproducible Results in Java
-
-Use `randomSeed()` in the config builder for reproducible results:
-
-```java
-IFormulaConfig config = FormulaConfigBuilder.builder()
-    .iterations(20)
-    .populationSize(50)
-    .randomSeed(12345)  // Same seed = same results
-    .build();
-```
-
-**Warning:** Setting a random seed enables **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution.
-
 ### Build and run JAR
 
 Requirements: Java, Leiningen
@@ -210,6 +126,90 @@ Coverage looks like this if you run `lein cloverage`:
 - Evolution consists of mutation and crossover. 
 - Mutations act on the function's AST and modify branches, leafs, or the whole tree.  Operations like `+0.1`, `*x`, `/Sin(x)` are applied to functions.
 - Crossovers combine two functions' ASTs at a random point, and combine using various operators like `+`, and `*`.
+
+### Java API
+
+You can use closyr as a library from Java or any JVM language. The Java API provides a clean interface layered on top of the Clojure implementation:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Your Java Application                         │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Java API (org.closyr.api)                        │
+│  ┌─────────────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
+│  │  FormulaFinder  │  │  FormulaConfig   │  │  IFormulaResult        │  │
+│  │  .find(xs, ys)  │  │  .iterations()   │  │  .getBestSolution()    │  │
+│  │  .create()      │  │  .populationSize │  │  .getAllSolutions()    │  │
+│  │                 │  │  .randomSeed()   │  │  .getIterationsRun()   │  │
+│  └─────────────────┘  └──────────────────┘  └────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Clojure Implementation Layer                         │
+│  ┌─────────────────────────────────────────────────────────────────┐    │
+│  │  closyr.api.finder  ──▶  closyr.symbolic-regression             │    │
+│  │         │                         │                             │    │
+│  │         ▼                         ▼                             │    │
+│  │  closyr.api.types        closyr.ga (genetic algorithm)          │    │
+│  │                                   │                             │    │
+│  │                                   ▼                             │    │
+│  │                          closyr.ops (mutations/crossover)       │    │
+│  │                                   │                             │    │
+│  │                                   ▼                             │    │
+│  │                          Symja (symbolic math engine)           │    │
+│  └─────────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Java Usage Example
+
+```java
+import org.closyr.api.*;
+
+public class Example {
+    public static void main(String[] args) {
+        // Input data points
+        double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
+        double[] ys = {2.0, 4.0, 6.0, 8.0, 10.0};
+
+        // Simple usage with defaults
+        IFormulaResult result = FormulaFinder.find(xs, ys);
+
+        // Or with custom configuration
+        IFormulaConfig config = FormulaConfigBuilder.builder()
+            .iterations(50)
+            .populationSize(100)
+            .maxLeafs(40)
+            .randomSeed(42)  // Optional: for reproducible results
+            .build();
+
+        result = FormulaFinder.find(xs, ys, config);
+
+        // Get the best formula found
+        IFormulaSolution best = result.getBestSolution();
+        System.out.println("Formula: " + best.getFormula());
+        System.out.println("Score: " + best.getScore());
+    }
+}
+```
+
+#### Reproducible Results in Java
+
+Use `randomSeed()` in the config builder for reproducible results:
+
+```java
+IFormulaConfig config = FormulaConfigBuilder.builder()
+    .iterations(20)
+    .populationSize(50)
+    .randomSeed(12345)  // Same seed = same results
+    .build();
+```
+
+**Warning:** Setting a random seed enables **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution.
 
 ## Roadmap
 
