@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [closyr.util.log :as log]
-    [closyr.util.prng :refer :all]))
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]))
 
 
 (set! *warn-on-reflection* true)

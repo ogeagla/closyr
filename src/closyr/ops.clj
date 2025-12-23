@@ -7,7 +7,7 @@
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.modify :as ops-modify]
     [closyr.util.log :as log]
-    [closyr.util.prng :refer :all]
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
     [closyr.util.spec :as specs])
   (:import
     (java.text

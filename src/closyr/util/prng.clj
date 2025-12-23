@@ -56,5 +56,6 @@
     (RT/vector (.toArray al))))
 
 
-(set-random-seed! 888)
-(rand-int 100)
+(comment
+  (set-random-seed! 888)
+  (rand-int 100))

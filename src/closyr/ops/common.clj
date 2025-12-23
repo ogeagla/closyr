@@ -3,7 +3,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [closyr.util.log :as log]
-    [closyr.util.prng :refer :all]
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
     [closyr.util.spec :as specs])
   (:import
     (java.util

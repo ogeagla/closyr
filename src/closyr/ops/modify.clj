@@ -5,7 +5,7 @@
     [clojure.string :as str]
     [closyr.ops.common :as ops-common]
     [closyr.util.log :as log]
-    [closyr.util.prng :refer :all]
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
     [closyr.util.spec :as specs])
   (:import
     (java.util.function
