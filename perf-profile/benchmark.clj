@@ -50,7 +50,7 @@
 
 (def results* (atom []))
 
-(doseq [pop-size [10 100 500 1000 20000]]
+(doseq [pop-size [10 100 500 1000 10000]]
   (swap! results* concat ["\n"])
   (doseq [xs-max [5.0 20.0]]
     (doseq [max-leafs [40 120]]
@@ -89,7 +89,7 @@
 ;; Comparison summary
 (println "\n=== Parallel vs Deterministic Comparison ===\n")
 
-(doseq [pop-size [100 1000]]
+(doseq [pop-size [100 1000 5000]]
   (let [parallel-result (benchmark-evolution pop-size 10 40 5.0)
         deterministic-result (benchmark-evolution pop-size 10 40 5.0 :random-seed 42)
         speedup (/ (:phenos-per-sec parallel-result) (:phenos-per-sec deterministic-result))]
