@@ -34,6 +34,7 @@
                                    :releases  false
                                    :snapshots true}}
   :java-source-paths ["src/main/java"]
+  :java-test-paths ["test"]
   :main ^:skip-aot closyr.core
   :target-path "target/%s"
 
@@ -61,7 +62,10 @@
 
   :profiles {:uberjar {:aot      :all
                        :manifest {"Multi-Release" true}
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
+             :test {:dependencies [[org.junit.jupiter/junit-jupiter-api "5.10.2"]
+                                   [org.junit.jupiter/junit-jupiter-engine "5.10.2"]
+                                   [org.junit.platform/junit-platform-launcher "1.10.2"]]}}
 
   :plugins [[lein-cloverage "1.2.4"]
             [lein-vanity "0.2.0"]
