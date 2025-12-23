@@ -1,7 +1,7 @@
 package org.closyr.core;
 
+import org.closyr.api.ClojureBridge;
 import org.closyr.api.FormulaConfigBuilder;
-import org.closyr.api.FormulaFinder;
 import org.closyr.api.IFormulaConfig;
 import org.closyr.api.IFormulaResult;
 import org.closyr.api.IFormulaSolution;
@@ -195,9 +195,9 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
      * @return Result containing the best formula found
      */
     public static Result findFormula(double[] xs, double[] ys, Config config) {
-        // Delegate to the new API
+        // Delegate to the new API via ClojureBridge
         IFormulaConfig formulaConfig = config.toFormulaConfig();
-        IFormulaResult apiResult = FormulaFinder.find(xs, ys, formulaConfig);
+        IFormulaResult apiResult = ClojureBridge.find(xs, ys, formulaConfig);
 
         // Convert to legacy Result format
         return convertResult(apiResult);
