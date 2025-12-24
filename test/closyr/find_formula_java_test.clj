@@ -1,13 +1,17 @@
 (ns closyr.find-formula-java-test
   "Tests for the Java FindFormula API that calls into Clojure symbolic regression."
   (:require
-    [clojure.test :refer :all])
+    [clojure.test :refer :all]
+    [closyr.test-utils :as test-utils])
   (:import
     (org.closyr.core
       FindFormula
       FindFormula$Config
       FindFormula$Result
       FindFormula$Solution)))
+
+
+(use-fixtures :once test-utils/quiet-logging-fixture)
 
 
 (deftest test-find-formula-with-linear-data

@@ -556,7 +556,7 @@
   (binding [ga/*deterministic-mode* (some? (:random-seed run-config))]
     ;; Set the random seed if provided
     (when (:random-seed run-config)
-      (log/warn "15 Deterministic mode enabled with seed:" (:random-seed run-config)
+      (log/info "run-solver-ga-iterations: Deterministic mode enabled with seed:" (:random-seed run-config)
                 "- CPU parallelism disabled for reproducibility")
       (prng/set-random-seed! (:random-seed run-config)))
     (loop [solver-state (init (map->IterativeGASolver {:run-config run-config :run-args run-args}))]
@@ -642,7 +642,7 @@
   (binding [ga/*deterministic-mode* (some? random-seed)]
     ;; Set the random seed if provided
     (when random-seed
-      (log/warn "Deterministic mode enabled with seed:" random-seed
+      (log/info "run-find-formula: Deterministic mode enabled with seed:" random-seed
                 "- CPU parallelism disabled for reproducibility")
       (prng/set-random-seed! random-seed))
 

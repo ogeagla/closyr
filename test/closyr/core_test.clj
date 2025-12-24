@@ -2,7 +2,11 @@
   (:require
     [clojure.test :refer :all]
     [closyr.core :as core]
-    [closyr.symbolic-regression :as symreg]))
+    [closyr.symbolic-regression :as symreg]
+    [closyr.test-utils :as test-utils]))
+
+
+(use-fixtures :once test-utils/quiet-logging-fixture)
 
 
 (deftest cli-options-test

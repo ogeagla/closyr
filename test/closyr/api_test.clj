@@ -3,7 +3,8 @@
   (:require
     [clojure.test :refer :all]
     [closyr.api.types :as types]
-    [closyr.api.finder :as finder])
+    [closyr.api.finder :as finder]
+    [closyr.test-utils :as test-utils])
   (:import
     (org.closyr.api
       FormulaConfigBuilder
@@ -12,6 +13,9 @@
       IFormulaFinder
       IFormulaResult
       IFormulaSolution)))
+
+
+(use-fixtures :once test-utils/quiet-logging-fixture)
 
 
 ;; ============================================================================

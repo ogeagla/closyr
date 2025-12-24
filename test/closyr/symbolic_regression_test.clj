@@ -7,12 +7,15 @@
     [closyr.ops.common :as ops-common]
     [closyr.ops.initialize :as ops-init]
     [closyr.symbolic-regression :as symreg]
+    [closyr.test-utils :as test-utils]
     [closyr.util.spec :as specs]
     [malli.core :as m])
   (:import
     (java.awt
       GraphicsEnvironment)))
 
+
+(use-fixtures :once test-utils/quiet-logging-fixture)
 
 (alter-var-root #'symreg/*is-testing* (constantly true))
 
