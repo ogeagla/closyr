@@ -127,7 +127,14 @@
                       (:final-population
                         (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
                           (fn []
-                            (symreg/run-app-without-gui [1 2 3] [6 12 99]))))))
+                            (symreg/run-find-formula
+                              {:initial-phenos (ops-init/initial-phenotypes 100)
+                               :initial-muts   (ops-init/initial-mutations)
+                               :iters          20
+                               :use-gui?       false
+                               :use-flamechart false
+                               :input-xs-exprs (ops-common/doubles->exprs [1 2 3])
+                               :input-ys-exprs (ops-common/doubles->exprs [6 12 99])}))))))
              100)))
 
     (testing "with gui launcher"
@@ -211,26 +218,26 @@
                      :input-ys-vec}
                    (set (keys @symreg/sim-input-args*))))))))
 
-    (testing "with provided data using record"
+    (testing "with provided data as map"
       (reset! symreg/sim-input-args* {})
       (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
         (fn []
           (let [{:keys [final-population next-step iters-done]}
-                (symreg/solve
-                  (symreg/map->SymbolicRegressionFindFormula
-                    {:input-phenos-count 100
-                     :initial-muts       (ops-init/initial-mutations)
-                     :iters              5
-                     :use-gui?           false
-                     :input-xs-exprs     (->> (range 50)
-                                              (map (fn [i] (* Math/PI (/ i 15.0))))
-                                              ops-common/doubles->exprs)
-                     :input-ys-exprs     (->> (range 50)
-                                              (map (fn [i]
-                                                     (+ 2.0
-                                                        (/ i 10.0)
-                                                        (Math/cos (* Math/PI (/ i 15.0))))))
-                                              ops-common/doubles->exprs)}))]
+                (symreg/run-find-formula
+                  {:input-phenos-count 100
+                   :initial-muts       (ops-init/initial-mutations)
+                   :iters              5
+                   :use-gui?           false
+                   :use-flamechart     false
+                   :input-xs-exprs     (->> (range 50)
+                                            (map (fn [i] (* Math/PI (/ i 15.0))))
+                                            ops-common/doubles->exprs)
+                   :input-ys-exprs     (->> (range 50)
+                                            (map (fn [i]
+                                                   (+ 2.0
+                                                      (/ i 10.0)
+                                                      (Math/cos (* Math/PI (/ i 15.0))))))
+                                            ops-common/doubles->exprs)})]
             (is (= 100
                    (count (:pop final-population))))
 
@@ -262,12 +269,13 @@
                                     true)]
 
               (symreg/run-find-formula
-                {:initial-phenos (ops-init/initial-phenotypes 20)
-                 :initial-muts   (ops-init/initial-mutations)
-                 :input-xs-exprs symreg/example-input-xs-exprs
-                 :input-ys-exprs symreg/example-input-ys-exprs
-                 :iters          20
-                 :use-gui?       true})
+                {:initial-phenos  (ops-init/initial-phenotypes 20)
+                 :initial-muts    (ops-init/initial-mutations)
+                 :input-xs-exprs  symreg/example-input-xs-exprs
+                 :input-ys-exprs  symreg/example-input-ys-exprs
+                 :iters           20
+                 :use-gui?        true
+                 :use-flamechart  false})
 
 
               (is (= (<!! control-process) true))))))))
@@ -391,12 +399,13 @@
                     true)]
 
               (symreg/run-find-formula
-                {:initial-phenos (ops-init/initial-phenotypes 20)
-                 :initial-muts   (ops-init/initial-mutations)
-                 :input-xs-exprs symreg/example-input-xs-exprs
-                 :input-ys-exprs symreg/example-input-ys-exprs
-                 :iters          20
-                 :use-gui?       true})
+                {:initial-phenos  (ops-init/initial-phenotypes 20)
+                 :initial-muts    (ops-init/initial-mutations)
+                 :input-xs-exprs  symreg/example-input-xs-exprs
+                 :input-ys-exprs  symreg/example-input-ys-exprs
+                 :iters           20
+                 :use-gui?        true
+                 :use-flamechart  false})
 
 
               (is (= (<!! control-process) true)))))))))

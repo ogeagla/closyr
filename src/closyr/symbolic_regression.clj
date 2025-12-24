@@ -242,7 +242,7 @@
     (.repaint scores-chart-panel)))
 
 
-(defn chart-update-loop
+(defn- chart-update-loop
   "In the GUI thread, loops over data sent from the experiement to be rendered onto the GUI. Parks waiting on new data,
   and ends the loop when a command in the close chan is sent"
   [sim->gui-chan
@@ -300,7 +300,7 @@
      :sim-stop-start-chan sim-stop-start-chan}))
 
 
-(defn update-plot-input-data
+(defn- update-plot-input-data
   "Get new data from GUI and generate necessary solver inputs"
   {:malli/schema [:=> [:cat #'specs/SolverGUIMessage] #'specs/SolverGUIInputArgs]}
   [{new-state          :new-state
@@ -325,7 +325,7 @@
                              :max-leafs          max-leafs})))
 
 
-(defn restart-with-new-inputs
+(defn- restart-with-new-inputs
   "Get new inputs and restart solver"
   {:malli/schema [:=> [:cat #'specs/SolverGUIMessage] keyword?]}
   [msg]
@@ -355,7 +355,7 @@
                               nil))))))))
 
 
-(defn ->run-args
+(defn- ->run-args
   "Generate one-time computed args for solver"
   {:malli/schema [:=> [:cat #'specs/SolverInputArgs] #'specs/SolverRunArgs]}
   [{input-xs-exprs     :input-xs-exprs
@@ -635,71 +635,33 @@
       run-config)))
 
 
-(defprotocol ISymbolicRegressionFindFormula
-
-  "A top-level interface to start the solver using CLI or GUI args"
-
-  (solve
-    [this]
-    "Run the solver on either CLI of GUI args.  When using GUI, we block on getting a signal from the
-    GUI which indicates the user wants to start (and later stop/restart) the solver.  The GUI
-    would also provide all the parameters and inputs to the solver, like iterations count and
-    the objective data.  When running from the CLI, we use the provided inputs or some example data
-    and defaults."))
-
-
-(defrecord SymbolicRegressionFindFormula
-  [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart max-leafs random-seed]
-
-  ISymbolicRegressionFindFormula
-
-  (solve
-    [this]
-    (let [symbolic-regression-solver-fn (fn []
-                                          (run-from-inputs
-                                            this
-                                            (if use-gui?
-                                              (start-gui-and-get-input-data this)
-                                              (get-input-data this))))]
-      (if use-gui?
-        (log/info "-- Running from GUI --")
-        (log/info "-- Running from CLI."
-                  "iters: " iters
-                  "pop: " (count initial-phenos)
-                  "muts: " (count initial-muts) " --"))
-
-      (if use-flamechart
-        ;; with flame graph analysis:
-        (in-flames symbolic-regression-solver-fn)
-        ;; plain experiment:
-        (symbolic-regression-solver-fn)))))
-
-
 (defn run-find-formula
-  "Run a GA evolution solver to search for function of best fit for input data.  The
-  word experiment is used loosely here, it's more of a time-evolving best-fit method instance."
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? random-seed] :as run-config}]
-  (binding [ga/*deterministic-mode* (some? (:random-seed run-config))]
+  "Run a GA evolution solver to search for function of best fit for input data.
+  This is the main programmatic entry point for the symbolic regression solver."
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed] :as run-config}]
+  (binding [ga/*deterministic-mode* (some? random-seed)]
     ;; Set the random seed if provided
-    (when (:random-seed run-config)
-      (log/warn "2 Deterministic mode enabled with seed:" (:random-seed run-config)
+    (when random-seed
+      (log/warn "Deterministic mode enabled with seed:" random-seed
                 "- CPU parallelism disabled for reproducibility")
-      (prng/set-random-seed! (:random-seed run-config)))
+      (prng/set-random-seed! random-seed))
 
-    (solve (map->SymbolicRegressionFindFormula run-config))))
+    (if use-gui?
+      (log/info "-- Running from GUI --")
+      (log/info "-- Running from CLI."
+                "iters:" iters
+                "pop:" (count initial-phenos)
+                "muts:" (count initial-muts) "--"))
 
-
-(defn run-app-without-gui
-  "Run app without GUI and with fake placeholder input data"
-  [xs ys]
-  (run-find-formula
-    {:initial-phenos (ops-init/initial-phenotypes 100)
-     :initial-muts   (ops-init/initial-mutations)
-     :iters          20
-     :use-gui?       false
-     :use-flamechart false
-     :input-xs-exprs (ops-common/doubles->exprs xs)
-     :input-ys-exprs (ops-common/doubles->exprs ys)}))
+    (let [solver-fn (fn []
+                      (run-from-inputs
+                        run-config
+                        (if use-gui?
+                          (start-gui-and-get-input-data run-config)
+                          (get-input-data run-config))))]
+      (if use-flamechart
+        (in-flames solver-fn)
+        (solver-fn)))))
 
 
 (defn- run-app-with-gui
@@ -759,6 +721,13 @@
 (comment (println "FN SCHEMAS: " (m/function-schemas)))
 (comment (macroexpand-1 `(log/info "Hello")))
 (comment (log/info "Hello"))
-(comment (run-app-without-gui [1 2 3] [6 12 99]))
+(comment (run-find-formula
+           {:initial-phenos (ops-init/initial-phenotypes 100)
+            :initial-muts   (ops-init/initial-mutations)
+            :iters          20
+            :use-gui?       false
+            :use-flamechart false
+            :input-xs-exprs (ops-common/doubles->exprs [1 2 3])
+            :input-ys-exprs (ops-common/doubles->exprs [6 12 99])}))
 (comment (run-app-with-gui {:use-flamechart true}))
 (comment (run-app-with-gui))
