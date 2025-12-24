@@ -7,7 +7,8 @@
       ArrayList
       Collection
       Collections
-      Random)))
+      Random
+      UUID)))
 
 
 (set! *warn-on-reflection* true)
@@ -75,7 +76,7 @@
                         (bit-or (bit-shift-left acc 8)
                                 (bit-and (aget bytes i) 0xff)))
                       0 (range 8 16))]
-      (java.util.UUID. msb lsb))))
+      (UUID. msb lsb))))
 
 
 (comment
