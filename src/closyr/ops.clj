@@ -309,14 +309,14 @@
 
 (defn report-iteration
   "Print and maybe send to GUI a summary report of the population, including best fn/score/etc"
-  [i
+  [iters-to-go
    iters
    ga-result
    {:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}
    {:keys [use-gui? max-leafs] :as run-config}]
-  (when (or (= 1 i) (zero? (mod i *log-steps*)))
+  (when (or (= 1 iters-to-go) (zero? (mod iters-to-go *log-steps*)))
     (let [bests      (sort-population ga-result)
           took-s     (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
           pop-size   (count (:pop ga-result))
@@ -329,7 +329,9 @@
                                                   best-v run-args extended-domain-args)]
 
       (reset! test-timer* (Date.))
-      (log/info i "-step pop size: " pop-size
+      (log/info (inc (- iters iters-to-go)) "-th-iter, "
+                " iters left: " (dec iters-to-go)
+                " pop size: " pop-size
                 " points: " (count input-ys-vec)
                 " max leafs: " max-leafs
                 " took secs: " took-s
@@ -343,7 +345,7 @@
 
       (when use-gui?
         (put! sim->gui-chan {:iters                 iters
-                             :i                     (inc (- iters i))
+                             :i                     (inc (- iters iters-to-go))
                              :best-eval             evaled
                              :input-xs-vec-extended xs-extended
                              :best-eval-extended    evaled-extended
