@@ -18,7 +18,7 @@ javac -d target/test-classes \
   test/org/closyr/core/FindFormulaTest.java
 
 # Run JUnit
-java -jar ~/.m2/repository/org/junit/platform/junit-platform-console-standalone/1.10.2/junit-platform-console-standalone-1.10.2.jar \
+java -jar ~/.m2/repository/org/junit/platform/junit-platform-console-standalone/6.0.1/junit-platform-console-standalone-6.0.1.jar \
   execute \
   --class-path "target/test-classes:target/classes:$CP" \
   --select-class org.closyr.core.FindFormulaTest \
