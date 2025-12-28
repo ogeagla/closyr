@@ -833,14 +833,13 @@
                              input-data-maps)]
       (reset! xs* (mapv :x scaled-inputs))
       (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) scaled-inputs)]
-        (let []
-          (log/info "Set ixy: " i x y
-                    " scalars: " x-scalar y-scalar
-                    " diff: " diff-x diff-y
-                    " canvas: " canvas-w canvas-h)
-          ((nth items-point-setters i)
-           x
-           (input-data/y->gui-coord-y sketchpad-size* y)))))))
+        (log/info "Set ixy: " i x y
+                  " scalars: " x-scalar y-scalar
+                  " diff: " diff-x diff-y
+                  " canvas: " canvas-w canvas-h)
+        ((nth items-point-setters i)
+         x
+         (input-data/y->gui-coord-y sketchpad-size* y))))))
 
 
 (defn- ^JPanel input-file-picker-widget
