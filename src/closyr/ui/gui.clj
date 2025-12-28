@@ -21,7 +21,9 @@
       Container
       Cursor
       FlowLayout
+      Font
       Graphics2D
+      GraphicsEnvironment
       GridBagConstraints
       GridBagLayout
       GridLayout
@@ -136,6 +138,19 @@
 (def ^:private items-points-accessors* (atom {}))
 (def ^:private replace-drawing-widget!* (atom nil))
 (def ^:private objective-formula-field* (atom nil))
+
+
+(defn- find-unicode-font
+  "Find a font that supports Unicode math symbols. Returns a Font or nil."
+  [size]
+  (let [preferred-fonts ["DejaVu Sans" "Noto Sans" "Segoe UI Symbol"
+                         "Arial Unicode MS" "Lucida Sans Unicode"
+                         "FreeSans" "Liberation Sans"]
+        available-fonts (set (.getAvailableFontFamilyNames
+                               (GraphicsEnvironment/getLocalGraphicsEnvironment)))
+        found-font      (first (filter available-fonts preferred-fonts))]
+    (when found-font
+      (Font. found-font Font/PLAIN size))))
 
 
 (defn- redraw-sketch-widget!
@@ -934,13 +949,22 @@
         content-pane                        (doto (.getContentPane my-frame)
                                               (.setLayout (GridLayout. 1 1)))
 
-        sim-info-label                      (JLabel. "")
+        unicode-font                        (find-unicode-font 14)
+        sim-info-label                      (let [lbl (JLabel. "")]
+                                              (when unicode-font
+                                                (.setFont lbl unicode-font))
+                                              lbl)
         initial-formula                     (str (or (input-y-formulas input-data/initial-fn) ""))
-        ^JTextField objective-formula-text  (reset! objective-formula-field*
-                                                    (doto (JTextField. initial-formula)
-                                                      (.setEditable false)))
-        ^JTextField best-fn-selectable-text (doto (JTextField. "")
-                                              (.setEditable false))
+        ^JTextField objective-formula-text  (let [tf (doto (JTextField. initial-formula)
+                                                       (.setEditable false))]
+                                              (when unicode-font
+                                                (.setFont tf unicode-font))
+                                              (reset! objective-formula-field* tf))
+        ^JTextField best-fn-selectable-text (let [tf (doto (JTextField. "")
+                                                       (.setEditable false))]
+                                              (when unicode-font
+                                                (.setFont tf unicode-font))
+                                              tf)
 
         ^XYChart best-fn-chart              (plot/make-plot:n-series
                                               {:x-axis-title "X"
