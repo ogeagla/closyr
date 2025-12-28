@@ -264,6 +264,84 @@ IFormulaConfig config = FormulaConfigBuilder.builder()
 - [ ] When I created this and my other symbolic regression tools, I didn't know about the formal field of symbolic regression.  I've since found some great libraries that I should review and apply the lessons to this project: https://github.com/MilesCranmer/PySR
 
 
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              ENTRY POINTS                                       │
+├─────────────────────┬─────────────────────┬─────────────────────────────────────┤
+│   closyr.core       │  closyr.api.finder  │  closyr.symbolic-regression         │
+│   (CLI -main)       │  (Java API)         │  (Main Orchestrator)                │
+└─────────┬───────────┴──────────┬──────────┴──────────────┬──────────────────────┘
+          │                      │                         │
+          └──────────────────────┼─────────────────────────┘
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           GENETIC ALGORITHM                                     │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │                           closyr.ga                                     │    │
+│  │            (Selection, Crossover, Mutation Loop)                        │    │
+│  └─────────────────────────────────────────────────────────────────────────┘    │
+└───────────────────────────────────┬─────────────────────────────────────────────┘
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         EXPRESSION OPERATIONS                                   │
+│  ┌───────────────┐    ┌───────────────┐    ┌───────────────┐                    │
+│  │  closyr.ops   │───▶│ ops.modify    │    │ ops.eval      │                    │
+│  │   (Facade)    │    │ (Mutations &  │    │ (Evaluate     │                    │
+│  │               │───▶│  Crossover)   │    │  Expressions) │                    │
+│  └───────┬───────┘    └───────────────┘    └───────────────┘                    │
+│          │            ┌───────────────┐    ┌───────────────┐                    │
+│          └───────────▶│ ops.initialize│    │ ops.common    │                    │
+│                       │ (Population   │    │ (Shared Utils)│                    │
+│                       │  Seeding)     │    │               │                    │
+│                       └───────────────┘    └───────────────┘                    │
+└───────────────────────────────────┬─────────────────────────────────────────────┘
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         SYMJA (External)                                        │
+│              Symbolic Math Engine - AST Manipulation & Evaluation               │
+│                    github.com/axkr/symja_android_library                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              UI LAYER                                           │
+│  ┌─────────────────────────┐    ┌─────────────────┐    ┌─────────────────┐      │
+│  │     closyr.ui.gui       │    │  closyr.ui.plot │    │ closyr.ui.icons │      │
+│  │   (Swing/Seesaw GUI)    │───▶│   (XChart)      │    │                 │      │
+│  │   - Sketchpad           │    │   - Best Fn     │    │                 │      │
+│  │   - Controls            │    │   - Scores      │    │                 │      │
+│  │   - Function Display    │    │                 │    │                 │      │
+│  └─────────────────────────┘    └─────────────────┘    └─────────────────┘      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            DATA LAYER                                           │
+│  ┌─────────────────────────┐    ┌───────────────────────────────────────────┐   │
+│  │  closyr.dataset.inputs  │    │  Built-in Datasets                        │   │
+│  │  (Benchmark Functions)  │    │  - prime-10000 (nth prime)                │   │
+│  │  - Nguyen-4, Nguyen-5   │    │  - prime-counting (π(x))                  │   │
+│  │  - Feynman Lorentz/Wave │    │                                           │   │
+│  │  - Trig, Log, Gaussian  │    │                                           │   │
+│  └─────────────────────────┘    └───────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            UTILITIES                                            │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐     │
+│  │ util.log      │  │ util.csv      │  │ util.prng     │  │ util.spec     │     │
+│  │ (Logging)     │  │ (CSV Import)  │  │ (Seeded RNG)  │  │ (Malli Specs) │     │
+│  └───────────────┘  └───────────────┘  └───────────────┘  └───────────────┘     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+Data Flow:
+  1. User provides (x,y) data via GUI sketchpad, CSV file, or CLI args
+  2. GA creates initial population of random Symja expressions
+  3. Each iteration: evaluate fitness (sum of residuals), select, mutate, crossover
+  4. Best expressions shown in real-time on charts
+  5. Final best-fit function returned as Symja-compatible expression
+```
+
 ## Credits
 
 - This project would not have been possible without the symbolic math library `Symja` (https://github.com/axkr/symja_android_library), which has been great to use and I consider it to be like a `MathJs` (https://github.com/josdejong/mathjs) on the JVM.
