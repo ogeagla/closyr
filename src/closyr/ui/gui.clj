@@ -20,6 +20,7 @@
       Color
       Container
       Cursor
+      Dimension
       FlowLayout
       Font
       Graphics2D
@@ -950,21 +951,38 @@
                                               (.setLayout (GridLayout. 1 1)))
 
         unicode-font                        (find-unicode-font 14)
+        label-width                         130
         sim-info-label                      (let [lbl (JLabel. "")]
                                               (when unicode-font
                                                 (.setFont lbl unicode-font))
                                               lbl)
         initial-formula                     (str (or (input-y-formulas input-data/initial-fn) ""))
+        ^JLabel objective-label             (let [lbl (doto (JLabel. "ObjectiveFn(x_) :=")
+                                                        (.setPreferredSize (Dimension. label-width 20)))]
+                                              (when unicode-font
+                                                (.setFont lbl unicode-font))
+                                              lbl)
         ^JTextField objective-formula-text  (let [tf (doto (JTextField. initial-formula)
                                                        (.setEditable false))]
                                               (when unicode-font
                                                 (.setFont tf unicode-font))
                                               (reset! objective-formula-field* tf))
+        ^JPanel objective-row               (doto (JPanel. (BorderLayout.))
+                                              (.add objective-label BorderLayout/WEST)
+                                              (.add objective-formula-text BorderLayout/CENTER))
+        ^JLabel best-label                  (let [lbl (doto (JLabel. "BestFitFn(x_) :=")
+                                                        (.setPreferredSize (Dimension. label-width 20)))]
+                                              (when unicode-font
+                                                (.setFont lbl unicode-font))
+                                              lbl)
         ^JTextField best-fn-selectable-text (let [tf (doto (JTextField. "")
                                                        (.setEditable false))]
                                               (when unicode-font
                                                 (.setFont tf unicode-font))
                                               tf)
+        ^JPanel best-row                    (doto (JPanel. (BorderLayout.))
+                                              (.add best-label BorderLayout/WEST)
+                                              (.add best-fn-selectable-text BorderLayout/CENTER))
 
         ^XYChart best-fn-chart              (plot/make-plot:n-series
                                               {:x-axis-title "X"
@@ -1080,8 +1098,8 @@
     (.add input-fn-container brush-container)
 
     (.add inputs-and-info-container sim-info-label)
-    (.add inputs-and-info-container objective-formula-text)
-    (.add inputs-and-info-container best-fn-selectable-text)
+    (.add inputs-and-info-container objective-row)
+    (.add inputs-and-info-container best-row)
 
     (.add draw-parent drawing-widget)
     (.add row-3-container draw-parent)

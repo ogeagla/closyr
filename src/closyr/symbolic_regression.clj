@@ -142,7 +142,7 @@
 
 (defn- check-new-best-fn
   [best-f-str ^JTextField best-fn-selectable-text]
-  (let [fn-str (str "best_fn_y(x) = " (ops/format-fn-str best-f-str))]
+  (let [fn-str (str "" (ops/format-fn-str best-f-str))]
     (when (not= fn-str (.getText best-fn-selectable-text))
       (log/info "New Best Function: " fn-str)
       (ss/set-text* best-fn-selectable-text fn-str))))
