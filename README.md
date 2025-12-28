@@ -119,6 +119,46 @@ Coverage looks like this if you run `lein cloverage`:
 
 ![test_coverage_2024-02-16_16-39.png](screenshots%2Ftest_coverage_2024-02-16_16-39.png)
 
+## Benchmarks
+
+The project includes benchmark tests using standard symbolic regression test functions from the literature:
+
+### Running Benchmarks
+
+```bash
+# Run all benchmark tests
+$ lein test :only closyr.benchmark-functions-test
+
+# Run a specific benchmark
+$ lein test :only closyr.benchmark-functions-test/nguyen-4-benchmark
+```
+
+### Benchmark Functions
+
+| Benchmark | Formula | Domain | Description |
+|-----------|---------|--------|-------------|
+| **Nguyen-4** | x⁶ + x⁵ + x⁴ + x³ + x² + x | [-1, 1] | High-degree polynomial |
+| **Nguyen-5** | sin(x²)·cos(x) - 1 | [-1, 1] | Trigonometric composition |
+| **Feynman Lorentz** | 1/√(1 - v²/c²) | [0, 0.95] | Relativistic Lorentz factor |
+| **Feynman Wave** | sin(kx - ωt) | [0, 4π] | Traveling wave equation |
+
+These benchmarks are from the [Nguyen benchmark suite](https://gpbenchmarks.org/) and [AI Feynman dataset](https://space.mit.edu/home/tegmark/aifeynman.html), commonly used in symbolic regression research.
+
+### Example Results
+
+Results from running benchmarks with 200 population, 100 iterations, seed=42:
+
+| Benchmark        | Best Score | Time |
+|------------------|------------|------|
+| Nguyen-4         | -0.91      | 4.97s |
+| Nguyen-5         | -0.29      | 2.04s |
+| Feynman Lorentz  | -0.72      | 2.73s |
+| Feynman Wave     | -0.14      | 2.43s |
+
+*Score is negative sum of residuals (closer to 0 is better). Times measured on AMD Ryzen 9.*
+
+**Note:** Benchmarks use deterministic mode (random seed) for reproducibility, which disables parallelism. Production runs without a seed will be faster.
+
 ## How It Works
 
 - We use Genetic Algorithms to allow candidate functions of best fit to compete.
