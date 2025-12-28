@@ -184,11 +184,32 @@ class FindFormulaTest {
         FindFormula.Config config = new FindFormula.Config()
                 .iterations(50)
                 .populationSize(200)
-                .maxLeafs(30);
+                .maxLeafs(30)
+                .randomSeed(12345);
 
         assertEquals(50, config.getIterations());
         assertEquals(200, config.getPopulationSize());
         assertEquals(30, config.getMaxLeafs());
+        assertEquals(12345, config.getRandomSeed());
+    }
+
+    @Test
+    void testRandomSeedProducesDeterministicResults() {
+        double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
+        double[] ys = {2.0, 4.0, 6.0, 8.0, 10.0};
+
+        FindFormula.Config config = new FindFormula.Config()
+                .iterations(5)
+                .populationSize(20)
+                .randomSeed(42);
+
+        FindFormula.Result result1 = FindFormula.findFormula(xs, ys, config);
+        FindFormula.Result result2 = FindFormula.findFormula(xs, ys, config);
+
+        assertEquals(result1.getFormulaString(), result2.getFormulaString(),
+                "Same seed should produce identical formulas");
+        assertEquals(result1.getScore(), result2.getScore(),
+                "Same seed should produce identical scores");
     }
 
     @Test

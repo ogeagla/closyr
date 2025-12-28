@@ -136,6 +136,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         private int iterations = 20;
         private int populationSize = 100;
         private int maxLeafs = 40;
+        private long randomSeed = -1L;
 
         public Config() {}
 
@@ -157,9 +158,16 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
             return this;
         }
 
+        /** Random seed for reproducible results (default: -1, meaning non-deterministic) */
+        public Config randomSeed(long randomSeed) {
+            this.randomSeed = randomSeed;
+            return this;
+        }
+
         public int getIterations() { return iterations; }
         public int getPopulationSize() { return populationSize; }
         public int getMaxLeafs() { return maxLeafs; }
+        public long getRandomSeed() { return randomSeed; }
 
         /** Convert to IFormulaConfig for the new API */
         IFormulaConfig toFormulaConfig() {
@@ -167,6 +175,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
                     .iterations(iterations)
                     .populationSize(populationSize)
                     .maxLeafs(maxLeafs)
+                    .randomSeed(randomSeed)
                     .build();
         }
     }
