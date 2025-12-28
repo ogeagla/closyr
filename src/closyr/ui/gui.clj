@@ -135,6 +135,7 @@
 
 (def ^:private items-points-accessors* (atom {}))
 (def ^:private replace-drawing-widget!* (atom nil))
+(def ^:private objective-formula-field* (atom nil))
 
 
 (defn- redraw-sketch-widget!
@@ -248,6 +249,13 @@
   (into {}
         (map
           (fn [[k v]] [k (:fn v)])
+          selectable-input-fns)))
+
+
+(def ^:private input-y-formulas
+  (into {}
+        (map
+          (fn [[k v]] [k (:formula v)])
           selectable-input-fns)))
 
 
@@ -623,13 +631,16 @@
   (let [{:keys [^JPanel drawing-widget items-point-setters items-point-getters]} @items-points-accessors*
         ^JComboBox jcb (.getSource e)
         selection      (-> jcb .getSelectedItem str)
-        new-fn         (input-y-fns selection)]
+        new-fn         (input-y-fns selection)
+        new-formula    (input-y-formulas selection)]
     (reset! xs* nil)
     (reset! input-y-fn* selection)
     (doseq [i (range @sketch-input-x-count*)]
       ((nth items-point-setters i)
        (.getX ^Point ((nth items-point-getters i)))
        (new-fn i)))
+    (when-let [^JTextField formula-field @objective-formula-field*]
+      (.setText formula-field (or new-formula "")))
     (ss/repaint! drawing-widget)
     (log/info "Selected: " selection)))
 
@@ -924,6 +935,10 @@
                                               (.setLayout (GridLayout. 1 1)))
 
         sim-info-label                      (JLabel. "")
+        initial-formula                     (str (or (input-y-formulas input-data/initial-fn) ""))
+        ^JTextField objective-formula-text  (reset! objective-formula-field*
+                                                    (doto (JTextField. initial-formula)
+                                                      (.setEditable false)))
         ^JTextField best-fn-selectable-text (doto (JTextField. "")
                                               (.setEditable false))
 
@@ -1041,6 +1056,7 @@
     (.add input-fn-container brush-container)
 
     (.add inputs-and-info-container sim-info-label)
+    (.add inputs-and-info-container objective-formula-text)
     (.add inputs-and-info-container best-fn-selectable-text)
 
     (.add draw-parent drawing-widget)
