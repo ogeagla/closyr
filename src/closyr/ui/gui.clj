@@ -639,7 +639,11 @@
     (ss/set-text* status-label
                   (if is-start
                     "Running"
-                    "Paused"))))
+                    "Paused"))
+    (.setForeground status-label
+                    (if is-start
+                      (Color. 0 200 0)
+                      (Color. 255 180 0)))))
 
 
 (defn- reset-on-click
@@ -655,7 +659,8 @@
                                       :input-data-x input-x
                                       :input-data-y input-y}))
     (ss/set-text* start-top-label ctl:stop)
-    (ss/set-text* status-label "Running")))
+    (ss/set-text* status-label "Running")
+    (.setForeground status-label (Color. 0 200 0))))
 
 
 (defn- input-dataset-change
@@ -1144,7 +1149,9 @@
 
         {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
 
-        status-label                        (JLabel. "Press Start To Begin Function Search")
+        status-label                        (doto (JLabel. "Press Start To Find Function")
+                                              (.setFont (Font. "SansSerif" Font/BOLD 18))
+                                              (.setForeground (Color. 180 180 180)))
         status-column                       (doto (panel-grid {:rows 2 :cols 1})
                                               (.add status-label)
                                               (.add (max-leafs-settings-panel)))

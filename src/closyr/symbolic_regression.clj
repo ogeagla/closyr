@@ -13,6 +13,8 @@
     [malli.core :as m]
     [seesaw.core :as ss])
   (:import
+    (java.awt
+      Color)
     (java.util
       Date
       List)
@@ -137,7 +139,8 @@
     (let [^JButton reset-btn @gui/ctl-reset-btn*]
       (ss/set-text* ctl-start-stop-btn gui/ctl:start)
       (.setEnabled reset-btn false)
-      (ss/set-text* status-label (str "Done")))))
+      (ss/set-text* status-label (str "Done"))
+      (.setForeground status-label (Color. 180 180 180)))))
 
 
 (defn- check-new-best-fn
