@@ -27,4 +27,20 @@ public interface IFormulaConfig {
     default long getRandomSeed() {
         return -1L;
     }
+
+    /**
+     * Get the whitelist of mutation labels to use.
+     * If null or empty, all mutations are used (subject to blacklist).
+     */
+    default String[] getMutationsWhitelist() {
+        return null;
+    }
+
+    /**
+     * Get the blacklist of mutation labels to exclude.
+     * If null or empty, no mutations are excluded.
+     */
+    default String[] getMutationsBlacklist() {
+        return null;
+    }
 }

@@ -34,6 +34,15 @@
       (log/error "Can't parse numbers str: " numbers-str " : " (.getMessage e)))))
 
 
+(defn- str->string-vec
+  "Parse comma-separated strings into a vector"
+  [s]
+  (when (and s (not (str/blank? s)))
+    (->> (str/split s #"\,")
+         (mapv str/trim)
+         (filterv (complement str/blank?)))))
+
+
 (def ^:private cli-options
   [["-i" "--iterations ITERATIONS" "Number of iterations"
     :default 10
@@ -82,6 +91,16 @@
     :default nil
     :parse-fn #(Long/parseLong %)
     :id :seed]
+
+   ["-w" "--mutations-whitelist WHITELIST" "Comma-separated list of mutation labels to use (whitelist)"
+    :default nil
+    :parse-fn str->string-vec
+    :id :mutations-whitelist]
+
+   ["-b" "--mutations-blacklist BLACKLIST" "Comma-separated list of mutation labels to exclude (blacklist)"
+    :default nil
+    :parse-fn str->string-vec
+    :id :mutations-blacklist]
 
    #_["-v" nil "Verbosity level"
       :id :verbosity

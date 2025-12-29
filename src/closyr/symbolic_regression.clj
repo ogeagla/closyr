@@ -692,23 +692,29 @@
 (defn run-app-from-cli-args
   "Run app from CLI args"
   {:malli/schema [:=> [:cat #'specs/CLIArgs] #'specs/SolverRunResults]}
-  [{:keys [iterations population headless xs ys use-flamechart max-leafs seed] :as cli-opts}]
+  [{:keys [iterations population headless xs ys use-flamechart max-leafs seed
+           mutations-whitelist mutations-blacklist] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   ;; Run with deterministic mode if seed is set (disables parallel execution)
-  (let [run-config {:initial-phenos (ops-init/initial-phenotypes population)
-                    :initial-muts   (ops-init/initial-mutations)
-                    :iters          iterations
-                    :use-gui?       (not headless)
-                    :random-seed    seed
-                    :max-leafs      max-leafs
-                    :use-flamechart use-flamechart
-                    :input-xs-exprs (if xs
-                                      (ops-common/doubles->exprs xs)
-                                      example-input-xs-exprs)
-                    :input-ys-exprs (if ys
-                                      (ops-common/doubles->exprs ys)
-                                      example-input-ys-exprs)}
-        result     (run-find-formula run-config)]
+  (let [initial-muts (if (or mutations-whitelist mutations-blacklist)
+                       (ops-init/filter-mutations {:whitelist mutations-whitelist
+                                                   :blacklist mutations-blacklist})
+                       (ops-init/initial-mutations))
+        _            (log/info "CLI: using" (count initial-muts) "mutations")
+        run-config   {:initial-phenos (ops-init/initial-phenotypes population)
+                      :initial-muts   initial-muts
+                      :iters          iterations
+                      :use-gui?       (not headless)
+                      :random-seed    seed
+                      :max-leafs      max-leafs
+                      :use-flamechart use-flamechart
+                      :input-xs-exprs (if xs
+                                        (ops-common/doubles->exprs xs)
+                                        example-input-xs-exprs)
+                      :input-ys-exprs (if ys
+                                        (ops-common/doubles->exprs ys)
+                                        example-input-ys-exprs)}
+        result       (run-find-formula run-config)]
     (log/info "CLI: Done!")
     (exit cli-opts)
     result))

@@ -665,4 +665,31 @@
                           ie))}])
 
 
+(defn mutation-labels
+  "Get all available mutation labels"
+  []
+  (mapv :label (initial-mutations)))
+
+
+(defn filter-mutations
+  "Filter mutations based on whitelist and/or blacklist.
+   - whitelist: if provided, only include mutations with labels in this set
+   - blacklist: if provided, exclude mutations with labels in this set
+   Whitelist is applied first, then blacklist."
+  [{:keys [whitelist blacklist]}]
+  (let [all-muts (initial-mutations)
+        filtered (if (seq whitelist)
+                   (let [whitelist-set (set whitelist)]
+                     (filterv #(whitelist-set (:label %)) all-muts))
+                   all-muts)
+        filtered (if (seq blacklist)
+                   (let [blacklist-set (set blacklist)]
+                     (filterv #(not (blacklist-set (:label %))) filtered))
+                   filtered)]
+    (if (empty? filtered)
+      (throw (IllegalArgumentException.
+               "No mutations remaining after filtering. Check your whitelist/blacklist."))
+      filtered)))
+
+
 (specs/instrument-all!)

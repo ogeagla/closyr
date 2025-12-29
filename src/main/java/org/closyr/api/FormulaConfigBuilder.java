@@ -18,6 +18,8 @@ public class FormulaConfigBuilder {
     private int populationSize = 100;
     private int maxLeafs = 40;
     private long randomSeed = -1L;
+    private String[] mutationsWhitelist = null;
+    private String[] mutationsBlacklist = null;
 
     private FormulaConfigBuilder() {
     }
@@ -63,10 +65,27 @@ public class FormulaConfigBuilder {
     }
 
     /**
+     * Set a whitelist of mutation labels to use (only these mutations will be used).
+     */
+    public FormulaConfigBuilder mutationsWhitelist(String... labels) {
+        this.mutationsWhitelist = labels;
+        return this;
+    }
+
+    /**
+     * Set a blacklist of mutation labels to exclude (these mutations will not be used).
+     */
+    public FormulaConfigBuilder mutationsBlacklist(String... labels) {
+        this.mutationsBlacklist = labels;
+        return this;
+    }
+
+    /**
      * Build the configuration.
      */
     public IFormulaConfig build() {
-        return new SimpleFormulaConfig(iterations, populationSize, maxLeafs, randomSeed);
+        return new SimpleFormulaConfig(iterations, populationSize, maxLeafs, randomSeed,
+                mutationsWhitelist, mutationsBlacklist);
     }
 
     /**
@@ -77,12 +96,17 @@ public class FormulaConfigBuilder {
         private final int populationSize;
         private final int maxLeafs;
         private final long randomSeed;
+        private final String[] mutationsWhitelist;
+        private final String[] mutationsBlacklist;
 
-        SimpleFormulaConfig(int iterations, int populationSize, int maxLeafs, long randomSeed) {
+        SimpleFormulaConfig(int iterations, int populationSize, int maxLeafs, long randomSeed,
+                           String[] mutationsWhitelist, String[] mutationsBlacklist) {
             this.iterations = iterations;
             this.populationSize = populationSize;
             this.maxLeafs = maxLeafs;
             this.randomSeed = randomSeed;
+            this.mutationsWhitelist = mutationsWhitelist;
+            this.mutationsBlacklist = mutationsBlacklist;
         }
 
         @Override
@@ -103,6 +127,16 @@ public class FormulaConfigBuilder {
         @Override
         public long getRandomSeed() {
             return randomSeed;
+        }
+
+        @Override
+        public String[] getMutationsWhitelist() {
+            return mutationsWhitelist;
+        }
+
+        @Override
+        public String[] getMutationsBlacklist() {
+            return mutationsBlacklist;
         }
 
         @Override

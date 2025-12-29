@@ -27,6 +27,13 @@
 (set! *warn-on-reflection* true)
 
 
+(defn- array->vec
+  "Convert Java array to Clojure vector, handling nil"
+  [^"[Ljava.lang.String;" arr]
+  (when arr
+    (vec arr)))
+
+
 (defn run-solver
   "Run the symbolic regression solver with the given parameters."
   [xs ys config]
@@ -39,8 +46,14 @@
         population-size (.getPopulationSize cfg)
         max-leafs (.getMaxLeafs cfg)
         random-seed (.getRandomSeed cfg)
+        whitelist (array->vec (.getMutationsWhitelist cfg))
+        blacklist (array->vec (.getMutationsBlacklist cfg))
+        initial-muts (if (or whitelist blacklist)
+                       (ops-init/filter-mutations {:whitelist whitelist
+                                                   :blacklist blacklist})
+                       (ops-init/initial-mutations))
         run-config {:initial-phenos (ops-init/initial-phenotypes population-size)
-                    :initial-muts   (ops-init/initial-mutations)
+                    :initial-muts   initial-muts
                     :iters          iterations
                     :use-gui?       false
                     :use-flamechart false
@@ -49,6 +62,7 @@
                     :input-xs-exprs (ops-common/doubles->exprs xs-vec)
                     :input-ys-exprs (ops-common/doubles->exprs ys-vec)}
 
+        _ (log/info "API: using" (count initial-muts) "mutations")
         result (symreg/run-find-formula run-config)]
 
     (types/->formula-result result)))

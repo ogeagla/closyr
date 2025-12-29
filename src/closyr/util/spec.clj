@@ -314,7 +314,9 @@
    [:ys {:optional true} [:maybe #'NumberVector]]
    [:use-flamechart {:optional true} boolean?]
    [:max-leafs {:optional true} #'MaxLeafs]
-   [:seed {:optional true} [:maybe #'RandomSeed]]])
+   [:seed {:optional true} [:maybe #'RandomSeed]]
+   [:mutations-whitelist {:optional true} [:maybe [:vector string?]]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
 
 
 (def ^:private ModificationsResult

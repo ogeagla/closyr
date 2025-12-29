@@ -186,3 +186,59 @@
     (let [config (-> (FindFormula$Config.)
                      (.randomSeed 12345))]
       (is (= 12345 (.getRandomSeed config))))))
+
+
+(deftest test-mutations-whitelist-config
+  (testing "Config accepts mutations whitelist"
+    (let [config (-> (FindFormula$Config.)
+                     (.mutationsWhitelist (into-array String ["+Sin" "-Sin" "+Cos"])))]
+      (is (= ["+Sin" "-Sin" "+Cos"] (vec (.getMutationsWhitelist config))))))
+
+  (testing "Whitelist restricts mutations used"
+    (let [xs (double-array [1.0 2.0 3.0])
+          ys (double-array [2.0 4.0 6.0])
+          config (-> (FindFormula$Config.)
+                     (.iterations 2)
+                     (.populationSize 10)
+                     (.randomSeed 42)
+                     (.mutationsWhitelist (into-array String ["+Sin" "-Sin" "+Cos" "-Cos"])))]
+      ;; Should run without error
+      (let [result (FindFormula/findFormula xs ys config)]
+        (is (instance? FindFormula$Result result))
+        (is (some? (.getFormulaString result)))))))
+
+
+(deftest test-mutations-blacklist-config
+  (testing "Config accepts mutations blacklist"
+    (let [config (-> (FindFormula$Config.)
+                     (.mutationsBlacklist (into-array String ["Derivative"])))]
+      (is (= ["Derivative"] (vec (.getMutationsBlacklist config))))))
+
+  (testing "Blacklist excludes mutations"
+    (let [xs (double-array [1.0 2.0 3.0])
+          ys (double-array [2.0 4.0 6.0])
+          config (-> (FindFormula$Config.)
+                     (.iterations 2)
+                     (.populationSize 10)
+                     (.randomSeed 42)
+                     (.mutationsBlacklist (into-array String ["Derivative" "+Sin"])))]
+      ;; Should run without error
+      (let [result (FindFormula/findFormula xs ys config)]
+        (is (instance? FindFormula$Result result))
+        (is (some? (.getFormulaString result)))))))
+
+
+(deftest test-mutations-whitelist-and-blacklist
+  (testing "Config accepts both whitelist and blacklist"
+    (let [xs (double-array [1.0 2.0 3.0])
+          ys (double-array [2.0 4.0 6.0])
+          config (-> (FindFormula$Config.)
+                     (.iterations 2)
+                     (.populationSize 10)
+                     (.randomSeed 42)
+                     (.mutationsWhitelist (into-array String ["+Sin" "-Sin" "+Cos" "-Cos" "*x"]))
+                     (.mutationsBlacklist (into-array String ["+Sin"])))]
+      ;; Should run with whitelist - blacklist = 4 mutations
+      (let [result (FindFormula/findFormula xs ys config)]
+        (is (instance? FindFormula$Result result))
+        (is (some? (.getFormulaString result)))))))

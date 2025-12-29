@@ -137,6 +137,8 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         private int populationSize = 100;
         private int maxLeafs = 40;
         private long randomSeed = -1L;
+        private String[] mutationsWhitelist = null;
+        private String[] mutationsBlacklist = null;
 
         public Config() {}
 
@@ -164,10 +166,24 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
             return this;
         }
 
+        /** Whitelist of mutation labels to use (only these mutations will be used) */
+        public Config mutationsWhitelist(String... labels) {
+            this.mutationsWhitelist = labels;
+            return this;
+        }
+
+        /** Blacklist of mutation labels to exclude (these mutations will not be used) */
+        public Config mutationsBlacklist(String... labels) {
+            this.mutationsBlacklist = labels;
+            return this;
+        }
+
         public int getIterations() { return iterations; }
         public int getPopulationSize() { return populationSize; }
         public int getMaxLeafs() { return maxLeafs; }
         public long getRandomSeed() { return randomSeed; }
+        public String[] getMutationsWhitelist() { return mutationsWhitelist; }
+        public String[] getMutationsBlacklist() { return mutationsBlacklist; }
 
         /** Convert to IFormulaConfig for the new API */
         IFormulaConfig toFormulaConfig() {
@@ -176,6 +192,8 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
                     .populationSize(populationSize)
                     .maxLeafs(maxLeafs)
                     .randomSeed(randomSeed)
+                    .mutationsWhitelist(mutationsWhitelist)
+                    .mutationsBlacklist(mutationsBlacklist)
                     .build();
         }
     }

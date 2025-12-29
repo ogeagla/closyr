@@ -90,6 +90,8 @@ You can also provide the same command-line options to `java` command, like:
 | `-y`,`--ys`             | no, unless `xs` | `2,4,8` | random  | the ys for the points in the dataset to fit against; if provided, must also provide `xs` and be the same count                |
 | `-f`,`--infile`         | no              | `f.csv` |         | A CSV file. Contains either 2 columns without titles in first row, or has columns `x` and `y` to be used as objective dataset |
 | `-s`,`--seed`           | no              | `42`    |         | Random seed for reproducible results. **Warning:** Enables deterministic mode which disables CPU parallelism                  |
+| `-w`,`--mutations-whitelist` | no         | `+Sin,-Sin` |     | Comma-separated list of mutation labels to use (only these mutations will be applied)                                         |
+| `-b`,`--mutations-blacklist` | no         | `Derivative` |    | Comma-separated list of mutation labels to exclude                                                                            |
 
 ### Reproducible Results with Random Seed
 
@@ -99,7 +101,24 @@ You can use the `-s` or `--seed` option to get reproducible results:
 
 Running the same command with the same seed will produce identical results.
 
-**Warning:** When a random seed is set, the solver enters **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution times for large populations.  
+**Warning:** When a random seed is set, the solver enters **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution times for large populations.
+
+### Filtering Mutations with Whitelist/Blacklist
+
+You can control which mutations are used during evolution using whitelist and blacklist options:
+
+```bash
+# Only use trigonometric mutations
+$ lein run -t -p 100 -i 50 -x 1,2,3,4,5 -y 2,4,6,8,10 -w "+Sin,-Sin,+Cos,-Cos,*Sin,*Cos"
+
+# Exclude derivative and logarithm mutations
+$ lein run -t -p 100 -i 50 -x 1,2,3,4,5 -y 2,4,6,8,10 -b "Derivative,+Log,-Log"
+
+# Combine both: start with trig mutations, exclude +Sin
+$ lein run -t -p 100 -i 50 -x 1,2,3,4,5 -y 2,4,6,8,10 -w "+Sin,-Sin,+Cos,-Cos" -b "+Sin"
+```
+
+Common mutation labels include: `Derivative`, `+Sin`, `-Sin`, `+Cos`, `-Cos`, `*Sin`, `*Cos`, `+Log`, `-Log`, `+Exp`, `-Exp`, `+x`, `-x`, `*x`, `/x`, `+1/2`, `-1/2`, `*2`, `/2`, and many more.
 
 ## Example Screenshots
 
@@ -250,6 +269,33 @@ IFormulaConfig config = FormulaConfigBuilder.builder()
 ```
 
 **Warning:** Setting a random seed enables **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution.
+
+#### Filtering Mutations in Java
+
+Use `mutationsWhitelist()` and `mutationsBlacklist()` to control which mutations are used:
+
+```java
+// Only use trigonometric mutations
+IFormulaConfig config = FormulaConfigBuilder.builder()
+    .iterations(50)
+    .populationSize(100)
+    .mutationsWhitelist("+Sin", "-Sin", "+Cos", "-Cos", "*Sin", "*Cos")
+    .build();
+
+// Exclude specific mutations
+IFormulaConfig config = FormulaConfigBuilder.builder()
+    .iterations(50)
+    .populationSize(100)
+    .mutationsBlacklist("Derivative", "+Log", "-Log")
+    .build();
+
+// Or using FindFormula.Config directly
+FindFormula.Config config = new FindFormula.Config()
+    .iterations(50)
+    .populationSize(100)
+    .mutationsWhitelist("+Sin", "-Sin", "+Cos", "-Cos")
+    .mutationsBlacklist("+Sin");  // Further exclude from whitelist
+```
 
 ## Roadmap
 

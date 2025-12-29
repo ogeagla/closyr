@@ -20,18 +20,20 @@
     (is (=
           (let [test-input
                 '("-t" "-p1000" "foo" "-i" "200" "-y" "1,2,30,4,5,6,10" "-x" "0,1,2,3,4,5,6" "-l" "20" "-c"
-                       "-g" "debug")]
+                   "-g" "debug")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless       true
-           :log-level      :debug
-           :max-leafs      20
-           :use-flamechart true
-           :iterations     200
-           :population     1000
-           :xs             [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
-           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
-           :seed           nil})))
+          {:headless            true
+           :log-level           :debug
+           :max-leafs           20
+           :use-flamechart      true
+           :iterations          200
+           :population          1000
+           :xs                  [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
+           :ys                  [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist nil})))
 
 
   (testing "if xs, also needs ys"
@@ -68,15 +70,17 @@
           (let [test-input '("-t" "-p1000" "-i" "200" "-g" "wearn")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless       true,
-           :log-level      :info,
-           :xs             nil,
-           :ys             nil,
-           :population     1000,
-           :use-flamechart false,
-           :iterations     200,
-           :max-leafs      40
-           :seed           nil})))
+          {:headless            true,
+           :log-level           :info,
+           :xs                  nil,
+           :ys                  nil,
+           :population          1000,
+           :use-flamechart      false,
+           :iterations          200,
+           :max-leafs           40
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist nil})))
 
 
   (testing "handles valid short options w csv data"
@@ -84,30 +88,34 @@
           (let [test-input '("-t" "-p1000" "foo" "-i" "200" "-f" "resources/csvs/test_inputs_1.csv" "-g" "warn")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless       true
-           :log-level      :warn
-           :max-leafs      40
-           :use-flamechart false
-           :iterations     200
-           :population     1000
-           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
-           :seed           nil})))
+          {:headless            true
+           :log-level           :warn
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
+           :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist nil})))
 
   (testing "handles valid long options w data inline"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "--ys" "1,2,30,4,5,6,10" "--xs" "0,1,2,3,4,5,6" "--use-flamechart" "--max-leafs" "60" "--log-level" "error")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless       true
-           :log-level      :error
-           :max-leafs      60
-           :use-flamechart true
-           :iterations     200
-           :population     1000
-           :xs             [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
-           :ys             [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
-           :seed           nil})))
+          {:headless            true
+           :log-level           :error
+           :max-leafs           60
+           :use-flamechart      true
+           :iterations          200
+           :population          1000
+           :xs                  [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
+           :ys                  [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist nil})))
 
 
   (testing "handles valid long options w csv data with columns"
@@ -115,15 +123,17 @@
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_1.csv")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless       true
-           :log-level      :info
-           :max-leafs      40
-           :use-flamechart false
-           :iterations     200
-           :population     1000
-           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
-           :seed           nil})))
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
+           :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist nil})))
 
 
   (testing "handles valid long options w csv data with columns with in order y,x"
@@ -131,30 +141,127 @@
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_3.csv")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless       true
-           :log-level      :info
-           :max-leafs      40
-           :use-flamechart false
-           :iterations     200
-           :population     1000
-           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0 30.0 45.0 55.0 60.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]
-           :seed           nil})))
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0 30.0 45.0 55.0 60.0]
+           :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist nil})))
 
   (testing "handles valid long options w csv data without columns"
     (is (=
           (let [test-input '("--headless" "--population" "1000" "--iterations" "200" "-f" "resources/csvs/test_inputs_2.csv")]
             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
 
-          {:headless       true
-           :log-level      :info
-           :max-leafs      40
-           :use-flamechart false
-           :iterations     200
-           :population     1000
-           :xs             [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
-           :ys             [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
-           :seed           nil}))))
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
+           :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist nil}))))
+
+
+(deftest cli-mutations-whitelist-test
+  (testing "parses whitelist option with short flag"
+    (is (=
+          (let [test-input '("-t" "-p1000" "-i" "200" "-w" "+Sin,-Sin,+Cos")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  nil
+           :ys                  nil
+           :seed                nil
+           :mutations-whitelist ["+Sin" "-Sin" "+Cos"]
+           :mutations-blacklist nil})))
+
+  (testing "parses whitelist option with long flag"
+    (is (=
+          (let [test-input '("--headless" "--population" "1000" "--iterations" "200"
+                              "--mutations-whitelist" "+Sin,-Sin")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  nil
+           :ys                  nil
+           :seed                nil
+           :mutations-whitelist ["+Sin" "-Sin"]
+           :mutations-blacklist nil}))))
+
+
+(deftest cli-mutations-blacklist-test
+  (testing "parses blacklist option with short flag"
+    (is (=
+          (let [test-input '("-t" "-p1000" "-i" "200" "-b" "Derivative,+Sin")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  nil
+           :ys                  nil
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist ["Derivative" "+Sin"]})))
+
+  (testing "parses blacklist option with long flag"
+    (is (=
+          (let [test-input '("--headless" "--population" "1000" "--iterations" "200"
+                              "--mutations-blacklist" "Derivative")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  nil
+           :ys                  nil
+           :seed                nil
+           :mutations-whitelist nil
+           :mutations-blacklist ["Derivative"]}))))
+
+
+(deftest cli-mutations-whitelist-and-blacklist-test
+  (testing "parses both whitelist and blacklist together"
+    (is (=
+          (let [test-input '("-t" "-p1000" "-i" "200" "-w" "+Sin,-Sin,+Cos,-Cos" "-b" "+Sin")]
+            (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))
+
+          {:headless            true
+           :log-level           :info
+           :max-leafs           40
+           :use-flamechart      false
+           :iterations          200
+           :population          1000
+           :xs                  nil
+           :ys                  nil
+           :seed                nil
+           :mutations-whitelist ["+Sin" "-Sin" "+Cos" "-Cos"]
+           :mutations-blacklist ["+Sin"]}))))
 
 
 (deftest main-test
