@@ -224,7 +224,8 @@
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe #'PopulationCount]]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
-   [:max-leafs [:maybe #'MaxLeafs]]])
+   [:max-leafs [:maybe #'MaxLeafs]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
 
 
 (def ^:private SolverEvalArgs
@@ -270,7 +271,8 @@
    [:input-iters #'Iterations]
    [:input-phenos-count #'PopulationCount]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
-   [:max-leafs [:maybe #'MaxLeafs]]])
+   [:max-leafs [:maybe #'MaxLeafs]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
 
 
 (def ^:private SolverInputArgs
@@ -288,7 +290,8 @@
    [:iters {:optional true} #'Iterations]
    [:input-phenos-count {:optional true} #'PopulationCount]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
-   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
 
 
 (def ^:private SolverGUIMessage
@@ -300,7 +303,8 @@
    [:input-iters #'Iterations]
    [:input-phenos-count #'PopulationCount]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
-   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
 
 
 (def ^:private CLIArgs

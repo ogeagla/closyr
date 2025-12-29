@@ -303,24 +303,26 @@
 (defn- update-plot-input-data
   "Get new data from GUI and generate necessary solver inputs"
   {:malli/schema [:=> [:cat #'specs/SolverGUIMessage] #'specs/SolverGUIInputArgs]}
-  [{new-state          :new-state
-    input-data-x       :input-data-x
-    input-data-y       :input-data-y
-    input-iters        :input-iters
-    input-phenos-count :input-phenos-count
-    random-seed        :random-seed
-    max-leafs          :max-leafs}]
+  [{new-state           :new-state
+    input-data-x        :input-data-x
+    input-data-y        :input-data-y
+    input-iters         :input-iters
+    input-phenos-count  :input-phenos-count
+    random-seed         :random-seed
+    max-leafs           :max-leafs
+    mutations-blacklist :mutations-blacklist}]
 
   (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
         input-ys-exprs (ops-common/doubles->exprs input-data-y)
         input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)
         input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)]
 
-    (reset! sim-input-args* {:input-xs-exprs     input-xs-exprs
-                             :input-xs-vec       input-xs-vec
-                             :input-ys-vec       input-ys-vec
-                             :input-iters        input-iters
-                             :input-phenos-count input-phenos-count
+    (reset! sim-input-args* {:input-xs-exprs      input-xs-exprs
+                             :input-xs-vec        input-xs-vec
+                             :input-ys-vec        input-ys-vec
+                             :input-iters         input-iters
+                             :input-phenos-count  input-phenos-count
+                             :mutations-blacklist mutations-blacklist
                              :random-seed        random-seed
                              :max-leafs          max-leafs})))
 
@@ -358,15 +360,16 @@
 (defn- ->run-args
   "Generate one-time computed args for solver"
   {:malli/schema [:=> [:cat #'specs/SolverInputArgs] #'specs/SolverRunArgs]}
-  [{input-xs-exprs     :input-xs-exprs
-    input-xs-vec       :input-xs-vec
-    input-ys-vec       :input-ys-vec
-    input-iters        :input-iters
-    iters              :iters
-    input-phenos-count :input-phenos-count
-    random-seed        :random-seed
-    max-leafs          :max-leafs
-    initial-phenos     :initial-phenos}]
+  [{input-xs-exprs      :input-xs-exprs
+    input-xs-vec        :input-xs-vec
+    input-ys-vec        :input-ys-vec
+    input-iters         :input-iters
+    iters               :iters
+    input-phenos-count  :input-phenos-count
+    random-seed         :random-seed
+    max-leafs           :max-leafs
+    initial-phenos      :initial-phenos
+    mutations-blacklist :mutations-blacklist}]
 
   (when-not (and input-xs-exprs
                  input-xs-vec
@@ -386,7 +389,8 @@
    :initial-phenos       initial-phenos
    :input-phenos-count   input-phenos-count
    :random-seed          random-seed
-   :max-leafs            max-leafs})
+   :max-leafs            max-leafs
+   :mutations-blacklist  mutations-blacklist})
 
 
 (defn- wait-and-get-gui-args
@@ -569,7 +573,7 @@
 (defn- merge-cli-and-gui-args
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count random-seed max-leafs input-xs-list input-xs-count input-ys-vec
-           sim-stop-start-chan sim->gui-chan]
+           sim-stop-start-chan sim->gui-chan mutations-blacklist]
     :as   run-args}]
 
   (let [max-leafs      (or max-leafs cli-max-leafs)
@@ -577,12 +581,21 @@
         initial-phenos (if input-phenos-count
                          (ops-init/initial-phenotypes input-phenos-count)
                          initial-phenos)
+        ;; Apply mutations blacklist from GUI if provided
+        initial-muts   (if (seq mutations-blacklist)
+                         (ops-init/filter-mutations {:blacklist mutations-blacklist})
+                         initial-muts)
 
         run-config     (assoc run-config
                               :initial-phenos initial-phenos
+                              :initial-muts initial-muts
                               :random-seed random-seed
                               :iters iters
                               :max-leafs (or max-leafs ops/default-max-leafs))
+
+        _              (when (seq mutations-blacklist)
+                         (log/info "GUI: using" (count initial-muts) "mutations"
+                                   "(" (count mutations-blacklist) "excluded)"))
 
         run-config     (assoc run-config
                               :log-steps (config->log-steps run-config run-args))]

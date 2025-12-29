@@ -4,6 +4,7 @@
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
     [clojure.java.io :as io]
     [closyr.dataset.inputs :as input-data]
+    [closyr.ops.initialize :as ops-init]
     [closyr.ui.plot :as plot]
     [closyr.util.csv :as input-csv]
     [closyr.util.log :as log]
@@ -33,6 +34,7 @@
       Toolkit)
     (java.awt.event
       ActionEvent
+      ActionListener
       MouseEvent)
     (java.io
       File
@@ -47,13 +49,16 @@
       ComboBoxModel
       Icon
       JButton
+      JCheckBox
       JComboBox
+      JDialog
       JFileChooser
       JFrame
       JLabel
       JPanel
       JRadioButton
       JRadioButtonMenuItem
+      JScrollPane
       JTabbedPane
       JTextField
       SwingUtilities
@@ -114,7 +119,18 @@
   (atom {:max-leafs          40
          :input-iters        100
          :input-phenos-count 2000
-         :random-seed        nil}))
+         :random-seed        nil
+         :mutations-blacklist nil}))
+
+
+(def ^:private all-mutation-labels
+  "All available mutation labels"
+  (ops-init/mutation-labels))
+
+
+(def ^:private selected-mutations*
+  "Set of currently selected mutation labels (all selected by default)"
+  (atom (set all-mutation-labels)))
 
 
 (def ^:private amount->number
@@ -818,6 +834,104 @@
     container))
 
 
+(defn- update-mutations-blacklist!
+  "Update the mutations blacklist based on deselected mutations"
+  []
+  (let [selected @selected-mutations*
+        blacklist (vec (remove selected all-mutation-labels))]
+    (swap! experiment-settings* assoc :mutations-blacklist
+           (when (seq blacklist) blacklist))
+    (log/info "Mutations blacklist updated:" (count blacklist) "mutations excluded")))
+
+
+(defn- show-mutations-dialog!
+  "Show a dialog to select/deselect mutations"
+  [^JFrame parent-frame ^JLabel count-label]
+  (let [^JDialog dialog (doto (JDialog. parent-frame "Select Mutations" true)
+                          (.setSize 400 500)
+                          (.setLocationRelativeTo parent-frame))
+
+        checkboxes (atom {})
+
+        ^JPanel checkbox-panel (JPanel.)
+        _ (.setLayout checkbox-panel (BoxLayout. checkbox-panel BoxLayout/Y_AXIS))
+
+        _ (doseq [^String label (sort all-mutation-labels)]
+            (let [^JCheckBox cb (doto (JCheckBox. label ^Boolean (contains? @selected-mutations* label))
+                                  (.addActionListener
+                                    (reify ActionListener
+                                      (actionPerformed [_ e]
+                                        (let [selected? (.isSelected ^JCheckBox (.getSource e))]
+                                          (if selected?
+                                            (swap! selected-mutations* conj label)
+                                            (swap! selected-mutations* disj label)))))))]
+              (swap! checkboxes assoc label cb)
+              (.add checkbox-panel cb)))
+
+        ^JScrollPane scroll-pane (doto (JScrollPane. checkbox-panel)
+                                   (.setVerticalScrollBarPolicy JScrollPane/VERTICAL_SCROLLBAR_ALWAYS))
+
+        ^JButton select-all-btn (doto (JButton. "Select All")
+                                  (.addActionListener
+                                    (reify ActionListener
+                                      (actionPerformed [_ _]
+                                        (reset! selected-mutations* (set all-mutation-labels))
+                                        (doseq [[_ ^JCheckBox cb] @checkboxes]
+                                          (.setSelected cb true))))))
+
+        ^JButton select-none-btn (doto (JButton. "Select None")
+                                   (.addActionListener
+                                     (reify ActionListener
+                                       (actionPerformed [_ _]
+                                         (reset! selected-mutations* #{})
+                                         (doseq [[_ ^JCheckBox cb] @checkboxes]
+                                           (.setSelected cb false))))))
+
+        ^JButton ok-btn (doto (JButton. "OK")
+                          (.addActionListener
+                            (reify ActionListener
+                              (actionPerformed [_ _]
+                                (update-mutations-blacklist!)
+                                (.setText count-label (str (count @selected-mutations*) "/" (count all-mutation-labels)))
+                                (.dispose dialog)))))
+
+        ^JPanel buttons-panel (doto (JPanel. (FlowLayout.))
+                                (.add select-all-btn)
+                                (.add select-none-btn)
+                                (.add ok-btn))
+
+        ^JPanel main-panel (doto (JPanel. (BorderLayout.))
+                             (.add (JLabel. "Select mutations to use during evolution:") BorderLayout/NORTH)
+                             (.add scroll-pane BorderLayout/CENTER)
+                             (.add buttons-panel BorderLayout/SOUTH))]
+
+    (.setContentPane dialog main-panel)
+    (.setVisible dialog true)))
+
+
+(defn- ^JPanel mutations-selection-panel
+  "Create a panel with a button to open mutation selection dialog"
+  [parent-frame-atom]
+  (let [^JPanel container (panel-grid {:rows 1 :cols 1 :border (radio-controls-border "Mutations")})
+        ^JPanel inner-panel (doto (JPanel.)
+                              (.setLayout (FlowLayout. FlowLayout/LEFT 5 2)))
+
+        ^JLabel count-label (JLabel. (str (count @selected-mutations*) "/" (count all-mutation-labels)))
+
+        ^JButton select-btn (doto (JButton. "Select Mutations...")
+                              (.setToolTipText "Choose which mutations to use during evolution")
+                              (.addActionListener
+                                (reify ActionListener
+                                  (actionPerformed [_ _]
+                                    (when-let [frame @parent-frame-atom]
+                                      (show-mutations-dialog! frame count-label))))))]
+
+    (.add inner-panel select-btn)
+    (.add inner-panel count-label)
+    (.add container inner-panel)
+    container))
+
+
 (defn- update-replace-drawing-widget
   [draw-container]
   (reset!
@@ -934,7 +1048,8 @@
            ^List xs-scores-p90
            ^List ys-scores-p90]
     :as   gui-data}]
-  (let [my-frame                            (doto (JFrame. "CLOSYR")
+  (let [my-frame-atom                       (atom nil)
+        my-frame                            (doto (JFrame. "CLOSYR")
                                               (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE)
                                               (set-app-icon))
 
@@ -1077,8 +1192,15 @@
 
         ^JPanel random-seed-panel-widget    (random-seed-panel)
 
-        settings-container                  (doto (panel-grid {:rows 3 :cols 1})
+        ^JPanel mutations-panel-widget      (mutations-selection-panel my-frame-atom)
+
+        ;; Combine random seed and mutations panels on the same row
+        seed-and-mutations-row              (doto (panel-grid {:rows 1 :cols 2})
                                               (.add random-seed-panel-widget)
+                                              (.add mutations-panel-widget))
+
+        settings-container                  (doto (panel-grid {:rows 3 :cols 1})
+                                              (.add seed-and-mutations-row)
                                               (.add settings-panel)
                                               (.add input-fn-container))
 
@@ -1122,6 +1244,9 @@
     (.pack my-frame)
     (.setVisible my-frame true)
     (.setSize my-frame 1500 800)
+
+    ;; Set the frame atom so dialogs can reference it
+    (reset! my-frame-atom my-frame)
 
     (update-loop
       {:best-fn-chart           best-fn-chart
