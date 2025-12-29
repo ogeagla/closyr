@@ -160,3 +160,29 @@
           result2 (FindFormula/findFormula xs ys config)]
       (is (some? result1))
       (is (some? result2)))))
+
+
+(deftest test-random-seed-deterministic
+  (testing "Running solver with same random seed produces identical results"
+    (let [xs (double-array [1.0 2.0 3.0 4.0 5.0])
+          ys (double-array [2.0 4.0 6.0 8.0 10.0])
+          seed 42
+          config (-> (FindFormula$Config.)
+                     (.iterations 5)
+                     (.populationSize 30)
+                     (.randomSeed seed))
+          ;; Run solver twice with same seed
+          result1 (FindFormula/findFormula xs ys config)
+          result2 (FindFormula/findFormula xs ys config)]
+      ;; Results should be identical
+      (is (= (.getFormulaString result1) (.getFormulaString result2))
+          "Same seed should produce identical formulas")
+      (is (= (.getScore result1) (.getScore result2))
+          "Same seed should produce identical scores"))))
+
+
+(deftest test-random-seed-config-getter
+  (testing "Config getter for random seed works correctly"
+    (let [config (-> (FindFormula$Config.)
+                     (.randomSeed 12345))]
+      (is (= 12345 (.getRandomSeed config))))))

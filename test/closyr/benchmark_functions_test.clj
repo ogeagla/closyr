@@ -22,6 +22,19 @@
 
 (def ^:private decimal-fmt (DecimalFormat. "0.00"))
 
+
+(defn- get-best-fn-str
+  "Extract the best formula string from the final population"
+  [final-population]
+  (let [{:keys [pop pop-scores]} final-population
+        best-idx (->> pop-scores
+                      (map-indexed vector)
+                      (apply max-key second)
+                      first)
+        best-pheno (nth pop best-idx)]
+    (ops/format-fn-str (:expr best-pheno))))
+
+
 (defmacro with-timing
   "Execute body and return [result elapsed-ms]"
   [& body]
@@ -114,14 +127,20 @@
                      :random-seed        42
                      :input-xs-exprs     (ops-common/doubles->exprs xs)
                      :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
-          best-score (apply max (:pop-scores final-population))]
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
 
       (is (= 200 (count (:pop final-population))))
       (is (= 100 iters-done))
       ;; Best score should be negative (error) and improving
       (is (neg? best-score))
+      ;; With random-seed 42, the resulting formula should be deterministic
+      (is (= "-1/100+Sin(x)+x*(x+1/50*x*Csc(x)*(-1/100+E^(2*(-1/10+E)^x)-11/10*Sin(121.0*x)))"
+             best-fn-str)
+          "Expected formula for Nguyen-4 with seed 42")
       (println (str "| Nguyen-4         | " (format-score best-score)
-                    " | " (format-time elapsed-ms) " |")))))
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
 
 
 (deftest ^:benchmark nguyen-5-benchmark
@@ -141,13 +160,19 @@
                      :random-seed        42
                      :input-xs-exprs     (ops-common/doubles->exprs xs)
                      :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
-          best-score (apply max (:pop-scores final-population))]
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
 
       (is (= 200 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
+      ;; With random-seed 42, the resulting formula should be deterministic
+      (is (= "-9601/10000"
+             best-fn-str)
+          "Expected formula for Nguyen-5 with seed 42")
       (println (str "| Nguyen-5         | " (format-score best-score)
-                    " | " (format-time elapsed-ms) " |")))))
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
 
 
 (deftest ^:benchmark feynman-lorentz-benchmark
@@ -167,13 +192,19 @@
                      :random-seed        42
                      :input-xs-exprs     (ops-common/doubles->exprs xs)
                      :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
-          best-score (apply max (:pop-scores final-population))]
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
 
       (is (= 200 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
+      ;; With random-seed 42, the resulting formula should be deterministic
+      (is (= "1/2+x-Cos(x)+Cos(1/2-x)*(-x^2+0.9*Log(-1/100+3.05997*x^4+Cos(x)))"
+             best-fn-str)
+          "Expected formula for Feynman Lorentz with seed 42")
       (println (str "| Feynman Lorentz  | " (format-score best-score)
-                    " | " (format-time elapsed-ms) " |")))))
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
 
 
 (deftest ^:benchmark feynman-wave-benchmark
@@ -193,13 +224,19 @@
                      :random-seed        42
                      :input-xs-exprs     (ops-common/doubles->exprs xs)
                      :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
-          best-score (apply max (:pop-scores final-population))]
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
 
       (is (= 200 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
+      ;; With random-seed 42, the resulting formula should be deterministic
+      (is (= "-Cos(3/5+x)"
+             best-fn-str)
+          "Expected formula for Feynman Wave with seed 42")
       (println (str "| Feynman Wave     | " (format-score best-score)
-                    " | " (format-time elapsed-ms) " |")))))
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
 
 
 (deftest benchmark-data-generation

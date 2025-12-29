@@ -148,12 +148,12 @@ These benchmarks are from the [Nguyen benchmark suite](https://gpbenchmarks.org/
 
 Results from running benchmarks with 200 population, 100 iterations, seed=42:
 
-| Benchmark        | Best Score | Time |
-|------------------|------------|------|
-| Nguyen-4         | -0.91      | 4.97s |
-| Nguyen-5         | -0.29      | 2.04s |
-| Feynman Lorentz  | -0.72      | 2.73s |
-| Feynman Wave     | -0.14      | 2.43s |
+| Benchmark        | Best Score | Time  | Best Formula Found |
+|------------------|------------|-------|-------------------|
+| Nguyen-4         | -0.91      | 4.91s | `-1/100+Sin(x)+x*(x+1/50*x*Csc(x)*(-1/100+E^(2*(-1/10+E)^x)-11/10*Sin(121.0*x)))` |
+| Nguyen-5         | -0.29      | 2.00s | `-9601/10000` |
+| Feynman Lorentz  | -0.72      | 2.67s | `1/2+x-Cos(x)+Cos(1/2-x)*(-x^2+0.9*Log(-1/100+3.05997*x^4+Cos(x)))` |
+| Feynman Wave     | -0.14      | 2.37s | `-Cos(3/5+x)` |
 
 *Score is negative sum of residuals (closer to 0 is better). Times measured on AMD Ryzen 9.*
 
