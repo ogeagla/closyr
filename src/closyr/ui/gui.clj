@@ -2,30 +2,25 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
-    [clojure.java.io :as io]
     [closyr.dataset.inputs :as input-data]
-    [closyr.ops.initialize :as ops-init]
+    [closyr.ui.components :as ui-comp]
     [closyr.ui.plot :as plot]
+    [closyr.ui.settings.advanced :as settings-adv]
+    [closyr.ui.settings.mutations :as settings-mut]
+    [closyr.ui.sketchpad :as sketchpad]
+    [closyr.ui.theme :as ui-theme]
     [closyr.util.csv :as input-csv]
     [closyr.util.log :as log]
     [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
-    [seesaw.behave :as sb]
-    [seesaw.border :as sbr]
-    [seesaw.core :as ss]
-    [seesaw.graphics :as sg])
+    [seesaw.core :as ss])
   (:import
-    (io.materialtheme.darkstackoverflow
-      DarkStackOverflowTheme)
     (java.awt
       BorderLayout
       Color
       Container
-      Cursor
       Dimension
       FlowLayout
       Font
-      Graphics2D
-      GraphicsEnvironment
       GridBagConstraints
       GridBagLayout
       GridLayout
@@ -46,33 +41,23 @@
     (javax.swing
       BorderFactory
       BoxLayout
-      ButtonGroup
       ComboBoxModel
       Icon
       JButton
-      JCheckBox
       JComboBox
-      JDialog
       JFileChooser
       JFrame
       JLabel
       JPanel
-      JRadioButton
       JRadioButtonMenuItem
-      JScrollPane
       JTabbedPane
       JTextField
       SwingUtilities
-      UIManager
-      UnsupportedLookAndFeelException)
-    (javax.swing.border
-      Border)
+      UIManager)
     (javax.swing.filechooser
       FileNameExtensionFilter)
     (javax.swing.text
       AbstractDocument$DefaultDocumentEvent)
-    (mdlaf
-      MaterialLookAndFeel)
     (org.knowm.xchart
       XChartPanel
       XYChart)
@@ -81,14 +66,6 @@
 
 
 (set! *warn-on-reflection* true)
-
-
-(def ^:private brush-label:skinny "S")
-(def ^:private brush-label:broad "M")
-(def ^:private brush-label:huge "L")
-(def ^:private brush-label:line "Y")
-
-(def ^:private sketch-input-x-count* (atom 50))
 
 
 (def ctl:start
@@ -107,15 +84,6 @@
   (atom nil))
 
 
-(def ^:private xs->gap
-  {200 3
-   100 6
-   50  12
-   25  24
-   20  28
-   10  56})
-
-
 (def ^:private experiment-settings*
   (atom {:max-leafs          40
          :input-iters        100
@@ -125,14 +93,6 @@
          :log-steps          nil}))
 
 
-(def ^:private all-mutation-labels
-  "All available mutation labels"
-  (ops-init/mutation-labels))
-
-
-(def ^:private selected-mutations*
-  "Set of currently selected mutation labels (all selected by default)"
-  (atom (set all-mutation-labels)))
 
 
 (def ^:private amount->number
@@ -151,132 +111,13 @@
    "50K"   50000})
 
 
-(def ^:private sketch-input-x-scale* (atom (xs->gap @sketch-input-x-count*)))
-
-
-(def ^:private items-points-accessors* (atom {}))
-(def ^:private replace-drawing-widget!* (atom nil))
 (def ^:private objective-formula-field* (atom nil))
-
-
-(defn- find-unicode-font
-  "Find a font that supports Unicode math symbols. Returns a Font or nil."
-  [size]
-  (let [preferred-fonts ["DejaVu Sans" "Noto Sans" "Segoe UI Symbol"
-                         "Arial Unicode MS" "Lucida Sans Unicode"
-                         "FreeSans" "Liberation Sans"]
-        available-fonts (set (.getAvailableFontFamilyNames
-                               (GraphicsEnvironment/getLocalGraphicsEnvironment)))
-        found-font      (first (filter available-fonts preferred-fonts))]
-    (when found-font
-      (Font. found-font Font/PLAIN size))))
-
-
-(defn- redraw-sketch-widget!
-  []
-  (@replace-drawing-widget!* (:drawing-widget @items-points-accessors*)))
-
-
-(def ^:private sketchpad-size* (atom {}))
 
 (def ^:private input-y-fn* (atom input-data/initial-fn))
 
 
-(def ^:private new-xs?* (atom true))
-
-(def ^:private xs* (atom nil))
-
-
-(defn- sketchpad-on-click:skinny-brush
-  [items x-scale ^MouseEvent e]
-  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
-    (doall
-      (map-indexed
-        (fn [i getter]
-          (let [^Point pt (getter)
-                setter    (nth items-point-setters i)
-                pt-x      (.getX pt)
-                pt-y      (.getY pt)
-                diff      (/ (abs
-                               (- pt-x
-                                  (.getX (.getPoint e))))
-                             500.0)]
-            (setter
-              pt-x
-              (+ (* (min 1 (+ 0.95 diff)) pt-y)
-                 (* (max 0 (- 0.05 diff)) (.getY (.getPoint e)))))))
-        items-point-getters))))
-
-
-(defn- sketchpad-on-click:broad-brush
-  [items x-scale ^MouseEvent e]
-  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
-    (doall
-      (map-indexed
-        (fn [i getter]
-          (let [^Point pt (getter)
-                setter    (nth items-point-setters i)
-                pt-x      (.getX pt)
-                pt-y      (.getY pt)
-                diff      (/ (abs
-                               (- pt-x
-                                  (.getX (.getPoint e))))
-                             500.0)]
-            (setter
-              pt-x
-              (+ (* (min 1 (+ 0.85 diff)) pt-y)
-                 (* (max 0 (- 0.15 diff)) (.getY (.getPoint e)))))))
-        items-point-getters))))
-
-
-(defn- sketchpad-on-click:huge-brush
-  [items x-scale ^MouseEvent e]
-  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
-    (doall
-      (map-indexed
-        (fn [i getter]
-          (let [^Point pt (getter)
-                setter    (nth items-point-setters i)
-                pt-x      (.getX pt)
-                pt-y      (.getY pt)
-
-                diff      (/ (abs
-                               (- pt-x
-                                  (.getX (.getPoint e))))
-                             500.0)]
-            (setter
-              pt-x
-              (+ (* (min 1 (+ 0.65 diff)) pt-y)
-                 (* (max 0 (- 0.35 diff)) (.getY (.getPoint e)))))))
-        items-point-getters))))
-
-
-(defn- sketchpad-on-click:line-brush
-  [items x-scale ^MouseEvent e]
-  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*]
-    (doall
-      (map-indexed
-        (fn [i getter]
-          (let [^Point pt (getter)
-                setter    (nth items-point-setters i)
-                pt-x      (.getX pt)
-                pt-y      (.getY pt)]
-            (setter pt-x (.getY (.getPoint e)))))
-        items-point-getters))))
-
-
-(def ^:private brush-fn* (atom sketchpad-on-click:broad-brush))
-
-
-(def ^:private brushes-map
-  {brush-label:skinny sketchpad-on-click:skinny-brush
-   brush-label:broad  sketchpad-on-click:broad-brush
-   brush-label:huge   sketchpad-on-click:huge-brush
-   brush-label:line   sketchpad-on-click:line-brush})
-
-
 (def ^:private selectable-input-fns
-  (input-data/input-y-fns-data sketchpad-size* sketch-input-x-count*))
+  (input-data/input-y-fns-data sketchpad/sketchpad-size* sketchpad/sketch-input-x-count*))
 
 
 (def ^:private input-y-fns
@@ -300,201 +141,6 @@
     (mapv first)))
 
 
-(defn- setup-theme
-  []
-  (try
-    (UIManager/setLookAndFeel
-      (MaterialLookAndFeel.
-        ;; (MaterialLiteTheme.)
-        ;; (JMarsDarkTheme.)
-        (DarkStackOverflowTheme.)))
-
-    (catch UnsupportedLookAndFeelException e
-      (log/error "Theme error: " e))))
-
-
-(defn- ^JPanel panel-grid
-  [{:keys [rows cols ^Border border]}]
-  (let [panel (doto (JPanel. (BorderLayout.))
-                (.setLayout (GridLayout. rows cols)))]
-    (cond-> panel
-      (not (nil? border)) (.setBorder border))
-    panel))
-
-
-(defn- radio-controls-border
-  [title]
-  (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title))
-
-
-(defn- movable
-  ([w] (movable w {:disable-x? false}))
-  ([w {disable-x? :disable-x?}]
-   (let [^Point start-point (Point.)]
-     (sb/when-mouse-dragged
-       w
-       ;; When the mouse is pressed, move the widget to the front of the z order
-       :start (fn [^MouseEvent e]
-                (ss/move! e :to-front)
-                (.setLocation start-point ^Point (.getPoint e)))
-       ;; When the mouse is dragged move the widget
-       ;; Unfortunately, the delta passed to this function doesn't work correctly
-       ;; if the widget is moved during the drag. So, the move is calculated
-       ;; manually.
-       :drag (fn [^MouseEvent e _]
-               (let [^Point p (.getPoint e)]
-                 (ss/move! e :by [(if disable-x? 0 (- (.x p) (.x start-point)))
-                                  (- (.y p) (.y start-point))]))))
-     w)))
-
-
-(defn- make-label
-  [location-fn text]
-  (doto
-    ;; Instead of a boring label, make the label rounded with
-    ;; some custom drawing. Use the before paint hook to draw
-    ;; under the label's text.
-    (ss/label
-      :border 5
-      :text text
-      :location (location-fn)
-      :paint {:before (fn [c g]
-                        (sg/draw g (sg/rounded-rect 3
-                                                    3
-                                                    (- (ss/width c) 6)
-                                                    (- (ss/width c) 6)
-                                                    ;; (- (ss/height c) 6)
-                                                    9)
-                                 (sg/style :foreground "salmon"
-                                           :background "#666"
-                                           :stroke 2)))})
-    ;; Set the bounds to its preferred size. Note that this has to be
-    ;; done after the label is fully constructed.
-    (ss/config! :bounds :preferred)))
-
-
-(defn- draw-grid
-  [c ^Graphics2D g]
-  (let [w (ss/width c) h (ss/height c)]
-    (.setColor g (Color. 98 98 98))
-    (doseq [x (range 0 w 10)]
-      (.drawLine g x 0 x h))
-    (doseq [y (range 0 h 10)]
-      (.drawLine g 0 y w y)))
-  [c g])
-
-
-(defn- reposition-labels
-  [[c ^Graphics2D g]]
-  (let [{items-point-setters :items-point-setters items-point-getters :items-point-getters} @items-points-accessors*
-        w     (ss/width c)
-        h     (ss/height c)
-        old-w (or (:w @sketchpad-size*) w)
-        old-h (or (:h @sketchpad-size*) h)]
-
-    (reset! sketchpad-size* {:h h :w w})
-
-    ;; only on resize:
-    (when (or (true? @new-xs?*)
-              (not= w old-w)
-              (not= h old-h))
-      (reset! new-xs?* false)
-      (if-let [xs @xs*]
-        (mapv
-          (fn [i x]
-            (let [setter (nth items-point-setters i)
-                  getter (nth items-point-getters i)]
-              (setter
-                (+ 50.0 (* x (/ w 675)))
-                (+ (.getY ^Point (getter))
-                   (if (pos? (- h old-h))
-                     (Math/ceil (/ (- h old-h) 2))
-                     (Math/floor (/ (- h old-h) 2)))))))
-          (range @sketch-input-x-count*)
-          xs)
-
-        (mapv
-          (fn [i]
-            (let [setter (nth items-point-setters i)
-                  getter (nth items-point-getters i)]
-              (setter
-                (+ 50.0 (* i @sketch-input-x-scale* (/ w 675)))
-                (+ (.getY ^Point (getter))
-                   (if (pos? (- h old-h))
-                     (Math/ceil (/ (- h old-h) 2))
-                     (Math/floor (/ (- h old-h) 2)))))))
-          (range @sketch-input-x-count*))))))
-
-
-(defn- set-widget-location
-  [^JLabel widget ^double x ^double y]
-  (.setLocation widget x y))
-
-
-(defn- input-data-items-widget
-  [points-fn]
-  (log/info "Create input-data-items-widget")
-  (let [^JPanel bp             (doto
-                                 (ss/border-panel
-                                   :border (sbr/line-border :top 15 :color "#AAFFFF")
-                                   :north (ss/label "I'm a draggable label with a text box!")
-                                   :center (ss/text
-                                             :text "Hey type some stuff here"
-                                             :listen
-                                             [:document
-                                              (fn [^AbstractDocument$DefaultDocumentEvent e]
-                                                (let [doc     (.getDocument e)
-                                                      doc-txt (.getText doc 0 (.getLength doc))]
-                                                  (log/info "New text: " doc-txt)))]))
-                                 (ss/config! :bounds :preferred)
-                                 (movable))
-
-
-        pts                    (map
-                                 (fn [i]
-                                   [(+ 50.0 (* i @sketch-input-x-scale*)) (points-fn i)])
-                                 (range @sketch-input-x-count*))
-
-        items                  (map
-                                 (fn [pt] (movable (make-label (constantly pt) (str " ")) {:disable-x? true}))
-                                 pts)
-
-        items-point-getters    (map
-                                 (fn [^JLabel widget] (fn [] (.getLocation widget)))
-                                 items)
-
-        items-point-setters    (map
-                                 (fn [^JLabel widget]
-                                   (fn [x y]
-                                     (set-widget-location widget x y)))
-                                 items)
-
-        ^JPanel drawing-widget (ss/xyz-panel
-                                 :paint (comp reposition-labels draw-grid)
-                                 :id :xyz
-                                 :items items #_(conj items bp)
-                                 :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
-
-    (.setCursor drawing-widget (Cursor/getPredefinedCursor Cursor/HAND_CURSOR))
-    (log/info "Set hand cursor for sketchpad widget: " (.getCursor drawing-widget))
-
-    (reset! items-points-accessors* {:drawing-widget      drawing-widget
-                                     :items-point-getters items-point-getters
-                                     :items-point-setters items-point-setters})
-
-    {:drawing-widget      drawing-widget
-     :items-point-getters items-point-getters
-     :items-point-setters items-point-setters}))
-
-
-(defn- getters->input-data
-  [items-point-getters]
-  (mapv (fn [getter]
-          (let [^Point pt (getter)]
-            [(/ (- (.getX pt) 50.0) (/ (:w @sketchpad-size*) 20.0 #_@sketch-input-x-count*))
-             (- 7.5 (/ (.getY pt)
-                       (/ (:h @sketchpad-size*) 15.0)))]))
-        items-point-getters))
 
 
 (defn- settings-max-leafs-on-change
@@ -506,10 +152,10 @@
 
 (defn- ^JPanel max-leafs-settings-panel
   []
-  (let [max-leafs-settings-container              (panel-grid
-                                                    {:rows 1 :cols 4 :border (radio-controls-border "Max Function Leafs")})
+  (let [max-leafs-settings-container              (ui-comp/panel-grid
+                                                    {:rows 1 :cols 4 :border (ui-comp/radio-controls-border "Max Function Leafs")})
 
-        ^JPanel settings-container                (panel-grid {:rows 1 :cols 1})
+        ^JPanel settings-container                (ui-comp/panel-grid {:rows 1 :cols 1})
 
         btn-group-max-leafs                       (ss/button-group)
         ^JRadioButtonMenuItem max-leafs-radio-10  (ss/radio-menu-item
@@ -539,60 +185,6 @@
     settings-container))
 
 
-(defn- show-advanced-settings-dialog!
-  "Show a dialog with advanced settings"
-  [^JFrame parent-frame ^JLabel current-value-label]
-  (let [^JDialog dialog (doto (JDialog. parent-frame "Advanced Settings" true)
-                          (.setSize 350 250)
-                          (.setLocationRelativeTo parent-frame))
-
-        current-log-steps (:log-steps @experiment-settings*)
-        selected-value    (atom current-log-steps)
-
-        btn-group         (ButtonGroup.)
-        options           [["Auto" nil] ["1" 1] ["5" 5] ["10" 10] ["25" 25]]
-
-        ^JPanel radio-panel (JPanel.)
-        _                 (.setLayout radio-panel (BoxLayout. radio-panel BoxLayout/Y_AXIS))
-
-        _                 (doseq [[label value] options]
-                           (let [^JRadioButton rb (doto (JRadioButton. ^String label)
-                                                    (.setSelected (= value current-log-steps))
-                                                    (.addActionListener
-                                                      (reify ActionListener
-                                                        (actionPerformed [_ _]
-                                                          (reset! selected-value value)))))]
-                             (.add btn-group rb)
-                             (.add radio-panel rb)))
-
-        ^JButton ok-btn   (doto (JButton. "OK")
-                            (.addActionListener
-                              (reify ActionListener
-                                (actionPerformed [_ _]
-                                  (swap! experiment-settings* assoc :log-steps @selected-value)
-                                  (.setText current-value-label (if @selected-value
-                                                                  (str @selected-value)
-                                                                  "Auto"))
-                                  (log/info "Log steps changed to:" (or @selected-value "Auto"))
-                                  (.dispose dialog)))))
-
-        ^JButton cancel-btn (doto (JButton. "Cancel")
-                              (.addActionListener
-                                (reify ActionListener
-                                  (actionPerformed [_ _]
-                                    (.dispose dialog)))))
-
-        ^JPanel buttons-panel (doto (JPanel. (FlowLayout.))
-                                (.add ok-btn)
-                                (.add cancel-btn))
-
-        ^JPanel main-panel (doto (JPanel. (BorderLayout.))
-                             (.add (JLabel. "Log/Chart Update Interval (iterations):") BorderLayout/NORTH)
-                             (.add radio-panel BorderLayout/CENTER)
-                             (.add buttons-panel BorderLayout/SOUTH))]
-
-    (.setContentPane dialog main-panel)
-    (.setVisible dialog true)))
 
 
 (defn- settings-iters-on-change
@@ -611,11 +203,11 @@
 
 (defn- ^JPanel experiment-settings-panel
   []
-  (let [iters-settings-container               (panel-grid
-                                                 {:rows 1 :cols 4 :border (radio-controls-border "Iterations")})
-        pcount-settings-container              (panel-grid
-                                                 {:rows 1 :cols 5 :border (radio-controls-border "Population Size")})
-        ^JPanel settings-container             (panel-grid {:rows 1 :cols 2})
+  (let [iters-settings-container               (ui-comp/panel-grid
+                                                 {:rows 1 :cols 4 :border (ui-comp/radio-controls-border "Iterations")})
+        pcount-settings-container              (ui-comp/panel-grid
+                                                 {:rows 1 :cols 5 :border (ui-comp/radio-controls-border "Population Size")})
+        ^JPanel settings-container             (ui-comp/panel-grid {:rows 1 :cols 2})
 
         btn-group-iters                        (ss/button-group)
         ^JRadioButtonMenuItem iter-radio-10    (ss/radio-menu-item
@@ -675,9 +267,9 @@
 
 (defn- start-stop-on-click
   [sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
-  (let [{:keys [items-point-getters]} @items-points-accessors*
+  (let [{:keys [items-point-getters]} (sketchpad/get-items-points-accessors)
         is-start   (= ctl:start (ss/get-text* e))
-        input-data (getters->input-data items-point-getters)
+        input-data (sketchpad/getters->input-data items-point-getters)
         input-x    (mapv first input-data)
         input-y    (mapv second input-data)]
 
@@ -706,8 +298,8 @@
 
 (defn- reset-on-click
   [^JButton start-top-label sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
-  (let [{:keys [items-point-getters]} @items-points-accessors*
-        input-data (getters->input-data items-point-getters)
+  (let [{:keys [items-point-getters]} (sketchpad/get-items-points-accessors)
+        input-data (sketchpad/getters->input-data items-point-getters)
         input-x    (mapv first input-data)
         input-y    (mapv second input-data)]
     (reset! experiment-is-running?* true)
@@ -723,107 +315,17 @@
 
 (defn- input-dataset-change
   [^ActionEvent e]
-  (let [{:keys [^JPanel drawing-widget items-point-setters items-point-getters]} @items-points-accessors*
-        ^JComboBox jcb (.getSource e)
+  (let [^JComboBox jcb (.getSource e)
         selection      (-> jcb .getSelectedItem str)
         new-fn         (input-y-fns selection)
         new-formula    (input-y-formulas selection)]
-    (reset! xs* nil)
+    (reset! sketchpad/xs* nil)
     (reset! input-y-fn* selection)
-    (doseq [i (range @sketch-input-x-count*)]
-      ((nth items-point-setters i)
-       (.getX ^Point ((nth items-point-getters i)))
-       (new-fn i)))
+    (sketchpad/update-points-from-setters! new-fn)
     (when-let [^JTextField formula-field @objective-formula-field*]
       (.setText formula-field (or new-formula "")))
-    (ss/repaint! drawing-widget)
+    (sketchpad/repaint-drawing-widget!)
     (log/info "Selected: " selection)))
-
-
-(defn- brush-on-change
-  [^MouseEvent e]
-  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
-    (reset! brush-fn* (brushes-map b))
-    (log/info "brush change to " b)))
-
-
-(defn- xs-on-change
-  [^MouseEvent e]
-  (let [xs-str (.getText ^JRadioButtonMenuItem (.getSource e))
-        new-xs (Integer/parseInt xs-str)]
-    (reset! xs* nil)
-    (reset! sketch-input-x-count* new-xs)
-    (reset! sketch-input-x-scale* (xs->gap new-xs))
-    (redraw-sketch-widget!)
-    (log/info "brush xs to " xs-str " -> " new-xs)))
-
-
-(defn- ^JPanel brush-panel
-  []
-  (let [brush-config-container          (panel-grid {:rows 1 :cols 4 :border (radio-controls-border "Brush")})
-        ^JPanel brush-container         (panel-grid {:rows 1 :cols 3})
-
-        btn-group-brush                 (ss/button-group)
-        ^JRadioButtonMenuItem b-radio-0 (ss/radio-menu-item
-                                          :text brush-label:skinny
-                                          :group btn-group-brush
-                                          :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem b-radio-1 (ss/radio-menu-item
-                                          :selected? true
-                                          :text brush-label:broad
-                                          :group btn-group-brush
-                                          :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem b-radio-2 (ss/radio-menu-item
-                                          :text brush-label:huge
-                                          :group btn-group-brush
-                                          :listen [:mouse-clicked brush-on-change])
-        ^JRadioButtonMenuItem b-radio-3 (ss/radio-menu-item
-                                          :text brush-label:line
-                                          :group btn-group-brush
-                                          :listen [:mouse-clicked brush-on-change])]
-    (.add brush-config-container b-radio-0)
-    (.add brush-config-container b-radio-1)
-    (.add brush-config-container b-radio-2)
-    (.add brush-config-container b-radio-3)
-    (.add brush-container brush-config-container)
-    brush-container))
-
-
-(defn- ^JPanel xs-panel
-  []
-  (let [xs-config-container                (panel-grid {:rows 1 :cols 5 :border (radio-controls-border "Points Count")})
-        ^JPanel xs-container               (panel-grid {:rows 1 :cols 1})
-
-        btn-group-xs                       (ss/button-group)
-        ^JRadioButtonMenuItem xs-radio-10  (ss/radio-menu-item
-                                             :text "10"
-                                             :group btn-group-xs
-                                             :listen [:mouse-clicked xs-on-change])
-        ^JRadioButtonMenuItem xs-radio-25  (ss/radio-menu-item
-                                             :text "25"
-                                             :group btn-group-xs
-                                             :listen [:mouse-clicked xs-on-change])
-        ^JRadioButtonMenuItem xs-radio-50  (ss/radio-menu-item
-                                             :selected? true
-                                             :text "50"
-                                             :group btn-group-xs
-                                             :listen [:mouse-clicked xs-on-change])
-        ^JRadioButtonMenuItem xs-radio-100 (ss/radio-menu-item
-                                             :text "100"
-                                             :group btn-group-xs
-                                             :listen [:mouse-clicked xs-on-change])
-
-        ^JRadioButtonMenuItem xs-radio-200 (ss/radio-menu-item
-                                             :text "200"
-                                             :group btn-group-xs
-                                             :listen [:mouse-clicked xs-on-change])]
-    (.add xs-config-container xs-radio-10)
-    (.add xs-config-container xs-radio-25)
-    (.add xs-config-container xs-radio-50)
-    (.add xs-config-container xs-radio-100)
-    ;; (.add xs-config-container xs-radio-200)
-    (.add xs-container xs-config-container)
-    xs-container))
 
 
 (defn- parse-seed-value
@@ -851,7 +353,7 @@
 (defn- ^JPanel random-seed-panel
   "Create a panel for random seed input with performance warning and clear button."
   []
-  (let [^JPanel container          (panel-grid {:rows 1 :cols 1 :border (radio-controls-border "Random Seed")})
+  (let [^JPanel container          (ui-comp/panel-grid {:rows 1 :cols 1 :border (ui-comp/radio-controls-border "Random Seed")})
         ^JPanel inner-panel        (doto (JPanel.)
                                      (.setLayout (FlowLayout. FlowLayout/LEFT 5 2)))
 
@@ -897,127 +399,29 @@
     container))
 
 
-(defn- update-mutations-blacklist!
-  "Update the mutations blacklist based on deselected mutations"
-  []
-  (let [selected @selected-mutations*
-        blacklist (vec (remove selected all-mutation-labels))]
-    (swap! experiment-settings* assoc :mutations-blacklist
-           (when (seq blacklist) blacklist))
-    (log/info "Mutations blacklist updated:" (count blacklist) "mutations excluded")))
-
-
-(defn- show-mutations-dialog!
-  "Show a dialog to select/deselect mutations"
-  [^JFrame parent-frame ^JLabel count-label]
-  (let [^JDialog dialog (doto (JDialog. parent-frame "Select Mutations" true)
-                          (.setSize 400 500)
-                          (.setLocationRelativeTo parent-frame))
-
-        checkboxes (atom {})
-
-        ^JPanel checkbox-panel (JPanel.)
-        _ (.setLayout checkbox-panel (BoxLayout. checkbox-panel BoxLayout/Y_AXIS))
-
-        _ (doseq [^String label (sort all-mutation-labels)]
-            (let [^JCheckBox cb (doto (JCheckBox. label ^Boolean (contains? @selected-mutations* label))
-                                  (.addActionListener
-                                    (reify ActionListener
-                                      (actionPerformed [_ e]
-                                        (let [selected? (.isSelected ^JCheckBox (.getSource e))]
-                                          (if selected?
-                                            (swap! selected-mutations* conj label)
-                                            (swap! selected-mutations* disj label)))))))]
-              (swap! checkboxes assoc label cb)
-              (.add checkbox-panel cb)))
-
-        ^JScrollPane scroll-pane (doto (JScrollPane. checkbox-panel)
-                                   (.setVerticalScrollBarPolicy JScrollPane/VERTICAL_SCROLLBAR_ALWAYS))
-
-        ^JButton select-all-btn (doto (JButton. "Select All")
-                                  (.addActionListener
-                                    (reify ActionListener
-                                      (actionPerformed [_ _]
-                                        (reset! selected-mutations* (set all-mutation-labels))
-                                        (doseq [[_ ^JCheckBox cb] @checkboxes]
-                                          (.setSelected cb true))))))
-
-        ^JButton select-none-btn (doto (JButton. "Select None")
-                                   (.addActionListener
-                                     (reify ActionListener
-                                       (actionPerformed [_ _]
-                                         (reset! selected-mutations* #{})
-                                         (doseq [[_ ^JCheckBox cb] @checkboxes]
-                                           (.setSelected cb false))))))
-
-        ^JButton ok-btn (doto (JButton. "OK")
-                          (.addActionListener
-                            (reify ActionListener
-                              (actionPerformed [_ _]
-                                (update-mutations-blacklist!)
-                                (.setText count-label (str (count @selected-mutations*) "/" (count all-mutation-labels)))
-                                (.dispose dialog)))))
-
-        ^JPanel buttons-panel (doto (JPanel. (FlowLayout.))
-                                (.add select-all-btn)
-                                (.add select-none-btn)
-                                (.add ok-btn))
-
-        ^JPanel main-panel (doto (JPanel. (BorderLayout.))
-                             (.add (JLabel. "Select mutations to use during evolution:") BorderLayout/NORTH)
-                             (.add scroll-pane BorderLayout/CENTER)
-                             (.add buttons-panel BorderLayout/SOUTH))]
-
-    (.setContentPane dialog main-panel)
-    (.setVisible dialog true)))
-
-
-(defn- ^JPanel mutations-selection-panel
-  "Create a panel with a button to open mutation selection dialog"
-  [parent-frame-atom]
-  (let [^JPanel container (panel-grid {:rows 1 :cols 1 :border (radio-controls-border "Mutations")})
-        ^JPanel inner-panel (doto (JPanel.)
-                              (.setLayout (FlowLayout. FlowLayout/LEFT 5 2)))
-
-        ^JLabel count-label (JLabel. (str (count @selected-mutations*) "/" (count all-mutation-labels)))
-
-        ^JButton select-btn (doto (JButton. "Select Mutations...")
-                              (.setToolTipText "Choose which mutations to use during evolution")
-                              (.addActionListener
-                                (reify ActionListener
-                                  (actionPerformed [_ _]
-                                    (when-let [frame @parent-frame-atom]
-                                      (show-mutations-dialog! frame count-label))))))]
-
-    (.add inner-panel select-btn)
-    (.add inner-panel count-label)
-    (.add container inner-panel)
-    container))
 
 
 (defn- update-replace-drawing-widget
   [draw-container]
-  (reset!
-    replace-drawing-widget!*
+  (sketchpad/set-replace-drawing-widget-fn!
     (fn [^JPanel drawing-widget]
       (log/info "REPLACE DRAWING WIDGET!")
-      (reset! new-xs?* true)
       (ss/replace!
         draw-container
         drawing-widget
         (:drawing-widget
-          (input-data-items-widget
+          (sketchpad/input-data-items-widget
             (input-y-fns @input-y-fn*)))))))
 
 
 (defn- set-input-data!
   [input-data-maps]
-  (let [{:keys [^JPanel drawing-widget]} @items-points-accessors*
+  (let [{:keys [^JPanel drawing-widget]} (sketchpad/get-items-points-accessors)
         canvas-w (ss/width drawing-widget)
         canvas-h (ss/height drawing-widget)]
-    (reset! sketch-input-x-count* (count input-data-maps))
-    (redraw-sketch-widget!)
-    (let [{:keys [items-point-setters items-point-getters]} @items-points-accessors*
+    (sketchpad/set-xs-count! (count input-data-maps))
+    (sketchpad/redraw-sketch-widget!)
+    (let [{:keys [items-point-setters items-point-getters]} (sketchpad/get-items-points-accessors)
           xs            (map :x input-data-maps)
           ys            (map :y input-data-maps)
           max-x         (reduce max xs)
@@ -1035,7 +439,7 @@
                                {:x (* x-scalar x)
                                 :y (* y-scalar y)})
                              input-data-maps)]
-      (reset! xs* (mapv :x scaled-inputs))
+      (reset! sketchpad/xs* (mapv :x scaled-inputs))
       (doseq [[i {:keys [x y]}] (map-indexed (fn [i d] [i d]) scaled-inputs)]
         (log/info "Set ixy: " i x y
                   " scalars: " x-scalar y-scalar
@@ -1043,7 +447,7 @@
                   " canvas: " canvas-w canvas-h)
         ((nth items-point-setters i)
          x
-         (input-data/y->gui-coord-y sketchpad-size* y))))))
+         (input-data/y->gui-coord-y sketchpad/sketchpad-size* y))))))
 
 
 (defn- ^JPanel input-file-picker-widget
@@ -1078,17 +482,12 @@
                                                   (ss/set-text* input-file-label
                                                                 (str "Error: " (.getMessage e))))))))])
 
-        ^JPanel input-file-container (doto (panel-grid {:rows 2 :cols 1})
+        ^JPanel input-file-container (doto (ui-comp/panel-grid {:rows 2 :cols 1})
                                        (.add select-file-button)
                                        (.add input-file-label))]
     input-file-container))
 
 
-(defn- set-app-icon
-  [^JFrame frame]
-  (let [^Image icon (.getImage (Toolkit/getDefaultToolkit) (io/resource "icons/icon_v5_qtr.png"))]
-    (doto frame
-      (.setIconImage icon))))
 
 
 (defn- setup-ui-frame
@@ -1114,21 +513,21 @@
   (let [my-frame-atom                       (atom nil)
         my-frame                            (doto (JFrame. "CLOSYR")
                                               (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE #_DISPOSE_ON_CLOSE)
-                                              (set-app-icon))
+                                              (ui-theme/set-app-icon))
 
-        bottom-container                    (panel-grid {:rows 2 :cols 1})
-        inputs-and-info-container           (panel-grid {:rows 3 :cols 1})
-        ctls-container                      (panel-grid {:rows 2 :cols 1})
-        row-3-container                     (panel-grid {:rows 1 :cols 2})
-        draw-parent                         (panel-grid {:rows 1 :cols 1})
-        top-container                       (panel-grid {:rows 1 :cols 2})
-        input-fn-container                  (panel-grid {:rows 1 :cols 1})
+        bottom-container                    (ui-comp/panel-grid {:rows 2 :cols 1})
+        inputs-and-info-container           (ui-comp/panel-grid {:rows 3 :cols 1})
+        ctls-container                      (ui-comp/panel-grid {:rows 2 :cols 1})
+        row-3-container                     (ui-comp/panel-grid {:rows 1 :cols 2})
+        draw-parent                         (ui-comp/panel-grid {:rows 1 :cols 1})
+        top-container                       (ui-comp/panel-grid {:rows 1 :cols 2})
+        input-fn-container                  (ui-comp/panel-grid {:rows 1 :cols 1})
 
-        page-pane                           (panel-grid {:rows 2 :cols 1})
+        page-pane                           (ui-comp/panel-grid {:rows 2 :cols 1})
         content-pane                        (doto (.getContentPane my-frame)
                                               (.setLayout (GridLayout. 1 1)))
 
-        unicode-font                        (find-unicode-font 14)
+        unicode-font                        (ui-theme/find-unicode-font 14)
         label-width                         130
         sim-info-label                      (let [lbl (JLabel. "")]
                                               (when unicode-font
@@ -1205,7 +604,7 @@
                                                :height       200})
         scores-chart-panel                  (XChartPanel. scores-chart)
 
-        {:keys [^JPanel drawing-widget]} (input-data-items-widget (input-y-fns @input-y-fn*))
+        {:keys [^JPanel drawing-widget]} (sketchpad/input-data-items-widget (input-y-fns @input-y-fn*))
 
         status-label                        (doto (JLabel. "Press Start To Find Function")
                                               (.setFont (Font. "SansSerif" Font/BOLD 18))
@@ -1216,14 +615,14 @@
                                                              :listen [:mouse-clicked
                                                                       (fn [_]
                                                                         (when-let [frame @my-frame-atom]
-                                                                          (show-advanced-settings-dialog! frame adv-settings-value-label)))])
+                                                                          (settings-adv/show-advanced-settings-dialog! frame adv-settings-value-label experiment-settings*)))])
                                               (.setToolTipText "Advanced settings")
                                               (.setFont (Font. "SansSerif" Font/PLAIN 16))
                                               (.setPreferredSize (Dimension. 40 30)))
         status-with-gear                    (doto (JPanel. (BorderLayout.))
                                               (.add status-label BorderLayout/CENTER)
                                               (.add gear-btn BorderLayout/EAST))
-        status-column                       (doto (panel-grid {:rows 2 :cols 1})
+        status-column                       (doto (ui-comp/panel-grid {:rows 2 :cols 1})
                                               (.add status-with-gear)
                                               (.add (max-leafs-settings-panel)))
 
@@ -1243,8 +642,8 @@
                                                                                    sim-stop-start-chan
                                                                                    status-label)])
                                                       (.setEnabled false)))
-        brush-container                     (brush-panel)
-        xs-container                        (xs-panel)
+        brush-container                     (sketchpad/brush-panel)
+        xs-container                        (sketchpad/xs-panel)
         settings-panel                      (experiment-settings-panel)
         ^JComboBox input-fn-picker          (ss/combobox
                                               :model dataset-fns
@@ -1252,11 +651,11 @@
 
         icon-test                           (JLabel. ^Icon (UIManager/getIcon "OptionPane.informationIcon"))
 
-        btns-row                            (doto (panel-grid {:rows 1 :cols 2})
+        btns-row                            (doto (ui-comp/panel-grid {:rows 1 :cols 2})
                                               (.add ctl-start-stop-btn)
                                               (.add ctl-reset-btn))
 
-        status-row                          (panel-grid {:rows 1 :cols 2})
+        status-row                          (ui-comp/panel-grid {:rows 1 :cols 2})
 
         ^JPanel input-file-container        (input-file-picker-widget status-row)
 
@@ -1264,25 +663,25 @@
                                               (.add status-column)
                                               (.add input-file-container))
 
-        btns-container                      (doto (panel-grid {:rows 2 :cols 1})
+        btns-container                      (doto (ui-comp/panel-grid {:rows 2 :cols 1})
                                               (.add btns-row)
                                               (.add status-row))
 
         ^JPanel random-seed-panel-widget    (random-seed-panel)
 
-        ^JPanel mutations-panel-widget      (mutations-selection-panel my-frame-atom)
+        ^JPanel mutations-panel-widget      (settings-mut/mutations-selection-panel my-frame-atom experiment-settings*)
 
         ;; Combine random seed and mutations panels on the same row
-        seed-and-mutations-row              (doto (panel-grid {:rows 1 :cols 2})
+        seed-and-mutations-row              (doto (ui-comp/panel-grid {:rows 1 :cols 2})
                                               (.add random-seed-panel-widget)
                                               (.add mutations-panel-widget))
 
-        settings-container                  (doto (panel-grid {:rows 3 :cols 1})
+        settings-container                  (doto (ui-comp/panel-grid {:rows 3 :cols 1})
                                               (.add seed-and-mutations-row)
                                               (.add settings-panel)
                                               (.add input-fn-container))
 
-        history-container                   (doto (panel-grid {:rows 1 :cols 1})
+        history-container                   (doto (ui-comp/panel-grid {:rows 1 :cols 1})
                                               (.add (JLabel. "Hello")))
 
         page-pane-tabbed                    (doto (JTabbedPane.)
@@ -1344,7 +743,7 @@
   (SwingUtilities/invokeLater
     (fn []
       (try
-        (setup-theme)
+        (ui-theme/setup-theme)
         (setup-ui-frame gui-data)
         (catch Exception e
           (log/error "Error in GUI: " e))))))
@@ -1417,7 +816,7 @@
   []
   (ss/invoke-later
 
-    (setup-theme)
+    (ui-theme/setup-theme)
 
     (-> (ss/frame :title "Hello",
                   :width 1600
