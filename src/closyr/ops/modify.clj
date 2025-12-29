@@ -177,13 +177,15 @@
 
       (if discount-mod?
         ;; keep last op:
-        (merge p (ops-common/->phenotype x-sym e1 (:util p-discard)))
+        (if-let [refreshed (ops-common/->phenotype x-sym e1 (:util p-discard))]
+          (merge p refreshed)
+          p)
 
         ;; record new last op:
-        (-> x-sym
-            (ops-common/->phenotype new-expr (:util p-discard))
-            (with-recent-mod-metadata {:label (name crossover-flavor)
-                                       :op    :modify-crossover}))))
+        (some-> x-sym
+                (ops-common/->phenotype new-expr (:util p-discard))
+                (with-recent-mod-metadata {:label (name crossover-flavor)
+                                           :op    :modify-crossover}))))
     (catch Exception e
       (log/error "Error in ops/crossover: " (.getMessage e))
       nil)))

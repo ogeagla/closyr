@@ -7,6 +7,7 @@
     [closyr.ops.modify :as ops-modify]
     [closyr.util.prng :as prng])
   (:import
+    (java.util UUID)
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
@@ -398,6 +399,44 @@
                      {:sym  x
                       :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})
                    nil)))))))
+
+  ;; Test for fix: when ->phenotype returns nil in the "record new last op" branch,
+  ;; crossover should return nil (not an incomplete map like {:last-op "cros:plus"})
+  (with-redefs-fn {#'prng/rand-int         (fn [maxv] (dec maxv))
+                   #'prng/rand-nth         (fn [coll] (first coll))
+                   #'ops-common/->phenotype (fn [_ _ _] nil)}
+    (fn []
+      (with-redefs [ops-modify/crossover-sampler [:plus]]
+        (let [x (F/Dummy "x")]
+          (testing "Crossover returns nil when ->phenotype fails (new expr branch)"
+            (is (= (ops-modify/crossover
+                     100
+                     {:sym  x
+                      :expr (F/Cos x)}
+                     {:sym  x
+                      :expr (F/Sin x)})
+                   nil)))))))
+
+  ;; Test for fix: when ->phenotype returns nil in the "keep last op" branch (discount-mod? true),
+  ;; crossover should return the original phenotype p unchanged
+  (with-redefs-fn {#'prng/rand-int         (fn [maxv] (dec maxv))
+                   #'prng/rand-nth         (fn [coll] (first coll))
+                   #'ops-common/->phenotype (fn [_ _ _] nil)}
+    (fn []
+      (with-redefs [ops-modify/crossover-sampler [:plus]
+                    ;; Force discount-mod? to be true
+                    ops-modify/check-modification-result (fn [_ _ _] [false true])]
+        (let [x (F/Dummy "x")
+              test-uuid (UUID/randomUUID)
+              original-pheno {:sym x :expr (F/Cos x) :id test-uuid}]
+          (testing "Crossover returns original phenotype when ->phenotype fails (discount branch)"
+            (is (= (ops-modify/crossover
+                     100
+                     original-pheno
+                     {:sym  x
+                      :expr (F/Sin x)
+                      :id   (UUID/randomUUID)})
+                   original-pheno)))))))
 
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
