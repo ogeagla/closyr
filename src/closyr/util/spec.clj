@@ -193,7 +193,7 @@
    [:max-leafs #'MaxLeafs]
    [:input-phenos-count {:optional true} #'PopulationCount]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
-   [:log-steps pos-int?]
+   [:log-steps {:optional true} [:maybe pos-int?]]
    [:use-flamechart [:maybe :boolean]]
    [:input-xs-exprs [:vector #'SymbolicExpr]]
    [:input-ys-exprs [:vector #'SymbolicExpr]]])
@@ -225,7 +225,8 @@
    [:input-phenos-count [:maybe #'PopulationCount]]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs [:maybe #'MaxLeafs]]
-   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]])
 
 
 (def ^:private SolverEvalArgs
@@ -272,7 +273,8 @@
    [:input-phenos-count #'PopulationCount]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs [:maybe #'MaxLeafs]]
-   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]])
 
 
 (def ^:private SolverInputArgs
@@ -291,7 +293,8 @@
    [:input-phenos-count {:optional true} #'PopulationCount]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
-   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]])
 
 
 (def ^:private SolverGUIMessage
@@ -304,7 +307,8 @@
    [:input-phenos-count #'PopulationCount]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
-   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]])
 
 
 (def ^:private CLIArgs

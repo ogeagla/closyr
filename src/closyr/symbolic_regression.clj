@@ -313,7 +313,8 @@
     input-phenos-count  :input-phenos-count
     random-seed         :random-seed
     max-leafs           :max-leafs
-    mutations-blacklist :mutations-blacklist}]
+    mutations-blacklist :mutations-blacklist
+    log-steps           :log-steps}]
 
   (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
         input-ys-exprs (ops-common/doubles->exprs input-data-y)
@@ -326,8 +327,9 @@
                              :input-iters         input-iters
                              :input-phenos-count  input-phenos-count
                              :mutations-blacklist mutations-blacklist
-                             :random-seed        random-seed
-                             :max-leafs          max-leafs})))
+                             :random-seed         random-seed
+                             :max-leafs           max-leafs
+                             :log-steps           log-steps})))
 
 
 (defn- restart-with-new-inputs
@@ -372,7 +374,8 @@
     random-seed         :random-seed
     max-leafs           :max-leafs
     initial-phenos      :initial-phenos
-    mutations-blacklist :mutations-blacklist}]
+    mutations-blacklist :mutations-blacklist
+    log-steps           :log-steps}]
 
   (when-not (and input-xs-exprs
                  input-xs-vec
@@ -393,7 +396,8 @@
    :input-phenos-count   input-phenos-count
    :random-seed          random-seed
    :max-leafs            max-leafs
-   :mutations-blacklist  mutations-blacklist})
+   :mutations-blacklist  mutations-blacklist
+   :log-steps            log-steps})
 
 
 (defn- wait-and-get-gui-args
@@ -576,7 +580,7 @@
 (defn- merge-cli-and-gui-args
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count random-seed max-leafs input-xs-list input-xs-count input-ys-vec
-           sim-stop-start-chan sim->gui-chan mutations-blacklist]
+           sim-stop-start-chan sim->gui-chan mutations-blacklist log-steps]
     :as   run-args}]
 
   (let [max-leafs      (or max-leafs cli-max-leafs)
@@ -600,8 +604,11 @@
                          (log/info "GUI: using" (count initial-muts) "mutations"
                                    "(" (count mutations-blacklist) "excluded)"))
 
+        ;; Use GUI-provided log-steps if set, otherwise auto-calculate
+        computed-log-steps (or log-steps (config->log-steps run-config run-args))
+
         run-config     (assoc run-config
-                              :log-steps (config->log-steps run-config run-args))]
+                              :log-steps computed-log-steps)]
     run-config))
 
 
