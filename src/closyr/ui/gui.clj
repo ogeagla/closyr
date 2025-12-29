@@ -6,6 +6,7 @@
     [closyr.ui.components :as ui-comp]
     [closyr.ui.plot :as plot]
     [closyr.ui.settings.advanced :as settings-adv]
+    [closyr.ui.settings.experiment :as settings-exp]
     [closyr.ui.settings.mutations :as settings-mut]
     [closyr.ui.sketchpad :as sketchpad]
     [closyr.ui.theme :as ui-theme]
@@ -49,7 +50,6 @@
       JFrame
       JLabel
       JPanel
-      JRadioButtonMenuItem
       JTabbedPane
       JTextField
       SwingUtilities
@@ -84,33 +84,6 @@
   (atom nil))
 
 
-(def ^:private experiment-settings*
-  (atom {:max-leafs          40
-         :input-iters        100
-         :input-phenos-count 2000
-         :random-seed        nil
-         :mutations-blacklist nil
-         :log-steps          nil}))
-
-
-
-
-(def ^:private amount->number
-  {"10"    10
-   "100"   100
-   "500"   500
-   "1000"  1000
-   "2000"  2000
-   "5000"  5000
-   "10000" 10000
-   "1K"    1000
-   "2K"    2000
-   "5K"    5000
-   "10K"   10000
-   "20K"   20000
-   "50K"   50000})
-
-
 (def ^:private objective-formula-field* (atom nil))
 
 (def ^:private input-y-fn* (atom input-data/initial-fn))
@@ -143,128 +116,6 @@
 
 
 
-(defn- settings-max-leafs-on-change
-  [^MouseEvent e]
-  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
-    (swap! experiment-settings* assoc :max-leafs (Integer/parseInt b))
-    (log/info "max leafs changed to " b)))
-
-
-(defn- ^JPanel max-leafs-settings-panel
-  []
-  (let [max-leafs-settings-container              (ui-comp/panel-grid
-                                                    {:rows 1 :cols 4 :border (ui-comp/radio-controls-border "Max Function Leafs")})
-
-        ^JPanel settings-container                (ui-comp/panel-grid {:rows 1 :cols 1})
-
-        btn-group-max-leafs                       (ss/button-group)
-        ^JRadioButtonMenuItem max-leafs-radio-10  (ss/radio-menu-item
-                                                    :text "20"
-                                                    :group btn-group-max-leafs
-                                                    :listen [:mouse-clicked settings-max-leafs-on-change])
-        ^JRadioButtonMenuItem max-leafs-radio-100 (ss/radio-menu-item
-                                                    :selected? true
-                                                    :text "40"
-                                                    :group btn-group-max-leafs
-                                                    :listen [:mouse-clicked settings-max-leafs-on-change])
-        ^JRadioButtonMenuItem max-leafs-radio-1k  (ss/radio-menu-item
-                                                    :text "60"
-                                                    :group btn-group-max-leafs
-                                                    :listen [:mouse-clicked settings-max-leafs-on-change])
-        ^JRadioButtonMenuItem max-leafs-radio-10k (ss/radio-menu-item
-                                                    :text "120"
-                                                    :group btn-group-max-leafs
-                                                    :listen [:mouse-clicked settings-max-leafs-on-change])]
-
-
-    (.add max-leafs-settings-container max-leafs-radio-10)
-    (.add max-leafs-settings-container max-leafs-radio-100)
-    (.add max-leafs-settings-container max-leafs-radio-1k)
-    (.add max-leafs-settings-container max-leafs-radio-10k)
-    (.add settings-container max-leafs-settings-container)
-    settings-container))
-
-
-
-
-(defn- settings-iters-on-change
-  [^MouseEvent e]
-  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
-    (swap! experiment-settings* assoc :input-iters (amount->number b))
-    (log/info "iters changed to " b)))
-
-
-(defn- settings-pheno-count-on-change
-  [^MouseEvent e]
-  (let [b (.getText ^JRadioButtonMenuItem (.getSource e))]
-    (swap! experiment-settings* assoc :input-phenos-count (amount->number b))
-    (log/info "pheno count changed to " b)))
-
-
-(defn- ^JPanel experiment-settings-panel
-  []
-  (let [iters-settings-container               (ui-comp/panel-grid
-                                                 {:rows 1 :cols 4 :border (ui-comp/radio-controls-border "Iterations")})
-        pcount-settings-container              (ui-comp/panel-grid
-                                                 {:rows 1 :cols 5 :border (ui-comp/radio-controls-border "Population Size")})
-        ^JPanel settings-container             (ui-comp/panel-grid {:rows 1 :cols 2})
-
-        btn-group-iters                        (ss/button-group)
-        ^JRadioButtonMenuItem iter-radio-10    (ss/radio-menu-item
-                                                 :text "10"
-                                                 :group btn-group-iters
-                                                 :listen [:mouse-clicked settings-iters-on-change])
-        ^JRadioButtonMenuItem iter-radio-100   (ss/radio-menu-item
-                                                 :selected? true
-                                                 :text "100"
-                                                 :group btn-group-iters
-                                                 :listen [:mouse-clicked settings-iters-on-change])
-        ^JRadioButtonMenuItem iter-radio-1k    (ss/radio-menu-item
-                                                 :text "1K"
-                                                 :group btn-group-iters
-                                                 :listen [:mouse-clicked settings-iters-on-change])
-        ^JRadioButtonMenuItem iter-radio-10k   (ss/radio-menu-item
-                                                 :text "10K"
-                                                 :group btn-group-iters
-                                                 :listen [:mouse-clicked settings-iters-on-change])
-
-        btn-group-pcounts                      (ss/button-group)
-        ^JRadioButtonMenuItem pcount-radio-500 (ss/radio-menu-item
-                                                 :text "500"
-                                                 :group btn-group-pcounts
-                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
-        ^JRadioButtonMenuItem pcount-radio-1k  (ss/radio-menu-item
-                                                 :text "1K"
-                                                 :group btn-group-pcounts
-                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
-        ^JRadioButtonMenuItem pcount-radio-2k  (ss/radio-menu-item
-                                                 :text "2K"
-                                                 :selected? true
-                                                 :group btn-group-pcounts
-                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
-        ^JRadioButtonMenuItem pcount-radio-10k (ss/radio-menu-item
-                                                 :text "5K"
-                                                 :group btn-group-pcounts
-                                                 :listen [:mouse-clicked settings-pheno-count-on-change])
-        ^JRadioButtonMenuItem pcount-radio-50k (ss/radio-menu-item
-                                                 :text "50K"
-                                                 :group btn-group-pcounts
-                                                 :listen [:mouse-clicked settings-pheno-count-on-change])]
-    (.add pcount-settings-container pcount-radio-500)
-    (.add pcount-settings-container pcount-radio-1k)
-    (.add pcount-settings-container pcount-radio-2k)
-    (.add pcount-settings-container pcount-radio-10k)
-    (.add pcount-settings-container pcount-radio-50k)
-
-    (.add iters-settings-container iter-radio-10)
-    (.add iters-settings-container iter-radio-100)
-    (.add iters-settings-container iter-radio-1k)
-    (.add iters-settings-container iter-radio-10k)
-    (.add settings-container iters-settings-container)
-    (.add settings-container pcount-settings-container)
-    settings-container))
-
-
 (defn- start-stop-on-click
   [sim-stop-start-chan ^JLabel status-label ^MouseEvent e]
   (let [{:keys [items-point-getters]} (sketchpad/get-items-points-accessors)
@@ -277,7 +128,7 @@
 
     (reset! experiment-is-running?* is-start)
     (.setEnabled ^JButton @ctl-reset-btn* true)
-    (put! sim-stop-start-chan (merge @experiment-settings*
+    (put! sim-stop-start-chan (merge @settings-exp/experiment-settings*
                                      {:new-state    (if is-start :start :pause)
                                       :input-data-x input-x
                                       :input-data-y input-y}))
@@ -304,7 +155,7 @@
         input-y    (mapv second input-data)]
     (reset! experiment-is-running?* true)
     (log/info "clicked Reset")
-    (put! sim-stop-start-chan (merge @experiment-settings*
+    (put! sim-stop-start-chan (merge @settings-exp/experiment-settings*
                                      {:new-state    :restart
                                       :input-data-x input-x
                                       :input-data-y input-y}))
@@ -369,7 +220,7 @@
                                      (.setVisible false))
 
         update-seed!               (fn [seed-value]
-                                     (swap! experiment-settings* assoc :random-seed seed-value)
+                                     (swap! settings-exp/experiment-settings* assoc :random-seed seed-value)
                                      (update-seed-warning-visibility! warning-label seed-value)
                                      (log/info "Random seed changed to:" seed-value
                                                (if seed-value "(deterministic mode)" "(parallel mode)")))]
@@ -615,7 +466,7 @@
                                                              :listen [:mouse-clicked
                                                                       (fn [_]
                                                                         (when-let [frame @my-frame-atom]
-                                                                          (settings-adv/show-advanced-settings-dialog! frame adv-settings-value-label experiment-settings*)))])
+                                                                          (settings-adv/show-advanced-settings-dialog! frame adv-settings-value-label settings-exp/experiment-settings*)))])
                                               (.setToolTipText "Advanced settings")
                                               (.setFont (Font. "SansSerif" Font/PLAIN 16))
                                               (.setPreferredSize (Dimension. 40 30)))
@@ -624,7 +475,7 @@
                                               (.add gear-btn BorderLayout/EAST))
         status-column                       (doto (ui-comp/panel-grid {:rows 2 :cols 1})
                                               (.add status-with-gear)
-                                              (.add (max-leafs-settings-panel)))
+                                              (.add (settings-exp/max-leafs-settings-panel)))
 
         ^JButton ctl-start-stop-btn         (ss/button
                                               :text ctl:start
@@ -644,7 +495,7 @@
                                                       (.setEnabled false)))
         brush-container                     (sketchpad/brush-panel)
         xs-container                        (sketchpad/xs-panel)
-        settings-panel                      (experiment-settings-panel)
+        settings-panel                      (settings-exp/experiment-settings-panel)
         ^JComboBox input-fn-picker          (ss/combobox
                                               :model dataset-fns
                                               :listen [:action input-dataset-change])
@@ -669,7 +520,7 @@
 
         ^JPanel random-seed-panel-widget    (random-seed-panel)
 
-        ^JPanel mutations-panel-widget      (settings-mut/mutations-selection-panel my-frame-atom experiment-settings*)
+        ^JPanel mutations-panel-widget      (settings-mut/mutations-selection-panel my-frame-atom settings-exp/experiment-settings*)
 
         ;; Combine random seed and mutations panels on the same row
         seed-and-mutations-row              (doto (ui-comp/panel-grid {:rows 1 :cols 2})
