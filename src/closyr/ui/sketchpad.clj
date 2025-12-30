@@ -62,10 +62,32 @@
 (def ^:private items-points-accessors* (atom {}))
 (def ^:private replace-drawing-widget!* (atom nil))
 (def ^:private new-xs?* (atom true))
+(def ^:private on-data-change-callback* (atom nil))
 
 (def xs*
   "Current x coordinates when loaded from file"
   (atom nil))
+
+
+(defn set-on-data-change-callback!
+  "Set a callback function to be called when sketchpad data changes.
+   The callback receives the current Y values as a vector."
+  [callback-fn]
+  (reset! on-data-change-callback* callback-fn))
+
+
+(defn- notify-data-change!
+  "Call the data change callback if set"
+  []
+  (when-let [callback @on-data-change-callback*]
+    (let [{:keys [items-point-getters]} @items-points-accessors*]
+      (when items-point-getters
+        (let [y-values (mapv (fn [getter]
+                               (let [^Point pt (getter)]
+                                 (- 7.5 (/ (.getY pt)
+                                           (/ (:h @sketchpad-size*) 15.0)))))
+                             items-point-getters)]
+          (callback y-values))))))
 
 
 ;; =============================================================================
@@ -253,7 +275,9 @@
                                  :paint (comp reposition-labels draw-grid)
                                  :id :xyz
                                  :items items
-                                 :listen [:mouse-clicked #(@brush-fn* items @sketch-input-x-scale* %)])]
+                                 :listen [:mouse-clicked (fn [e]
+                                                           (@brush-fn* items @sketch-input-x-scale* e)
+                                                           (notify-data-change!))])]
 
     (.setCursor drawing-widget (Cursor/getPredefinedCursor Cursor/HAND_CURSOR))
     (log/info "Set hand cursor for sketchpad widget: " (.getCursor drawing-widget))
@@ -288,6 +312,12 @@
   "Set the function used to replace the drawing widget"
   [f]
   (reset! replace-drawing-widget!* f))
+
+
+(defn init-drag-callback!
+  "Initialize the drag finish callback to notify data changes"
+  []
+  (ui-comp/set-on-drag-finish-callback! notify-data-change!))
 
 
 (defn redraw-sketch-widget!

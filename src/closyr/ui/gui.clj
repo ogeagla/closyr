@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! alts!]]
+    [clojure.string :as str]
     [closyr.dataset.inputs :as input-data]
     [closyr.ui.components :as ui-comp]
     [closyr.ui.plot :as plot]
@@ -85,6 +86,7 @@
 
 
 (def ^:private objective-formula-field* (atom nil))
+(def ^:private objective-label* (atom nil))
 
 (def ^:private input-y-fn* (atom input-data/initial-fn))
 
@@ -173,6 +175,9 @@
     (reset! sketchpad/xs* nil)
     (reset! input-y-fn* selection)
     (sketchpad/update-points-from-setters! new-fn)
+    ;; Reset label to show formula when selecting a dataset
+    (when-let [^JLabel label @objective-label*]
+      (.setText label "ObjectiveFn(x_) :="))
     (when-let [^JTextField formula-field @objective-formula-field*]
       (.setText formula-field (or new-formula "")))
     (sketchpad/repaint-drawing-widget!)
@@ -389,7 +394,7 @@
                                                         (.setPreferredSize (Dimension. label-width 20)))]
                                               (when unicode-font
                                                 (.setFont lbl unicode-font))
-                                              lbl)
+                                              (reset! objective-label* lbl))
         ^JTextField objective-formula-text  (let [tf (doto (JTextField. initial-formula)
                                                        (.setEditable false))]
                                               (when unicode-font
@@ -568,6 +573,16 @@
     (.add page-pane top-container)
     (.add page-pane bottom-container)
     (.add content-pane page-pane)
+
+    ;; Set up callback to update ObjectiveFn field when sketchpad data changes
+    (sketchpad/set-on-data-change-callback!
+      (fn [y-values]
+        (.setText objective-label "InputData(y_) :=")
+        (.setText objective-formula-text
+                  (str "[" (str/join ", " (map #(format "%.2f" %) y-values)) "]"))))
+
+    ;; Connect drag finish to data change notification
+    (sketchpad/init-drag-callback!)
 
     (.pack my-frame)
     (.setVisible my-frame true)

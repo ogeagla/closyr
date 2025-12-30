@@ -38,6 +38,13 @@
   (BorderFactory/createTitledBorder (BorderFactory/createLineBorder (Color. 80 80 80) 1) title))
 
 
+(def ^:private on-drag-finish-callback* (atom nil))
+
+(defn set-on-drag-finish-callback!
+  "Set a callback to be called when any movable widget finishes being dragged"
+  [callback-fn]
+  (reset! on-drag-finish-callback* callback-fn))
+
 (defn movable
   "Make a widget draggable with mouse. Options: {:disable-x? true} to lock horizontal movement."
   ([w] (movable w {:disable-x? false}))
@@ -56,8 +63,12 @@
        :drag (fn [^MouseEvent e _]
                (let [^Point p (.getPoint e)]
                  (ss/move! e :by [(if disable-x? 0 (- (.x p) (.x start-point)))
-                                  (- (.y p) (.y start-point))]))))
-     w)))
+                                  (- (.y p) (.y start-point))])))
+       ;; When the drag finishes, call the callback if set
+       :finish (fn [_]
+                 (when-let [callback @on-drag-finish-callback*]
+                   (callback)))))
+     w))
 
 
 (defn make-label
