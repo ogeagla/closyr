@@ -134,7 +134,7 @@
 
 
 (defn- check-if-done
-  [i iters status-label ctl-start-stop-btn]
+  [i iters ^JLabel status-label ctl-start-stop-btn]
   (when (= iters i)
     (let [^JButton reset-btn @gui/ctl-reset-btn*]
       (ss/set-text* ctl-start-stop-btn gui/ctl:start)

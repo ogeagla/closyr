@@ -28,7 +28,15 @@
                  [org.matheclipse/matheclipse-core "3.1.0-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]
                  [org.matheclipse/matheclipse-gpl "3.1.0-SNAPSHOT"
-                  :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]]
+                  :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]
+
+                 ;; Web server
+                 [ring/ring-core "1.12.2"]
+                 [ring/ring-jetty-adapter "1.12.2"]
+                 [ring/ring-defaults "0.5.0"]
+                 [metosin/reitit "0.7.2"]
+                 [selmer "1.12.61"]
+                 [cheshire "5.13.0"]]
 
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
                                    :releases  false

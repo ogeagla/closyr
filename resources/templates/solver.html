@@ -1,0 +1,563 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-white mb-6">Symbolic Regression Solver</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Input Form -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-white mb-4">Input Data</h2>
+
+            <form id="solver-form">
+                <!-- Dataset Presets -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Load Preset Dataset
+                    </label>
+                    <select id="preset-select"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onchange="loadPreset(this.value)">
+                        <option value="">-- Select a preset --</option>
+                        {% for dataset in datasets %}
+                        <option value="{{dataset.id}}"
+                                data-xs="{{dataset.xs}}"
+                                data-ys="{{dataset.ys}}"
+                                data-formula="{{dataset.formula}}"
+                                data-min="{{dataset.xMin}}"
+                                data-max="{{dataset.xMax}}">
+                            {{dataset.name}}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Number of Points (for generatable datasets) -->
+                <div id="points-container" class="mb-4 hidden">
+                    <label for="num-points" class="block text-sm font-medium text-gray-300 mb-2">
+                        Number of Points <span class="text-gray-500">(for generated data)</span>
+                    </label>
+                    <div class="flex items-center space-x-3">
+                        <input type="range" id="num-points-slider" min="5" max="100" value="20"
+                               class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                               oninput="updatePointsValue(this.value); regeneratePreset();">
+                        <input type="number" id="num-points" value="20" min="5" max="100"
+                               class="w-20 bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               onchange="document.getElementById('num-points-slider').value = this.value; regeneratePreset();">
+                    </div>
+                </div>
+
+                <!-- X Values -->
+                <div class="mb-4">
+                    <label for="xs" class="block text-sm font-medium text-gray-300 mb-2">
+                        X Values <span class="text-gray-500">(comma-separated)</span>
+                    </label>
+                    <textarea id="xs" name="xs" rows="2" required
+                              class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="1, 2, 3, 4, 5">1, 2, 3, 4, 5</textarea>
+                </div>
+
+                <!-- Y Values -->
+                <div class="mb-4">
+                    <label for="ys" class="block text-sm font-medium text-gray-300 mb-2">
+                        Y Values <span class="text-gray-500">(comma-separated)</span>
+                    </label>
+                    <textarea id="ys" name="ys" rows="2" required
+                              class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="1, 4, 9, 16, 25">1, 4, 9, 16, 25</textarea>
+                </div>
+
+                <!-- CSV Upload -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Or Upload CSV File
+                    </label>
+                    <div class="flex items-center justify-center w-full">
+                        <label class="w-full flex flex-col items-center px-4 py-6 bg-gray-700 text-gray-400 rounded-lg border-2 border-gray-600 border-dashed cursor-pointer hover:border-blue-500 hover:text-blue-400">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <span class="mt-2 text-sm">Click to upload CSV</span>
+                            <input type="file" id="csv-file" accept=".csv" class="hidden" onchange="handleCsvUpload(this)">
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="border-gray-700 my-6">
+
+                <!-- Configuration -->
+                <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="iterations" class="block text-sm font-medium text-gray-300 mb-2">
+                            Iterations
+                        </label>
+                        <input type="number" id="iterations" name="config.iterations" value="20" min="1" max="1000"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="population" class="block text-sm font-medium text-gray-300 mb-2">
+                            Population Size
+                        </label>
+                        <input type="number" id="population" name="config.population" value="50" min="10" max="10000"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="max-leafs" class="block text-sm font-medium text-gray-300 mb-2">
+                            Max Expression Size
+                        </label>
+                        <input type="number" id="max-leafs" name="config.maxLeafs" value="40" min="5" max="100"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="seed" class="block text-sm font-medium text-gray-300 mb-2">
+                            Random Seed <span class="text-gray-500">(optional)</span>
+                        </label>
+                        <input type="number" id="seed" name="config.seed"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Leave empty for random">
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex space-x-3">
+                    <button type="submit" id="start-btn"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="start-btn-text">Find Formula</span>
+                    </button>
+                    <button type="button" id="pause-btn"
+                            class="px-6 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors hidden"
+                            onclick="togglePause()">
+                        <span id="pause-btn-text">Pause</span>
+                    </button>
+                    <button type="button" id="stop-btn"
+                            class="px-6 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors hidden"
+                            onclick="stopJob()">
+                        Stop
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-white mb-4">Results</h2>
+            <div id="results" class="text-gray-400">
+                <p>Enter your data and click "Find Formula" to start the solver.</p>
+                <p class="mt-4 text-sm">
+                    The genetic algorithm will evolve mathematical expressions to find
+                    the best fit for your data.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Formula generators for each dataset type
+const formulaGenerators = {
+    'quadratic': x => x * x,
+    'cubic': x => x * x * x,
+    'linear': x => 2 * x + 1,
+    'sine': x => Math.sin(x),
+    'exponential': x => Math.exp(x),
+    'nguyen4': x => Math.pow(x, 6) + Math.pow(x, 5) + Math.pow(x, 4) + Math.pow(x, 3) + Math.pow(x, 2) + x
+};
+
+// Generate evenly spaced points
+function linspace(min, max, n) {
+    const step = (max - min) / (n - 1);
+    return Array.from({length: n}, (_, i) => min + i * step);
+}
+
+// Update the number display when slider changes
+function updatePointsValue(val) {
+    document.getElementById('num-points').value = val;
+}
+
+// Regenerate data for the current preset with the new number of points
+function regeneratePreset() {
+    const select = document.getElementById('preset-select');
+    const presetId = select.value;
+    if (!presetId) return;
+
+    const option = select.options[select.selectedIndex];
+    const formula = option.dataset.formula;
+
+    // Only regenerate for datasets with formulas
+    if (formula && formulaGenerators[formula]) {
+        const numPoints = parseInt(document.getElementById('num-points').value) || 20;
+        const min = parseFloat(option.dataset.min);
+        const max = parseFloat(option.dataset.max);
+
+        const xs = linspace(min, max, numPoints);
+        const ys = xs.map(formulaGenerators[formula]);
+
+        document.getElementById('xs').value = xs.map(x => x.toFixed(4)).join(', ');
+        document.getElementById('ys').value = ys.map(y => y.toFixed(6)).join(', ');
+    }
+}
+
+// Load preset dataset
+function loadPreset(presetId) {
+    if (!presetId) {
+        document.getElementById('points-container').classList.add('hidden');
+        return;
+    }
+
+    const select = document.getElementById('preset-select');
+    const option = select.options[select.selectedIndex];
+    const formula = option.dataset.formula;
+
+    // Show/hide points slider based on whether this is a generatable dataset
+    const pointsContainer = document.getElementById('points-container');
+    if (formula && formulaGenerators[formula]) {
+        pointsContainer.classList.remove('hidden');
+        // Generate with current number of points
+        regeneratePreset();
+    } else {
+        pointsContainer.classList.add('hidden');
+        // Use static data
+        const xs = option.dataset.xs;
+        const ys = option.dataset.ys;
+        document.getElementById('xs').value = xs;
+        document.getElementById('ys').value = ys;
+    }
+}
+
+// Current job state
+let currentJobId = null;
+let currentEventSource = null;
+let isPaused = false;
+
+// Toggle pause/resume
+async function togglePause() {
+    if (!currentJobId) return;
+
+    const endpoint = isPaused ? 'resume' : 'pause';
+
+    try {
+        const response = await fetch('/api/jobs/' + currentJobId + '/' + endpoint, {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.error) {
+            console.error('Error toggling pause:', data.error);
+            return;
+        }
+
+        isPaused = !isPaused;
+        updatePauseButton();
+    } catch (err) {
+        console.error('Error toggling pause:', err);
+    }
+}
+
+// Update pause button text based on state
+function updatePauseButton() {
+    const pauseBtn = document.getElementById('pause-btn');
+    const pauseBtnText = document.getElementById('pause-btn-text');
+    const startBtnText = document.getElementById('start-btn-text');
+
+    if (isPaused) {
+        pauseBtnText.textContent = 'Resume';
+        pauseBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+        pauseBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        startBtnText.innerHTML = `
+            <svg class="h-5 w-5 text-white inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Paused
+        `;
+    } else {
+        pauseBtnText.textContent = 'Pause';
+        pauseBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        pauseBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+        startBtnText.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Running...
+        `;
+    }
+}
+
+// Stop the current job
+async function stopJob() {
+    if (!currentJobId) return;
+
+    try {
+        const response = await fetch('/api/jobs/' + currentJobId + '/stop', {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.error) {
+            console.error('Error stopping job:', data.error);
+        }
+    } catch (err) {
+        console.error('Error stopping job:', err);
+    }
+}
+
+// Reset UI to ready state
+function resetUI() {
+    const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const startBtnText = document.getElementById('start-btn-text');
+    const pauseBtnText = document.getElementById('pause-btn-text');
+
+    startBtn.disabled = false;
+    startBtnText.textContent = 'Find Formula';
+    pauseBtn.classList.add('hidden');
+    pauseBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+    pauseBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+    pauseBtnText.textContent = 'Pause';
+    stopBtn.classList.add('hidden');
+    currentJobId = null;
+    isPaused = false;
+
+    if (currentEventSource) {
+        currentEventSource.close();
+        currentEventSource = null;
+    }
+}
+
+// Show running state
+function showRunningState() {
+    const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const startBtnText = document.getElementById('start-btn-text');
+
+    startBtn.disabled = true;
+    startBtnText.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Running...
+    `;
+    pauseBtn.classList.remove('hidden');
+    stopBtn.classList.remove('hidden');
+    isPaused = false;
+}
+
+// Handle CSV file upload
+async function handleCsvUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const content = await file.text();
+
+    try {
+        const response = await fetch('/api/upload-csv', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({content: content})
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            alert('Error parsing CSV: ' + data.error);
+            return;
+        }
+
+        document.getElementById('xs').value = data.xs.join(', ');
+        document.getElementById('ys').value = data.ys.join(', ');
+
+        // Clear the file input
+        input.value = '';
+    } catch (err) {
+        alert('Error uploading CSV: ' + err.message);
+    }
+}
+
+// Override form submission to properly format data as JSON
+document.getElementById('solver-form').addEventListener('submit', function(evt) {
+    evt.preventDefault();
+
+    // Parse the form data
+    const xs = document.getElementById('xs').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+    const ys = document.getElementById('ys').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+
+    const config = {
+        iterations: parseInt(document.getElementById('iterations').value) || 20,
+        population: parseInt(document.getElementById('population').value) || 50,
+        maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40
+    };
+
+    const seedValue = document.getElementById('seed').value;
+    if (seedValue) {
+        config.seed = parseInt(seedValue);
+    }
+
+    // Show running state
+    showRunningState();
+
+    // Send JSON request
+    fetch('/api/solve', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({xs: xs, ys: ys, config: config})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.jobId) {
+            currentJobId = data.jobId;
+            setupSSEConnection(data.jobId);
+        } else if (data.error) {
+            resetUI();
+            document.getElementById('results').innerHTML = `
+                <div class="text-red-400">
+                    <div class="font-semibold mb-2">Error</div>
+                    <div>${data.error}</div>
+                </div>
+            `;
+        }
+    })
+    .catch(err => {
+        resetUI();
+        document.getElementById('results').innerHTML = `
+            <div class="text-red-400">
+                <div class="font-semibold mb-2">Error</div>
+                <div>${err.message}</div>
+            </div>
+        `;
+    });
+});
+
+// Set up SSE connection for real-time progress updates
+function setupSSEConnection(jobId) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = `
+        <div class="flex items-center space-x-3 mb-4">
+            <svg class="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-blue-400">Solver running...</span>
+        </div>
+        <div id="progress-info" class="text-sm text-gray-400">
+            Waiting for first update...
+        </div>
+    `;
+
+    const eventSource = new EventSource('/api/jobs/' + jobId + '/events');
+    currentEventSource = eventSource;
+
+    eventSource.addEventListener('progress', function(e) {
+        const data = JSON.parse(e.data);
+        const percent = Math.round((data.iteration / data['total-iterations']) * 100);
+        document.getElementById('progress-info').innerHTML = `
+            <div class="mb-2">
+                <div class="flex justify-between text-sm mb-1">
+                    <span>Progress</span>
+                    <span>${data.iteration} / ${data['total-iterations']}</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="text-gray-300 text-sm mb-1">Current Best Formula:</div>
+                <div class="formula-display text-green-400 text-lg">${data['best-formula']}</div>
+            </div>
+            <div class="mt-2 text-sm">
+                <span class="text-gray-400">Score:</span>
+                <span class="text-white">${data['best-score'].toFixed(6)}</span>
+            </div>
+        `;
+    });
+
+    eventSource.addEventListener('complete', function(e) {
+        eventSource.close();
+        resetUI();
+        const data = JSON.parse(e.data);
+        resultsDiv.innerHTML = `
+            <div class="mb-4">
+                <div class="flex items-center space-x-2 text-green-400 mb-4">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="font-semibold">Completed!</span>
+                </div>
+
+                <div class="mb-4">
+                    <div class="text-gray-300 text-sm mb-2">Best Formula Found:</div>
+                    <div class="formula-display text-green-400 text-xl">${data['best-solution'].formula}</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-sm mb-6">
+                    <div>
+                        <span class="text-gray-400">Score:</span>
+                        <span class="text-white ml-2">${data['best-solution'].score.toFixed(6)}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Complexity:</span>
+                        <span class="text-white ml-2">${data['best-solution'].leafCount} nodes</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-gray-300 text-sm mb-2">Other Solutions:</div>
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        ${data['all-solutions'].slice(1, 6).map((sol, i) => `
+                            <div class="bg-gray-700 rounded p-2 text-sm">
+                                <div class="text-gray-200 font-mono">${sol.formula}</div>
+                                <div class="text-gray-400 text-xs mt-1">Score: ${sol.score.toFixed(6)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    eventSource.addEventListener('error', function(e) {
+        eventSource.close();
+        resetUI();
+        if (e.data) {
+            const data = JSON.parse(e.data);
+            resultsDiv.innerHTML = `
+                <div class="text-red-400">
+                    <div class="font-semibold mb-2">Error</div>
+                    <div>${data.error}</div>
+                </div>
+            `;
+        }
+    });
+
+    eventSource.addEventListener('stopped', function(e) {
+        eventSource.close();
+        resetUI();
+        resultsDiv.innerHTML = `
+            <div class="text-yellow-400">
+                <div class="flex items-center space-x-2 mb-2">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                    </svg>
+                    <span class="font-semibold">Stopped</span>
+                </div>
+                <div class="text-gray-400 text-sm">The solver was stopped by user request.</div>
+            </div>
+        `;
+    });
+
+    eventSource.onerror = function() {
+        // Connection error - might be normal end of stream
+    };
+}
+</script>
+{% endblock %}

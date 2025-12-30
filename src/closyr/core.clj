@@ -6,7 +6,8 @@
     [closyr.symbolic-regression :as symreg]
     [closyr.util.csv :as input-csv]
     [closyr.util.log :as log]
-    [closyr.util.prng :as prng])
+    [closyr.util.prng :as prng]
+    [closyr.web.server :as web-server])
   (:import
     (java.io
       File)))
@@ -102,6 +103,11 @@
     :parse-fn str->string-vec
     :id :mutations-blacklist]
 
+   [nil "--web [PORT]" "Start HTTP web server instead of GUI (default port: 3000)"
+    :default nil
+    :parse-fn #(if (str/blank? %) 3000 (Integer/parseInt %))
+    :id :web-port]
+
    #_["-v" nil "Verbosity level"
       :id :verbosity
       :default 0
@@ -135,7 +141,7 @@
                (and xs (nil? ys)) (log/error "Error: only XS provided, please provide YS. XS/YS: " xs ys)
                (and ys (nil? xs)) (log/error "Error: only YS provided, please provide XS. XS/YS: " xs ys)
                :else opts)]
-    (dissoc opts :infile)))
+    (dissoc opts :infile :web-port)))
 
 
 (def ^:private big-text
@@ -157,7 +163,16 @@ ________/\\\\\\\\\__/\\\___________________/\\\\\__________/\\\\\\\\\\\____/\\\_
   [& args]
   (log/info big-text)
 
-  (some->
-    (parse-main-opts args)
-    (validate-symreg-opts)
-    (symreg/run-app-from-cli-args)))
+  (let [opts (parse-main-opts args)]
+    (if-let [port (:web-port opts)]
+      ;; Web server mode
+      (do
+        (log/info "Starting web server on port" port)
+        (web-server/start! {:port port})
+        ;; Keep the main thread alive
+        @(promise))
+      ;; GUI or headless mode
+      (some->
+        opts
+        (validate-symreg-opts)
+        (symreg/run-app-from-cli-args)))))

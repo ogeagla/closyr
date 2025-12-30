@@ -238,15 +238,17 @@
 
 
 (defn- reportable-phen-str
-  [{:keys [^IExpr expr ^double score last-op mods-applied] p-id :id :as p}]
-  (str
-    " id: " (str/join (take 3 (str p-id)))
-    " last mod #: " (or mods-applied "-")
-    " last op: " (format "%18s" (str last-op))
-    " score: " (.format score-format score)
-    " leafs: " (.leafCount expr)
-    ;; strip newlines from here also:
-    " fn: " (format-fn-str expr)))
+  [{:keys [^IExpr expr score last-op mods-applied] p-id :id :as p}]
+  (if (and expr score)
+    (str
+      " id: " (str/join (take 3 (str p-id)))
+      " last mod #: " (or mods-applied "-")
+      " last op: " (format "%18s" (str last-op))
+      " score: " (.format score-format (double score))
+      " leafs: " (.leafCount expr)
+      ;; strip newlines from here also:
+      " fn: " (format-fn-str expr))
+    " [invalid phenotype]"))
 
 
 (defn- summarize-sim-stats
@@ -308,34 +310,42 @@
 
 
 (defn report-iteration
-  "Print and maybe send to GUI a summary report of the population, including best fn/score/etc"
+  "Print and maybe send to GUI a summary report of the population, including best fn/score/etc.
+   Also calls progress-callback if provided in run-config."
   [iters-to-go
    iters
    ga-result
    {:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}
-   {:keys [use-gui? max-leafs] :as run-config}]
+   {:keys [use-gui? max-leafs progress-callback] :as run-config}]
   (when (or (= 1 iters-to-go) (zero? (mod iters-to-go *log-steps*)))
     (let [bests      (sort-population ga-result)
-          took-s     (/ (ops-common/start-date->diff-ms @test-timer*) 1000.0)
+          timer      @test-timer*
+          took-s     (if timer
+                       (/ (ops-common/start-date->diff-ms timer) 1000.0)
+                       0.0)
           pop-size   (count (:pop ga-result))
           best-v     (first bests)
-          best-p99-v (nth bests (* 0.01 (count bests)))
-          best-p95-v (nth bests (* 0.05 (count bests)))
-          best-p90-v (nth bests (* 0.1 (count bests)))
+          n-bests    (count bests)
+          best-p99-v (when (pos? n-bests) (nth bests (min (dec n-bests) (int (* 0.01 n-bests)))))
+          best-p95-v (when (pos? n-bests) (nth bests (min (dec n-bests) (int (* 0.05 n-bests)))))
+          best-p90-v (when (pos? n-bests) (nth bests (min (dec n-bests) (int (* 0.1 n-bests)))))
           evaled     (ops-eval/eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (ops-eval/eval-vec-pheno-oversample
-                                                  best-v run-args extended-domain-args)]
+                                                  best-v run-args extended-domain-args)
+          current-iteration (inc (- iters iters-to-go))]
 
       (reset! test-timer* (Date.))
-      (log/info (inc (- iters iters-to-go)) "-th-iter, "
+      (log/info current-iteration "-th-iter, "
                 " iters left: " (dec iters-to-go)
                 " pop size: " pop-size
                 " points: " (count input-ys-vec)
                 " max leafs: " max-leafs
                 " took secs: " took-s
-                " phenos/s: " (Math/round ^double (/ (* pop-size *log-steps*) took-s))
+                " phenos/s: " (if (pos? took-s)
+                                (Math/round ^double (/ (* pop-size *log-steps*) took-s))
+                                0)
                 (str "\n top " *print-top-n* " best:\n"
                      (->> (take *print-top-n* bests)
                           (map reportable-phen-str)
@@ -345,15 +355,28 @@
 
       (when use-gui?
         (put! sim->gui-chan {:iters                 iters
-                             :i                     (inc (- iters iters-to-go))
+                             :i                     current-iteration
                              :best-eval             evaled
                              :input-xs-vec-extended xs-extended
                              :best-eval-extended    evaled-extended
                              :best-f-str            (str (:expr best-v))
-                             :best-score            (:score best-v)
-                             :best-p99-score        (:score best-p99-v)
-                             :best-p95-score        (:score best-p95-v)
-                             :best-p90-score        (:score best-p90-v)}))))
+                             :best-score            (or (:score best-v) min-score)
+                             :best-p99-score        (or (:score best-p99-v) min-score)
+                             :best-p95-score        (or (:score best-p95-v) min-score)
+                             :best-p90-score        (or (:score best-p90-v) min-score)}))
+
+      ;; Call progress callback if provided (for HTTP API/SSE)
+      (when (and progress-callback best-v)
+        (try
+          (progress-callback {:iteration        current-iteration
+                              :total-iterations iters
+                              :best-formula     (str (:expr best-v))
+                              :best-score       (or (:score best-v) min-score)
+                              :percentiles      {:p99 (or (:score best-p99-v) min-score)
+                                                 :p95 (or (:score best-p95-v) min-score)
+                                                 :p90 (or (:score best-p90-v) min-score)}})
+          (catch Exception e
+            (log/warn "Error in progress callback: " (.getMessage e)))))))
   (reset! sim-stats* {}))
 
 

@@ -78,9 +78,61 @@ You can also provide the same command-line options to `java` command, like:
 
     $ java -jar target/uberjar/closyr-0.1.0-SNAPSHOT-standalone.jar -t -p 25 -i 5 -x 0,1,2,3,4,5,6 -y 1,2,30,4,5,6,10
 
+### Run as Web Application
+
+You can run closyr as a web application with a browser-based UI that includes real-time progress updates via Server-Sent Events (SSE).
+
+Requirements: Java, Leiningen
+
+Start the web server on the default port (3000):
+
+    $ lein run --web
+
+Or specify a custom port:
+
+    $ lein run --web 8080
+
+Then open your browser to http://localhost:3000 (or your custom port).
+
+The web interface provides:
+- **Input data entry**: Enter X and Y values as comma-separated numbers
+- **CSV file upload**: Upload a CSV file with x,y data points
+- **Built-in datasets**: Choose from preset datasets (quadratic, cubic, sine, etc.)
+- **Configuration**: Set iterations, population size, max expression size, and random seed
+- **Real-time progress**: Watch the solver evolve formulas with live updates
+- **Results display**: View the best formula found along with alternative solutions
+
+#### Web API
+
+The web application also exposes a JSON API for programmatic access:
+
+```bash
+# Start a solver job
+curl -X POST http://localhost:3000/api/solve \
+  -H "Content-Type: application/json" \
+  -d '{"xs": [1,2,3,4,5], "ys": [1,4,9,16,25], "config": {"iterations": 20, "population": 50}}'
+
+# Response: {"jobId": "uuid-here", "eventsUrl": "/api/jobs/uuid-here/events"}
+
+# Check job status
+curl http://localhost:3000/api/jobs/{jobId}
+
+# Stream progress updates (SSE)
+curl http://localhost:3000/api/jobs/{jobId}/events
+
+# List available datasets
+curl http://localhost:3000/api/datasets
+
+# Parse CSV content
+curl -X POST http://localhost:3000/api/upload-csv \
+  -H "Content-Type: application/json" \
+  -d '{"content": "x,y\n1,1\n2,4\n3,9"}'
+```
+
 ## Options
 | Short, Long Option      | Required?       | Example | Default | Description                                                                                                                   |
 |-------------------------|-----------------|---------|---------|-------------------------------------------------------------------------------------------------------------------------------|
+| `--web`                 | no              | `--web 3000` | `3000` | start HTTP web server instead of GUI on specified port                                                                   |
 | `-t`,`--headless`       | no              | `-t`    | `false` | run without GUI, in terminal only                                                                                             |
 | `-c`,`--use-flamechart` | no              | `-c`    | `false` | run with flamecharts, run then visit http://localhost:54321/flames.svg                                                        |
 | `-p`,`--population`     | no              | `100`   | `20`    | size of population which will evolve; the number of functions we create and modify                                            |
@@ -300,12 +352,13 @@ FindFormula.Config config = new FindFormula.Config()
 ## Roadmap
 
 - [x] CLI options accept a CSV file (GUI already supports this)
+- [x] Web frontend with HTTP API and SSE for real-time updates
 - [ ] More tests
-- [ ] Use something like ProGuard to shrink the JAR for releases 
+- [ ] Use something like ProGuard to shrink the JAR for releases
   - https://www.guardsquare.com/manual/configuration/examples
   - https://stackoverflow.com/questions/12281365/obfuscating-clojure-uberjars-with-proguard
   - https://github.com/eiffelqiu/obfuscate-clojure-project-demo/tree/master
-- [ ] A different frontend.  The current Java Swing frontend does the job, but it's not easy to maintain and it's hard to make look better.
+- [ ] Improve web frontend styling and features (the Swing GUI still has more features like the sketchpad)
 - [ ] Can this be a follow-up to this issue, asking for a symbolic regression tool on the JVM? https://github.com/axkr/symja_android_library/issues/850
 - [ ] When I created this and my other symbolic regression tools, I didn't know about the formal field of symbolic regression.  I've since found some great libraries that I should review and apply the lessons to this project: https://github.com/MilesCranmer/PySR
 
@@ -359,6 +412,18 @@ FindFormula.Config config = new FindFormula.Config()
 │  │   - Controls            │    │   - Scores      │    │                 │      │
 │  │   - Function Display    │    │                 │    │                 │      │
 │  └─────────────────────────┘    └─────────────────┘    └─────────────────┘      │
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │                         WEB LAYER (--web mode)                          │    │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                │    │
+│  │  │ web.server    │  │ web.routes    │  │ web.sse       │                │    │
+│  │  │ (Jetty)       │  │ (Reitit)      │  │ (SSE Stream)  │                │    │
+│  │  └───────────────┘  └───────────────┘  └───────────────┘                │    │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                │    │
+│  │  │ handlers.api  │  │ handlers.pages│  │ web.middleware│                │    │
+│  │  │ (JSON API)    │  │ (Selmer HTML) │  │ (CORS, JSON)  │                │    │
+│  │  └───────────────┘  └───────────────┘  └───────────────┘                │    │
+│  └─────────────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────────┐

@@ -196,7 +196,8 @@
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:use-flamechart [:maybe :boolean]]
    [:input-xs-exprs [:vector #'SymbolicExpr]]
-   [:input-ys-exprs [:vector #'SymbolicExpr]]])
+   [:input-ys-exprs [:vector #'SymbolicExpr]]
+   [:progress-callback {:optional true} [:maybe fn?]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -225,6 +226,7 @@
    [:input-phenos-count [:maybe #'PopulationCount]]
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs [:maybe #'MaxLeafs]]
+   [:progress-callback {:optional true} [:maybe fn?]]
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:log-steps {:optional true} [:maybe pos-int?]]])
 
@@ -294,7 +296,8 @@
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
-   [:log-steps {:optional true} [:maybe pos-int?]]])
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:progress-callback {:optional true} [:maybe fn?]]])
 
 
 (def ^:private SolverGUIMessage
