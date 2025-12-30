@@ -72,6 +72,14 @@
                                    [org.junit.platform/junit-platform-launcher "6.0.1"]
                                    [org.junit.platform/junit-platform-console-standalone "6.0.1"]]}}
 
+  :cloverage {:ns-exclude-regex [#"closyr\.ops\.common"
+                                  #"closyr\.ops\.eval"
+                                  #"closyr\.ops\.initialize"
+                                  #"closyr\.ops\.modify"
+                                  #"closyr\.ops"
+                                  #"closyr\.ui\."
+                                  #"closyr\.util\.spec"]}
+
   :plugins [[lein-cloverage "1.2.4"]
             [lein-vanity "0.2.0"]
             [lein-nomis-ns-graph "0.14.6"]
