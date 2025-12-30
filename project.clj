@@ -7,9 +7,9 @@
                  [org.clojure/core.async "1.8.741"]
                  [metosin/malli "0.20.0"]
 
-                 [org.clojure/tools.cli "1.2.245"]
+                 [org.clojure/tools.cli "1.3.250"]
 
-                 [org.clojure/data.csv "1.1.0"]
+                 [org.clojure/data.csv "1.1.1"]
 
                  [seesaw/seesaw "1.5.0"]
                  [flames "0.5.0"]
@@ -31,12 +31,12 @@
                   :exclusions [org.slf4j/slf4j-api com.fasterxml.jackson.core/jackson-core]]
 
                  ;; Web server
-                 [ring/ring-core "1.12.2"]
-                 [ring/ring-jetty-adapter "1.12.2"]
-                 [ring/ring-defaults "0.5.0"]
-                 [metosin/reitit "0.7.2"]
+                 [ring/ring-core "1.15.3"]
+                 [ring/ring-jetty-adapter "1.15.3"]
+                 [ring/ring-defaults "0.7.0"]
+                 [metosin/reitit "0.9.2"]
                  [selmer "1.12.61"]
-                 [cheshire "5.13.0"]]
+                 [cheshire "6.1.0"]]
 
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
                                    :releases  false
