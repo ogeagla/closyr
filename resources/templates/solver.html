@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto">
+<div class="max-w-6xl mx-auto">
     <h1 class="text-3xl font-bold text-white mb-6">Symbolic Regression Solver</h1>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -308,8 +308,11 @@ function convertFormula(formula) {
         .replace(/Sqrt\(/g, 'sqrt(')
         .replace(/Abs\(/g, 'abs(')
         .replace(/Asin\(/g, 'asin(')
+        .replace(/ArcSin\(/g, 'asin(')
         .replace(/Acos\(/g, 'acos(')
+        .replace(/ArcCos\(/g, 'acos(')
         .replace(/Atan\(/g, 'atan(')
+        .replace(/ArcTan\(/g, 'atan(')
         .replace(/Sinh\(/g, 'sinh(')
         .replace(/Cosh\(/g, 'cosh(')
         .replace(/Tanh\(/g, 'tanh(')
@@ -460,7 +463,10 @@ const formulaGenerators = {
     'linear': x => 2 * x + 1,
     'sine': x => Math.sin(x),
     'exponential': x => Math.exp(x),
-    'nguyen4': x => Math.pow(x, 6) + Math.pow(x, 5) + Math.pow(x, 4) + Math.pow(x, 3) + Math.pow(x, 2) + x
+    'nguyen4': x => Math.pow(x, 6) + Math.pow(x, 5) + Math.pow(x, 4) + Math.pow(x, 3) + Math.pow(x, 2) + x,
+    'nguyen5': x => Math.sin(x * x) * Math.cos(x) - 1,
+    'feynman-lorentz': x => 1 / Math.sqrt(1 - x * x),
+    'feynman-wave': x => Math.sin(x)
 };
 
 // Generate evenly spaced points

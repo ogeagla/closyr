@@ -399,7 +399,30 @@
                        :xs      [-1 -0.5 0 0.5 1]
                        :ys      (mapv (fn [x] (+ (Math/pow x 6) (Math/pow x 5) (Math/pow x 4)
                                                  (Math/pow x 3) (Math/pow x 2) x))
-                                      [-1 -0.5 0 0.5 1])}]]
+                                      [-1 -0.5 0 0.5 1])}
+                      {:id      "nguyen5"
+                       :name    "Nguyen-5 (sin(x^2)*cos(x)-1)"
+                       :formula "nguyen5"
+                       :xMin    -1
+                       :xMax    1
+                       :xs      [-1 -0.5 0 0.5 1]
+                       :ys      (mapv (fn [x] (- (* (Math/sin (* x x)) (Math/cos x)) 1))
+                                      [-1 -0.5 0 0.5 1])}
+                      {:id      "feynman-lorentz"
+                       :name    "Feynman Lorentz (1/sqrt(1-x^2))"
+                       :formula "feynman-lorentz"
+                       :xMin    0
+                       :xMax    0.9
+                       :xs      [0 0.2 0.4 0.6 0.8]
+                       :ys      (mapv (fn [x] (/ 1.0 (Math/sqrt (- 1.0 (* x x)))))
+                                      [0 0.2 0.4 0.6 0.8])}
+                      {:id      "feynman-wave"
+                       :name    "Feynman Wave (sin(x))"
+                       :formula "feynman-wave"
+                       :xMin    0
+                       :xMax    (* 4 Math/PI)
+                       :xs      [0 1 2 3 4 5 6]
+                       :ys      (mapv #(Math/sin %) [0 1 2 3 4 5 6])}]]
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/encode {:datasets dataset-list})}))
