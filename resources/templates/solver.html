@@ -313,6 +313,7 @@ function convertFormula(formula) {
         .replace(/Sinh\(/g, 'sinh(')
         .replace(/Cosh\(/g, 'cosh(')
         .replace(/Tanh\(/g, 'tanh(')
+        .replace(/Sec\(/g, 'sec(')
         .replace(/\bPi\b/g, 'pi')
         .replace(/\bE\b/g, 'e');
     return converted;
