@@ -163,6 +163,12 @@
             </div>
         </div>
     </div>
+
+    <!-- Job History Section -->
+    <div id="job-history-section" class="mt-8 hidden">
+        <h2 class="text-xl font-semibold text-white mb-4">Job History</h2>
+        <div id="job-history" class="space-y-4"></div>
+    </div>
 </div>
 {% endblock %}
 
@@ -176,6 +182,209 @@ let inputYs = [];
 // Data editor chart instance
 let dataEditorChart = null;
 let editorData = []; // [{x, y, index}]
+
+// Job history storage
+let jobHistory = [];
+let historyCharts = {}; // Store chart instances by job id
+
+// Copy formula to clipboard
+function copyFormula(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const text = el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        // Brief visual feedback
+        el.classList.add('text-white');
+        setTimeout(() => el.classList.remove('text-white'), 200);
+    });
+}
+
+// Save job to history
+function saveToHistory(jobData) {
+    const job = {
+        id: currentJobId,
+        timestamp: new Date().toLocaleString(),
+        formula: jobData['best-solution'].formula,
+        score: jobData['best-solution'].score,
+        leafCount: jobData['best-solution'].leafCount,
+        xs: [...inputXs],
+        ys: [...inputYs],
+        config: {
+            iterations: parseInt(document.getElementById('iterations').value) || 100,
+            population: parseInt(document.getElementById('population').value) || 100,
+            maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
+            seed: document.getElementById('seed').value || null
+        },
+        allSolutions: jobData['all-solutions']
+    };
+    jobHistory.unshift(job); // Add to beginning
+    renderJobHistory();
+}
+
+// Render job history list
+function renderJobHistory() {
+    const section = document.getElementById('job-history-section');
+    const container = document.getElementById('job-history');
+
+    if (jobHistory.length === 0) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    section.classList.remove('hidden');
+    container.innerHTML = jobHistory.map((job, index) => `
+        <div class="bg-gray-800 rounded-lg overflow-hidden">
+            <div class="p-4 cursor-pointer hover:bg-gray-750" onclick="toggleHistoryItem(${index})">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-2">
+                            <svg id="chevron-${index}" class="w-4 h-4 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                            <span class="text-green-400 text-sm font-mono truncate">${job.formula}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1 ml-6">
+                            Score: ${job.score.toFixed(6)} · ${job.xs.length} points · ${job.timestamp}
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); loadFromHistory(${index})" class="ml-2 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" title="Load this data">
+                        Load
+                    </button>
+                </div>
+            </div>
+            <div id="history-details-${index}" class="hidden border-t border-gray-700">
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <span class="text-gray-400">Score:</span>
+                            <span class="text-white ml-1">${job.score.toFixed(6)}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Complexity:</span>
+                            <span class="text-white ml-1">${job.leafCount} nodes</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Iterations:</span>
+                            <span class="text-white ml-1">${job.config.iterations}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Population:</span>
+                            <span class="text-white ml-1">${job.config.population}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-gray-400 text-xs mb-1">Input Data (${job.xs.length} points):</div>
+                        <div class="text-xs font-mono bg-gray-900 p-2 rounded max-h-16 overflow-auto">
+                            <div><span class="text-gray-500">X:</span> <span class="text-white">${job.xs.map(x => x.toFixed(4)).join(', ')}</span></div>
+                            <div><span class="text-gray-500">Y:</span> <span class="text-white">${job.ys.map(y => y.toFixed(4)).join(', ')}</span></div>
+                        </div>
+                    </div>
+                    <div id="history-chart-${index}" class="bg-gray-900 rounded" style="width: 100%; height: 200px;"></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Toggle history item expansion
+function toggleHistoryItem(index) {
+    const details = document.getElementById(`history-details-${index}`);
+    const chevron = document.getElementById(`chevron-${index}`);
+    const isHidden = details.classList.contains('hidden');
+
+    if (isHidden) {
+        details.classList.remove('hidden');
+        chevron.classList.add('rotate-90');
+        // Render chart after showing
+        setTimeout(() => renderHistoryChart(index), 50);
+    } else {
+        details.classList.add('hidden');
+        chevron.classList.remove('rotate-90');
+        // Dispose chart when hiding
+        if (historyCharts[index]) {
+            historyCharts[index].dispose();
+            delete historyCharts[index];
+        }
+    }
+}
+
+// Render chart for a history item
+function renderHistoryChart(index) {
+    const job = jobHistory[index];
+    const container = document.getElementById(`history-chart-${index}`);
+    if (!container || !job) return;
+
+    // Dispose existing chart if any
+    if (historyCharts[index]) {
+        historyCharts[index].dispose();
+    }
+
+    const chart = echarts.init(container, 'dark');
+    historyCharts[index] = chart;
+
+    // Sort data points
+    const dataPoints = job.xs.map((x, i) => ({ x, y: job.ys[i] }));
+    dataPoints.sort((a, b) => a.x - b.x);
+    const sortedXs = dataPoints.map(p => p.x);
+    const sortedYs = dataPoints.map(p => p.y);
+
+    // Generate curve points
+    const mathJsFormula = convertFormula(job.formula);
+    let curveXs = [], curveYs = [];
+    try {
+        const node = math.parse(mathJsFormula);
+        const compiled = node.compile();
+        const xMin = Math.min(...sortedXs);
+        const xMax = Math.max(...sortedXs);
+        const range = xMax - xMin;
+        const step = range / 50;
+        for (let x = xMin - range * 0.1; x <= xMax + range * 0.1; x += step) {
+            curveXs.push(x);
+            try {
+                const y = compiled.evaluate({ x });
+                curveYs.push(isFinite(y) ? y : null);
+            } catch (e) { curveYs.push(null); }
+        }
+    } catch (e) { console.error('Chart error:', e); }
+
+    chart.setOption({
+        animation: false,
+        backgroundColor: 'transparent',
+        grid: { left: '10%', right: '5%', top: '10%', bottom: '15%' },
+        xAxis: { type: 'value', axisLine: { lineStyle: { color: '#4b5563' } }, axisLabel: { color: '#9ca3af', fontSize: 10 }, splitLine: { lineStyle: { color: '#374151' } } },
+        yAxis: { type: 'value', axisLine: { lineStyle: { color: '#4b5563' } }, axisLabel: { color: '#9ca3af', fontSize: 10 }, splitLine: { lineStyle: { color: '#374151' } } },
+        series: [
+            { type: 'scatter', symbolSize: 6, data: sortedXs.map((x, i) => [x, sortedYs[i]]), itemStyle: { color: '#3b82f6' } },
+            { type: 'line', smooth: true, showSymbol: false, data: curveXs.map((x, i) => [x, curveYs[i]]), lineStyle: { color: '#22c55e', width: 2 } }
+        ]
+    });
+}
+
+// Load data from history item
+function loadFromHistory(index) {
+    const job = jobHistory[index];
+    if (!job) return;
+
+    // Load input data
+    document.getElementById('xs').value = job.xs.join(', ');
+    document.getElementById('ys').value = job.ys.join(', ');
+
+    // Load config
+    document.getElementById('iterations').value = job.config.iterations;
+    document.getElementById('population').value = job.config.population;
+    document.getElementById('max-leafs').value = job.config.maxLeafs;
+    document.getElementById('seed').value = job.config.seed || '';
+
+    // Update editor chart
+    initDataEditorChart();
+
+    // Clear preset selection
+    document.getElementById('preset-select').value = '';
+    document.getElementById('points-container').classList.add('hidden');
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 // Initialize the data editor chart
 function initDataEditorChart() {
@@ -898,7 +1107,14 @@ function setupSSEConnection(jobId) {
             </div>
             <div class="mt-4">
                 <div class="text-gray-300 text-sm mb-1">Current Best Formula:</div>
-                <div class="formula-display text-green-400 text-sm">${data['best-formula']}</div>
+                <div class="group relative formula-display text-green-400 text-sm">
+                    <span id="current-formula">${data['best-formula']}</span>
+                    <button onclick="copyFormula('current-formula')" class="absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="mt-2 text-sm">
                 <span class="text-gray-400">Score:</span>
@@ -921,6 +1137,10 @@ function setupSSEConnection(jobId) {
         eventSource.close();
         resetUI();
         const data = JSON.parse(e.data);
+
+        // Save to job history
+        saveToHistory(data);
+
         resultsDiv.innerHTML = `
             <div class="mb-4">
                 <div class="flex items-center space-x-2 text-green-400 mb-4">
@@ -932,7 +1152,14 @@ function setupSSEConnection(jobId) {
 
                 <div class="mb-4">
                     <div class="text-gray-300 text-sm mb-2">Best Formula Found:</div>
-                    <div class="formula-display text-green-400 text-sm">${data['best-solution'].formula}</div>
+                    <div class="group relative formula-display text-green-400 text-sm">
+                        <span id="best-formula">${data['best-solution'].formula}</span>
+                        <button onclick="copyFormula('best-formula')" class="absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </button>
+                    </div>
                     <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
                 </div>
 
@@ -1024,6 +1251,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (dataEditorChart) {
             dataEditorChart.resize();
             setupDragHandlers(); // Re-position drag handles after resize
+        }
+    });
+
+    // Stop running/paused jobs when page is closed or reloaded
+    window.addEventListener('beforeunload', function() {
+        if (currentJobId) {
+            // Use sendBeacon for reliable delivery during page unload
+            navigator.sendBeacon('/api/jobs/' + currentJobId + '/stop', '');
         }
     });
 });
