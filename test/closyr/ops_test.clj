@@ -27,6 +27,20 @@
                           (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))
           -3.0000147)))
 
+  (testing "eval score on Hold-wrapped expr returns min-score"
+    (is (=
+          (ops/score-fn {:input-ys-vec   [0 1 2]
+                         :input-xs-list  (ops-common/exprs->exprs-list
+                                           (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                         :input-xs-count 3}
+                        {:max-leafs ops/default-max-leafs}
+                        (let [x (F/Dummy "x")]
+                          ;; Manually create a phenotype with Hold-wrapped expr
+                          {:sym  x
+                           :id   (random-uuid)
+                           :expr (F/Hold (F/Sin x))}))
+          ops/min-score)))
+
   (testing "eval score on too big fn"
     (is (=
           (ops/score-fn {:input-ys-vec   [0 1 2]

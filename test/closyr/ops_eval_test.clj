@@ -301,4 +301,33 @@
                  (range 320))))))))
 
 
+(deftest eval-extended-test
+  (let [x (F/Dummy "x")]
+    (testing "eval-extended returns nil when middle-section is nil"
+      (is (= (with-redefs-fn {#'ops-eval/eval-vec-pheno (fn [_ _] nil)}
+               (fn []
+                 (ops-eval/eval-extended
+                   (ops-common/->phenotype x (F/Sin x) nil)
+                   {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [1.0 2.0]))
+                    :input-xs-count 2}
+                   {:x-head      [0.5]
+                    :x-head-list (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                    :x-tail      [3.0]
+                    :x-tail-list (ops-common/exprs->exprs-list (ops-common/doubles->exprs [3.0]))})))
+             nil)))
+
+    (testing "eval-extended returns nil when middle-section is empty"
+      (is (= (with-redefs-fn {#'ops-eval/eval-vec-pheno (fn [_ _] [])}
+               (fn []
+                 (ops-eval/eval-extended
+                   (ops-common/->phenotype x (F/Sin x) nil)
+                   {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [1.0 2.0]))
+                    :input-xs-count 2}
+                   {:x-head      [0.5]
+                    :x-head-list (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
+                    :x-tail      [3.0]
+                    :x-tail-list (ops-common/exprs->exprs-list (ops-common/doubles->exprs [3.0]))})))
+             nil)))))
+
+
 (comment (run-tests 'closyr.ops-eval-test))

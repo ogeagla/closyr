@@ -160,13 +160,17 @@
    {:keys [max-leafs]}
    pheno]
   (try
-    (let [leafs (.leafCount ^IExpr (:expr pheno))]
-      (if (> leafs max-leafs)
+    (let [expr-str (str (:expr pheno))]
+      ;; Skip Hold() expressions - they can't be numerically evaluated
+      (if (str/starts-with? expr-str "Hold(")
         (tally-min-score min-score)
-        (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
-          (if f-of-xs
-            (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs input-ys-arr)
-            (tally-min-score min-score)))))
+        (let [leafs (.leafCount ^IExpr (:expr pheno))]
+          (if (> leafs max-leafs)
+            (tally-min-score min-score)
+            (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
+              (if f-of-xs
+                (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs input-ys-arr)
+                (tally-min-score min-score)))))))
     (catch Exception e
       (log/error "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))

@@ -131,15 +131,25 @@
     expr))
 
 
+(defn- hold-expr?
+  "Check if an expression is wrapped in Hold() which prevents numeric evaluation"
+  [^IExpr expr]
+  (and expr
+       (.isAST expr)
+       (= (.head expr) F/Hold)))
+
 (defn ->phenotype
   "Create a GA phenotype from an expr and symbol and other args"
   [^ISymbol variable ^IAST expr ^ExprEvaluator util]
   (try
-    (let [^ExprEvaluator util (or util (new-util))]
-      {:sym  variable
-       :util util
-       :id   (prng/random-uuid)
-       :expr (.eval util (valid-expr-or-default variable expr))})
+    (let [^ExprEvaluator util (or util (new-util))
+          ^IExpr result (.eval util (valid-expr-or-default variable expr))]
+      ;; Reject expressions wrapped in Hold() as they can't be numerically evaluated
+      (when-not (hold-expr? result)
+        {:sym  variable
+         :util util
+         :id   (prng/random-uuid)
+         :expr result}))
     (catch Exception e
       ;; These are expected during evolution - log at debug level without stack trace
       (log/debug "Eval error for expr: " (subs (str expr) 0 (min 60 (count (str expr)))) "..."))))

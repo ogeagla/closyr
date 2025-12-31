@@ -38,6 +38,11 @@
              (str (:expr (ops-common/->phenotype x (F/Sin x) nil))))
            "Sin(x)")))
 
+  (testing "with Hold-wrapped expr returns nil"
+    (is (= (let [x (F/Dummy "x")]
+             (ops-common/->phenotype x (F/Hold (F/Sin x)) nil))
+           nil)))
+
   (testing "with expr throwing exception"
     (is (=
           (let [x (F/Dummy "x")]
