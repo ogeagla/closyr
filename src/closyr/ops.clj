@@ -376,7 +376,10 @@
                                                  :p95 (or (:score best-p95-v) min-score)
                                                  :p90 (or (:score best-p90-v) min-score)}})
           (catch Exception e
-            (log/warn "Error in progress callback: " (.getMessage e)))))))
+            ;; Re-throw stop exceptions so the solver actually stops
+            (if (= :stopped (:type (ex-data e)))
+              (throw e)
+              (log/warn "Error in progress callback: " (.getMessage e))))))))
   (reset! sim-stats* {}))
 
 

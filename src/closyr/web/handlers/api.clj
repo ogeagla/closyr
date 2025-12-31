@@ -65,21 +65,29 @@
 
 
 (defn- wait-while-paused!
-  "Block while job is paused. Returns true if should continue, false if stopped."
+  "Block while job is paused. Returns true if should continue, false if stopped.
+   Uses single atom reads to get consistent snapshots and avoid race conditions."
   [job-id]
   (loop []
-    (cond
-      (job-stopped? job-id) false
-      (job-paused? job-id) (do
-                             (try
-                               (Thread/sleep 100)
-                               (catch InterruptedException _
-                                 nil))
-                             ;; Always check stop after waking, before recur
-                             (if (job-stopped? job-id)
-                               false
-                               (recur)))
-      :else true)))
+    ;; Single atomic read to get consistent view of job state
+    (let [{:keys [stop-requested paused]} (get @jobs* job-id)]
+      (cond
+        ;; Always check stop first - if stop requested, exit immediately
+        stop-requested false
+
+        ;; If paused, sleep and check again
+        paused
+        (do
+          (try
+            (Thread/sleep 100)
+            (catch InterruptedException _ nil))
+          ;; After waking, do another atomic read to check stop
+          (if (:stop-requested (get @jobs* job-id))
+            false
+            (recur)))
+
+        ;; Not stopped and not paused - continue execution
+        :else true))))
 
 
 (defn- interrupted-exception?
@@ -249,8 +257,9 @@
     (if job
       (if (= :running (:status job))
         (let [sse-channel (:sse-channel job)]
-          ;; Set the stop flag and clear paused - the progress callback will check this
-          (swap! jobs* update job-id merge {:stop-requested true :paused false :status :stopped})
+          ;; Set the stop flag - do NOT clear :paused to avoid race condition in wait-while-paused!
+          ;; The pause loop checks job-stopped? first, so it will properly detect the stop.
+          (swap! jobs* update job-id merge {:stop-requested true :status :stopped})
           ;; Send stopped event immediately via SSE
           (when (and sse-channel (:send! sse-channel))
             (try
