@@ -148,14 +148,22 @@
                         (swap! jobs* assoc-in [job-id :status] :running))
                   result (symreg/run-find-formula run-config)
 
-                  ;; Extract solutions from final population
+                  ;; Extract unique solutions from final population (deduplicated by formula)
                   solutions (->> (get-in result [:final-population :pop])
                                  (filter (fn [p] (and (:score p) (:expr p))))
                                  (sort-by :score)
                                  reverse
-                                 (take 10)
                                  (mapv phenotype->solution)
-                                 (filterv some?))
+                                 (filterv some?)
+                                 ;; Deduplicate by formula, keeping first (best score)
+                                 (reduce (fn [[seen results] sol]
+                                           (if (seen (:formula sol))
+                                             [seen results]
+                                             [(conj seen (:formula sol)) (conj results sol)]))
+                                         [#{} []])
+                                 second
+                                 (take 10)
+                                 vec)
 
                   final-result {:iterations-done (:iters-done result)
                                 :best-solution   (first solutions)
