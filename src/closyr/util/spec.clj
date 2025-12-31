@@ -197,7 +197,8 @@
    [:use-flamechart [:maybe :boolean]]
    [:input-xs-exprs [:vector #'SymbolicExpr]]
    [:input-ys-exprs [:vector #'SymbolicExpr]]
-   [:progress-callback {:optional true} [:maybe fn?]]])
+   [:progress-callback {:optional true} [:maybe fn?]]
+   [:quiet-logs? {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -297,7 +298,8 @@
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:log-steps {:optional true} [:maybe pos-int?]]
-   [:progress-callback {:optional true} [:maybe fn?]]])
+   [:progress-callback {:optional true} [:maybe fn?]]
+   [:quiet-logs? {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private SolverGUIMessage

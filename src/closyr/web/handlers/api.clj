@@ -139,11 +139,13 @@
                               :use-flamechart    false
                               :max-leafs         max-leafs
                               :random-seed       random-seed
+                              :quiet-logs?       true
                               :progress-callback progress-callback
                               :input-xs-exprs    (ops-common/doubles->exprs xs-vec)
                               :input-ys-exprs    (ops-common/doubles->exprs ys-vec)}
 
-                  _ (swap! jobs* assoc-in [job-id :status] :running)
+                  _ (do (log/info "Starting job" job-id "- iterations:" iterations "population:" population-size "points:" (count xs-vec))
+                        (swap! jobs* assoc-in [job-id :status] :running))
                   result (symreg/run-find-formula run-config)
 
                   ;; Extract solutions from final population
@@ -159,7 +161,9 @@
                                 :best-solution   (first solutions)
                                 :all-solutions   solutions}]
 
-              ;; Update job with final result
+              ;; Update job with final result and log completion
+              (log/info "Job" job-id "completed. Best formula:" (:formula (first solutions))
+                        "Score:" (:score (first solutions)))
               (swap! jobs* assoc job-id {:status :completed
                                          :result final-result})
 

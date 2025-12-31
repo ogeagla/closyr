@@ -337,21 +337,24 @@
           current-iteration (inc (- iters iters-to-go))]
 
       (reset! test-timer* (Date.))
-      (log/info current-iteration "-th-iter, "
-                " iters left: " (dec iters-to-go)
-                " pop size: " pop-size
-                " points: " (count input-ys-vec)
-                " max leafs: " max-leafs
-                " took secs: " took-s
-                " phenos/s: " (if (pos? took-s)
-                                (Math/round ^double (/ (* pop-size *log-steps*) took-s))
-                                0)
-                (str "\n top " *print-top-n* " best:\n"
-                     (->> (take *print-top-n* bests)
-                          (map reportable-phen-str)
-                          (str/join "\n")))
-                "\n"
-                (summarize-sim-stats))
+
+      ;; Log iteration details unless quiet-logs? is set (e.g., when running from web API)
+      (when-not (:quiet-logs? run-config)
+        (log/info current-iteration "-th-iter, "
+                  " iters left: " (dec iters-to-go)
+                  " pop size: " pop-size
+                  " points: " (count input-ys-vec)
+                  " max leafs: " max-leafs
+                  " took secs: " took-s
+                  " phenos/s: " (if (pos? took-s)
+                                  (Math/round ^double (/ (* pop-size *log-steps*) took-s))
+                                  0)
+                  (str "\n top " *print-top-n* " best:\n"
+                       (->> (take *print-top-n* bests)
+                            (map reportable-phen-str)
+                            (str/join "\n")))
+                  "\n"
+                  (summarize-sim-stats)))
 
       (when use-gui?
         (put! sim->gui-chan {:iters                 iters
