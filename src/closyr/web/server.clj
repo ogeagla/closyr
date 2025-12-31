@@ -44,3 +44,8 @@
   "Check if the server is currently running."
   []
   (some? @server*))
+
+
+(comment
+  (start!)
+  (stop!))
