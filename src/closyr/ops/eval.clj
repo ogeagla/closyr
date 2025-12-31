@@ -52,8 +52,9 @@
             ^IExpr res (.eval (or util (ops-common/new-util)) ast)]
         res)
       (log/warn "Warning: eval needs both expr and args, and expr cannot be NIL"))
-    (catch Exception e (log/error "Warning: Error in eval: "
-                                  (str expr) " : " (or (.getMessage e) e)))))
+    (catch Exception e
+      ;; Expected during evolution - log at debug level
+      (log/debug "Eval error: " (subs (str expr) 0 (min 50 (count (str expr)))) "..."))))
 
 
 (defn- parseable-eval-result?
@@ -77,7 +78,7 @@
         (ops-common/expr->double res)
         Double/POSITIVE_INFINITY))
     (catch Exception e
-      (log/error "Error in evaling function on input values: "
+      (log/debug "Error in evaling function on input values: "
                  (str eval-p) " : " (or (.getMessage e) e))
       Double/POSITIVE_INFINITY)))
 
@@ -93,7 +94,7 @@
             eval-p
             arg0))))
     (catch Exception e
-      (log/error "Error in evaling function on const xs vector: "
+      (log/debug "Error in evaling function on const xs vector: "
                  (str eval-p) " : " (.getMessage e))
       (throw e))))
 
@@ -130,18 +131,16 @@
     x-head-list :x-head-list
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
-  (let [middle-section (eval-vec-pheno p run-args)
-        max-y          (reduce max middle-section)
-        min-y          (reduce min middle-section)]
-    (concat
-
-      (mapv #(clamp-oversampled-ys max-y min-y %)
-            (eval-vec-pheno p (assoc run-args :input-xs-list x-head-list :input-xs-count (count x-head))))
-
-      middle-section
-
-      (mapv #(clamp-oversampled-ys max-y min-y %)
-            (eval-vec-pheno p (assoc run-args :input-xs-list x-tail-list :input-xs-count (count x-tail)))))))
+  (let [middle-section (eval-vec-pheno p run-args)]
+    (when (seq middle-section)
+      (let [max-y (reduce max middle-section)
+            min-y (reduce min middle-section)]
+        (concat
+          (mapv #(clamp-oversampled-ys max-y min-y %)
+                (eval-vec-pheno p (assoc run-args :input-xs-list x-head-list :input-xs-count (count x-head))))
+          middle-section
+          (mapv #(clamp-oversampled-ys max-y min-y %)
+                (eval-vec-pheno p (assoc run-args :input-xs-list x-tail-list :input-xs-count (count x-tail)))))))))
 
 
 #_(defn eval-vec-pheno-oversample-from-orig-xs

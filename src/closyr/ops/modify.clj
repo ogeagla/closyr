@@ -233,7 +233,7 @@
                                           (catch Exception e
                                             (if (= "Infinite expression 1/0 encountered." (.getMessage e))
                                               (divided-by-zero)
-                                              (log/warn
+                                              (log/debug
                                                 "Warning, mutation failed: " (:label mod-to-apply)
                                                 " on: " (type expr-prior) " / " (str expr-prior)
                                                 " due to: " (or (.getMessage e) e)))

@@ -141,8 +141,8 @@
        :id   (prng/random-uuid)
        :expr (.eval util (valid-expr-or-default variable expr))})
     (catch Exception e
-      (log/error "Err creating pheno from expr/x: "
-                 (str expr) " / " (str variable) " : " (or (.getMessage e) e)))))
+      ;; These are expected during evolution - log at debug level without stack trace
+      (log/debug "Eval error for expr: " (subs (str expr) 0 (min 60 (count (str expr)))) "..."))))
 
 
 (defn- probability-inversely-proportional-to-leaf-size
