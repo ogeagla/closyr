@@ -352,6 +352,15 @@ function setupSSEConnection(jobId) {
     eventSource.addEventListener('stopped', function(e) {
         eventSource.close();
         resetUI();
+
+        // Parse data and save to history if we have progress data
+        if (e.data) {
+            const data = JSON.parse(e.data);
+            if (data['last-progress']) {
+                saveStoppedToHistory(data['last-progress']);
+            }
+        }
+
         resultsDiv.innerHTML = `
             <div class="text-yellow-400">
                 <div class="flex items-center space-x-2 mb-2">

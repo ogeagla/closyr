@@ -186,12 +186,14 @@
                                  (interrupted-exception? e)
                                  (job-stopped? job-id))]
                 (if stopped?
-                  (do
+                  (let [progress (:progress (get @jobs* job-id))]
                     (log/info "Solver job stopped by user:" job-id)
                     (swap! jobs* update job-id merge {:status :stopped})
                     (when (and sse-channel (:send! sse-channel))
                       (try
-                        ((:send! sse-channel) "stopped" {:message "Job stopped by user"})
+                        ((:send! sse-channel) "stopped" (merge {:message "Job stopped by user"}
+                                                               (when progress
+                                                                 {:last-progress progress})))
                         ((:close! sse-channel))
                         (catch Exception _ nil))))
                   (do
@@ -268,14 +270,17 @@
         job (get @jobs* job-id)]
     (if job
       (if (= :running (:status job))
-        (let [sse-channel (:sse-channel job)]
+        (let [sse-channel (:sse-channel job)
+              progress (:progress job)]
           ;; Set the stop flag - do NOT clear :paused to avoid race condition in wait-while-paused!
           ;; The pause loop checks job-stopped? first, so it will properly detect the stop.
           (swap! jobs* update job-id merge {:stop-requested true :status :stopped})
-          ;; Send stopped event immediately via SSE
+          ;; Send stopped event immediately via SSE, including last progress data
           (when (and sse-channel (:send! sse-channel))
             (try
-              ((:send! sse-channel) "stopped" {:message "Job stopped by user"})
+              ((:send! sse-channel) "stopped" (merge {:message "Job stopped by user"}
+                                                     (when progress
+                                                       {:last-progress progress})))
               ((:close! sse-channel))
               (catch Exception _ nil)))
           ;; Also try to cancel the future

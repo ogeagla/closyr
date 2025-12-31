@@ -5,10 +5,11 @@
 let jobHistory = [];
 
 // Save job to history
-function saveToHistory(jobData) {
+function saveToHistory(jobData, status = 'completed') {
     const job = {
         id: currentJobId,
         timestamp: new Date().toLocaleString(),
+        status: status,
         formula: jobData['best-solution'].formula,
         score: jobData['best-solution'].score,
         leafCount: jobData['best-solution'].leafCount,
@@ -26,6 +27,33 @@ function saveToHistory(jobData) {
     renderJobHistory();
 }
 
+// Save stopped job to history (from progress data)
+function saveStoppedToHistory(progressData) {
+    if (!progressData) return;
+
+    const job = {
+        id: currentJobId,
+        timestamp: new Date().toLocaleString(),
+        status: 'stopped',
+        formula: progressData['best-formula'],
+        score: progressData['best-score'],
+        leafCount: null, // Not available in progress data
+        iteration: progressData['iteration'],
+        totalIterations: progressData['total-iterations'],
+        xs: [...inputXs],
+        ys: [...inputYs],
+        config: {
+            iterations: parseInt(document.getElementById('iterations').value) || 100,
+            population: parseInt(document.getElementById('population').value) || 100,
+            maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
+            seed: document.getElementById('seed').value || null
+        },
+        allSolutions: null
+    };
+    jobHistory.unshift(job);
+    renderJobHistory();
+}
+
 // Render job history list
 function renderJobHistory() {
     const section = document.getElementById('job-history-section');
@@ -37,7 +65,16 @@ function renderJobHistory() {
     }
 
     section.classList.remove('hidden');
-    container.innerHTML = jobHistory.map((job, index) => `
+    container.innerHTML = jobHistory.map((job, index) => {
+        const statusBadge = job.status === 'stopped'
+            ? '<span class="px-1.5 py-0.5 text-xs bg-yellow-600 text-white rounded ml-2">Stopped</span>'
+            : '';
+        const iterationInfo = job.status === 'stopped' && job.iteration
+            ? ` · Stopped at ${job.iteration}/${job.totalIterations}`
+            : '';
+        const complexityInfo = job.leafCount ? `${job.leafCount} nodes` : 'N/A';
+
+        return `
         <div class="bg-gray-800 rounded-lg overflow-hidden">
             <div class="p-4 cursor-pointer hover:bg-gray-750" onclick="toggleHistoryItem(${index})">
                 <div class="flex items-center justify-between">
@@ -47,9 +84,10 @@ function renderJobHistory() {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
                             <span class="text-green-400 text-sm font-mono truncate">${job.formula}</span>
+                            ${statusBadge}
                         </div>
                         <div class="text-xs text-gray-500 mt-1 ml-6">
-                            Score: ${job.score.toFixed(6)} · ${job.xs.length} points · ${job.timestamp}
+                            Score: ${job.score.toFixed(6)} · ${job.xs.length} points${iterationInfo} · ${job.timestamp}
                         </div>
                     </div>
                     <button onclick="event.stopPropagation(); loadFromHistory(${index})" class="ml-2 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" title="Load this data">
@@ -66,11 +104,11 @@ function renderJobHistory() {
                         </div>
                         <div>
                             <span class="text-gray-400">Complexity:</span>
-                            <span class="text-white ml-1">${job.leafCount} nodes</span>
+                            <span class="text-white ml-1">${complexityInfo}</span>
                         </div>
                         <div>
                             <span class="text-gray-400">Iterations:</span>
-                            <span class="text-white ml-1">${job.config.iterations}</span>
+                            <span class="text-white ml-1">${job.status === 'stopped' ? `${job.iteration}/${job.totalIterations}` : job.config.iterations}</span>
                         </div>
                         <div>
                             <span class="text-gray-400">Population:</span>
@@ -88,7 +126,7 @@ function renderJobHistory() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // Toggle history item expansion
