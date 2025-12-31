@@ -67,6 +67,14 @@
                               placeholder="1, 4, 9, 16, 25">1, 4, 9, 16, 25</textarea>
                 </div>
 
+                <!-- Interactive Data Editor -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Edit Data Points <span class="text-gray-500">(drag points to adjust Y values)</span>
+                    </label>
+                    <div id="data-editor-chart" class="bg-gray-900 rounded-md" style="width: 100%; height: 200px;"></div>
+                </div>
+
                 <!-- CSV Upload -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">
@@ -93,14 +101,14 @@
                         <label for="iterations" class="block text-sm font-medium text-gray-300 mb-2">
                             Iterations
                         </label>
-                        <input type="number" id="iterations" name="config.iterations" value="20" min="1" max="1000"
+                        <input type="number" id="iterations" name="config.iterations" value="100" min="1" max="10000"
                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label for="population" class="block text-sm font-medium text-gray-300 mb-2">
                             Population Size
                         </label>
-                        <input type="number" id="population" name="config.population" value="50" min="10" max="10000"
+                        <input type="number" id="population" name="config.population" value="100" min="10" max="20000"
                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
@@ -110,7 +118,7 @@
                         <label for="max-leafs" class="block text-sm font-medium text-gray-300 mb-2">
                             Max Expression Size
                         </label>
-                        <input type="number" id="max-leafs" name="config.maxLeafs" value="40" min="5" max="100"
+                        <input type="number" id="max-leafs" name="config.maxLeafs" value="40" min="5" max="150"
                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
@@ -165,6 +173,129 @@ let fitChart = null;
 let inputXs = [];
 let inputYs = [];
 
+// Data editor chart instance
+let dataEditorChart = null;
+let editorData = []; // [{x, y, index}]
+
+// Initialize the data editor chart
+function initDataEditorChart() {
+    const container = document.getElementById('data-editor-chart');
+    if (!container) return;
+
+    if (!dataEditorChart) {
+        dataEditorChart = echarts.init(container, 'dark');
+    }
+
+    // Parse current values from textareas
+    const xs = document.getElementById('xs').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+    const ys = document.getElementById('ys').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+
+    if (xs.length === 0 || ys.length === 0) {
+        dataEditorChart.clear();
+        return;
+    }
+
+    // Build data with indices for tracking
+    editorData = xs.map((x, i) => ({ x, y: ys[i] !== undefined ? ys[i] : 0, index: i }));
+
+    updateDataEditorChart();
+}
+
+// Update the data editor chart display
+function updateDataEditorChart() {
+    if (!dataEditorChart || editorData.length === 0) return;
+
+    const xs = editorData.map(d => d.x);
+    const ys = editorData.map(d => d.y);
+
+    const option = {
+        backgroundColor: 'transparent',
+        grid: {
+            left: '12%',
+            right: '5%',
+            top: '10%',
+            bottom: '15%'
+        },
+        xAxis: {
+            type: 'value',
+            axisLine: { lineStyle: { color: '#4b5563' } },
+            axisLabel: { color: '#9ca3af', fontSize: 10 },
+            splitLine: { lineStyle: { color: '#374151' } }
+        },
+        yAxis: {
+            type: 'value',
+            axisLine: { lineStyle: { color: '#4b5563' } },
+            axisLabel: { color: '#9ca3af', fontSize: 10 },
+            splitLine: { lineStyle: { color: '#374151' } }
+        },
+        series: [{
+            type: 'scatter',
+            symbolSize: 12,
+            data: editorData.map(d => [d.x, d.y]),
+            itemStyle: { color: '#3b82f6' },
+            cursor: 'ns-resize'
+        }]
+    };
+
+    dataEditorChart.setOption(option);
+
+    // Set up drag handling using graphic elements
+    setupDragHandlers();
+}
+
+// Set up drag handlers for points
+function setupDragHandlers() {
+    if (!dataEditorChart || editorData.length === 0) return;
+
+    const graphicElements = editorData.map((d, idx) => ({
+        type: 'circle',
+        position: dataEditorChart.convertToPixel('grid', [d.x, d.y]),
+        shape: { r: 10 },
+        style: { fill: 'transparent' },
+        cursor: 'ns-resize',
+        draggable: 'vertical',
+        z: 100,
+        ondrag: function(e) {
+            const pos = [this.x, this.y];
+            const dataPos = dataEditorChart.convertFromPixel('grid', pos);
+            editorData[idx].y = dataPos[1];
+
+            // Update the scatter series
+            dataEditorChart.setOption({
+                series: [{
+                    data: editorData.map(d => [d.x, d.y])
+                }]
+            });
+        },
+        ondragend: function() {
+            // Update textarea with new values
+            syncEditorToTextarea();
+        }
+    }));
+
+    dataEditorChart.setOption({
+        graphic: graphicElements
+    });
+}
+
+// Sync editor data to Y values textarea
+function syncEditorToTextarea() {
+    const ys = editorData.map(d => d.y.toFixed(6));
+    document.getElementById('ys').value = ys.join(', ');
+}
+
+// Debounce helper
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// Listen for textarea changes to update chart
+const debouncedUpdateEditor = debounce(initDataEditorChart, 300);
+
 // Convert formula from symbolic regression format to math.js format
 function convertFormula(formula) {
     // Convert title-case functions to lowercase for math.js
@@ -188,7 +319,8 @@ function convertFormula(formula) {
 }
 
 // Initialize or update the fit chart
-function renderFitChart(formula) {
+// Set animate=false during progress updates for performance
+function renderFitChart(formula, animate = true) {
     const chartContainer = document.getElementById('fit-chart');
     if (!chartContainer) return;
 
@@ -248,6 +380,7 @@ function renderFitChart(formula) {
 
         // Chart options
         const option = {
+            animation: animate,
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'axis',
@@ -286,7 +419,8 @@ function renderFitChart(formula) {
                 {
                     name: 'Objective Data',
                     type: 'scatter',
-                    symbolSize: 7,
+                    symbol: 'circle',
+                    symbolSize: 8,
                     data: sortedXs.map((x, i) => [x, sortedYs[i]]),
                     itemStyle: { color: '#3b82f6' }
                 },
@@ -359,6 +493,9 @@ function regeneratePreset() {
 
         document.getElementById('xs').value = xs.map(x => x.toFixed(4)).join(', ');
         document.getElementById('ys').value = ys.map(y => y.toFixed(6)).join(', ');
+
+        // Update the data editor chart
+        initDataEditorChart();
     }
 }
 
@@ -386,6 +523,9 @@ function loadPreset(presetId) {
         const ys = option.dataset.ys;
         document.getElementById('xs').value = xs;
         document.getElementById('ys').value = ys;
+
+        // Update the data editor chart
+        initDataEditorChart();
     }
 }
 
@@ -540,6 +680,9 @@ async function handleCsvUpload(input) {
         document.getElementById('xs').value = data.xs.join(', ');
         document.getElementById('ys').value = data.ys.join(', ');
 
+        // Update the data editor chart
+        initDataEditorChart();
+
         // Clear the file input
         input.value = '';
     } catch (err) {
@@ -648,8 +791,8 @@ function setupSSEConnection(jobId) {
             </div>
         `;
 
-        // Update chart with current best formula
-        renderFitChart(data['best-formula']);
+        // Update chart with current best formula (no animation during progress)
+        renderFitChart(data['best-formula'], false);
     });
 
     eventSource.addEventListener('complete', function(e) {
@@ -740,5 +883,23 @@ function setupSSEConnection(jobId) {
         // Connection error - might be normal end of stream
     };
 }
+
+// Initialize data editor on page load and set up event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the data editor chart
+    initDataEditorChart();
+
+    // Listen for changes to X and Y textareas
+    document.getElementById('xs').addEventListener('input', debouncedUpdateEditor);
+    document.getElementById('ys').addEventListener('input', debouncedUpdateEditor);
+
+    // Handle window resize for data editor chart
+    window.addEventListener('resize', function() {
+        if (dataEditorChart) {
+            dataEditorChart.resize();
+            setupDragHandlers(); // Re-position drag handles after resize
+        }
+    });
+});
 </script>
 {% endblock %}
