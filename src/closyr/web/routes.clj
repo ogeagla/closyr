@@ -57,4 +57,4 @@
                   ;; Standard site defaults (but disable CSRF for API)
                   [wrap-defaults (-> site-defaults
                                      (assoc-in [:security :anti-forgery] false)
-                                     (assoc-in [:responses :content-types] false))]]}))
+                                     (assoc-in [:responses :content-types] true))]]}))
