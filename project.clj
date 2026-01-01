@@ -35,7 +35,7 @@
                  [ring/ring-jetty-adapter "1.15.3"]
                  [ring/ring-defaults "0.7.0"]
                  [metosin/reitit "0.9.2"]
-                 [selmer "1.12.61"]
+                 [selmer "1.12.70"]
                  [cheshire "6.1.0"]]
 
   :repositories {"snapshots-repo" {:url       "https://oss.sonatype.org/content/repositories/snapshots"
