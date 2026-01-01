@@ -172,7 +172,7 @@
                 (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs input-ys-arr)
                 (tally-min-score min-score)))))))
     (catch Exception e
-      (log/error "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
+      (log/debug "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
 
