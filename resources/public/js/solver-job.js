@@ -153,6 +153,9 @@ async function handleCsvUpload(input) {
         document.getElementById('xs').value = data.xs.join(', ');
         document.getElementById('ys').value = data.ys.join(', ');
 
+        // Clear dataset name since data came from CSV
+        clearDatasetName();
+
         initDataEditorChart();
         input.value = '';
     } catch (err) {
@@ -287,6 +290,11 @@ function setupSSEConnection(jobId) {
 
         saveToHistory(data);
 
+        const datasetName = getSelectedDatasetName();
+        const datasetBadge = datasetName
+            ? `<span class="px-2 py-1 text-xs bg-blue-600 text-white rounded ml-2">${datasetName}</span>`
+            : '';
+
         resultsDiv.innerHTML = `
             <div class="mb-4">
                 <div class="flex items-center space-x-2 text-green-400 mb-4">
@@ -294,6 +302,7 @@ function setupSSEConnection(jobId) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                     <span class="font-semibold">Completed!</span>
+                    ${datasetBadge}
                 </div>
 
                 <div class="mb-4">

@@ -93,6 +93,8 @@ function setupDragHandlers() {
 function syncEditorToTextarea() {
     const ys = editorData.map(d => d.y.toFixed(6));
     document.getElementById('ys').value = ys.join(', ');
+    // Clear dataset name since user manually edited via drag
+    clearDatasetName();
 }
 
 // Initialize or update the fit chart

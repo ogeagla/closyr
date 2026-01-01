@@ -14,6 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('xs').addEventListener('input', debouncedUpdateEditor);
     document.getElementById('ys').addEventListener('input', debouncedUpdateEditor);
 
+    // Clear dataset name when user manually edits the data
+    document.getElementById('xs').addEventListener('input', clearDatasetName);
+    document.getElementById('ys').addEventListener('input', clearDatasetName);
+
     // Form submission
     document.getElementById('solver-form').addEventListener('submit', submitSolverForm);
 

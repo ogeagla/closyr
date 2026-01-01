@@ -10,6 +10,7 @@ function saveToHistory(jobData, status = 'completed') {
         id: currentJobId,
         timestamp: new Date().toLocaleString(),
         status: status,
+        datasetName: getSelectedDatasetName(),
         formula: jobData['best-solution'].formula,
         score: jobData['best-solution'].score,
         leafCount: jobData['best-solution'].leafCount,
@@ -35,6 +36,7 @@ function saveStoppedToHistory(progressData) {
         id: currentJobId,
         timestamp: new Date().toLocaleString(),
         status: 'stopped',
+        datasetName: getSelectedDatasetName(),
         formula: progressData['best-formula'],
         score: progressData['best-score'],
         leafCount: null, // Not available in progress data
@@ -69,6 +71,9 @@ function renderJobHistory() {
         const statusBadge = job.status === 'stopped'
             ? '<span class="px-1.5 py-0.5 text-xs bg-yellow-600 text-white rounded ml-2">Stopped</span>'
             : '';
+        const datasetBadge = job.datasetName
+            ? `<span class="px-1.5 py-0.5 text-xs bg-blue-600 text-white rounded ml-2">${job.datasetName}</span>`
+            : '';
         const iterationInfo = job.status === 'stopped' && job.iteration
             ? ` · Stopped at ${job.iteration}/${job.totalIterations}`
             : '';
@@ -85,6 +90,7 @@ function renderJobHistory() {
                             </svg>
                             <span class="text-green-400 text-sm font-mono truncate">${job.formula}</span>
                             ${statusBadge}
+                            ${datasetBadge}
                         </div>
                         <div class="text-xs text-gray-500 mt-1 ml-6">
                             Score: ${job.score.toFixed(6)} · ${job.xs.length} points${iterationInfo} · ${job.timestamp}

@@ -2,6 +2,19 @@
  * Dataset presets and generation
  */
 
+// Track currently selected dataset name (null if data was manually edited)
+let selectedDatasetName = null;
+
+// Get the current dataset name (or null if edited)
+function getSelectedDatasetName() {
+    return selectedDatasetName;
+}
+
+// Clear dataset name when data is manually edited
+function clearDatasetName() {
+    selectedDatasetName = null;
+}
+
 // Formula generators for each dataset type
 const formulaGenerators = {
     'quadratic': x => x * x,
@@ -65,12 +78,16 @@ function regeneratePreset() {
 function loadPreset(presetId) {
     if (!presetId) {
         document.getElementById('points-container').classList.add('hidden');
+        selectedDatasetName = null;
         return;
     }
 
     const select = document.getElementById('preset-select');
     const option = select.options[select.selectedIndex];
     const formula = option.dataset.formula;
+
+    // Store the dataset name
+    selectedDatasetName = option.textContent.trim();
 
     const pointsContainer = document.getElementById('points-container');
     if (formula && formulaGenerators[formula]) {
