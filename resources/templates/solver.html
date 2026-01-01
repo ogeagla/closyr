@@ -131,6 +131,30 @@
                     </div>
                 </div>
 
+                <!-- Mutations Selection (collapsible) -->
+                <div class="mb-6">
+                    <button type="button" id="mutations-toggle"
+                            class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-300 hover:text-white"
+                            onclick="toggleMutationsPanel()">
+                        <span>
+                            Mutations
+                            <span id="mutations-count" class="text-gray-500 ml-2">(loading...)</span>
+                        </span>
+                        <svg id="mutations-chevron" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="mutations-panel" class="hidden mt-3">
+                        <div class="flex space-x-2 mb-2">
+                            <button type="button" onclick="selectAllMutations()" class="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded">Select All</button>
+                            <button type="button" onclick="selectNoMutations()" class="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded">Select None</button>
+                        </div>
+                        <div id="mutations-list" class="max-h-48 overflow-y-auto bg-gray-900 rounded-md p-2 grid grid-cols-3 gap-1 text-xs">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Control Buttons -->
                 <div class="flex space-x-3">
                     <button type="submit" id="start-btn"
@@ -179,6 +203,7 @@
 <script src="/js/solver-charts.js"></script>
 <script src="/js/solver-history.js"></script>
 <script src="/js/solver-presets.js"></script>
+<script src="/js/solver-mutations.js"></script>
 <script src="/js/solver-job.js"></script>
 <script src="/js/solver-init.js"></script>
 {% endblock %}

@@ -117,6 +117,7 @@
                   population-size (get config :population 20)
                   max-leafs (get config :maxLeafs 40)
                   random-seed (get config :seed)
+                  mutations-blacklist (get config :mutationsBlacklist)
 
                   ;; Progress callback that sends SSE events and checks for stop/pause
                   progress-callback (fn [progress-data]
@@ -131,7 +132,10 @@
                                       ;; Also update job state
                                       (swap! jobs* assoc-in [job-id :progress] progress-data))
 
-                  initial-muts (ops-init/initial-mutations)
+                  ;; Apply mutations blacklist if provided
+                  initial-muts (if (seq mutations-blacklist)
+                                 (ops-init/filter-mutations {:blacklist mutations-blacklist})
+                                 (ops-init/initial-mutations))
                   run-config {:initial-phenos    (ops-init/initial-phenotypes population-size)
                               :initial-muts      initial-muts
                               :iters             iterations
@@ -566,6 +570,16 @@
     {:status  200
      :headers {"Content-Type" "application/json"}
      :body    (json/encode {:datasets dataset-list})}))
+
+
+(defn mutations
+  "GET /api/mutations - List all available mutation labels for filtering."
+  [_]
+  (let [all-labels (ops-init/mutation-labels)]
+    {:status  200
+     :headers {"Content-Type" "application/json"}
+     :body    (json/encode {:mutations all-labels
+                            :count     (count all-labels)})}))
 
 
 (defn upload-csv

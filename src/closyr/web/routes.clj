@@ -26,6 +26,7 @@
     ["/jobs/:id/resume" {:post api/resume-job}]
     ["/jobs/:id/events" {:get api/events}]
     ["/datasets" {:get api/datasets}]
+    ["/mutations" {:get api/mutations}]
     ["/upload-csv" {:post api/upload-csv}]]
 
    ;; HTMX partials

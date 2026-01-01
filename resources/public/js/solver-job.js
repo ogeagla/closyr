@@ -181,6 +181,14 @@ function submitSolverForm(evt) {
         config.seed = parseInt(seedValue);
     }
 
+    // Add mutations blacklist if any mutations are excluded
+    const blacklist = getMutationsBlacklist();
+    console.log('Mutations blacklist:', blacklist);
+    if (blacklist.length > 0) {
+        config.mutationsBlacklist = blacklist;
+    }
+    console.log('Full config being sent:', config);
+
     showRunningState();
 
     fetch('/api/solve', {
