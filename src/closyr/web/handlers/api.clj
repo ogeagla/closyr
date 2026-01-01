@@ -449,6 +449,47 @@
                        :xMax    (* 4 Math/PI)
                        :xs      [0 1 2 3 4 5 6]
                        :ys      (mapv #(Math/sin %) [0 1 2 3 4 5 6])}
+                      {:id      "feynman-diffraction"
+                       :name    "Feynman Diffraction (sin²(5x/2)/sin²(x/2))"
+                       :formula "feynman-diffraction"
+                       :xMin    0.1
+                       :xMax    (* 2 Math/PI)
+                       :xs      [0.5 1.0 1.5 2.0 2.5 3.0 4.0 5.0 6.0]
+                       :ys      (mapv (fn [x]
+                                        (let [sin-half (Math/sin (/ x 2.0))
+                                              sin-n-half (Math/sin (* 2.5 x))]
+                                          (if (< (Math/abs sin-half) 1e-10)
+                                            25.0
+                                            (/ (* sin-n-half sin-n-half)
+                                               (* sin-half sin-half)))))
+                                      [0.5 1.0 1.5 2.0 2.5 3.0 4.0 5.0 6.0])}
+                      {:id      "feynman-planck"
+                       :name    "Feynman Planck (x³/(e^x-1))"
+                       :formula "feynman-planck"
+                       :xMin    0.1
+                       :xMax    5.0
+                       :xs      [0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5]
+                       :ys      (mapv (fn [x] (/ (* x x x) (- (Math/exp x) 1.0)))
+                                      [0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5])}
+                      {:id      "feynman-rutherford"
+                       :name    "Feynman Rutherford (1/sin⁴(x/2))"
+                       :formula "feynman-rutherford"
+                       :xMin    0.3
+                       :xMax    Math/PI
+                       :xs      [0.5 0.8 1.0 1.3 1.6 2.0 2.5 3.0]
+                       :ys      (mapv (fn [x]
+                                        (let [sin-half (Math/sin (/ x 2.0))]
+                                          (/ 1.0 (* sin-half sin-half sin-half sin-half))))
+                                      [0.5 0.8 1.0 1.3 1.6 2.0 2.5 3.0])}
+                      {:id      "feynman-ellipse"
+                       :name    "Feynman Ellipse (0.64/(1+0.6*cos(x)))"
+                       :formula "feynman-ellipse"
+                       :xMin    0
+                       :xMax    (* 2 Math/PI)
+                       :xs      [0 0.8 1.6 2.4 3.2 4.0 4.8 5.6 6.2]
+                       :ys      (mapv (fn [x]
+                                        (/ 0.64 (+ 1.0 (* 0.6 (Math/cos x)))))
+                                      [0 0.8 1.6 2.4 3.2 4.0 4.8 5.6 6.2])}
                       ;; Prime counting function π(x) - number of primes <= x (20 points)
                       {:id   "prime-counting-20"
                        :name "Prime Counting π(x) [20 pts]"

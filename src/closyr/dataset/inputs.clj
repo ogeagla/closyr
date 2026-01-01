@@ -147,4 +147,61 @@
                      t 2.0]       ; fixed time
                  (y->gui-coord-y
                    sketchpad-size*
-                   (* 60 (Math/sin (- (* k x) (* omega t)))))))}})
+                   (* 60 (Math/sin (- (* k x) (* omega t)))))))}
+
+   ;; Diffraction grating: I = I0 * sin²(nθ/2) / sin²(θ/2), n=5
+   "Feynman Diffraction"
+   {:idx     130
+    :formula "Sin(n*x/2)^2 / Sin(x/2)^2"
+    :fn      (fn [i]
+               (let [theta (+ 0.1 (* 6.0 (/ i (double @sketch-input-x-count*))))  ; θ in [0.1, 6.1]
+                     n 5.0
+                     half-theta (/ theta 2.0)
+                     sin-half (Math/sin half-theta)
+                     sin-n-half (Math/sin (* n half-theta))
+                     intensity (if (< (Math/abs sin-half) 1e-10)
+                                 (* n n)
+                                 (/ (* sin-n-half sin-n-half)
+                                    (* sin-half sin-half)))]
+                 (y->gui-coord-y
+                   sketchpad-size*
+                   (* 3 intensity))))}
+
+   ;; Planck radiation spectrum: x³ / (exp(x) - 1)
+   "Feynman Planck"
+   {:idx     140
+    :formula "x^3 / (Exp(x) - 1)"
+    :fn      (fn [i]
+               (let [x (+ 0.1 (* 5.0 (/ i (double @sketch-input-x-count*))))  ; x in [0.1, 5.1]
+                     planck (/ (* x x x)
+                               (- (Math/exp x) 1.0))]
+                 (y->gui-coord-y
+                   sketchpad-size*
+                   (* 50 planck))))}
+
+   ;; Rutherford scattering: 1 / sin⁴(θ/2)
+   "Feynman Rutherford"
+   {:idx     150
+    :formula "1 / Sin(x/2)^4"
+    :fn      (fn [i]
+               (let [theta (+ 0.3 (* 2.8 (/ i (double @sketch-input-x-count*))))  ; θ in [0.3, 3.1]
+                     sin-half (Math/sin (/ theta 2.0))
+                     rutherford (/ 1.0
+                                   (* sin-half sin-half sin-half sin-half))]
+                 (y->gui-coord-y
+                   sketchpad-size*
+                   (* 1 (Math/log rutherford)))))}  ; use log scale for display
+
+   ;; Elliptical orbit: r = a(1-e²) / (1 + e*cos(θ)), e=0.6
+   "Feynman Ellipse"
+   {:idx     160
+    :formula "a*(1-e^2) / (1 + e*Cos(x))"
+    :fn      (fn [i]
+               (let [theta (* 2.0 Math/PI (/ i (double @sketch-input-x-count*)))  ; θ in [0, 2π]
+                     e 0.6
+                     a 1.0
+                     radius (/ (* a (- 1.0 (* e e)))
+                               (+ 1.0 (* e (Math/cos theta))))]
+                 (y->gui-coord-y
+                   sketchpad-size*
+                   (* 60 radius))))}})

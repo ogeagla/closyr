@@ -192,6 +192,8 @@ Coverage looks like this if you run `lein cloverage`:
 
 ## Benchmarks
 
+Inspired by https://github.com/omron-sinicx/srsd-benchmark
+
 The project includes benchmark tests using standard symbolic regression test functions from the literature:
 
 ### Running Benchmarks

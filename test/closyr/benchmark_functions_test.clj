@@ -90,6 +90,49 @@
   (Math/sin (- x 1.0)))  ; simplified: k=1, omega*t=1
 
 
+(defn feynman-diffraction
+  "Diffraction grating intensity: I = I0 * sin²(nθ/2) / sin²(θ/2), n=5, I0=1
+   From Feynman I.30.3"
+  [theta]
+  (let [n 5.0
+        half-theta (/ theta 2.0)
+        sin-half (Math/sin half-theta)
+        sin-n-half (Math/sin (* n half-theta))]
+    (if (< (Math/abs sin-half) 1e-10)
+      (* n n)  ; limit as theta->0 is n²
+      (/ (* sin-n-half sin-n-half)
+         (* sin-half sin-half)))))
+
+
+(defn feynman-planck
+  "Planck radiation spectrum (simplified): x³ / (exp(x) - 1)
+   Core shape of black-body radiation. From Feynman I.41.16"
+  [x]
+  (if (< x 0.01)
+    (* x x)  ; Taylor expansion near 0
+    (/ (* x x x)
+       (- (Math/exp x) 1.0))))
+
+
+(defn feynman-rutherford
+  "Rutherford scattering cross-section: 1 / sin⁴(θ/2)
+   Simplified from Feynman B1. θ in (0.1, π)"
+  [theta]
+  (let [sin-half (Math/sin (/ theta 2.0))]
+    (/ 1.0
+       (* sin-half sin-half sin-half sin-half))))
+
+
+(defn feynman-elliptical-orbit
+  "Elliptical orbit radius: r = a(1-e²) / (1 + e*cos(θ))
+   Kepler's first law. e=0.6 (eccentricity), a=1. From Feynman B3"
+  [theta]
+  (let [e 0.6
+        a 1.0]
+    (/ (* a (- 1.0 (* e e)))
+       (+ 1.0 (* e (Math/cos theta))))))
+
+
 ;; =============================================================================
 ;; Data Generation
 ;; =============================================================================
@@ -235,6 +278,118 @@
              best-fn-str)
           "Expected formula for Feynman Wave with seed 42")
       (println (str "| Feynman Wave     | " (format-score best-score)
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
+
+
+(deftest ^:benchmark feynman-diffraction-benchmark
+  (testing "Feynman Diffraction: sin²(nθ/2) / sin²(θ/2)"
+    (let [{:keys [xs ys]} (generate-benchmark-data feynman-diffraction 0.1 (* 2 Math/PI) 30)
+          [{:keys [final-population iters-done]} elapsed-ms]
+          (with-timing
+            (binding [ops/*print-top-n* 1]
+              (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
+                (fn []
+                  (symreg/run-find-formula
+                    {:input-phenos-count 200
+                     :initial-muts       (ops-init/initial-mutations)
+                     :iters              100
+                     :use-gui?           false
+                     :use-flamechart     false
+                     :random-seed        42
+                     :input-xs-exprs     (ops-common/doubles->exprs xs)
+                     :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
+
+      (is (= 200 (count (:pop final-population))))
+      (is (= 100 iters-done))
+      (is (neg? best-score))
+      (println (str "| Feynman Diffraction | " (format-score best-score)
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
+
+
+(deftest ^:benchmark feynman-planck-benchmark
+  (testing "Feynman Planck radiation: x³ / (exp(x) - 1)"
+    (let [{:keys [xs ys]} (generate-benchmark-data feynman-planck 0.1 5.0 30)
+          [{:keys [final-population iters-done]} elapsed-ms]
+          (with-timing
+            (binding [ops/*print-top-n* 1]
+              (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
+                (fn []
+                  (symreg/run-find-formula
+                    {:input-phenos-count 200
+                     :initial-muts       (ops-init/initial-mutations)
+                     :iters              100
+                     :use-gui?           false
+                     :use-flamechart     false
+                     :random-seed        42
+                     :input-xs-exprs     (ops-common/doubles->exprs xs)
+                     :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
+
+      (is (= 200 (count (:pop final-population))))
+      (is (= 100 iters-done))
+      (is (neg? best-score))
+      (println (str "| Feynman Planck   | " (format-score best-score)
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
+
+
+(deftest ^:benchmark feynman-rutherford-benchmark
+  (testing "Feynman Rutherford scattering: 1 / sin⁴(θ/2)"
+    (let [{:keys [xs ys]} (generate-benchmark-data feynman-rutherford 0.3 Math/PI 30)
+          [{:keys [final-population iters-done]} elapsed-ms]
+          (with-timing
+            (binding [ops/*print-top-n* 1]
+              (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
+                (fn []
+                  (symreg/run-find-formula
+                    {:input-phenos-count 200
+                     :initial-muts       (ops-init/initial-mutations)
+                     :iters              100
+                     :use-gui?           false
+                     :use-flamechart     false
+                     :random-seed        42
+                     :input-xs-exprs     (ops-common/doubles->exprs xs)
+                     :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
+
+      (is (= 200 (count (:pop final-population))))
+      (is (= 100 iters-done))
+      (is (neg? best-score))
+      (println (str "| Feynman Rutherford | " (format-score best-score)
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
+
+
+(deftest ^:benchmark feynman-elliptical-orbit-benchmark
+  (testing "Feynman Elliptical orbit: a(1-e²) / (1 + e*cos(θ))"
+    (let [{:keys [xs ys]} (generate-benchmark-data feynman-elliptical-orbit 0.0 (* 2 Math/PI) 30)
+          [{:keys [final-population iters-done]} elapsed-ms]
+          (with-timing
+            (binding [ops/*print-top-n* 1]
+              (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
+                (fn []
+                  (symreg/run-find-formula
+                    {:input-phenos-count 200
+                     :initial-muts       (ops-init/initial-mutations)
+                     :iters              100
+                     :use-gui?           false
+                     :use-flamechart     false
+                     :random-seed        42
+                     :input-xs-exprs     (ops-common/doubles->exprs xs)
+                     :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
+
+      (is (= 200 (count (:pop final-population))))
+      (is (= 100 iters-done))
+      (is (neg? best-score))
+      (println (str "| Feynman Elliptical | " (format-score best-score)
                     " | " (format-time elapsed-ms)
                     " | fn: " best-fn-str " |")))))
 

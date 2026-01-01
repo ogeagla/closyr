@@ -12,7 +12,24 @@ const formulaGenerators = {
     'nguyen4': x => Math.pow(x, 6) + Math.pow(x, 5) + Math.pow(x, 4) + Math.pow(x, 3) + Math.pow(x, 2) + x,
     'nguyen5': x => Math.sin(x * x) * Math.cos(x) - 1,
     'feynman-lorentz': x => 1 / Math.sqrt(1 - x * x),
-    'feynman-wave': x => Math.sin(x)
+    'feynman-wave': x => Math.sin(x),
+    'feynman-diffraction': x => {
+        const n = 5;
+        const sinHalf = Math.sin(x / 2);
+        const sinNHalf = Math.sin(n * x / 2);
+        if (Math.abs(sinHalf) < 1e-10) return n * n;
+        return (sinNHalf * sinNHalf) / (sinHalf * sinHalf);
+    },
+    'feynman-planck': x => (x * x * x) / (Math.exp(x) - 1),
+    'feynman-rutherford': x => {
+        const sinHalf = Math.sin(x / 2);
+        return 1 / Math.pow(sinHalf, 4);
+    },
+    'feynman-ellipse': x => {
+        const e = 0.6;
+        const a = 1.0;
+        return (a * (1 - e * e)) / (1 + e * Math.cos(x));
+    }
 };
 
 // Update the number display when slider changes
