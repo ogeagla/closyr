@@ -226,6 +226,11 @@ function submitSolverForm(evt) {
 // Set up SSE connection for real-time progress updates
 function setupSSEConnection(jobId) {
     const resultsDiv = document.getElementById('results');
+    const datasetName = getSelectedDatasetName();
+    const datasetBadge = datasetName
+        ? `<span class="px-2 py-1 text-xs bg-blue-600 text-white rounded">${datasetName}</span>`
+        : '';
+
     resultsDiv.innerHTML = `
         <div class="flex items-center space-x-3 mb-4">
             <svg class="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -233,6 +238,7 @@ function setupSSEConnection(jobId) {
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <span class="text-blue-400">Solver running...</span>
+            ${datasetBadge}
         </div>
         <div id="progress-info" class="text-sm text-gray-400">
             Waiting for first update...
