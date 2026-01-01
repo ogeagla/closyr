@@ -125,6 +125,10 @@ function renderJobHistory() {
                             <span class="text-gray-400">Population:</span>
                             <span class="text-white ml-1">${job.config.population}</span>
                         </div>
+                        ${job.config.seed ? `<div>
+                            <span class="text-gray-400">Seed:</span>
+                            <span class="text-white ml-1">${job.config.seed}</span>
+                        </div>` : ''}
                     </div>
                     <div>
                         <div class="text-gray-400 text-xs mb-1">Input Data (${job.xs.length} points):</div>
