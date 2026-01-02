@@ -57,6 +57,15 @@
     (RT/vector (.toArray al))))
 
 
+(defn shuffle-arraylist!
+  "Shuffle a collection in-place and return as ArrayList for efficient iteration.
+  Avoids vector conversion overhead when the result will be iterated sequentially."
+  ^ArrayList [^Collection coll]
+  (let [^ArrayList al (if (instance? ArrayList coll) coll (ArrayList. coll))]
+    (Collections/shuffle al rng)
+    al))
+
+
 (defn random-uuid
   "Generate a random UUID using the seeded PRNG.
   This produces deterministic UUIDs when the seed is set."

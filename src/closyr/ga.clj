@@ -2,7 +2,9 @@
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
     [closyr.util.log :as log]
-    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]))
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle shuffle-arraylist!]])
+  (:import
+    (java.util ArrayList List)))
 
 
 (set! *warn-on-reflection* true)
@@ -69,34 +71,66 @@
     :else 10))
 
 
+(defn- process-chunk
+  "Process a chunk of population pairs, returning [scores new-individuals]."
+  [config ^List chunk]
+  (let [chunk-size (.size chunk)
+        scores     (transient [])
+        new-pop    (transient [])]
+    (loop [i 0]
+      (when (< i chunk-size)
+        (let [e1                       (.get chunk i)
+              e2                       (when (< (inc i) chunk-size) (.get chunk (inc i)))
+              [pair-score pair-result] (compete config [e1 e2])]
+          (conj! scores pair-score)
+          (run! #(conj! new-pop %) pair-result)
+          (recur (+ i 2)))))
+    [(persistent! scores) (persistent! new-pop)]))
+
+
+(defn- process-chunks-parallel
+  "Process population chunks in parallel, collecting scores and new population."
+  [config ^ArrayList shuffled-pop chunk-size]
+  (let [pop-size    (.size shuffled-pop)
+        num-chunks  (Math/ceil (/ pop-size (double chunk-size)))
+        chunk-ranges (mapv (fn [i]
+                            (let [start (* i chunk-size)
+                                  end   (min (* (inc i) chunk-size) pop-size)]
+                              [start end]))
+                          (range (int num-chunks)))
+        ;; Create sub-lists (views, no copy) for each chunk
+        chunks      (mapv (fn [[start end]]
+                           (.subList shuffled-pop start end))
+                         chunk-ranges)
+        ;; Process chunks in parallel
+        results     (if *deterministic-mode*
+                      (mapv (partial process-chunk config) chunks)
+                      (pmap (partial process-chunk config) chunks))]
+    ;; Combine results using transducers
+    (let [all-scores (into [] (mapcat first) results)
+          all-pop    (into [] (mapcat second) results)]
+      [all-scores all-pop])))
+
+
 (defn evolve
-  "Evolve a population using random competition"
+  "Evolve a population using random competition.
+  Optimized to reduce intermediate allocations using transducers and in-place operations."
   [{:keys [pop score-fn mutation-fn crossover-fn]
     :as   config}]
   (try
-    (let [pop-shuff    (->>
-                         pop
-                         (maybe-pmap (partial with-score score-fn))
-                         (shuffle))
+    (let [;; Score population (parallel if not deterministic)
+          scored-pop  (if *deterministic-mode*
+                        (mapv (partial with-score score-fn) pop)
+                        (into [] (pmap (partial with-score score-fn) pop)))
+          ;; Shuffle in-place, returning ArrayList for efficient indexed access
+          shuffled    (shuffle-arraylist! scored-pop)
+          ;; Process in chunks
+          chunk-size  (pop->chunks pop)
+          [pop-scores new-pop] (process-chunks-parallel config shuffled chunk-size)]
 
-          new-pop-data (->>
-                         (partition-all (pop->chunks pop) pop-shuff)
-                         (maybe-pmap (fn [pop-chunk]
-                                       (mapv (partial compete config)
-                                             (partition-all 2 pop-chunk))))
-                         (mapcat identity))
-
-          pop-scores   (vec (maybe-pmap first new-pop-data))
-          new-pop      (->> (maybe-pmap second new-pop-data)
-                            (mapcat identity)
-                            (vec))]
-
-      (merge config
-             {:pop          new-pop
-              :score-fn     score-fn
-              :pop-scores   pop-scores
-              :mutation-fn  mutation-fn
-              :crossover-fn crossover-fn}))
+      (assoc config
+        :pop new-pop
+        :pop-scores pop-scores))
     (catch Exception e
       (log/error "Err in evolve: " e)
       (throw e))))
