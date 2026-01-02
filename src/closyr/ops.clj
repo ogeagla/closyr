@@ -348,8 +348,8 @@
 
       (reset! test-timer* (Date.))
 
-      ;; Log iteration details unless quiet-logs? is set (e.g., when running from web API)
-      (when-not (:quiet-logs? run-config)
+      ;; Log iteration details unless quiet-logs is set (e.g., when running from web API)
+      (when-not (:quiet-logs run-config)
         (log/info current-iteration "-th-iter, "
                   " iters left: " (dec iters-to-go)
                   " pop size: " pop-size

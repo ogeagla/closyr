@@ -70,7 +70,7 @@
                  :use-gui?       false
                  :random-seed    123
                  :adaptive-mode  nil
-                 :quiet-logs?    nil
+                 :quiet-logs     nil
                  :use-flamechart true}
                 {:input-iters         20
                  :input-phenos-count  nil
@@ -120,7 +120,7 @@
                  :use-gui?       false
                  :random-seed    nil
                  :adaptive-mode  nil
-                 :quiet-logs?    nil
+                 :quiet-logs     nil
                  :use-flamechart nil}
                 {:input-iters         20
                  :input-phenos-count  nil

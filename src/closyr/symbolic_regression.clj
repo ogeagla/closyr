@@ -609,7 +609,7 @@
                               :iters iters
                               :max-leafs (or max-leafs ops/default-max-leafs)
                               :adaptive-mode adaptive-mode
-                              :quiet-logs? quiet-logs)
+                              :quiet-logs quiet-logs)
 
         _              (when (seq mutations-blacklist)
                          (log/info "GUI: using" (count initial-muts) "mutations"
@@ -752,7 +752,7 @@
                       :max-leafs      max-leafs
                       :use-flamechart use-flamechart
                       :adaptive-mode  adaptive-mode
-                      :quiet-logs?    quiet-logs
+                      :quiet-logs     quiet-logs
                       :input-xs-exprs (if xs
                                         (ops-common/doubles->exprs xs)
                                         example-input-xs-exprs)

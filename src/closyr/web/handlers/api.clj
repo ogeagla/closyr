@@ -146,7 +146,7 @@
                               :max-leafs         max-leafs
                               :random-seed       random-seed
                               :adaptive-mode     adaptive-mode
-                              :quiet-logs?       quiet-logs
+                              :quiet-logs        quiet-logs
                               :progress-callback progress-callback
                               :input-xs-exprs    (ops-common/doubles->exprs xs-vec)
                               :input-ys-exprs    (ops-common/doubles->exprs ys-vec)}
