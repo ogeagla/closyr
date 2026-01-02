@@ -274,8 +274,6 @@ function setupSSEConnection(jobId) {
             score: data['best-score']
         });
 
-        console.warn(currentScoreHistory);
-
         document.getElementById('progress-info').innerHTML = `
             <div class="mb-2">
                 <div class="flex justify-between text-sm mb-1">
