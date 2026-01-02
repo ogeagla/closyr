@@ -7,6 +7,7 @@ let fitChart = null;
 let dataEditorChart = null;
 let editorData = [];
 let historyCharts = {};
+let scoreCharts = {};
 
 // Initialize the data editor chart
 function initDataEditorChart() {
@@ -251,5 +252,117 @@ function disposeFitChart() {
     if (fitChart) {
         fitChart.dispose();
         fitChart = null;
+    }
+}
+
+// Render a compact score progression chart (logarithmic Y-axis)
+function renderScoreChart(containerId, scoreHistory, chartKey = null) {
+    const container = document.getElementById(containerId);
+    if (!container || !scoreHistory || scoreHistory.length === 0) {
+        if (container) container.innerHTML = '<div class="text-gray-500 text-xs text-center py-4">Waiting for data...</div>';
+        return;
+    }
+
+    // Need at least 2 points to draw a line
+    if (scoreHistory.length < 2) {
+        container.innerHTML = '<div class="text-gray-500 text-xs text-center py-4">Collecting data...</div>';
+        return;
+    }
+
+    // Dispose existing chart if using a keyed chart
+    const key = chartKey || containerId;
+    if (scoreCharts[key]) {
+        scoreCharts[key].dispose();
+    }
+
+    const chart = echarts.init(container, 'dark');
+    scoreCharts[key] = chart;
+
+    // Prepare data - scores should decrease (better), so we show them going down
+    const data = scoreHistory.map(h => [h.iteration, h.score]);
+
+    // Calculate if log scale is appropriate (scores span more than 2 orders of magnitude)
+    const scores = scoreHistory.map(h => h.score).filter(s => s > 0);
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
+    const useLogScale = maxScore / minScore > 100;
+
+    // Add some padding to Y range
+    const yPadding = (maxScore - minScore) * 0.1 || maxScore * 0.1;
+
+    const option = {
+        animation: false,
+        backgroundColor: 'transparent',
+        grid: {
+            left: 50,
+            right: 10,
+            top: 10,
+            bottom: 25
+        },
+        tooltip: {
+            trigger: 'axis',
+            backgroundColor: '#1f2937',
+            borderColor: '#374151',
+            textStyle: { color: '#f3f4f6', fontSize: 11 },
+            formatter: function(params) {
+                const p = params[0];
+                return `Iter ${p.data[0]}: ${p.data[1].toExponential(2)}`;
+            }
+        },
+        xAxis: {
+            type: 'value',
+            name: 'iter',
+            nameLocation: 'middle',
+            nameGap: 12,
+            nameTextStyle: { color: '#6b7280', fontSize: 10 },
+            axisLine: { lineStyle: { color: '#374151' } },
+            axisLabel: { color: '#6b7280', fontSize: 9 },
+            splitLine: { show: false },
+            min: 0
+        },
+        yAxis: {
+            type: 'value',
+            name: '',
+            axisLine: { lineStyle: { color: '#374151' } },
+            axisLabel: {
+                color: '#6b7280',
+                fontSize: 9,
+                formatter: function(val) {
+                    if (Math.abs(val) >= 1000000) return val.toExponential(0);
+                    if (Math.abs(val) >= 1000) return (val/1000).toFixed(0) + 'k';
+                    if (Math.abs(val) >= 1) return val.toFixed(0);
+                    if (Math.abs(val) >= 0.01) return val.toFixed(2);
+                    return val.toExponential(0);
+                }
+            },
+            splitLine: { lineStyle: { color: '#374151', opacity: 0.5 } },
+            min: Math.max(0, minScore - yPadding),
+            max: maxScore + yPadding
+        },
+        series: [{
+            type: 'line',
+            smooth: true,
+            showSymbol: scoreHistory.length < 20,
+            symbolSize: 4,
+            data: data,
+            lineStyle: { color: '#f59e0b', width: 2 },
+            itemStyle: { color: '#f59e0b' },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(245, 158, 11, 0.3)' },
+                    { offset: 1, color: 'rgba(245, 158, 11, 0.05)' }
+                ])
+            }
+        }]
+    };
+
+    chart.setOption(option);
+}
+
+// Dispose a score chart by key
+function disposeScoreChart(key) {
+    if (scoreCharts[key]) {
+        scoreCharts[key].dispose();
+        delete scoreCharts[key];
     }
 }

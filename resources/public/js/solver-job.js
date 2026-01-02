@@ -11,6 +11,9 @@ let isPaused = false;
 let inputXs = [];
 let inputYs = [];
 
+// Score history for current job (iteration -> score)
+let currentScoreHistory = [];
+
 // Toggle pause/resume
 async function togglePause() {
     if (!currentJobId) return;
@@ -115,6 +118,7 @@ function showRunningState() {
     const startBtnText = document.getElementById('start-btn-text');
 
     disposeFitChart();
+    currentScoreHistory = []; // Reset score history for new job
 
     startBtn.disabled = true;
     startBtnText.innerHTML = `
@@ -251,6 +255,10 @@ function setupSSEConnection(jobId) {
         </div>
         <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm hidden overflow-x-auto"></div>
         <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
+        <div class="mt-4">
+            <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
+            <div id="score-chart" class="bg-gray-900 rounded" style="width: 100%; height: 80px;"></div>
+        </div>
     `;
 
     const eventSource = new EventSource('/api/jobs/' + jobId + '/events');
@@ -259,6 +267,15 @@ function setupSSEConnection(jobId) {
     eventSource.addEventListener('progress', function(e) {
         const data = JSON.parse(e.data);
         const percent = Math.round((data.iteration / data['total-iterations']) * 100);
+
+        // Track score history
+        currentScoreHistory.push({
+            iteration: data.iteration,
+            score: data['best-score']
+        });
+
+        console.warn(currentScoreHistory);
+
         document.getElementById('progress-info').innerHTML = `
             <div class="mb-2">
                 <div class="flex justify-between text-sm mb-1">
@@ -286,6 +303,9 @@ function setupSSEConnection(jobId) {
             </div>
         `;
 
+        // Render score progression chart
+        renderScoreChart('score-chart', currentScoreHistory);
+
         renderFitChart(data['best-formula'], false);
 
         const latexEl = document.getElementById('formula-latex');
@@ -300,7 +320,8 @@ function setupSSEConnection(jobId) {
         resetUI();
         const data = JSON.parse(e.data);
 
-        saveToHistory(data);
+        // Save with score history
+        saveToHistory(data, 'completed', [...currentScoreHistory]);
 
         const datasetName = getSelectedDatasetName();
         const datasetBadge = datasetName
@@ -323,14 +344,14 @@ function setupSSEConnection(jobId) {
                         <span id="best-formula">${data['best-solution'].formula}</span>
                         <button onclick="copyFormula('best-formula')" class="absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>
                         </button>
                     </div>
                     <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-sm mb-6">
+                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
                     <div>
                         <span class="text-gray-400">Score:</span>
                         <span class="text-white ml-2">${data['best-solution'].score.toFixed(6)}</span>
@@ -341,7 +362,7 @@ function setupSSEConnection(jobId) {
                     </div>
                 </div>
 
-                <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
+                <div id="fit-chart" style="width: 100%; height: 300px;"></div>
 
                 <div class="mt-4">
                     <div class="text-gray-300 text-sm mb-2">Other Solutions:</div>
@@ -354,10 +375,16 @@ function setupSSEConnection(jobId) {
                         `).join('')}
                     </div>
                 </div>
+
+                <div class="mt-4">
+                    <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
+                    <div id="completed-score-chart" class="bg-gray-900 rounded" style="width: 100%; height: 80px;"></div>
+                </div>
             </div>
         `;
 
         disposeFitChart();
+        renderScoreChart('completed-score-chart', currentScoreHistory);
         renderFitChart(data['best-solution'].formula);
         renderLatex('formula-latex', data['best-solution'].formula);
     });
@@ -384,7 +411,7 @@ function setupSSEConnection(jobId) {
         if (e.data) {
             const data = JSON.parse(e.data);
             if (data['last-progress']) {
-                saveStoppedToHistory(data['last-progress']);
+                saveStoppedToHistory(data['last-progress'], [...currentScoreHistory]);
             }
         }
 

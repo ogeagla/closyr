@@ -5,7 +5,7 @@
 let jobHistory = [];
 
 // Save job to history
-function saveToHistory(jobData, status = 'completed') {
+function saveToHistory(jobData, status = 'completed', scoreHistory = []) {
     const job = {
         id: currentJobId,
         timestamp: new Date().toLocaleString(),
@@ -22,14 +22,15 @@ function saveToHistory(jobData, status = 'completed') {
             maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
             seed: document.getElementById('seed').value || null
         },
-        allSolutions: jobData['all-solutions']
+        allSolutions: jobData['all-solutions'],
+        scoreHistory: scoreHistory
     };
     jobHistory.unshift(job);
     renderJobHistory();
 }
 
 // Save stopped job to history (from progress data)
-function saveStoppedToHistory(progressData) {
+function saveStoppedToHistory(progressData, scoreHistory = []) {
     if (!progressData) return;
 
     const job = {
@@ -50,7 +51,8 @@ function saveStoppedToHistory(progressData) {
             maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
             seed: document.getElementById('seed').value || null
         },
-        allSolutions: null
+        allSolutions: null,
+        scoreHistory: scoreHistory
     };
     jobHistory.unshift(job);
     renderJobHistory();
@@ -130,6 +132,12 @@ function renderJobHistory() {
                             <span class="text-white ml-1">${job.config.seed}</span>
                         </div>` : ''}
                     </div>
+                    ${job.scoreHistory && job.scoreHistory.length > 0 ? `
+                    <div>
+                        <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
+                        <div id="history-score-chart-${index}" class="bg-gray-900 rounded" style="width: 100%; height: 80px;"></div>
+                    </div>
+                    ` : ''}
                     <div>
                         <div class="text-gray-400 text-xs mb-1">Input Data (${job.xs.length} points):</div>
                         <div class="text-xs font-mono bg-gray-900 p-2 rounded max-h-16 overflow-auto">
@@ -149,11 +157,18 @@ function toggleHistoryItem(index) {
     const details = document.getElementById(`history-details-${index}`);
     const chevron = document.getElementById(`chevron-${index}`);
     const isHidden = details.classList.contains('hidden');
+    const job = jobHistory[index];
 
     if (isHidden) {
         details.classList.remove('hidden');
         chevron.classList.add('rotate-90');
-        setTimeout(() => renderHistoryChart(index), 50);
+        setTimeout(() => {
+            renderHistoryChart(index);
+            // Render score chart if history data exists
+            if (job && job.scoreHistory && job.scoreHistory.length > 0) {
+                renderScoreChart(`history-score-chart-${index}`, job.scoreHistory, `history-score-${index}`);
+            }
+        }, 50);
     } else {
         details.classList.add('hidden');
         chevron.classList.remove('rotate-90');
@@ -161,16 +176,18 @@ function toggleHistoryItem(index) {
             historyCharts[index].dispose();
             delete historyCharts[index];
         }
+        disposeScoreChart(`history-score-${index}`);
     }
 }
 
 // Remove job from history
 function removeFromHistory(index) {
-    // Dispose chart if it exists
+    // Dispose charts if they exist
     if (historyCharts[index]) {
         historyCharts[index].dispose();
         delete historyCharts[index];
     }
+    disposeScoreChart(`history-score-${index}`);
     // Remove from array
     jobHistory.splice(index, 1);
     // Re-render (this will update all indices)
