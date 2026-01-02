@@ -184,6 +184,12 @@ function submitSolverForm(evt) {
         config.seed = parseInt(seedValue);
     }
 
+    // Add adaptive mode and quiet logs settings
+    const adaptiveModeEl = document.getElementById('adaptive-mode');
+    const quietLogsEl = document.getElementById('quiet-logs');
+    config.adaptiveMode = adaptiveModeEl && adaptiveModeEl.getAttribute('aria-checked') === 'true';
+    config.quietLogs = !(quietLogsEl && quietLogsEl.getAttribute('aria-checked') === 'true'); // Inverted: "Verbose Logging" toggle
+
     // Add mutations blacklist if any mutations are excluded
     const blacklist = getMutationsBlacklist();
     if (blacklist.length > 0) {

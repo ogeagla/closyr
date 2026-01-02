@@ -198,7 +198,8 @@
    [:input-xs-exprs [:vector #'SymbolicExpr]]
    [:input-ys-exprs [:vector #'SymbolicExpr]]
    [:progress-callback {:optional true} [:maybe fn?]]
-   [:quiet-logs? {:optional true} [:maybe :boolean]]])
+   [:quiet-logs? {:optional true} [:maybe :boolean]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private ExtendedDomainArgs

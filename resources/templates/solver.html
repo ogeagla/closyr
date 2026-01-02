@@ -113,7 +113,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label for="max-leafs" class="block text-sm font-medium text-gray-300 mb-2">
                             Max Expression Size
@@ -128,6 +128,32 @@
                         <input type="number" id="seed" name="config.seed"
                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                                placeholder="Leave empty for random">
+                    </div>
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <label for="adaptive-mode" class="text-sm font-medium text-gray-300">
+                            Adaptive Mutations
+                            <span class="block text-xs text-gray-500">Adjust mutation rates dynamically</span>
+                        </label>
+                        <button type="button" id="adaptive-mode" role="switch" aria-checked="false"
+                                onclick="toggleSwitch(this)"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gray-600">
+                            <span class="toggle-knob pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label for="quiet-logs" class="text-sm font-medium text-gray-300">
+                            Verbose Logging
+                            <span class="block text-xs text-gray-500">Show detailed server logs</span>
+                        </label>
+                        <button type="button" id="quiet-logs" role="switch" aria-checked="false"
+                                onclick="toggleSwitch(this)"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gray-600">
+                            <span class="toggle-knob pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+                        </button>
                     </div>
                 </div>
 

@@ -1,6 +1,7 @@
 (ns closyr.symbolic-regression
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
+    [closyr.adaptive :as adaptive]
     [closyr.ga :as ga]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
@@ -661,13 +662,19 @@
 (defn run-find-formula
   "Run a GA evolution solver to search for function of best fit for input data.
   This is the main programmatic entry point for the symbolic regression solver."
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed] :as run-config}]
-  (binding [ga/*deterministic-mode* (some? random-seed)]
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed adaptive-mode] :as run-config}]
+  ;; Reset adaptive state for new run
+  (adaptive/reset-adaptive-state!)
+  (binding [ga/*deterministic-mode* (some? random-seed)
+            ga/*adaptive-mode* (if (some? adaptive-mode) adaptive-mode false)]
     ;; Set the random seed if provided
     (when random-seed
       (log/info "run-find-formula: Deterministic mode enabled with seed:" random-seed
                 "- CPU parallelism disabled for reproducibility")
       (prng/set-random-seed! random-seed))
+
+    (when ga/*adaptive-mode*
+      (log/warn "-- Running Adaptive Mode --"))
 
     (if use-gui?
       (log/info "-- Running from GUI --")

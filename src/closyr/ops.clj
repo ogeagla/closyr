@@ -3,6 +3,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alts! close!]]
     [clojure.string :as str]
+    [closyr.adaptive :as adaptive]
     [closyr.ops.common :as ops-common]
     [closyr.ops.eval :as ops-eval]
     [closyr.ops.modify :as ops-modify]
@@ -182,7 +183,8 @@
 
 
 (defn mutation-fn
-  "Symbolic regression mutation"
+  "Symbolic regression mutation.
+   Uses adaptive mutation count when adaptive mode is enabled."
   {:malli/schema
    [:=>
 
@@ -197,7 +199,7 @@
   (try
     (let [start   (Date.)
           {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
-                                           max-leafs (rand-nth ops-modify/mutations-sampler) initial-muts p-winner p-discard)
+                                           max-leafs (ops-modify/sample-mutation-count) initial-muts p-winner p-discard)
           diff-ms (ops-common/start-date->diff-ms start)]
 
       (when (> diff-ms *long-running-mutation-thresh-ms*)
@@ -315,7 +317,8 @@
 
 (defn report-iteration
   "Print and maybe send to GUI a summary report of the population, including best fn/score/etc.
-   Also calls progress-callback if provided in run-config."
+   Also calls progress-callback if provided in run-config.
+   Updates adaptive mutation state based on population metrics."
   [iters-to-go
    iters
    ga-result
@@ -325,6 +328,9 @@
    {:keys [use-gui? max-leafs progress-callback] :as run-config}]
   (when (or (= 1 iters-to-go) (zero? (mod iters-to-go *log-steps*)))
     (let [bests      (sort-population ga-result)
+          ;; Update adaptive state with current population scores
+          sorted-scores (mapv :score bests)
+          _          (adaptive/update-adaptive-state! sorted-scores)
           timer      @test-timer*
           took-s     (if timer
                        (/ (ops-common/start-date->diff-ms timer) 1000.0)
@@ -358,7 +364,9 @@
                             (map reportable-phen-str)
                             (str/join "\n")))
                   "\n"
-                  (summarize-sim-stats)))
+                  (summarize-sim-stats)
+                  "\n  "
+                  (adaptive/format-adaptive-status)))
 
       (when use-gui?
         (put! sim->gui-chan {:iters                 iters

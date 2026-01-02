@@ -37,3 +37,23 @@ function parseArrayString(str) {
     }
     return str;
 }
+
+// Toggle switch component handler
+function toggleSwitch(button) {
+    const isChecked = button.getAttribute('aria-checked') === 'true';
+    const newState = !isChecked;
+    button.setAttribute('aria-checked', newState.toString());
+
+    // Update visual state
+    if (newState) {
+        button.classList.remove('bg-gray-600');
+        button.classList.add('bg-blue-600');
+        button.querySelector('.toggle-knob').classList.remove('translate-x-0');
+        button.querySelector('.toggle-knob').classList.add('translate-x-5');
+    } else {
+        button.classList.remove('bg-blue-600');
+        button.classList.add('bg-gray-600');
+        button.querySelector('.toggle-knob').classList.remove('translate-x-5');
+        button.querySelector('.toggle-knob').classList.add('translate-x-0');
+    }
+}

@@ -3,6 +3,7 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str]
+    [closyr.adaptive :as adaptive]
     [closyr.ops.common :as ops-common]
     [closyr.util.log :as log]
     [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
@@ -277,17 +278,26 @@
     (concat (repeat 3 13))
     (concat (repeat 2 14))
     (concat (repeat 1 15))
-    ;; (concat (repeat 5 16))
-    ;; (concat (repeat 4 17))
-    ;; (concat (repeat 3 18))
-    ;; (concat (repeat 2 19))
-    ;; (concat (repeat 1 20))
-    ;; (concat (repeat 3 21))
-    ;; (concat (repeat 2 22))
-    ;; (concat (repeat 1 23))
-    ;; (concat (repeat 1 24))
-    ;; (concat (repeat 1 25))
     vec))
+
+
+(def ^:private mutations-sampler-max
+  "Maximum value in mutations-sampler for clamping boosted values"
+  15)
+
+
+(defn sample-mutation-count
+  "Sample mutation count with optional adaptive boost.
+  When adaptive mode is enabled and we're stagnating, the boost multiplier
+  increases the sampled count to explore more aggressively."
+  ([]
+   (sample-mutation-count (adaptive/get-mutation-count-boost)))
+  ([boost]
+   (let [base-count (rand-nth mutations-sampler)]
+     (if (= boost 1.0)
+       base-count
+       (let [boosted (int (Math/ceil (* base-count boost)))]
+         (min mutations-sampler-max boosted))))))
 
 
 (specs/instrument-all!)

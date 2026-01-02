@@ -1,6 +1,7 @@
 (ns closyr.ga
   (:refer-clojure :exclude [rand rand-int rand-nth shuffle])
   (:require
+    [closyr.adaptive :as adaptive]
     [closyr.util.log :as log]
     [closyr.util.prng :refer [rand rand-int rand-nth shuffle shuffle-arraylist!]])
   (:import
@@ -14,6 +15,12 @@
   "When true, uses sequential map instead of pmap for deterministic results.
    Set to true when using a seeded PRNG for reproducibility."
   false)
+
+
+(def ^:dynamic *adaptive-mode*
+  "When true, uses adaptive mutation rates based on population diversity and stagnation.
+   When false, uses fixed 80/20 mutation/crossover ratio."
+  true)
 
 
 (defn- maybe-pmap
@@ -34,8 +41,17 @@
 
 
 (def ^:private new-phen-modifier-sampler
-  ;; 4 / 5 chance of mutation instead of crossover:
+  ;; 4 / 5 chance of mutation instead of crossover (used when adaptive mode is off):
   [true true true true false])
+
+
+(defn- should-use-mutation?
+  "Decide whether to use mutation or crossover.
+  Uses adaptive probability when *adaptive-mode* is true, otherwise fixed 80/20."
+  []
+  (if *adaptive-mode*
+    (adaptive/should-mutate?)
+    (rand-nth new-phen-modifier-sampler)))
 
 
 (defn- with-score
@@ -53,7 +69,7 @@
   (if (nil? e2)
     [e1-score [e1]]
 
-    (let [new-e-fn (if (rand-nth new-phen-modifier-sampler)
+    (let [new-e-fn (if (should-use-mutation?)
                      mutation-fn
                      crossover-fn)
           next-e   (if (>= e1-score e2-score)

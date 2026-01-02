@@ -178,7 +178,7 @@
       ;; Best score should be negative (error) and improving
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "-1/100+Sin(x)+x*(x+1/50*x*Csc(x)*(-1/100+E^(2*(-1/10+E)^x)-11/10*Sin(121.0*x)))"
+      (is (= "-1/100+Sin(x)+x*(x+1/50*x*Csc(x)*(49/100+E^(2*(-1/10+E)^x)-11/10*Sin(1.6*x)))"
              best-fn-str)
           "Expected formula for Nguyen-4 with seed 42")
       (println (str "| Nguyen-4         | " (format-score best-score)
@@ -210,7 +210,7 @@
       (is (= 100 iters-done))
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "-9601/10000"
+      (is (= "Cos(x)+0.9/(-Cos(x)+x*(Cos(1/2-1.1*(11/100-99/100*Cos(0.9*x)))-Sin(x)))"
              best-fn-str)
           "Expected formula for Nguyen-5 with seed 42")
       (println (str "| Nguyen-5         | " (format-score best-score)

@@ -118,6 +118,8 @@
                   max-leafs (get config :maxLeafs 40)
                   random-seed (get config :seed)
                   mutations-blacklist (get config :mutationsBlacklist)
+                  adaptive-mode (get config :adaptiveMode false)
+                  quiet-logs (get config :quietLogs true)
 
                   ;; Progress callback that sends SSE events and checks for stop/pause
                   progress-callback (fn [progress-data]
@@ -143,12 +145,14 @@
                               :use-flamechart    false
                               :max-leafs         max-leafs
                               :random-seed       random-seed
-                              :quiet-logs?       true
+                              :adaptive-mode     adaptive-mode
+                              :quiet-logs?       quiet-logs
                               :progress-callback progress-callback
                               :input-xs-exprs    (ops-common/doubles->exprs xs-vec)
                               :input-ys-exprs    (ops-common/doubles->exprs ys-vec)}
 
-                  _ (do (log/info "Starting job" job-id "- iterations:" iterations "population:" population-size "points:" (count xs-vec))
+                  _ (do (log/info "Starting job" job-id "- iterations:" iterations "population:" population-size
+                                  "points:" (count xs-vec) "adaptive:" adaptive-mode "quiet-logs:" quiet-logs)
                         (swap! jobs* assoc-in [job-id :status] :running))
                   result (symreg/run-find-formula run-config)
 
