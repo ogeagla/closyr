@@ -114,6 +114,11 @@ curl -X POST http://localhost:3000/api/solve \
 
 # Response: {"jobId": "uuid-here", "eventsUrl": "/api/jobs/uuid-here/events"}
 
+# With adaptive mode and quiet logs
+curl -X POST http://localhost:3000/api/solve \
+  -H "Content-Type: application/json" \
+  -d '{"xs": [1,2,3,4,5], "ys": [1,4,9,16,25], "config": {"iterations": 100, "population": 200, "adaptiveMode": true, "quietLogs": true}}'
+
 # Check job status
 curl http://localhost:3000/api/jobs/{jobId}
 
@@ -144,6 +149,8 @@ curl -X POST http://localhost:3000/api/upload-csv \
 | `-s`,`--seed`           | no              | `42`    |         | Random seed for reproducible results. **Warning:** Enables deterministic mode which disables CPU parallelism                  |
 | `-w`,`--mutations-whitelist` | no         | `+Sin,-Sin` |     | Comma-separated list of mutation labels to use (only these mutations will be applied)                                         |
 | `-b`,`--mutations-blacklist` | no         | `Derivative` |    | Comma-separated list of mutation labels to exclude                                                                            |
+| `-a`,`--adaptive`       | no              | `-a`    | `false` | Enable adaptive mutation rates that adjust based on population diversity and stagnation                                       |
+| `-q`,`--quiet`          | no              | `-q`    | `false` | Suppress detailed iteration logs (quiet mode)                                                                                 |
 
 ### Reproducible Results with Random Seed
 
@@ -171,6 +178,28 @@ $ lein run -t -p 100 -i 50 -x 1,2,3,4,5 -y 2,4,6,8,10 -w "+Sin,-Sin,+Cos,-Cos" -
 ```
 
 Common mutation labels include: `Derivative`, `+Sin`, `-Sin`, `+Cos`, `-Cos`, `*Sin`, `*Cos`, `+Log`, `-Log`, `+Exp`, `-Exp`, `+x`, `-x`, `*x`, `/x`, `+1/2`, `-1/2`, `*2`, `/2`, and many more.
+
+### Adaptive Mutation Rates
+
+The `-a` or `--adaptive` flag enables adaptive mutation rates. When enabled, the solver dynamically adjusts:
+
+- **Mutation vs Crossover ratio**: Increases mutation rate when population diversity is low or when progress stagnates
+- **Mutation count per individual**: Applies more mutations when stuck in local optima
+
+```bash
+# Run with adaptive mutation rates
+$ lein run -t -p 200 -i 100 -x 1,2,3,4,5 -y 1,4,9,16,25 -a
+
+# Combine with quiet mode for cleaner output
+$ lein run -t -p 200 -i 100 -x 1,2,3,4,5 -y 1,4,9,16,25 -a -q
+```
+
+The adaptive system tracks:
+- **Population diversity**: Score spread between best and median individuals
+- **Stagnation**: Iterations without fitness improvement
+- **History**: Recent best scores to detect convergence trends
+
+When the population converges (low diversity) or stagnates (no improvement for several iterations), the system automatically increases exploration by raising mutation rates and applying more mutations per individual.
 
 ## Example Screenshots
 
@@ -323,6 +352,26 @@ IFormulaConfig config = FormulaConfigBuilder.builder()
 ```
 
 **Warning:** Setting a random seed enables **deterministic mode** which disables CPU parallelism. This ensures reproducibility but may result in slower execution.
+
+#### Adaptive Mutation Rates in Java
+
+Enable adaptive mutation rates to dynamically adjust exploration based on population diversity:
+
+```java
+IFormulaConfig config = FormulaConfigBuilder.builder()
+    .iterations(100)
+    .populationSize(200)
+    .adaptiveMode(true)   // Enable adaptive mutation rates
+    .quietLogs(true)      // Optional: suppress detailed iteration logs
+    .build();
+
+IFormulaResult result = FormulaFinder.find(xs, ys, config);
+```
+
+When adaptive mode is enabled, the solver automatically:
+- Increases mutation rates when population diversity is low
+- Applies more mutations per individual when progress stagnates
+- Reduces mutation intensity when making steady progress
 
 #### Filtering Mutations in Java
 

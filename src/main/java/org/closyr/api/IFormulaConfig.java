@@ -43,4 +43,20 @@ public interface IFormulaConfig {
     default String[] getMutationsBlacklist() {
         return null;
     }
+
+    /**
+     * Check if adaptive mutation mode is enabled.
+     * When enabled, mutation rates adjust dynamically based on population diversity.
+     */
+    default boolean isAdaptiveMode() {
+        return false;
+    }
+
+    /**
+     * Check if quiet logging mode is enabled.
+     * When enabled, detailed iteration logs are suppressed.
+     */
+    default boolean isQuietLogs() {
+        return false;
+    }
 }

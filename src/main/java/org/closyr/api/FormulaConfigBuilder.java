@@ -20,6 +20,8 @@ public class FormulaConfigBuilder {
     private long randomSeed = -1L;
     private String[] mutationsWhitelist = null;
     private String[] mutationsBlacklist = null;
+    private boolean adaptiveMode = false;
+    private boolean quietLogs = false;
 
     private FormulaConfigBuilder() {
     }
@@ -81,11 +83,29 @@ public class FormulaConfigBuilder {
     }
 
     /**
+     * Enable or disable adaptive mutation mode.
+     * When enabled, mutation rates adjust dynamically based on population diversity.
+     */
+    public FormulaConfigBuilder adaptiveMode(boolean adaptiveMode) {
+        this.adaptiveMode = adaptiveMode;
+        return this;
+    }
+
+    /**
+     * Enable or disable quiet logging mode.
+     * When enabled, detailed iteration logs are suppressed.
+     */
+    public FormulaConfigBuilder quietLogs(boolean quietLogs) {
+        this.quietLogs = quietLogs;
+        return this;
+    }
+
+    /**
      * Build the configuration.
      */
     public IFormulaConfig build() {
         return new SimpleFormulaConfig(iterations, populationSize, maxLeafs, randomSeed,
-                mutationsWhitelist, mutationsBlacklist);
+                mutationsWhitelist, mutationsBlacklist, adaptiveMode, quietLogs);
     }
 
     /**
@@ -98,15 +118,20 @@ public class FormulaConfigBuilder {
         private final long randomSeed;
         private final String[] mutationsWhitelist;
         private final String[] mutationsBlacklist;
+        private final boolean adaptiveMode;
+        private final boolean quietLogs;
 
         SimpleFormulaConfig(int iterations, int populationSize, int maxLeafs, long randomSeed,
-                           String[] mutationsWhitelist, String[] mutationsBlacklist) {
+                           String[] mutationsWhitelist, String[] mutationsBlacklist,
+                           boolean adaptiveMode, boolean quietLogs) {
             this.iterations = iterations;
             this.populationSize = populationSize;
             this.maxLeafs = maxLeafs;
             this.randomSeed = randomSeed;
             this.mutationsWhitelist = mutationsWhitelist;
             this.mutationsBlacklist = mutationsBlacklist;
+            this.adaptiveMode = adaptiveMode;
+            this.quietLogs = quietLogs;
         }
 
         @Override
@@ -140,11 +165,23 @@ public class FormulaConfigBuilder {
         }
 
         @Override
+        public boolean isAdaptiveMode() {
+            return adaptiveMode;
+        }
+
+        @Override
+        public boolean isQuietLogs() {
+            return quietLogs;
+        }
+
+        @Override
         public String toString() {
             return "FormulaConfig{iterations=" + iterations +
                     ", populationSize=" + populationSize +
                     ", maxLeafs=" + maxLeafs +
-                    ", randomSeed=" + randomSeed + "}";
+                    ", randomSeed=" + randomSeed +
+                    ", adaptiveMode=" + adaptiveMode +
+                    ", quietLogs=" + quietLogs + "}";
         }
     }
 }

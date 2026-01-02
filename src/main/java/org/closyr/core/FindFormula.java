@@ -139,6 +139,8 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         private long randomSeed = -1L;
         private String[] mutationsWhitelist = null;
         private String[] mutationsBlacklist = null;
+        private boolean adaptiveMode = false;
+        private boolean quietLogs = false;
 
         public Config() {}
 
@@ -178,12 +180,26 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
             return this;
         }
 
+        /** Enable adaptive mutation rates (default: false) */
+        public Config adaptiveMode(boolean adaptiveMode) {
+            this.adaptiveMode = adaptiveMode;
+            return this;
+        }
+
+        /** Enable quiet logging mode (default: false) */
+        public Config quietLogs(boolean quietLogs) {
+            this.quietLogs = quietLogs;
+            return this;
+        }
+
         public int getIterations() { return iterations; }
         public int getPopulationSize() { return populationSize; }
         public int getMaxLeafs() { return maxLeafs; }
         public long getRandomSeed() { return randomSeed; }
         public String[] getMutationsWhitelist() { return mutationsWhitelist; }
         public String[] getMutationsBlacklist() { return mutationsBlacklist; }
+        public boolean isAdaptiveMode() { return adaptiveMode; }
+        public boolean isQuietLogs() { return quietLogs; }
 
         /** Convert to IFormulaConfig for the new API */
         IFormulaConfig toFormulaConfig() {
@@ -194,6 +210,8 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
                     .randomSeed(randomSeed)
                     .mutationsWhitelist(mutationsWhitelist)
                     .mutationsBlacklist(mutationsBlacklist)
+                    .adaptiveMode(adaptiveMode)
+                    .quietLogs(quietLogs)
                     .build();
         }
     }

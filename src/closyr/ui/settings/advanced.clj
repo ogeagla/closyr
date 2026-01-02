@@ -12,6 +12,7 @@
       BoxLayout
       ButtonGroup
       JButton
+      JCheckBox
       JDialog
       JFrame
       JLabel
@@ -23,41 +24,77 @@
 
 
 (defn show-advanced-settings-dialog!
-  "Show a dialog with advanced settings for log interval configuration"
+  "Show a dialog with advanced settings for log interval, adaptive mode, and quiet logging"
   [^JFrame parent-frame ^JLabel current-value-label experiment-settings*]
   (let [^JDialog dialog (doto (JDialog. parent-frame "Advanced Settings" true)
-                          (.setSize 350 250)
+                          (.setSize 400 350)
                           (.setLocationRelativeTo parent-frame))
 
         current-log-steps (:log-steps @experiment-settings*)
-        selected-value    (atom current-log-steps)
+        current-adaptive (:adaptive-mode @experiment-settings*)
+        current-quiet (:quiet-logs @experiment-settings*)
+        selected-value (atom current-log-steps)
+        selected-adaptive (atom current-adaptive)
+        selected-quiet (atom current-quiet)
 
-        btn-group         (ButtonGroup.)
-        options           [["Auto" nil] ["1" 1] ["5" 5] ["10" 10] ["25" 25]]
+        btn-group (ButtonGroup.)
+        options [["Auto" nil] ["1" 1] ["5" 5] ["10" 10] ["25" 25]]
 
         ^JPanel radio-panel (JPanel.)
-        _                 (.setLayout radio-panel (BoxLayout. radio-panel BoxLayout/Y_AXIS))
+        _ (.setLayout radio-panel (BoxLayout. radio-panel BoxLayout/Y_AXIS))
 
-        _                 (doseq [[label value] options]
-                           (let [^JRadioButton rb (doto (JRadioButton. ^String label)
-                                                    (.setSelected (= value current-log-steps))
-                                                    (.addActionListener
-                                                      (reify ActionListener
-                                                        (actionPerformed [_ _]
-                                                          (reset! selected-value value)))))]
-                             (.add btn-group rb)
-                             (.add radio-panel rb)))
+        _ (doseq [[label value] options]
+            (let [^JRadioButton rb (doto (JRadioButton. ^String label)
+                                     (.setSelected (= value current-log-steps))
+                                     (.addActionListener
+                                       (reify ActionListener
+                                         (actionPerformed [_ _]
+                                           (reset! selected-value value)))))]
+              (.add btn-group rb)
+              (.add radio-panel rb)))
 
-        ^JButton ok-btn   (doto (JButton. "OK")
-                            (.addActionListener
-                              (reify ActionListener
-                                (actionPerformed [_ _]
-                                  (swap! experiment-settings* assoc :log-steps @selected-value)
-                                  (.setText current-value-label (if @selected-value
-                                                                  (str @selected-value)
-                                                                  "Auto"))
-                                  (log/info "Log steps changed to:" (or @selected-value "Auto"))
-                                  (.dispose dialog)))))
+        ;; Adaptive mode checkbox
+        ^JCheckBox adaptive-cb (JCheckBox. "Adaptive Mutations")
+        _ (doto adaptive-cb
+            (.setSelected (boolean current-adaptive))
+            (.setToolTipText "Dynamically adjust mutation rates based on population diversity and stagnation")
+            (.addActionListener
+              (reify ActionListener
+                (actionPerformed [_ _]
+                  (reset! selected-adaptive (.isSelected adaptive-cb))))))
+
+        ;; Quiet logging checkbox
+        ^JCheckBox quiet-cb (JCheckBox. "Quiet Logging")
+        _ (doto quiet-cb
+            (.setSelected (boolean current-quiet))
+            (.setToolTipText "Suppress detailed iteration logs for cleaner output")
+            (.addActionListener
+              (reify ActionListener
+                (actionPerformed [_ _]
+                  (reset! selected-quiet (.isSelected quiet-cb))))))
+
+        ;; Checkboxes panel
+        ^JPanel checkbox-panel (JPanel.)
+        _ (doto checkbox-panel
+            (.setLayout (BoxLayout. checkbox-panel BoxLayout/Y_AXIS))
+            (.add adaptive-cb)
+            (.add quiet-cb))
+
+        ^JButton ok-btn (doto (JButton. "OK")
+                          (.addActionListener
+                            (reify ActionListener
+                              (actionPerformed [_ _]
+                                (swap! experiment-settings* assoc
+                                       :log-steps @selected-value
+                                       :adaptive-mode @selected-adaptive
+                                       :quiet-logs @selected-quiet)
+                                (.setText current-value-label (if @selected-value
+                                                                (str @selected-value)
+                                                                "Auto"))
+                                (log/info "Log steps changed to:" (or @selected-value "Auto"))
+                                (log/info "Adaptive mode:" @selected-adaptive)
+                                (log/info "Quiet logging:" @selected-quiet)
+                                (.dispose dialog)))))
 
         ^JButton cancel-btn (doto (JButton. "Cancel")
                               (.addActionListener
@@ -69,9 +106,18 @@
                                 (.add ok-btn)
                                 (.add cancel-btn))
 
+        ;; Center panel with both sections
+        ^JPanel center-panel (JPanel.)
+        _ (doto center-panel
+            (.setLayout (BoxLayout. center-panel BoxLayout/Y_AXIS))
+            (.add (JLabel. "Log/Chart Update Interval (iterations):"))
+            (.add radio-panel)
+            (.add (JLabel. " "))
+            (.add (JLabel. "Mutation Settings:"))
+            (.add checkbox-panel))
+
         ^JPanel main-panel (doto (JPanel. (BorderLayout.))
-                             (.add (JLabel. "Log/Chart Update Interval (iterations):") BorderLayout/NORTH)
-                             (.add radio-panel BorderLayout/CENTER)
+                             (.add center-panel BorderLayout/CENTER)
                              (.add buttons-panel BorderLayout/SOUTH))]
 
     (.setContentPane dialog main-panel)

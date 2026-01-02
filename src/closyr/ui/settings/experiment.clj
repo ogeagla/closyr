@@ -26,7 +26,9 @@
          :input-phenos-count  2000
          :random-seed         nil
          :mutations-blacklist nil
-         :log-steps           nil}))
+         :log-steps           nil
+         :adaptive-mode       false
+         :quiet-logs          false}))
 
 
 (def ^:private amount->number

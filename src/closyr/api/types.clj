@@ -98,7 +98,9 @@
 (deftype FormulaConfig [^int iterations
                         ^int population-size
                         ^int max-leafs
-                        ^long random-seed]
+                        ^long random-seed
+                        ^boolean adaptive-mode
+                        ^boolean quiet-logs]
 
   IFormulaConfig
 
@@ -110,13 +112,19 @@
 
   (getRandomSeed [_] random-seed)
 
+  (isAdaptiveMode [_] adaptive-mode)
+
+  (isQuietLogs [_] quiet-logs)
+
   Object
 
   (toString [_]
     (str "FormulaConfig{iterations=" iterations
          ", populationSize=" population-size
          ", maxLeafs=" max-leafs
-         ", randomSeed=" random-seed "}")))
+         ", randomSeed=" random-seed
+         ", adaptiveMode=" adaptive-mode
+         ", quietLogs=" quiet-logs "}")))
 
 
 (defn config
@@ -126,18 +134,24 @@
      :iterations      - Number of GA iterations (default: 20)
      :population-size - Population size (default: 100)
      :max-leafs       - Max expression tree leaves (default: 40)
-     :random-seed     - Random seed for reproducibility (default: -1, meaning no seed)"
+     :random-seed     - Random seed for reproducibility (default: -1, meaning no seed)
+     :adaptive-mode   - Enable adaptive mutation rates (default: false)
+     :quiet-logs      - Suppress detailed iteration logs (default: false)"
   ([]
    (config {}))
-  ([{:keys [iterations population-size max-leafs random-seed]
+  ([{:keys [iterations population-size max-leafs random-seed adaptive-mode quiet-logs]
      :or   {iterations      20
             population-size 100
             max-leafs       40
-            random-seed     -1}}]
+            random-seed     -1
+            adaptive-mode   false
+            quiet-logs      false}}]
    (FormulaConfig. (int iterations)
                    (int population-size)
                    (int max-leafs)
-                   (long random-seed))))
+                   (long random-seed)
+                   (boolean adaptive-mode)
+                   (boolean quiet-logs))))
 
 
 (defn config->map
@@ -146,4 +160,6 @@
   {:iterations      (.getIterations cfg)
    :population-size (.getPopulationSize cfg)
    :max-leafs       (.getMaxLeafs cfg)
-   :random-seed     (.getRandomSeed cfg)})
+   :random-seed     (.getRandomSeed cfg)
+   :adaptive-mode   (.isAdaptiveMode cfg)
+   :quiet-logs      (.isQuietLogs cfg)})

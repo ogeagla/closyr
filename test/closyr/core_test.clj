@@ -32,6 +32,8 @@
            :xs                  [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
            :ys                  [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -79,6 +81,8 @@
            :iterations          200,
            :max-leafs           40
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -97,6 +101,8 @@
            :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
            :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -114,6 +120,8 @@
            :xs                  [0.0 1.0 2.0 3.0 4.0 5.0 6.0]
            :ys                  [1.0 2.0 30.0 4.0 5.0 6.0 10.0]
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -132,6 +140,8 @@
            :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
            :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -150,6 +160,8 @@
            :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0 30.0 45.0 55.0 60.0]
            :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0 -22.0 -25.0 -10.0 10.0]
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -167,6 +179,8 @@
            :xs                  [0.0 1.0 2.0 3.0 4.0 6.0 15.0 20.0]
            :ys                  [1.0 1.0 1.0 2.0 3.0 0.0 -1.0 -12.0]
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist nil}))))
 
@@ -186,6 +200,8 @@
            :xs                  nil
            :ys                  nil
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist ["+Sin" "-Sin" "+Cos"]
            :mutations-blacklist nil})))
 
@@ -204,6 +220,8 @@
            :xs                  nil
            :ys                  nil
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist ["+Sin" "-Sin"]
            :mutations-blacklist nil}))))
 
@@ -223,6 +241,8 @@
            :xs                  nil
            :ys                  nil
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist ["Derivative" "+Sin"]})))
 
@@ -241,6 +261,8 @@
            :xs                  nil
            :ys                  nil
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist nil
            :mutations-blacklist ["Derivative"]}))))
 
@@ -260,8 +282,29 @@
            :xs                  nil
            :ys                  nil
            :seed                nil
+           :adaptive-mode       false
+           :quiet-logs          false
            :mutations-whitelist ["+Sin" "-Sin" "+Cos" "-Cos"]
            :mutations-blacklist ["+Sin"]}))))
+
+
+(deftest cli-mutations-whitelist-and-blacklist-test-2
+  (testing "parses both whitelist and blacklist together with adaptive mode and quiet logs"
+    (is (= {:headless            true
+            :log-level           :info
+            :max-leafs           40
+            :use-flamechart      false
+            :iterations          200
+            :population          1000
+            :xs                  nil
+            :ys                  nil
+            :seed                nil
+            :adaptive-mode       true
+            :quiet-logs          true
+            :mutations-whitelist ["+Sin" "-Sin" "+Cos" "-Cos"]
+            :mutations-blacklist ["+Sin"]}
+           (let [test-input '("-t" "-p1000" "-i" "200" "-w" "+Sin,-Sin,+Cos,-Cos" "-b" "+Sin" "-a" "-q")]
+             (#'core/validate-symreg-opts (#'core/parse-main-opts test-input)))))))
 
 
 (deftest main-test

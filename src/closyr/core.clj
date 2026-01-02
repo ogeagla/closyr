@@ -103,6 +103,14 @@
     :parse-fn str->string-vec
     :id :mutations-blacklist]
 
+   ["-a" "--adaptive" "Enable adaptive mutation rates (adjusts based on population diversity)"
+    :default false
+    :id :adaptive-mode]
+
+   ["-q" "--quiet" "Quiet logging mode (suppress detailed iteration logs)"
+    :default false
+    :id :quiet-logs]
+
    [nil "--web [PORT]" "Start HTTP web server instead of GUI (default port: 3000)"
     :default nil
     :parse-fn #(if (str/blank? %) 3000 (Integer/parseInt %))

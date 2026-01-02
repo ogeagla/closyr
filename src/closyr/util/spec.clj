@@ -230,7 +230,9 @@
    [:max-leafs [:maybe #'MaxLeafs]]
    [:progress-callback {:optional true} [:maybe fn?]]
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
-   [:log-steps {:optional true} [:maybe pos-int?]]])
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private SolverEvalArgs
@@ -278,7 +280,9 @@
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs [:maybe #'MaxLeafs]]
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
-   [:log-steps {:optional true} [:maybe pos-int?]]])
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private SolverInputArgs
@@ -300,6 +304,8 @@
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:progress-callback {:optional true} [:maybe fn?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]
    [:quiet-logs? {:optional true} [:maybe :boolean]]])
 
 
@@ -314,7 +320,9 @@
    [:random-seed {:optional true} [:maybe #'RandomSeed]]
    [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
-   [:log-steps {:optional true} [:maybe pos-int?]]])
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private CLIArgs
@@ -330,7 +338,9 @@
    [:max-leafs {:optional true} #'MaxLeafs]
    [:seed {:optional true} [:maybe #'RandomSeed]]
    [:mutations-whitelist {:optional true} [:maybe [:vector string?]]]
-   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]])
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:adaptive-mode {:optional true} [:maybe boolean?]]
+   [:quiet-logs {:optional true} [:maybe boolean?]]])
 
 
 (def ^:private ModificationsResult

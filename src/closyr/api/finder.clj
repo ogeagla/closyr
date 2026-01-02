@@ -46,6 +46,8 @@
         population-size (.getPopulationSize cfg)
         max-leafs (.getMaxLeafs cfg)
         random-seed (.getRandomSeed cfg)
+        adaptive-mode (.isAdaptiveMode cfg)
+        quiet-logs (.isQuietLogs cfg)
         whitelist (array->vec (.getMutationsWhitelist cfg))
         blacklist (array->vec (.getMutationsBlacklist cfg))
         initial-muts (if (or whitelist blacklist)
@@ -59,10 +61,13 @@
                     :use-flamechart false
                     :max-leafs      max-leafs
                     :random-seed    random-seed
+                    :adaptive-mode  adaptive-mode
+                    :quiet-logs?    quiet-logs
                     :input-xs-exprs (ops-common/doubles->exprs xs-vec)
                     :input-ys-exprs (ops-common/doubles->exprs ys-vec)}
 
-        _ (log/info "API: using" (count initial-muts) "mutations")
+        _ (log/info "API: using" (count initial-muts) "mutations"
+                    "adaptive:" adaptive-mode "quiet:" quiet-logs)
         result (symreg/run-find-formula run-config)]
 
     (types/->formula-result result)))

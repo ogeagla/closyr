@@ -315,7 +315,9 @@
     random-seed         :random-seed
     max-leafs           :max-leafs
     mutations-blacklist :mutations-blacklist
-    log-steps           :log-steps}]
+    log-steps           :log-steps
+    adaptive-mode       :adaptive-mode
+    quiet-logs          :quiet-logs}]
 
   (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
         input-ys-exprs (ops-common/doubles->exprs input-data-y)
@@ -330,7 +332,9 @@
                              :mutations-blacklist mutations-blacklist
                              :random-seed         random-seed
                              :max-leafs           max-leafs
-                             :log-steps           log-steps})))
+                             :log-steps           log-steps
+                             :adaptive-mode       adaptive-mode
+                             :quiet-logs          quiet-logs})))
 
 
 (defn- restart-with-new-inputs
@@ -376,7 +380,9 @@
     max-leafs           :max-leafs
     initial-phenos      :initial-phenos
     mutations-blacklist :mutations-blacklist
-    log-steps           :log-steps}]
+    log-steps           :log-steps
+    adaptive-mode       :adaptive-mode
+    quiet-logs          :quiet-logs}]
 
   (when-not (and input-xs-exprs
                  input-xs-vec
@@ -398,7 +404,9 @@
    :random-seed          random-seed
    :max-leafs            max-leafs
    :mutations-blacklist  mutations-blacklist
-   :log-steps            log-steps})
+   :log-steps            log-steps
+   :adaptive-mode        adaptive-mode
+   :quiet-logs           quiet-logs})
 
 
 (defn- wait-and-get-gui-args
@@ -581,7 +589,7 @@
 (defn- merge-cli-and-gui-args
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count random-seed max-leafs input-xs-list input-xs-count input-ys-vec
-           sim-stop-start-chan sim->gui-chan mutations-blacklist log-steps]
+           sim-stop-start-chan sim->gui-chan mutations-blacklist log-steps adaptive-mode quiet-logs]
     :as   run-args}]
 
   (let [max-leafs      (or max-leafs cli-max-leafs)
@@ -599,11 +607,16 @@
                               :initial-muts initial-muts
                               :random-seed random-seed
                               :iters iters
-                              :max-leafs (or max-leafs ops/default-max-leafs))
+                              :max-leafs (or max-leafs ops/default-max-leafs)
+                              :adaptive-mode adaptive-mode
+                              :quiet-logs? quiet-logs)
 
         _              (when (seq mutations-blacklist)
                          (log/info "GUI: using" (count initial-muts) "mutations"
                                    "(" (count mutations-blacklist) "excluded)"))
+
+        _              (when adaptive-mode
+                         (log/info "GUI: adaptive mutations enabled"))
 
         ;; Use GUI-provided log-steps if set, otherwise auto-calculate
         computed-log-steps (or log-steps (config->log-steps run-config run-args))
@@ -723,7 +736,7 @@
   "Run app from CLI args"
   {:malli/schema [:=> [:cat #'specs/CLIArgs] #'specs/SolverRunResults]}
   [{:keys [iterations population headless xs ys use-flamechart max-leafs seed
-           mutations-whitelist mutations-blacklist] :as cli-opts}]
+           mutations-whitelist mutations-blacklist adaptive-mode quiet-logs] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   ;; Run with deterministic mode if seed is set (disables parallel execution)
   (let [initial-muts (if (or mutations-whitelist mutations-blacklist)
@@ -738,6 +751,8 @@
                       :random-seed    seed
                       :max-leafs      max-leafs
                       :use-flamechart use-flamechart
+                      :adaptive-mode  adaptive-mode
+                      :quiet-logs?    quiet-logs
                       :input-xs-exprs (if xs
                                         (ops-common/doubles->exprs xs)
                                         example-input-xs-exprs)
