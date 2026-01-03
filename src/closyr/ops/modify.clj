@@ -188,7 +188,7 @@
                 (with-recent-mod-metadata {:label (name crossover-flavor)
                                            :op    :modify-crossover}))))
     (catch Exception e
-      (log/error "Error in ops/crossover: " (.getMessage e))
+      (log/debug "Error in ops/crossover: " (.getMessage e))
       nil)))
 
 
