@@ -16,6 +16,12 @@ function initDataEditorChart() {
 
     if (!dataEditorChart) {
         dataEditorChart = echarts.init(container, 'dark');
+        // Update drag handle positions after chart finishes rendering (e.g., after axis rescale)
+        dataEditorChart.on('finished', function() {
+            if (editorData.length > 0) {
+                updateDragHandlerPositions();
+            }
+        });
     }
 
     const xs = document.getElementById('xs').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
@@ -68,6 +74,7 @@ function setupDragHandlers() {
 
     const graphicElements = editorData.map((d, idx) => ({
         type: 'circle',
+        id: `drag-point-${idx}`,
         position: dataEditorChart.convertToPixel('grid', [d.x, d.y]),
         shape: { r: 10 },
         style: { fill: 'transparent' },
@@ -84,10 +91,24 @@ function setupDragHandlers() {
         },
         ondragend: function() {
             syncEditorToTextarea();
+            // Re-sync graphic positions after axis may have rescaled
+            updateDragHandlerPositions();
         }
     }));
 
     dataEditorChart.setOption({ graphic: graphicElements });
+}
+
+// Update drag handler positions without recreating them (after axis rescale)
+function updateDragHandlerPositions() {
+    if (!dataEditorChart || editorData.length === 0) return;
+
+    const graphicUpdates = editorData.map((d, idx) => ({
+        id: `drag-point-${idx}`,
+        position: dataEditorChart.convertToPixel('grid', [d.x, d.y])
+    }));
+
+    dataEditorChart.setOption({ graphic: graphicUpdates });
 }
 
 // Sync editor data to Y values textarea
