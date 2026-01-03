@@ -257,7 +257,7 @@ function setupSSEConnection(jobId) {
         <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
         <div class="mt-4">
             <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
-            <div id="score-chart" class="bg-gray-900 rounded" style="width: 100%; height: 80px;"></div>
+            <div id="score-chart" style="width: 100%; height: 80px;"></div>
         </div>
     `;
 
@@ -376,7 +376,7 @@ function setupSSEConnection(jobId) {
 
                 <div class="mt-4">
                     <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
-                    <div id="completed-score-chart" class="bg-gray-900 rounded" style="width: 100%; height: 80px;"></div>
+                    <div id="completed-score-chart" style="width: 100%; height: 80px;"></div>
                 </div>
             </div>
         `;

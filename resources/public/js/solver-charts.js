@@ -387,9 +387,9 @@ function renderScoreChart(containerId, scoreHistory, chartKey = null) {
             type: 'line',
             smooth: true,
             showSymbol: scoreHistory.length < 20,
-            symbolSize: 4,
+            symbolSize: 2,
             data: data,
-            lineStyle: { color: '#f59e0b', width: 2 },
+            lineStyle: { color: '#f59e0b', width: 1 },
             itemStyle: { color: '#f59e0b' },
             areaStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
