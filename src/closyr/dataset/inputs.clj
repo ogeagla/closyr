@@ -204,4 +204,19 @@
                                (+ 1.0 (* e (Math/cos theta))))]
                  (y->gui-coord-y
                    sketchpad-size*
-                   (* 60 radius))))}})
+                   (* 60 radius))))}
+
+   ;; Quantum transition probability (sinc² function): sin²(x) / x²
+   ;; From Feynman III.9.52: PI→II = (2πμEt/h)² × sin²((ω-ω₀)t/2) / ((ω-ω₀)t/2)²
+   "Feynman Transition"
+   {:idx     170
+    :formula "Sin(x)^2 / x^2"
+    :fn      (fn [i]
+               (let [x (+ -9.0 (* 18.0 (/ i (double @sketch-input-x-count*))))  ; x in [-9, 9]
+                     sinc-sq (if (< (Math/abs x) 1e-10)
+                               1.0  ; limit as x->0 is 1
+                               (/ (* (Math/sin x) (Math/sin x))
+                                  (* x x)))]
+                 (y->gui-coord-y
+                   sketchpad-size*
+                   (* 80 sinc-sq))))}})

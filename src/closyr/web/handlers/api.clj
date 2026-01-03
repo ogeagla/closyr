@@ -498,6 +498,18 @@
                        :ys      (mapv (fn [x]
                                         (/ 0.64 (+ 1.0 (* 0.6 (Math/cos x)))))
                                       [0 0.8 1.6 2.4 3.2 4.0 4.8 5.6 6.2])}
+                      {:id      "feynman-transition"
+                       :name    "Feynman Transition (sin²(x)/x²)"
+                       :formula "feynman-transition"
+                       :xMin    -9
+                       :xMax    9
+                       :xs      [-8 -6 -4 -2 -1 0 1 2 4 6 8]
+                       :ys      (mapv (fn [x]
+                                        (if (< (Math/abs x) 1e-10)
+                                          1.0
+                                          (/ (* (Math/sin x) (Math/sin x))
+                                             (* x x))))
+                                      [-8 -6 -4 -2 -1 0 1 2 4 6 8])}
                       ;; Prime counting function π(x) - number of primes <= x (20 points)
                       {:id   "prime-counting-20"
                        :name "Prime Counting π(x) [20 pts]"

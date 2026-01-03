@@ -42,6 +42,11 @@ const formulaGenerators = {
         const e = 0.6;
         const a = 1.0;
         return (a * (1 - e * e)) / (1 + e * Math.cos(x));
+    },
+    'feynman-transition': x => {
+        // Quantum transition probability (sinc² function) from Feynman III.9.52
+        if (Math.abs(x) < 1e-10) return 1.0; // limit as x->0 is 1
+        return (Math.sin(x) * Math.sin(x)) / (x * x);
     }
 };
 

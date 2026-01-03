@@ -133,6 +133,17 @@
        (+ 1.0 (* e (Math/cos theta))))))
 
 
+(defn feynman-transition
+  "Quantum transition probability (sinc² function): sin²(x) / x²
+   From Feynman III.9.52: PI→II = (2πμEt/h)² × sin²((ω-ω₀)t/2) / ((ω-ω₀)t/2)²
+   Core shape where x = (ω-ω₀)t/2"
+  [x]
+  (if (< (Math/abs x) 1e-10)
+    1.0  ; limit as x->0 is 1
+    (/ (* (Math/sin x) (Math/sin x))
+       (* x x))))
+
+
 ;; =============================================================================
 ;; Data Generation
 ;; =============================================================================
@@ -390,6 +401,34 @@
       (is (= 100 iters-done))
       (is (neg? best-score))
       (println (str "| Feynman Elliptical | " (format-score best-score)
+                    " | " (format-time elapsed-ms)
+                    " | fn: " best-fn-str " |")))))
+
+
+(deftest ^:benchmark feynman-transition-benchmark
+  (testing "Feynman Transition (III.9.52): sin²(x) / x²"
+    (let [{:keys [xs ys]} (generate-benchmark-data feynman-transition (- (* 3 Math/PI)) (* 3 Math/PI) 30)
+          [{:keys [final-population iters-done]} elapsed-ms]
+          (with-timing
+            (binding [ops/*print-top-n* 1]
+              (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
+                (fn []
+                  (symreg/run-find-formula
+                    {:input-phenos-count 200
+                     :initial-muts       (ops-init/initial-mutations)
+                     :iters              100
+                     :use-gui?           false
+                     :use-flamechart     false
+                     :random-seed        42
+                     :input-xs-exprs     (ops-common/doubles->exprs xs)
+                     :input-ys-exprs     (ops-common/doubles->exprs ys)})))))
+          best-score (apply max (:pop-scores final-population))
+          best-fn-str (get-best-fn-str final-population)]
+
+      (is (= 200 (count (:pop final-population))))
+      (is (= 100 iters-done))
+      (is (neg? best-score))
+      (println (str "| Feynman Transition | " (format-score best-score)
                     " | " (format-time elapsed-ms)
                     " | fn: " best-fn-str " |")))))
 
