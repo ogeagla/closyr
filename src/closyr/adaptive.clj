@@ -49,8 +49,8 @@
 ;; =============================================================================
 
 (def ^:private config
-  {:history-window         10       ; number of iterations to track for trends
-   :stagnation-threshold   5        ; iterations without improvement before boosting
+  {:history-window         40       ; number of iterations to track for trends
+   :stagnation-threshold   20       ; iterations without improvement before boosting
    :min-mutation-prob      0.5      ; minimum mutation probability
    :max-mutation-prob      0.95     ; maximum mutation probability
    :min-mutation-boost     0.5      ; minimum mutation count multiplier
