@@ -48,6 +48,7 @@
         random-seed (.getRandomSeed cfg)
         adaptive-mode (.isAdaptiveMode cfg)
         quiet-logs (.isQuietLogs cfg)
+        use-eval-cache (.isUseEvalCache cfg)
         whitelist (array->vec (.getMutationsWhitelist cfg))
         blacklist (array->vec (.getMutationsBlacklist cfg))
         initial-muts (if (or whitelist blacklist)
@@ -63,6 +64,7 @@
                     :random-seed    random-seed
                     :adaptive-mode  adaptive-mode
                     :quiet-logs     quiet-logs
+                    :use-eval-cache use-eval-cache
                     :input-xs-exprs (ops-common/doubles->exprs xs-vec)
                     :input-ys-exprs (ops-common/doubles->exprs ys-vec)}
 

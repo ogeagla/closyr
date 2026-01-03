@@ -59,4 +59,12 @@ public interface IFormulaConfig {
     default boolean isQuietLogs() {
         return false;
     }
+
+    /**
+     * Check if evaluation cache is enabled.
+     * When enabled, expression evaluation results are cached to avoid redundant calculations.
+     */
+    default boolean isUseEvalCache() {
+        return false;
+    }
 }

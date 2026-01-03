@@ -194,6 +194,32 @@ class FindFormulaTest {
     }
 
     @Test
+    void testConfigBuilderWithEvalCache() {
+        FindFormula.Config config = new FindFormula.Config()
+                .iterations(10)
+                .populationSize(50)
+                .useEvalCache(true);
+
+        assertTrue(config.isUseEvalCache());
+
+        // Verify it works with the solver
+        double[] xs = {1.0, 2.0, 3.0};
+        double[] ys = {2.0, 4.0, 6.0};
+
+        FindFormula.Result result = FindFormula.findFormula(xs, ys, config);
+        assertNotNull(result);
+        assertNotNull(result.getFormulaString());
+
+        System.out.println("Result with eval cache: " + result);
+    }
+
+    @Test
+    void testConfigBuilderEvalCacheDefaultsFalse() {
+        FindFormula.Config config = new FindFormula.Config();
+        assertFalse(config.isUseEvalCache());
+    }
+
+    @Test
     void testRandomSeedProducesDeterministicResults() {
         double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
         double[] ys = {2.0, 4.0, 6.0, 8.0, 10.0};

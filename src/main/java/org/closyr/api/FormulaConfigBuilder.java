@@ -22,6 +22,7 @@ public class FormulaConfigBuilder {
     private String[] mutationsBlacklist = null;
     private boolean adaptiveMode = false;
     private boolean quietLogs = false;
+    private boolean useEvalCache = false;
 
     private FormulaConfigBuilder() {
     }
@@ -101,11 +102,20 @@ public class FormulaConfigBuilder {
     }
 
     /**
+     * Enable or disable evaluation cache.
+     * When enabled, expression evaluation results are cached to avoid redundant calculations.
+     */
+    public FormulaConfigBuilder useEvalCache(boolean useEvalCache) {
+        this.useEvalCache = useEvalCache;
+        return this;
+    }
+
+    /**
      * Build the configuration.
      */
     public IFormulaConfig build() {
         return new SimpleFormulaConfig(iterations, populationSize, maxLeafs, randomSeed,
-                mutationsWhitelist, mutationsBlacklist, adaptiveMode, quietLogs);
+                mutationsWhitelist, mutationsBlacklist, adaptiveMode, quietLogs, useEvalCache);
     }
 
     /**
@@ -120,10 +130,11 @@ public class FormulaConfigBuilder {
         private final String[] mutationsBlacklist;
         private final boolean adaptiveMode;
         private final boolean quietLogs;
+        private final boolean useEvalCache;
 
         SimpleFormulaConfig(int iterations, int populationSize, int maxLeafs, long randomSeed,
                            String[] mutationsWhitelist, String[] mutationsBlacklist,
-                           boolean adaptiveMode, boolean quietLogs) {
+                           boolean adaptiveMode, boolean quietLogs, boolean useEvalCache) {
             this.iterations = iterations;
             this.populationSize = populationSize;
             this.maxLeafs = maxLeafs;
@@ -132,6 +143,7 @@ public class FormulaConfigBuilder {
             this.mutationsBlacklist = mutationsBlacklist;
             this.adaptiveMode = adaptiveMode;
             this.quietLogs = quietLogs;
+            this.useEvalCache = useEvalCache;
         }
 
         @Override
@@ -175,13 +187,19 @@ public class FormulaConfigBuilder {
         }
 
         @Override
+        public boolean isUseEvalCache() {
+            return useEvalCache;
+        }
+
+        @Override
         public String toString() {
             return "FormulaConfig{iterations=" + iterations +
                     ", populationSize=" + populationSize +
                     ", maxLeafs=" + maxLeafs +
                     ", randomSeed=" + randomSeed +
                     ", adaptiveMode=" + adaptiveMode +
-                    ", quietLogs=" + quietLogs + "}";
+                    ", quietLogs=" + quietLogs +
+                    ", useEvalCache=" + useEvalCache + "}";
         }
     }
 }

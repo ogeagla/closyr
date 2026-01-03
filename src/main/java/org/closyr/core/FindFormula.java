@@ -141,6 +141,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         private String[] mutationsBlacklist = null;
         private boolean adaptiveMode = false;
         private boolean quietLogs = false;
+        private boolean useEvalCache = false;
 
         public Config() {}
 
@@ -192,6 +193,12 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
             return this;
         }
 
+        /** Enable evaluation cache (default: false) */
+        public Config useEvalCache(boolean useEvalCache) {
+            this.useEvalCache = useEvalCache;
+            return this;
+        }
+
         public int getIterations() { return iterations; }
         public int getPopulationSize() { return populationSize; }
         public int getMaxLeafs() { return maxLeafs; }
@@ -200,6 +207,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         public String[] getMutationsBlacklist() { return mutationsBlacklist; }
         public boolean isAdaptiveMode() { return adaptiveMode; }
         public boolean isQuietLogs() { return quietLogs; }
+        public boolean isUseEvalCache() { return useEvalCache; }
 
         /** Convert to IFormulaConfig for the new API */
         IFormulaConfig toFormulaConfig() {
@@ -212,6 +220,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
                     .mutationsBlacklist(mutationsBlacklist)
                     .adaptiveMode(adaptiveMode)
                     .quietLogs(quietLogs)
+                    .useEvalCache(useEvalCache)
                     .build();
         }
     }

@@ -100,7 +100,8 @@
                         ^int max-leafs
                         ^long random-seed
                         ^boolean adaptive-mode
-                        ^boolean quiet-logs]
+                        ^boolean quiet-logs
+                        ^boolean use-eval-cache]
 
   IFormulaConfig
 
@@ -116,6 +117,8 @@
 
   (isQuietLogs [_] quiet-logs)
 
+  (isUseEvalCache [_] use-eval-cache)
+
   Object
 
   (toString [_]
@@ -124,7 +127,8 @@
          ", maxLeafs=" max-leafs
          ", randomSeed=" random-seed
          ", adaptiveMode=" adaptive-mode
-         ", quietLogs=" quiet-logs "}")))
+         ", quietLogs=" quiet-logs
+         ", useEvalCache=" use-eval-cache "}")))
 
 
 (defn config
@@ -136,22 +140,25 @@
      :max-leafs       - Max expression tree leaves (default: 40)
      :random-seed     - Random seed for reproducibility (default: -1, meaning no seed)
      :adaptive-mode   - Enable adaptive mutation rates (default: false)
-     :quiet-logs      - Suppress detailed iteration logs (default: false)"
+     :quiet-logs      - Suppress detailed iteration logs (default: false)
+     :use-eval-cache  - Enable evaluation caching (default: false)"
   ([]
    (config {}))
-  ([{:keys [iterations population-size max-leafs random-seed adaptive-mode quiet-logs]
+  ([{:keys [iterations population-size max-leafs random-seed adaptive-mode quiet-logs use-eval-cache]
      :or   {iterations      20
             population-size 100
             max-leafs       40
             random-seed     -1
             adaptive-mode   false
-            quiet-logs      false}}]
+            quiet-logs      false
+            use-eval-cache  false}}]
    (FormulaConfig. (int iterations)
                    (int population-size)
                    (int max-leafs)
                    (long random-seed)
                    (boolean adaptive-mode)
-                   (boolean quiet-logs))))
+                   (boolean quiet-logs)
+                   (boolean use-eval-cache))))
 
 
 (defn config->map
@@ -162,4 +169,5 @@
    :max-leafs       (.getMaxLeafs cfg)
    :random-seed     (.getRandomSeed cfg)
    :adaptive-mode   (.isAdaptiveMode cfg)
-   :quiet-logs      (.isQuietLogs cfg)})
+   :quiet-logs      (.isQuietLogs cfg)
+   :use-eval-cache  (.isUseEvalCache cfg)})
