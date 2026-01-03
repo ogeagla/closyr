@@ -199,7 +199,8 @@
    [:input-ys-exprs [:vector #'SymbolicExpr]]
    [:progress-callback {:optional true} [:maybe fn?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
-   [:quiet-logs {:optional true} [:maybe :boolean]]])
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -339,7 +340,8 @@
    [:mutations-whitelist {:optional true} [:maybe [:vector string?]]]
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:adaptive-mode {:optional true} [:maybe boolean?]]
-   [:quiet-logs {:optional true} [:maybe boolean?]]])
+   [:quiet-logs {:optional true} [:maybe boolean?]]
+   [:use-eval-cache {:optional true} [:maybe boolean?]]])
 
 
 (def ^:private ModificationsResult

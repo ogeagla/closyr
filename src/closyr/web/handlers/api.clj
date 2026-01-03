@@ -504,7 +504,7 @@
                        :xMin    -9
                        :xMax    9
                        :xs      [-8 -6 -4 -2 -1 0 1 2 4 6 8]
-                       :ys      (mapv (fn [x]
+                       :ys      (mapv (fn [^double x]
                                         (if (< (Math/abs x) 1e-10)
                                           1.0
                                           (/ (* (Math/sin x) (Math/sin x))

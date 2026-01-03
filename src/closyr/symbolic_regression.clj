@@ -445,7 +445,14 @@
   (log/info "-- Done! Next state: " next-step
             " took" (/ (ops-common/start-date->diff-ms start) 1000.0)
             " seconds for iters: " iters-done
-            " --"))
+            " --")
+  (when ops/*use-eval-cache*
+    (let [{:keys [size hits misses]} (ops/eval-cache-stats)]
+      (log/info "-- Eval cache stats: size=" size " hits=" hits " misses=" misses
+                " hit-rate=" (if (pos? (+ hits misses))
+                               (format "%.1f%%" (* 100.0 (/ hits (+ hits misses))))
+                               "N/A")
+                " --"))))
 
 
 (defn- print-and-save-start-time
@@ -674,12 +681,17 @@
 
 (defn run-find-formula
   "Run a GA evolution solver to search for function of best fit for input data.
-  This is the main programmatic entry point for the symbolic regression solver."
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed adaptive-mode] :as run-config}]
-  ;; Reset adaptive state for new run
+  This is the main programmatic entry point for the symbolic regression solver.
+
+  Options:
+    :use-eval-cache - when true, cache evaluation results by expression string (default: false)"
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed adaptive-mode use-eval-cache] :as run-config}]
+  ;; Reset adaptive state and eval cache for new run
   (adaptive/reset-adaptive-state!)
+  (ops/clear-eval-cache!)
   (binding [ga/*deterministic-mode* (some? random-seed)
-            ga/*adaptive-mode* (if (some? adaptive-mode) adaptive-mode false)]
+            ga/*adaptive-mode* (if (some? adaptive-mode) adaptive-mode false)
+            ops/*use-eval-cache* (boolean use-eval-cache)]
     ;; Set the random seed if provided
     (when random-seed
       (log/info "run-find-formula: Deterministic mode enabled with seed:" random-seed
@@ -736,7 +748,7 @@
   "Run app from CLI args"
   {:malli/schema [:=> [:cat #'specs/CLIArgs] #'specs/SolverRunResults]}
   [{:keys [iterations population headless xs ys use-flamechart max-leafs seed
-           mutations-whitelist mutations-blacklist adaptive-mode quiet-logs] :as cli-opts}]
+           mutations-whitelist mutations-blacklist adaptive-mode quiet-logs use-eval-cache] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   ;; Run with deterministic mode if seed is set (disables parallel execution)
   (let [initial-muts (if (or mutations-whitelist mutations-blacklist)
@@ -744,21 +756,22 @@
                                                    :blacklist mutations-blacklist})
                        (ops-init/initial-mutations))
         _            (log/info "CLI: using" (count initial-muts) "mutations")
-        run-config   {:initial-phenos (ops-init/initial-phenotypes population)
-                      :initial-muts   initial-muts
-                      :iters          iterations
-                      :use-gui?       (not headless)
-                      :random-seed    seed
-                      :max-leafs      max-leafs
-                      :use-flamechart use-flamechart
-                      :adaptive-mode  adaptive-mode
-                      :quiet-logs     quiet-logs
-                      :input-xs-exprs (if xs
-                                        (ops-common/doubles->exprs xs)
-                                        example-input-xs-exprs)
-                      :input-ys-exprs (if ys
-                                        (ops-common/doubles->exprs ys)
-                                        example-input-ys-exprs)}
+        run-config   {:initial-phenos  (ops-init/initial-phenotypes population)
+                      :initial-muts    initial-muts
+                      :iters           iterations
+                      :use-gui?        (not headless)
+                      :random-seed     seed
+                      :max-leafs       max-leafs
+                      :use-flamechart  use-flamechart
+                      :adaptive-mode   adaptive-mode
+                      :quiet-logs      quiet-logs
+                      :use-eval-cache  use-eval-cache
+                      :input-xs-exprs  (if xs
+                                         (ops-common/doubles->exprs xs)
+                                         example-input-xs-exprs)
+                      :input-ys-exprs  (if ys
+                                         (ops-common/doubles->exprs ys)
+                                         example-input-ys-exprs)}
         result       (run-find-formula run-config)]
     (log/info "CLI: Done!")
     (exit cli-opts)

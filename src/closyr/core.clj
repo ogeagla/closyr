@@ -111,6 +111,10 @@
     :default false
     :id :quiet-logs]
 
+   [nil "--cache" "Enable evaluation cache (cache scores by expression string)"
+    :default false
+    :id :use-eval-cache]
+
    [nil "--web [PORT]" "Start HTTP web server instead of GUI (default port: 3000)"
     :default nil
     :parse-fn #(if (str/blank? %) 3000 (Integer/parseInt %))

@@ -27,6 +27,36 @@
   -100000000)
 
 
+;; =============================================================================
+;; Evaluation Cache
+;; =============================================================================
+
+(def ^:dynamic *use-eval-cache*
+  "When true, cache evaluation results by expression string.
+   Can significantly speed up evolution when duplicate expressions appear."
+  false)
+
+
+;; Cache of expression string -> score. Reset between runs.
+(defonce eval-cache*
+  (atom {}))
+
+
+(defn clear-eval-cache!
+  "Clear the evaluation cache. Call this before starting a new run."
+  []
+  (reset! eval-cache* {}))
+
+
+(defn eval-cache-stats
+  "Return stats about the evaluation cache."
+  []
+  (let [cache @eval-cache*]
+    {:size (count cache)
+     :hits (:hits (meta cache) 0)
+     :misses (:misses (meta cache) 0)}))
+
+
 (def default-max-leafs
   "Default max number of AST tree leafs in candidate pheno function"
   40)
@@ -154,26 +184,49 @@
        (tally-min-score min-score)))))
 
 
-(defn score-fn
-  "Symbolic regression scoring.
-   Uses primitive array for fast residual computation when input-ys-arr is available."
-  {:malli/schema [:=> [:cat #'specs/ScoreFnArgs [:map {:closed false} [:max-leafs number?]] #'specs/GAPhenotype] number?]}
+(defn- score-fn-uncached
+  "Core scoring logic without caching."
   [{:keys [input-xs-list input-xs-count input-ys-vec input-ys-arr]
     :as   run-args}
    {:keys [max-leafs]}
+   pheno
+   expr-str]
+  ;; Skip Hold() expressions - they can't be numerically evaluated
+  (if (str/starts-with? expr-str "Hold(")
+    (tally-min-score min-score)
+    (let [leafs (.leafCount ^IExpr (:expr pheno))]
+      (if (> leafs max-leafs)
+        (tally-min-score min-score)
+        (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
+          (if f-of-xs
+            (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs input-ys-arr)
+            (tally-min-score min-score)))))))
+
+
+(defn score-fn
+  "Symbolic regression scoring.
+   Uses primitive array for fast residual computation when input-ys-arr is available.
+   When *use-eval-cache* is true, caches results by expression string."
+  {:malli/schema [:=> [:cat #'specs/ScoreFnArgs [:map {:closed false} [:max-leafs number?]] #'specs/GAPhenotype] number?]}
+  [{:keys [input-xs-list input-xs-count input-ys-vec input-ys-arr]
+    :as   run-args}
+   {:keys [max-leafs] :as run-config}
    pheno]
   (try
     (let [expr-str (str (:expr pheno))]
-      ;; Skip Hold() expressions - they can't be numerically evaluated
-      (if (str/starts-with? expr-str "Hold(")
-        (tally-min-score min-score)
-        (let [leafs (.leafCount ^IExpr (:expr pheno))]
-          (if (> leafs max-leafs)
-            (tally-min-score min-score)
-            (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
-              (if f-of-xs
-                (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs input-ys-arr)
-                (tally-min-score min-score)))))))
+      (if *use-eval-cache*
+        ;; Cached path
+        (if-let [cached-score (get @eval-cache* expr-str)]
+          (do
+            (swap! eval-cache* vary-meta update :hits (fnil inc 0))
+            cached-score)
+          (let [score (score-fn-uncached run-args run-config pheno expr-str)]
+            (swap! eval-cache* (fn [c]
+                                 (-> (assoc c expr-str score)
+                                     (vary-meta update :misses (fnil inc 0)))))
+            score))
+        ;; Uncached path
+        (score-fn-uncached run-args run-config pheno expr-str)))
     (catch Exception e
       (log/debug "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))

@@ -92,8 +92,8 @@
 
   (testing "mutation probability increases during stagnation"
     (adaptive/reset-adaptive-state!)
-    ;; Stagnate for several iterations
-    (dotimes [_ 10]
+    ;; Stagnate past threshold (20 iterations needed)
+    (dotimes [_ 25]
       (adaptive/update-adaptive-state! test-scores-a))
     (is (> (adaptive/get-mutation-probability) 0.8)))
 
@@ -113,8 +113,8 @@
 
   (testing "boost increases during stagnation"
     (adaptive/reset-adaptive-state!)
-    ;; Stagnate past threshold
-    (dotimes [_ 10]
+    ;; Stagnate past threshold (20 iterations needed)
+    (dotimes [_ 25]
       (adaptive/update-adaptive-state! test-scores-a))
     (is (> (adaptive/get-mutation-count-boost) 1.0)))
 
@@ -182,10 +182,10 @@
 
   (testing "history is bounded to window size"
     (adaptive/reset-adaptive-state!)
-    ;; Add more than window size (10) entries
-    (dotimes [i 15]
+    ;; Add more than window size (40) entries
+    (dotimes [i 50]
       (let [scores (mapv #(- (- i) (* 0.1 %)) (range 20))]
         (adaptive/update-adaptive-state! scores)))
 
     (let [history (:best-score-history (adaptive/get-adaptive-state))]
-      (is (<= (count history) 10)))))
+      (is (<= (count history) 40)))))

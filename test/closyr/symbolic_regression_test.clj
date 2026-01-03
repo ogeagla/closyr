@@ -71,6 +71,7 @@
                  :random-seed    123
                  :adaptive-mode  nil
                  :quiet-logs     nil
+                 :use-eval-cache nil
                  :use-flamechart true}
                 {:input-iters         20
                  :input-phenos-count  nil
@@ -121,6 +122,7 @@
                  :random-seed    nil
                  :adaptive-mode  nil
                  :quiet-logs     nil
+                 :use-eval-cache nil
                  :use-flamechart nil}
                 {:input-iters         20
                  :input-phenos-count  nil
