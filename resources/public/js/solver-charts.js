@@ -149,11 +149,32 @@ function renderFitChart(formula, animate = true) {
         const curveXs = [];
         const curveYs = [];
 
+        // Calculate y-axis bounds from objective data with padding
+        const dataYMin = Math.min(...sortedYs);
+        const dataYMax = Math.max(...sortedYs);
+        const yRange = dataYMax - dataYMin;
+        const yPadding = Math.max(yRange * 0.5, Math.abs(dataYMax) * 0.1, Math.abs(dataYMin) * 0.1, 1);
+        const yAxisMin = Math.floor(dataYMin - yPadding);
+        const yAxisMax = Math.ceil(dataYMax + yPadding);
+
+        // Clipping bounds with small margin so line visibly exits the chart
+        const clipMax = yAxisMax + yPadding * 0.1;
+        const clipMin = yAxisMin - yPadding * 0.1;
+
         for (let x = xMin; x <= xMax; x += step) {
             curveXs.push(x);
             try {
                 const y = compiled.evaluate({ x: x });
-                curveYs.push(isFinite(y) ? y : null);
+                // Clip curve values to axis bounds
+                if (!isFinite(y)) {
+                    curveYs.push(null);
+                } else if (y > clipMax) {
+                    curveYs.push(clipMax);
+                } else if (y < clipMin) {
+                    curveYs.push(clipMin);
+                } else {
+                    curveYs.push(y);
+                }
             } catch (e) {
                 curveYs.push(null);
             }
@@ -188,7 +209,9 @@ function renderFitChart(formula, animate = true) {
                 nameTextStyle: { color: '#9ca3af' },
                 axisLine: { lineStyle: { color: '#4b5563' } },
                 axisLabel: { color: '#9ca3af' },
-                splitLine: { lineStyle: { color: '#374151' } }
+                splitLine: { lineStyle: { color: '#374151' } },
+                min: yAxisMin,
+                max: yAxisMax
             },
             series: [
                 {
