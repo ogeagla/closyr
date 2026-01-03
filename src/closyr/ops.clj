@@ -114,6 +114,8 @@
 
 
 (defn- length-deduction
+  "A tiny score deduction based on the number of leafs, proportional to score.  Intentionally tiny to just break ties
+  for otherwise same scores to break the tie and favor smaller functions."
   [score leafs]
   (* (abs score) (min 0.1 (* 0.0000001 leafs leafs))))
 
