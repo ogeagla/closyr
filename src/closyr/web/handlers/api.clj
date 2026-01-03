@@ -120,6 +120,7 @@
                   mutations-blacklist (get config :mutationsBlacklist)
                   adaptive-mode (get config :adaptiveMode false)
                   quiet-logs (get config :quietLogs true)
+                  use-eval-cache (get config :useEvalCache false)
 
                   ;; Progress callback that sends SSE events and checks for stop/pause
                   progress-callback (fn [progress-data]
@@ -147,6 +148,7 @@
                               :random-seed       random-seed
                               :adaptive-mode     adaptive-mode
                               :quiet-logs        quiet-logs
+                              :use-eval-cache    use-eval-cache
                               :progress-callback progress-callback
                               :input-xs-exprs    (ops-common/doubles->exprs xs-vec)
                               :input-ys-exprs    (ops-common/doubles->exprs ys-vec)}

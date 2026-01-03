@@ -151,6 +151,7 @@ curl -X POST http://localhost:3000/api/upload-csv \
 | `-b`,`--mutations-blacklist` | no         | `Derivative` |    | Comma-separated list of mutation labels to exclude                                                                            |
 | `-a`,`--adaptive`       | no              | `-a`    | `false` | Enable adaptive mutation rates that adjust based on population diversity and stagnation                                       |
 | `-q`,`--quiet`          | no              | `-q`    | `false` | Suppress detailed iteration logs (quiet mode)                                                                                 |
+| `--cache`               | no              | `--cache` | `false` | Enable evaluation cache to avoid redundant score calculations for identical expressions                                      |
 
 ### Reproducible Results with Random Seed
 
@@ -200,6 +201,25 @@ The adaptive system tracks:
 - **History**: Recent best scores to detect convergence trends
 
 When the population converges (low diversity) or stagnates (no improvement for several iterations), the system automatically increases exploration by raising mutation rates and applying more mutations per individual.
+
+### Evaluation Cache
+
+The `--cache` flag enables caching of evaluation results by expression string. When the same expression appears multiple times (which is common during evolution), cached scores are returned instead of re-computing them.
+
+```bash
+# Run with evaluation cache enabled
+$ lein run -t -p 200 -i 100 -x 1,2,3,4,5 -y 1,4,9,16,25 --cache
+
+# Combine with adaptive mode
+$ lein run -t -p 200 -i 100 -x 1,2,3,4,5 -y 1,4,9,16,25 -a --cache
+```
+
+The cache is most beneficial when:
+- Using larger populations where duplicate expressions are more likely
+- Running many iterations where expressions may recur
+- Using deterministic mode (with `--seed`) where the same mutations may produce the same results
+
+The cache is cleared at the start of each run. In the GUI and webapp interfaces, the evaluation cache option is available in the Advanced Settings.
 
 ## Example Screenshots
 

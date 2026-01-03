@@ -317,7 +317,8 @@
     mutations-blacklist :mutations-blacklist
     log-steps           :log-steps
     adaptive-mode       :adaptive-mode
-    quiet-logs          :quiet-logs}]
+    quiet-logs          :quiet-logs
+    use-eval-cache      :use-eval-cache}]
 
   (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
         input-ys-exprs (ops-common/doubles->exprs input-data-y)
@@ -334,7 +335,8 @@
                              :max-leafs           max-leafs
                              :log-steps           log-steps
                              :adaptive-mode       adaptive-mode
-                             :quiet-logs          quiet-logs})))
+                             :quiet-logs          quiet-logs
+                             :use-eval-cache      use-eval-cache})))
 
 
 (defn- restart-with-new-inputs
@@ -382,7 +384,8 @@
     mutations-blacklist :mutations-blacklist
     log-steps           :log-steps
     adaptive-mode       :adaptive-mode
-    quiet-logs          :quiet-logs}]
+    quiet-logs          :quiet-logs
+    use-eval-cache      :use-eval-cache}]
 
   (when-not (and input-xs-exprs
                  input-xs-vec
@@ -406,7 +409,8 @@
    :mutations-blacklist  mutations-blacklist
    :log-steps            log-steps
    :adaptive-mode        adaptive-mode
-   :quiet-logs           quiet-logs})
+   :quiet-logs           quiet-logs
+   :use-eval-cache       use-eval-cache})
 
 
 (defn- wait-and-get-gui-args
@@ -596,7 +600,7 @@
 (defn- merge-cli-and-gui-args
   [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
    {:keys [input-iters input-phenos-count random-seed max-leafs input-xs-list input-xs-count input-ys-vec
-           sim-stop-start-chan sim->gui-chan mutations-blacklist log-steps adaptive-mode quiet-logs]
+           sim-stop-start-chan sim->gui-chan mutations-blacklist log-steps adaptive-mode quiet-logs use-eval-cache]
     :as   run-args}]
 
   (let [max-leafs      (or max-leafs cli-max-leafs)
@@ -616,7 +620,8 @@
                               :iters iters
                               :max-leafs (or max-leafs ops/default-max-leafs)
                               :adaptive-mode adaptive-mode
-                              :quiet-logs quiet-logs)
+                              :quiet-logs quiet-logs
+                              :use-eval-cache use-eval-cache)
 
         _              (when (seq mutations-blacklist)
                          (log/info "GUI: using" (count initial-muts) "mutations"
@@ -624,6 +629,9 @@
 
         _              (when adaptive-mode
                          (log/info "GUI: adaptive mutations enabled"))
+
+        _              (when use-eval-cache
+                         (log/info "GUI: evaluation cache enabled"))
 
         ;; Use GUI-provided log-steps if set, otherwise auto-calculate
         computed-log-steps (or log-steps (config->log-steps run-config run-args))

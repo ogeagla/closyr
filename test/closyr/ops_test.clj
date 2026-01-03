@@ -215,3 +215,77 @@
   (testing "invalid input 2"
     (is (= (#'ops/compute-residual ##Inf ##Inf)
            ops/max-resid))))
+
+
+(deftest eval-cache-test
+  (testing "cache starts empty"
+    (ops/clear-eval-cache!)
+    (let [stats (ops/eval-cache-stats)]
+      (is (= 0 (:size stats)))))
+
+  (testing "cache is populated when enabled"
+    (ops/clear-eval-cache!)
+    (binding [ops/*use-eval-cache* true]
+      (let [run-args {:input-ys-vec   [0 1 2]
+                      :input-xs-list  (ops-common/exprs->exprs-list
+                                        (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                      :input-xs-count 3}
+            run-config {:max-leafs ops/default-max-leafs}
+            x (F/Dummy "x")
+            pheno (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)]
+        ;; First call should miss
+        (ops/score-fn run-args run-config pheno)
+        (let [stats (ops/eval-cache-stats)]
+          (is (= 1 (:size stats)))
+          (is (= 1 (:misses stats)))
+          (is (= 0 (:hits stats))))
+        ;; Second call with same expr should hit
+        (ops/score-fn run-args run-config pheno)
+        (let [stats (ops/eval-cache-stats)]
+          (is (= 1 (:size stats)))
+          (is (= 1 (:misses stats)))
+          (is (= 1 (:hits stats)))))))
+
+  (testing "cache is not populated when disabled"
+    (ops/clear-eval-cache!)
+    (binding [ops/*use-eval-cache* false]
+      (let [run-args {:input-ys-vec   [0 1 2]
+                      :input-xs-list  (ops-common/exprs->exprs-list
+                                        (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                      :input-xs-count 3}
+            run-config {:max-leafs ops/default-max-leafs}
+            x (F/Dummy "x")
+            pheno (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)]
+        (ops/score-fn run-args run-config pheno)
+        (ops/score-fn run-args run-config pheno)
+        (let [stats (ops/eval-cache-stats)]
+          (is (= 0 (:size stats)))))))
+
+  (testing "cache returns same score for same expression"
+    (ops/clear-eval-cache!)
+    (binding [ops/*use-eval-cache* true]
+      (let [run-args {:input-ys-vec   [0 1 2]
+                      :input-xs-list  (ops-common/exprs->exprs-list
+                                        (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                      :input-xs-count 3}
+            run-config {:max-leafs ops/default-max-leafs}
+            x (F/Dummy "x")
+            pheno (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)
+            score1 (ops/score-fn run-args run-config pheno)
+            score2 (ops/score-fn run-args run-config pheno)]
+        (is (= score1 score2)))))
+
+  (testing "clear-eval-cache! resets cache"
+    (ops/clear-eval-cache!)
+    (binding [ops/*use-eval-cache* true]
+      (let [run-args {:input-ys-vec   [0 1 2]
+                      :input-xs-list  (ops-common/exprs->exprs-list
+                                        (ops-common/doubles->exprs [0.5 1.0 2.0]))
+                      :input-xs-count 3}
+            run-config {:max-leafs ops/default-max-leafs}
+            x (F/Dummy "x")
+            pheno (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)]
+        (ops/score-fn run-args run-config pheno)
+        (is (= 1 (:size (ops/eval-cache-stats))))
+        (ops/clear-eval-cache!)
+        (is (= 0 (:size (ops/eval-cache-stats))))))))

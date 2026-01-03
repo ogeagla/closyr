@@ -188,11 +188,13 @@ function submitSolverForm(evt) {
         config.seed = parseInt(seedValue);
     }
 
-    // Add adaptive mode and quiet logs settings
+    // Add adaptive mode, quiet logs, and eval cache settings
     const adaptiveModeEl = document.getElementById('adaptive-mode');
     const quietLogsEl = document.getElementById('quiet-logs');
+    const evalCacheEl = document.getElementById('eval-cache');
     config.adaptiveMode = adaptiveModeEl && adaptiveModeEl.getAttribute('aria-checked') === 'true';
     config.quietLogs = !(quietLogsEl && quietLogsEl.getAttribute('aria-checked') === 'true'); // Inverted: "Verbose Logging" toggle
+    config.useEvalCache = evalCacheEl && evalCacheEl.getAttribute('aria-checked') === 'true';
 
     // Add mutations blacklist if any mutations are excluded
     const blacklist = getMutationsBlacklist();

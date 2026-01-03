@@ -33,9 +33,11 @@
         current-log-steps (:log-steps @experiment-settings*)
         current-adaptive (:adaptive-mode @experiment-settings*)
         current-quiet (:quiet-logs @experiment-settings*)
+        current-eval-cache (:use-eval-cache @experiment-settings*)
         selected-value (atom current-log-steps)
         selected-adaptive (atom current-adaptive)
         selected-quiet (atom current-quiet)
+        selected-eval-cache (atom current-eval-cache)
 
         btn-group (ButtonGroup.)
         options [["Auto" nil] ["1" 1] ["5" 5] ["10" 10] ["25" 25]]
@@ -73,12 +75,23 @@
                 (actionPerformed [_ _]
                   (reset! selected-quiet (.isSelected quiet-cb))))))
 
+        ;; Eval cache checkbox
+        ^JCheckBox eval-cache-cb (JCheckBox. "Evaluation Cache")
+        _ (doto eval-cache-cb
+            (.setSelected (boolean current-eval-cache))
+            (.setToolTipText "Cache evaluation results by expression to avoid redundant calculations")
+            (.addActionListener
+              (reify ActionListener
+                (actionPerformed [_ _]
+                  (reset! selected-eval-cache (.isSelected eval-cache-cb))))))
+
         ;; Checkboxes panel
         ^JPanel checkbox-panel (JPanel.)
         _ (doto checkbox-panel
             (.setLayout (BoxLayout. checkbox-panel BoxLayout/Y_AXIS))
             (.add adaptive-cb)
-            (.add quiet-cb))
+            (.add quiet-cb)
+            (.add eval-cache-cb))
 
         ^JButton ok-btn (doto (JButton. "OK")
                           (.addActionListener
@@ -87,13 +100,15 @@
                                 (swap! experiment-settings* assoc
                                        :log-steps @selected-value
                                        :adaptive-mode @selected-adaptive
-                                       :quiet-logs @selected-quiet)
+                                       :quiet-logs @selected-quiet
+                                       :use-eval-cache @selected-eval-cache)
                                 (.setText current-value-label (if @selected-value
                                                                 (str @selected-value)
                                                                 "Auto"))
                                 (log/info "Log steps changed to:" (or @selected-value "Auto"))
                                 (log/info "Adaptive mode:" @selected-adaptive)
                                 (log/info "Quiet logging:" @selected-quiet)
+                                (log/info "Eval cache:" @selected-eval-cache)
                                 (.dispose dialog)))))
 
         ^JButton cancel-btn (doto (JButton. "Cancel")

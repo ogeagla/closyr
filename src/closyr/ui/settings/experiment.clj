@@ -28,7 +28,8 @@
          :mutations-blacklist nil
          :log-steps           nil
          :adaptive-mode       false
-         :quiet-logs          false}))
+         :quiet-logs          false
+         :use-eval-cache      false}))
 
 
 (def ^:private amount->number

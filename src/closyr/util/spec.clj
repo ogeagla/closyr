@@ -233,7 +233,8 @@
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
-   [:quiet-logs {:optional true} [:maybe :boolean]]])
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private SolverEvalArgs
@@ -283,7 +284,8 @@
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
-   [:quiet-logs {:optional true} [:maybe :boolean]]])
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private SolverInputArgs
@@ -306,7 +308,8 @@
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:progress-callback {:optional true} [:maybe fn?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
-   [:quiet-logs {:optional true} [:maybe :boolean]]])
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private SolverGUIMessage
@@ -322,7 +325,8 @@
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
-   [:quiet-logs {:optional true} [:maybe :boolean]]])
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]])
 
 
 (def ^:private CLIArgs
