@@ -273,7 +273,9 @@
             pheno (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)
             score1 (ops/score-fn run-args run-config pheno)
             score2 (ops/score-fn run-args run-config pheno)]
-        (is (= score1 score2)))))
+        (is (= score1 score2))
+        (is (= {"-1/2+x^2" -3.0000147}
+               @ops/eval-cache*)))))
 
   (testing "clear-eval-cache! resets cache"
     (ops/clear-eval-cache!)
