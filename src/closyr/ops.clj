@@ -571,7 +571,7 @@
           (progress-callback {:iteration               current-iteration
                               :total-iterations        iters
                               :best-formula            (str (:expr best-v))
-                              :best-formula-leaf-count (.leafCount (:expr best-v))
+                              :best-formula-leaf-count (.leafCount ^IExpr (:expr best-v))
                               :best-score              (or (:score best-v) min-score)
                               :percentiles             {:p99 (or (:score best-p99-v) min-score)
                                                         :p95 (or (:score best-p95-v) min-score)

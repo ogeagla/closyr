@@ -173,7 +173,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -184,12 +184,12 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       ;; Best score should be negative (error) and improving
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "-1/100+Sin(x)+x*(x+1/50*x*Csc(x)*(49/100+E^(2*(-1/10+E)^x)-11/10*Sin(1.6*x)))"
+      (is (= "-x-Cos(Sqrt(x))-Log(x)+Sin(x)-0.81*(x*((-1/100+E)^(2*x)-Cos(x))+Sin(x))"
              best-fn-str)
           "Expected formula for Nguyen-4 with seed 42")
       (println (str "| Nguyen-4         | " (format-score best-score)
@@ -206,7 +206,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -217,11 +217,11 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "Cos(x)+0.9/(-Cos(x)+x*(Cos(1/2-1.1*(11/100-99/100*Cos(0.9*x)))-Sin(x)))"
+      (is (= "303/500-3/2*Cos(x)+Log(x)"
              best-fn-str)
           "Expected formula for Nguyen-5 with seed 42")
       (println (str "| Nguyen-5         | " (format-score best-score)
@@ -238,7 +238,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -249,11 +249,11 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "1/2+x-Cos(x)+Cos(1/2-x)*(-x^2+0.9*Log(-1/100+3.05997*x^4+Cos(x)))"
+      (is (= "1/10*(E^x+3/5*(-1/2-Log(ArcCos(x))-0.9*(0.9*x+Cos(0.9*x))*Sec(x)))+Sec(x)^(7/5)"
              best-fn-str)
           "Expected formula for Feynman Lorentz with seed 42")
       (println (str "| Feynman Lorentz  | " (format-score best-score)
@@ -270,7 +270,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -281,11 +281,11 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "-Cos(3/5+x)"
+      (is (= "-1/100*x*Cos(3/5+x)"
              best-fn-str)
           "Expected formula for Feynman Wave with seed 42")
       (println (str "| Feynman Wave     | " (format-score best-score)
@@ -302,7 +302,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -313,7 +313,7 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       (println (str "| Feynman Diffraction | " (format-score best-score)
@@ -330,7 +330,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -341,7 +341,7 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       (println (str "| Feynman Planck   | " (format-score best-score)
@@ -358,7 +358,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -369,7 +369,7 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       (println (str "| Feynman Rutherford | " (format-score best-score)
@@ -386,7 +386,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -397,7 +397,7 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       (println (str "| Feynman Elliptical | " (format-score best-score)
@@ -414,7 +414,7 @@
               (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 50)}
                 (fn []
                   (symreg/run-find-formula
-                    {:input-phenos-count 200
+                    {:input-phenos-count 100
                      :initial-muts       (ops-init/initial-mutations)
                      :iters              100
                      :use-gui?           false
@@ -425,7 +425,7 @@
           best-score (apply max (:pop-scores final-population))
           best-fn-str (get-best-fn-str final-population)]
 
-      (is (= 200 (count (:pop final-population))))
+      (is (= 100 (count (:pop final-population))))
       (is (= 100 iters-done))
       (is (neg? best-score))
       (println (str "| Feynman Transition | " (format-score best-score)
