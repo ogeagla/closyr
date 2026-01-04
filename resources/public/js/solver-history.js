@@ -63,7 +63,7 @@ function saveStoppedToHistory(progressData, scoreHistory = []) {
             population: parseInt(document.getElementById('population').value) || 100,
             maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
             seed: document.getElementById('seed').value || null,
-            scoringMethod: scoringMethodEl ? scoringMethodEl.value : 'mae-max'
+            scoringMethod: progressData['scoring-method']
         },
         allSolutions: null,
         scoreHistory: scoreHistory
