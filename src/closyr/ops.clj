@@ -568,14 +568,15 @@
       ;; Call progress callback if provided (for HTTP API/SSE)
       (when (and progress-callback best-v)
         (try
-          (progress-callback {:iteration        current-iteration
-                              :total-iterations iters
-                              :best-formula     (str (:expr best-v))
-                              :best-score       (or (:score best-v) min-score)
-                              :percentiles      {:p99 (or (:score best-p99-v) min-score)
-                                                 :p95 (or (:score best-p95-v) min-score)
-                                                 :p90 (or (:score best-p90-v) min-score)}
-                              :scoring-method   scoring-method})
+          (progress-callback {:iteration               current-iteration
+                              :total-iterations        iters
+                              :best-formula            (str (:expr best-v))
+                              :best-formula-leaf-count (.leafCount (:expr best-v))
+                              :best-score              (or (:score best-v) min-score)
+                              :percentiles             {:p99 (or (:score best-p99-v) min-score)
+                                                        :p95 (or (:score best-p95-v) min-score)
+                                                        :p90 (or (:score best-p90-v) min-score)}
+                              :scoring-method          scoring-method})
           (catch Exception e
             ;; Re-throw stop exceptions so the solver actually stops
             (if (= :stopped (:type (ex-data e)))

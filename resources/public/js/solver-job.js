@@ -311,6 +311,10 @@ function setupSSEConnection(jobId) {
                     <span class="text-white">${data['best-score'].toFixed(6)}</span>
                 </div>
                 <div>
+                    <span class="text-gray-400">Complexity:</span>
+                    <span class="text-white">${data['best-formula-leaf-count']} nodes</span>
+                </div>
+                <div>
                     <span class="text-gray-400">Scoring:</span>
                     <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
                 </div>
@@ -376,7 +380,7 @@ function setupSSEConnection(jobId) {
                     </div>
                     <div>
                         <span class="text-gray-400">Scoring:</span>
-                        <span class="text-white ml-2">${getScoringMethodDisplay(document.getElementById('scoring-method')?.value)}</span>
+                        <span class="text-white ml-2">${getScoringMethodDisplay(data['scoring-method'])}</span>
                     </div>
                 </div>
 

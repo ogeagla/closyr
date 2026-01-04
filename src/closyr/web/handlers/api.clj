@@ -179,6 +179,7 @@
 
                   final-result {:iterations-done (:iters-done result)
                                 :best-solution   (first solutions)
+                                :scoring-method  scoring-method
                                 :all-solutions   solutions}]
 
               ;; Update job with final result and log completion
