@@ -8,7 +8,7 @@
   [seed n]
   (prng/set-random-seed! seed)
   (let [r1 (prng/rand-int n) r2 (prng/rand-int n)]
-    (println "Seed: " seed " n: " n
+    #_(println "Seed: " seed " n: " n
              ;; https://github.com/trystan/random-seed/issues/3
              ;; odd that the first value is so similar for different seeds:
              " rand-int: " r1

@@ -152,6 +152,7 @@ curl -X POST http://localhost:3000/api/upload-csv \
 | `-a`,`--adaptive`       | no              | `-a`    | `false` | Enable adaptive mutation rates that adjust based on population diversity and stagnation                                       |
 | `-q`,`--quiet`          | no              | `-q`    | `false` | Suppress detailed iteration logs (quiet mode)                                                                                 |
 | `--cache`               | no              | `--cache` | `false` | Enable evaluation cache to avoid redundant score calculations for identical expressions                                      |
+| `--scoring`             | no              | `--scoring r-squared` | `mae-max` | Scoring method: `mae-max` (default), `log-cosh`, or `r-squared`                                                    |
 
 ### Reproducible Results with Random Seed
 
@@ -220,6 +221,34 @@ The cache is most beneficial when:
 - Using deterministic mode (with `--seed`) where the same mutations may produce the same results
 
 The cache is cleared at the start of each run. In the GUI and webapp interfaces, the evaluation cache option is available in the Advanced Settings.
+
+### Scoring Methods
+
+The `--scoring` option allows you to choose different fitness scoring methods. All methods return 0 for a perfect fit, with more negative values indicating worse fits.
+
+```bash
+# Use R² scoring (coefficient of determination)
+$ lein run -t -p 100 -i 50 -x 1,2,3,4,5 -y 1,4,9,16,25 --scoring r-squared
+
+# Use log-cosh scoring (robust to outliers)
+$ lein run -t -p 100 -i 50 -x 1,2,3,4,5 -y 1,4,9,16,25 --scoring log-cosh
+
+# Use default MAE scoring
+$ lein run -t -p 100 -i 50 -x 1,2,3,4,5 -y 1,4,9,16,25 --scoring mae-max
+```
+
+Available scoring methods:
+
+| Method | Description |
+|--------|-------------|
+| `mae-max` | Default. Negative of (2×MAE + max residual). Penalizes both average error and worst-case outliers. |
+| `log-cosh` | Log-cosh loss. Smooth like MSE for small errors, robust like MAE for large errors. No hyperparameter tuning needed. |
+| `r-squared` | R² coefficient of determination minus 1. Perfect fit = 0, predictions at mean = -1, worse predictions < -1. |
+
+**Choosing a scoring method:**
+- Use `mae-max` (default) for general-purpose symbolic regression
+- Use `log-cosh` when your data may have outliers but you still want smooth gradients for small errors
+- Use `r-squared` when you want to measure how well the expression explains variance in the data
 
 ## Example Screenshots
 
@@ -419,6 +448,42 @@ FindFormula.Config config = new FindFormula.Config()
     .mutationsWhitelist("+Sin", "-Sin", "+Cos", "-Cos")
     .mutationsBlacklist("+Sin");  // Further exclude from whitelist
 ```
+
+#### Scoring Methods in Java
+
+Choose different fitness scoring methods using `scoringMethod()`:
+
+```java
+// Use R² scoring (coefficient of determination)
+FindFormula.Config config = new FindFormula.Config()
+    .iterations(50)
+    .populationSize(100)
+    .scoringMethod("r-squared");
+
+// Use log-cosh scoring (robust to outliers)
+FindFormula.Config config = new FindFormula.Config()
+    .iterations(50)
+    .populationSize(100)
+    .scoringMethod("log-cosh");
+
+// Use default MAE scoring (explicitly)
+FindFormula.Config config = new FindFormula.Config()
+    .iterations(50)
+    .populationSize(100)
+    .scoringMethod("mae-max");
+
+// Or with FormulaConfigBuilder
+IFormulaConfig config = FormulaConfigBuilder.builder()
+    .iterations(50)
+    .populationSize(100)
+    .scoringMethod("r-squared")
+    .build();
+```
+
+Available scoring methods:
+- `mae-max` (default): Negative of (2×MAE + max residual). Penalizes both average error and worst-case outliers.
+- `log-cosh`: Log-cosh loss. Smooth like MSE for small errors, robust like MAE for large errors.
+- `r-squared`: R² coefficient of determination minus 1. Perfect fit = 0, worse predictions are more negative.
 
 ## Roadmap
 

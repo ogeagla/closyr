@@ -131,6 +131,25 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="scoring-method" class="block text-sm font-medium text-gray-300 mb-2">
+                            Scoring Method
+                        </label>
+                        <select id="scoring-method" name="config.scoringMethod"
+                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="mae-max" selected>MAE + Max (default)</option>
+                            <option value="log-cosh">Log-Cosh (robust)</option>
+                            <option value="r-squared">R² (variance)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end pb-2">
+                        <span class="text-xs text-gray-500">
+                            Fitness scoring for evolution. All return 0 for perfect fit.
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Advanced Options -->
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div class="flex items-center justify-between">

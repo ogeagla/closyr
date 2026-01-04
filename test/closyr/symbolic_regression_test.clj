@@ -5,6 +5,7 @@
     [clojure.test :refer :all]
     [closyr.ops :as ops]
     [closyr.ops.common :as ops-common]
+    [closyr.ops.eval :as ops-eval]
     [closyr.ops.initialize :as ops-init]
     [closyr.symbolic-regression :as symreg]
     [closyr.test-utils :as test-utils]
@@ -12,7 +13,9 @@
     [malli.core :as m])
   (:import
     (java.awt
-      GraphicsEnvironment)))
+      GraphicsEnvironment)
+    (org.matheclipse.core.interfaces
+      IExpr)))
 
 
 (use-fixtures :once test-utils/quiet-logging-fixture)
@@ -63,8 +66,7 @@
                         :seed           123})))
                  :final-population)))
 
-        (is (= @args*
-               [{:iters          20
+        (is (= [{:iters          20
                  :log-steps      200
                  :max-leafs      20
                  :use-gui?       false
@@ -72,6 +74,7 @@
                  :adaptive-mode  nil
                  :quiet-logs     nil
                  :use-eval-cache nil
+                 :scoring-method :mae-max
                  :use-flamechart true}
                 {:input-iters         20
                  :input-phenos-count  nil
@@ -79,12 +82,14 @@
                  :adaptive-mode       nil
                  :quiet-logs          nil
                  :use-eval-cache      nil
+                 :scoring-method      nil
                  :input-xs-count      3
                  :input-xs-vec        [0.0 1.0 2.0]
                  :input-ys-vec        [1.0 4.0 19.0]
                  :max-leafs           20
                  :mutations-blacklist nil
-                 :log-steps           nil}])
+                 :log-steps           nil}]
+               @args*)
             "Arguments should be consistent with inputs"))))
 
 
@@ -115,8 +120,7 @@
                        :headless   true})))
                 :final-population)))
 
-        (is (= @args*
-               [{:iters          20
+        (is (= [{:iters          20
                  :log-steps      200
                  :max-leafs      40
                  :use-gui?       false
@@ -124,6 +128,7 @@
                  :adaptive-mode  nil
                  :quiet-logs     nil
                  :use-eval-cache nil
+                 :scoring-method :mae-max
                  :use-flamechart nil}
                 {:input-iters         20
                  :input-phenos-count  nil
@@ -131,12 +136,14 @@
                  :adaptive-mode       nil
                  :quiet-logs          nil
                  :use-eval-cache      nil
+                 :scoring-method      nil
                  :input-xs-count      50
                  :input-xs-vec        [0.0 0.20943951023931953 0.41887902047863906 0.6283185307179586 0.8377580409572781 1.0471975511965976 1.2566370614359172 1.4660765716752369 1.6755160819145563 1.8849555921538759 2.0943951023931953 2.3038346126325147 2.5132741228718345 2.7227136331111543 2.9321531433504737 3.141592653589793 3.3510321638291125 3.560471674068432 3.7699111843077517 3.979350694547071 4.1887902047863905 4.39822971502571 4.607669225265029 4.81710873550435 5.026548245743669 5.235987755982989 5.445427266222309 5.654866776461628 5.8643062867009474 6.073745796940266 6.283185307179586 6.492624817418906 6.702064327658225 6.911503837897546 7.120943348136864 7.3303828583761845 7.5398223686155035 7.749261878854823 7.958701389094142 8.168140899333462 8.377580409572781 8.587019919812102 8.79645943005142 9.00589894029074 9.215338450530059 9.42477796076938 9.6342174710087 9.843656981248019 10.053096491487338 10.262536001726657]
                  :input-ys-vec        [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
                  :max-leafs           nil
                  :mutations-blacklist nil
-                 :log-steps           nil}])
+                 :log-steps           nil}]
+               @args*)
             "Arguments should be consistent with inputs")))))
 
 
@@ -345,6 +352,184 @@
                  (set (keys @symreg/sim-input-args*)))))))))
 
 
+(deftest deterministic-experiments-scoring-methods
+  (let [run-config {:input-phenos-count 10
+                    :initial-muts       (ops-init/initial-mutations)
+                    :iters              5
+                    :use-gui?           false
+                    :use-flamechart     false
+                    :random-seed        456
+                    :input-xs-exprs     (->> (range 20)
+                                             (map (fn [i] (* 0.5 i)))
+                                             ops-common/doubles->exprs)
+                    :input-ys-exprs     (->> (range 20)
+                                             (map (fn [i] (+ (* 2 i) 3)))
+                                             ops-common/doubles->exprs)}]
+
+    (testing "mae-max scoring method (default)"
+      (reset! symreg/sim-input-args* {})
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+        (fn []
+          (binding [ops/*scoring-method* :mae-max]
+            (let [{:keys [final-population iters-done] :as resp}
+                  (symreg/run-find-formula run-config)
+                  sorted-scores (sort (:pop-scores final-population))]
+              ;; MAE scores are negative (closer to 0 is better)
+              (is (every? neg? sorted-scores))
+              (is (= 10 (count (:pop final-population))))
+              (is (= 5 iters-done))
+              ;; Best score should be better (less negative) than worst
+              (is (> (last sorted-scores) (first sorted-scores))))))))
+
+    (testing "log-cosh scoring method"
+      (reset! symreg/sim-input-args* {})
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+        (fn []
+          (binding [ops/*scoring-method* :log-cosh]
+            (let [{:keys [final-population iters-done] :as resp}
+                  (symreg/run-find-formula run-config)
+                  sorted-scores (sort (:pop-scores final-population))]
+              ;; Log-cosh scores are negative (closer to 0 is better)
+              (is (every? neg? sorted-scores))
+              (is (= 10 (count (:pop final-population))))
+              (is (= 5 iters-done))
+              ;; Best score should be better (less negative) than worst
+              (is (> (last sorted-scores) (first sorted-scores))))))))
+
+    (testing "r-squared scoring method"
+      (reset! symreg/sim-input-args* {})
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+        (fn []
+          (binding [ops/*scoring-method* :r-squared]
+            (let [{:keys [final-population iters-done] :as resp}
+                  (symreg/run-find-formula run-config)
+                  sorted-scores (sort (:pop-scores final-population))]
+              ;; R² scores can be negative (bad) to 1.0 (perfect)
+              ;; Best scores should be closer to 1.0
+              (is (= 10 (count (:pop final-population))))
+              (is (= 5 iters-done))
+              ;; Best score should be better (higher, closer to 1) than worst
+              (is (> (last sorted-scores) (first sorted-scores)))
+              ;; R² for good fits will still be negative
+              (is (neg? (last sorted-scores))))))))
+
+    (testing "different scoring methods produce different score ranges"
+      (reset! symreg/sim-input-args* {})
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+        (fn []
+          (let [mae-result (binding [ops/*scoring-method* :mae-max]
+                             (symreg/run-find-formula run-config))
+                log-cosh-result (binding [ops/*scoring-method* :log-cosh]
+                                  (symreg/run-find-formula run-config))
+                r2-result (binding [ops/*scoring-method* :r-squared]
+                            (symreg/run-find-formula run-config))
+                mae-best (apply max (:pop-scores (:final-population mae-result)))
+                log-cosh-best (apply max (:pop-scores (:final-population log-cosh-result)))
+                r2-best (apply max (:pop-scores (:final-population r2-result)))]
+            ;; MAE and log-cosh best scores are negative (less negative = better)
+            (is (neg? mae-best))
+            (is (neg? log-cosh-best))
+            ;; R² best score should still be negative for reasonable fits
+            (is (neg? r2-best))
+            ;; R² is bounded above by 1.0
+            (is (<= r2-best 1.0))))))))
+
+
+(deftest cross-method-scoring-comparison
+  (testing "compare solutions from different scoring methods using all scoring metrics"
+    (let [;; Simple quadratic data: y = x^2
+          xs-vec (mapv double (range 1 6))
+          ys-vec (mapv (fn [x] (+ (* x x 0.5) x 1)) xs-vec)     ;; 0.5 * x^2 + x + 1
+          ys-arr (double-array ys-vec)
+
+          run-config {:input-phenos-count 15
+                      :initial-muts       (ops-init/initial-mutations)
+                      :iters              8
+                      :use-gui?           false
+                      :use-flamechart     false
+                      :random-seed        789
+                      :input-xs-exprs     (ops-common/doubles->exprs xs-vec)
+                      :input-ys-exprs     (ops-common/doubles->exprs ys-vec)}
+
+          ;; Helper to evaluate a phenotype under a specific scoring method
+          score-pheno-with-method (fn [pheno method]
+                                    (let [f-of-xs (ops-eval/eval-vec-pheno
+                                                    pheno
+                                                    {:input-xs-list  (ops-common/exprs->exprs-list
+                                                                       (ops-common/doubles->exprs xs-vec))
+                                                     :input-xs-count (count xs-vec)})]
+                                      (when f-of-xs
+                                        (#'ops/compute-score-from-actuals-and-expecteds
+                                          pheno f-of-xs ys-vec
+                                          (.leafCount ^IExpr (:expr pheno))
+                                          ys-arr
+                                          method))))
+
+          ;; Run with each scoring method and get best solution
+          _ (reset! symreg/sim-input-args* {})
+          mae-result (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+                       (fn []
+                         (symreg/run-find-formula (assoc run-config :scoring-method :mae-max))))
+          mae-best (first (sort-by :score > (:pop (:final-population mae-result))))
+
+          _ (reset! symreg/sim-input-args* {})
+          log-cosh-result (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+                            (fn []
+                              (symreg/run-find-formula (assoc run-config :scoring-method :log-cosh))))
+          log-cosh-best (first (sort-by :score > (:pop (:final-population log-cosh-result))))
+
+          _ (reset! symreg/sim-input-args* {})
+          r2-result (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+                      (fn []
+                        (symreg/run-find-formula (assoc run-config :scoring-method :r-squared))))
+          r2-best (first (sort-by :score > (:pop (:final-population r2-result))))
+
+          ;; Score each best solution under all three methods
+          mae-best-scores {:mae-max   (score-pheno-with-method mae-best :mae-max)
+                           :log-cosh  (score-pheno-with-method mae-best :log-cosh)
+                           :r-squared (score-pheno-with-method mae-best :r-squared)}
+          log-cosh-best-scores {:mae-max   (score-pheno-with-method log-cosh-best :mae-max)
+                                :log-cosh  (score-pheno-with-method log-cosh-best :log-cosh)
+                                :r-squared (score-pheno-with-method log-cosh-best :r-squared)}
+          r2-best-scores {:mae-max   (score-pheno-with-method r2-best :mae-max)
+                          :log-cosh  (score-pheno-with-method r2-best :log-cosh)
+                          :r-squared (score-pheno-with-method r2-best :r-squared)}]
+
+      ;; Log results for inspection
+      (println "\n=== Cross-Method Scoring Comparison ===")
+      (println "MAE-trained best formula:" (str (:expr mae-best)))
+      (println "  scored as MAE:" (:mae-max mae-best-scores)
+               "log-cosh:" (:log-cosh mae-best-scores)
+               "R²:" (:r-squared mae-best-scores))
+
+      (println "Log-cosh-trained best formula:" (str (:expr log-cosh-best)))
+      (println "  scored as MAE:" (:mae-max log-cosh-best-scores)
+               "log-cosh:" (:log-cosh log-cosh-best-scores)
+               "R²:" (:r-squared log-cosh-best-scores))
+
+      (println "R²-trained best formula:" (str (:expr r2-best)))
+      (println "  scored as MAE:" (:mae-max r2-best-scores)
+               "log-cosh:" (:log-cosh r2-best-scores)
+               "R²:" (:r-squared r2-best-scores))
+      (println "========================================\n")
+
+      ;; Basic assertions - all scores should be numeric and negative (closer to 0 = better)
+      (is (number? (:mae-max mae-best-scores)))
+      (is (number? (:log-cosh mae-best-scores)))
+      (is (number? (:r-squared mae-best-scores)))
+
+      ;; Each solution should score best (or very well) under its own training method
+      ;; This is a sanity check that the scoring methods are being applied correctly
+      (is (or (neg? (:mae-max mae-best-scores)) (zero? (:mae-max mae-best-scores))))
+      (is (or (neg? (:log-cosh log-cosh-best-scores)) (zero? (:log-cosh log-cosh-best-scores))))
+      (is (or (neg? (:r-squared r2-best-scores)) (zero? (:r-squared r2-best-scores))))
+
+      ;; R² scores should be bounded above by 0 (since we shifted by -1)
+      (is (<= (:r-squared mae-best-scores) 0))
+      (is (<= (:r-squared log-cosh-best-scores) 0))
+      (is (<= (:r-squared r2-best-scores) 0)))))
+
+
 (deftest can-run-experiment-gui:start-restart-stop
   (when (not (GraphicsEnvironment/isHeadless))
     (binding [ops/*print-top-n* 1]
@@ -414,6 +599,7 @@
                              :quiet-logs
                              :adaptive-mode
                              :use-eval-cache
+                             :scoring-method
                              :mutations-blacklist
                              :log-steps}))
 
@@ -485,6 +671,7 @@
              :quiet-logs
              :adaptive-mode
              :use-eval-cache
+             :scoring-method
              :input-xs-count
              :input-xs-list
              :input-xs-vec

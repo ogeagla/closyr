@@ -29,7 +29,8 @@
          :log-steps           nil
          :adaptive-mode       false
          :quiet-logs          false
-         :use-eval-cache      false}))
+         :use-eval-cache      false
+         :scoring-method      :mae-max}))
 
 
 (def ^:private amount->number

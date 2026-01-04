@@ -148,6 +148,10 @@
   [:int {:min Integer/MIN_VALUE :max Integer/MAX_VALUE}])
 
 
+(def ^:private ScoringMethod
+  [:enum :mae-max :log-cosh :r-squared])
+
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
@@ -200,7 +204,8 @@
    [:progress-callback {:optional true} [:maybe fn?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
-   [:use-eval-cache {:optional true} [:maybe :boolean]]])
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -234,7 +239,8 @@
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
-   [:use-eval-cache {:optional true} [:maybe :boolean]]])
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
 
 
 (def ^:private SolverEvalArgs
@@ -285,7 +291,8 @@
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
-   [:use-eval-cache {:optional true} [:maybe :boolean]]])
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
 
 
 (def ^:private SolverInputArgs
@@ -309,7 +316,8 @@
    [:progress-callback {:optional true} [:maybe fn?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
-   [:use-eval-cache {:optional true} [:maybe :boolean]]])
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
 
 
 (def ^:private SolverGUIMessage
@@ -326,7 +334,8 @@
    [:log-steps {:optional true} [:maybe pos-int?]]
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
-   [:use-eval-cache {:optional true} [:maybe :boolean]]])
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
 
 
 (def ^:private CLIArgs
@@ -345,7 +354,8 @@
    [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
    [:adaptive-mode {:optional true} [:maybe boolean?]]
    [:quiet-logs {:optional true} [:maybe boolean?]]
-   [:use-eval-cache {:optional true} [:maybe boolean?]]])
+   [:use-eval-cache {:optional true} [:maybe boolean?]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
 
 
 (def ^:private ModificationsResult

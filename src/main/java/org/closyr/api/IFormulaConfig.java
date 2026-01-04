@@ -67,4 +67,13 @@ public interface IFormulaConfig {
     default boolean isUseEvalCache() {
         return false;
     }
+
+    /**
+     * Get the scoring method for fitness evaluation.
+     * Valid values: "mae-max" (default), "log-cosh", "r-squared".
+     * All methods return 0 for perfect fit, negative for worse fits.
+     */
+    default String getScoringMethod() {
+        return "mae-max";
+    }
 }

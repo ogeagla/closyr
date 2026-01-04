@@ -273,7 +273,7 @@
 
 (defn- setup-gui
   []
-  (let [sim->gui-chan       *sim->gui-chan*
+  (let [sim->gui-chan *sim->gui-chan*
         sim-stop-start-chan *sim-stop-start-chan*
         {:keys [input-xs-vec input-ys-vec]} @sim-input-args*]
     (gui/create-and-show-gui
@@ -318,12 +318,13 @@
     log-steps           :log-steps
     adaptive-mode       :adaptive-mode
     quiet-logs          :quiet-logs
-    use-eval-cache      :use-eval-cache}]
+    use-eval-cache      :use-eval-cache
+    scoring-method      :scoring-method}]
 
   (let [input-xs-exprs (ops-common/doubles->exprs input-data-x)
         input-ys-exprs (ops-common/doubles->exprs input-data-y)
-        input-ys-vec   (ops-common/exprs->doubles input-ys-exprs)
-        input-xs-vec   (ops-common/exprs->doubles input-xs-exprs)]
+        input-ys-vec (ops-common/exprs->doubles input-ys-exprs)
+        input-xs-vec (ops-common/exprs->doubles input-xs-exprs)]
 
     (reset! sim-input-args* {:input-xs-exprs      input-xs-exprs
                              :input-xs-vec        input-xs-vec
@@ -336,7 +337,8 @@
                              :log-steps           log-steps
                              :adaptive-mode       adaptive-mode
                              :quiet-logs          quiet-logs
-                             :use-eval-cache      use-eval-cache})))
+                             :use-eval-cache      use-eval-cache
+                             :scoring-method      scoring-method})))
 
 
 (defn- restart-with-new-inputs
@@ -385,7 +387,8 @@
     log-steps           :log-steps
     adaptive-mode       :adaptive-mode
     quiet-logs          :quiet-logs
-    use-eval-cache      :use-eval-cache}]
+    use-eval-cache      :use-eval-cache
+    scoring-method      :scoring-method}]
 
   (when-not (and input-xs-exprs
                  input-xs-vec
@@ -410,7 +413,8 @@
    :log-steps            log-steps
    :adaptive-mode        adaptive-mode
    :quiet-logs           quiet-logs
-   :use-eval-cache       use-eval-cache})
+   :use-eval-cache       use-eval-cache
+   :scoring-method       scoring-method})
 
 
 (defn- wait-and-get-gui-args
@@ -435,11 +439,15 @@
 
     (merge gui-comms (wait-and-get-gui-args sim-stop-start-chan))))
 
+(def ^:private finished-eps
+  {:mae-max   -1e-3
+   :log-cosh  -1e-3
+   :r-squared -1e-4})
 
 (defn- next-iters
   "Determine how many more GA iterations are left based on score, and stop if near perfect solution."
   [i scores]
-  (if (some #(> % -1e-3) scores)
+  (if (some #(> % (get finished-eps ops/*scoring-method* -1e-3)) scores)
     (near-exact-solution i scores)
     (dec i)))
 
@@ -509,33 +517,33 @@
     (specs/validate! "SolverRunConfig" #'specs/SolverRunConfig run-config)
     (specs/validate! "SolverRunArgs" #'specs/SolverRunArgs run-args)
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
-          start    (print-and-save-start-time iters initial-phenos run-config)
+          start (print-and-save-start-time iters initial-phenos run-config)
           init-pop (ga/initialize
                      initial-phenos
                      (partial ops/score-fn run-args run-config)
                      (partial ops/mutation-fn run-config initial-muts)
                      (partial ops/crossover-fn run-config initial-muts))]
 
-      (log/info "Running with logging every n steps: " (:log-steps run-config))
+      (log/info "Running with progress update / logging every n steps: " (:log-steps run-config))
 
       (assoc this
-             :ga-result init-pop
-             :iters-to-go iters
-             :start-ms start)))
+        :ga-result init-pop
+        :iters-to-go iters
+        :start-ms start)))
 
 
   (solver-step
     [this]
     (let [{:keys [iters log-steps]} run-config
-          population  (:ga-result this)
+          population (:ga-result this)
           iters-to-go (:iters-to-go this)]
       (binding [ops/*log-steps* log-steps]
         (if (zero? iters-to-go)
           (assoc this
-                 :status :done
-                 :result {:iters-done       (- iters iters-to-go)
-                          :final-population population
-                          :next-step        :wait})
+            :status :done
+            :result {:iters-done       (- iters iters-to-go)
+                     :final-population population
+                     :next-step        :wait})
           (let [{scores :pop-scores :as ga-result} (ga/evolve population)]
             (specs/validate! "GAPopulation" #'specs/GAPopulationPhenotypes (:pop ga-result))
             (ops/report-iteration iters-to-go iters ga-result run-args run-config)
@@ -545,8 +553,8 @@
   (next-state
     [this]
     (let [{:keys [iters initial-phenos initial-muts use-gui?]} run-config
-          iters-to-go         (:iters-to-go this)
-          population          (:ga-result this)
+          iters-to-go (:iters-to-go this)
+          population (:ga-result this)
           should-return-state (and use-gui? (check-gui-command-and-maybe-park run-args))]
       (if (and use-gui? should-return-state)
         (case should-return-state
@@ -598,46 +606,53 @@
 
 
 (defn- merge-cli-and-gui-args
-  [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui?] :as run-config}
+  [{cli-max-leafs :max-leafs :keys [iters initial-phenos initial-muts use-gui? scoring-method] :as run-config}
    {:keys [input-iters input-phenos-count random-seed max-leafs input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan mutations-blacklist log-steps adaptive-mode quiet-logs use-eval-cache]
+    gui-scoring-method :scoring-method
     :as   run-args}]
 
-  (let [max-leafs      (or max-leafs cli-max-leafs)
-        iters          (or input-iters iters)
+  (let [max-leafs (or max-leafs cli-max-leafs)
+        iters (or input-iters iters)
         initial-phenos (if input-phenos-count
                          (ops-init/initial-phenotypes input-phenos-count)
                          initial-phenos)
         ;; Apply mutations blacklist from GUI if provided
-        initial-muts   (if (seq mutations-blacklist)
-                         (ops-init/filter-mutations {:blacklist mutations-blacklist})
-                         initial-muts)
+        initial-muts (if (seq mutations-blacklist)
+                       (ops-init/filter-mutations {:blacklist mutations-blacklist})
+                       initial-muts)
+        ;; GUI scoring method takes precedence over CLI
+        effective-scoring-method (or gui-scoring-method scoring-method :mae-max)
 
-        run-config     (assoc run-config
-                              :initial-phenos initial-phenos
-                              :initial-muts initial-muts
-                              :random-seed random-seed
-                              :iters iters
-                              :max-leafs (or max-leafs ops/default-max-leafs)
-                              :adaptive-mode adaptive-mode
-                              :quiet-logs quiet-logs
-                              :use-eval-cache use-eval-cache)
+        run-config (assoc run-config
+                     :initial-phenos initial-phenos
+                     :initial-muts initial-muts
+                     :random-seed random-seed
+                     :iters iters
+                     :max-leafs (or max-leafs ops/default-max-leafs)
+                     :adaptive-mode adaptive-mode
+                     :quiet-logs quiet-logs
+                     :use-eval-cache use-eval-cache
+                     :scoring-method effective-scoring-method)
 
-        _              (when (seq mutations-blacklist)
-                         (log/info "GUI: using" (count initial-muts) "mutations"
-                                   "(" (count mutations-blacklist) "excluded)"))
+        _ (when (seq mutations-blacklist)
+            (log/info "GUI: using" (count initial-muts) "mutations"
+                      "(" (count mutations-blacklist) "excluded)"))
 
-        _              (when adaptive-mode
-                         (log/info "GUI: adaptive mutations enabled"))
+        _ (when adaptive-mode
+            (log/info "GUI: adaptive mutations enabled"))
 
-        _              (when use-eval-cache
-                         (log/info "GUI: evaluation cache enabled"))
+        _ (when use-eval-cache
+            (log/info "GUI: evaluation cache enabled"))
+
+        _ (when (not= effective-scoring-method :mae-max)
+            (log/info "GUI: scoring method:" effective-scoring-method))
 
         ;; Use GUI-provided log-steps if set, otherwise auto-calculate
         computed-log-steps (or log-steps (config->log-steps run-config run-args))
 
-        run-config     (assoc run-config
-                              :log-steps computed-log-steps)]
+        run-config (assoc run-config
+                     :log-steps computed-log-steps)]
     run-config))
 
 
@@ -692,14 +707,16 @@
   This is the main programmatic entry point for the symbolic regression solver.
 
   Options:
-    :use-eval-cache - when true, cache evaluation results by expression string (default: false)"
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed adaptive-mode use-eval-cache] :as run-config}]
+    :use-eval-cache - when true, cache evaluation results by expression string (default: false)
+    :scoring-method - scoring method (:mae-max, :log-cosh, or :r-squared)"
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed adaptive-mode use-eval-cache scoring-method] :as run-config}]
   ;; Reset adaptive state and eval cache for new run
   (adaptive/reset-adaptive-state!)
   (ops/clear-eval-cache!)
   (binding [ga/*deterministic-mode* (some? random-seed)
             ga/*adaptive-mode* (if (some? adaptive-mode) adaptive-mode false)
-            ops/*use-eval-cache* (boolean use-eval-cache)]
+            ops/*use-eval-cache* (boolean use-eval-cache)
+            ops/*scoring-method* (or scoring-method :mae-max)]
     ;; Set the random seed if provided
     (when random-seed
       (log/info "run-find-formula: Deterministic mode enabled with seed:" random-seed
@@ -756,31 +773,33 @@
   "Run app from CLI args"
   {:malli/schema [:=> [:cat #'specs/CLIArgs] #'specs/SolverRunResults]}
   [{:keys [iterations population headless xs ys use-flamechart max-leafs seed
-           mutations-whitelist mutations-blacklist adaptive-mode quiet-logs use-eval-cache] :as cli-opts}]
+           mutations-whitelist mutations-blacklist adaptive-mode quiet-logs use-eval-cache
+           scoring-method] :as cli-opts}]
   (log/info "CLI: run from options: " cli-opts)
   ;; Run with deterministic mode if seed is set (disables parallel execution)
   (let [initial-muts (if (or mutations-whitelist mutations-blacklist)
                        (ops-init/filter-mutations {:whitelist mutations-whitelist
                                                    :blacklist mutations-blacklist})
                        (ops-init/initial-mutations))
-        _            (log/info "CLI: using" (count initial-muts) "mutations")
-        run-config   {:initial-phenos  (ops-init/initial-phenotypes population)
-                      :initial-muts    initial-muts
-                      :iters           iterations
-                      :use-gui?        (not headless)
-                      :random-seed     seed
-                      :max-leafs       max-leafs
-                      :use-flamechart  use-flamechart
-                      :adaptive-mode   adaptive-mode
-                      :quiet-logs      quiet-logs
-                      :use-eval-cache  use-eval-cache
-                      :input-xs-exprs  (if xs
-                                         (ops-common/doubles->exprs xs)
-                                         example-input-xs-exprs)
-                      :input-ys-exprs  (if ys
-                                         (ops-common/doubles->exprs ys)
-                                         example-input-ys-exprs)}
-        result       (run-find-formula run-config)]
+        _ (log/info "CLI: using" (count initial-muts) "mutations")
+        run-config {:initial-phenos (ops-init/initial-phenotypes population)
+                    :initial-muts   initial-muts
+                    :iters          iterations
+                    :use-gui?       (not headless)
+                    :random-seed    seed
+                    :max-leafs      max-leafs
+                    :use-flamechart use-flamechart
+                    :adaptive-mode  adaptive-mode
+                    :quiet-logs     quiet-logs
+                    :use-eval-cache use-eval-cache
+                    :scoring-method scoring-method
+                    :input-xs-exprs (if xs
+                                      (ops-common/doubles->exprs xs)
+                                      example-input-xs-exprs)
+                    :input-ys-exprs (if ys
+                                      (ops-common/doubles->exprs ys)
+                                      example-input-ys-exprs)}
+        result (run-find-formula run-config)]
     (log/info "CLI: Done!")
     (exit cli-opts)
     result))

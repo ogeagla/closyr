@@ -49,6 +49,8 @@
         adaptive-mode (.isAdaptiveMode cfg)
         quiet-logs (.isQuietLogs cfg)
         use-eval-cache (.isUseEvalCache cfg)
+        scoring-method-str (.getScoringMethod cfg)
+        scoring-method (when scoring-method-str (keyword scoring-method-str))
         whitelist (array->vec (.getMutationsWhitelist cfg))
         blacklist (array->vec (.getMutationsBlacklist cfg))
         initial-muts (if (or whitelist blacklist)
@@ -65,11 +67,12 @@
                     :adaptive-mode  adaptive-mode
                     :quiet-logs     quiet-logs
                     :use-eval-cache use-eval-cache
+                    :scoring-method scoring-method
                     :input-xs-exprs (ops-common/doubles->exprs xs-vec)
                     :input-ys-exprs (ops-common/doubles->exprs ys-vec)}
 
         _ (log/info "API: using" (count initial-muts) "mutations"
-                    "adaptive:" adaptive-mode "quiet:" quiet-logs)
+                    "adaptive:" adaptive-mode "quiet:" quiet-logs "scoring:" scoring-method)
         result (symreg/run-find-formula run-config)]
 
     (types/->formula-result result)))

@@ -35,6 +35,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -85,6 +86,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -106,6 +108,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -126,6 +129,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -147,6 +151,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -168,6 +173,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist nil})))
 
@@ -188,6 +194,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist nil}))))
 
@@ -210,6 +217,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist ["+Sin" "-Sin" "+Cos"]
            :mutations-blacklist nil})))
 
@@ -231,6 +239,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist ["+Sin" "-Sin"]
            :mutations-blacklist nil}))))
 
@@ -253,6 +262,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist ["Derivative" "+Sin"]})))
 
@@ -274,6 +284,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist nil
            :mutations-blacklist ["Derivative"]}))))
 
@@ -296,6 +307,7 @@
            :adaptive-mode       false
            :quiet-logs          false
            :use-eval-cache      false
+           :scoring-method      :mae-max
            :mutations-whitelist ["+Sin" "-Sin" "+Cos" "-Cos"]
            :mutations-blacklist ["+Sin"]}))))
 
@@ -314,6 +326,7 @@
             :adaptive-mode       true
             :quiet-logs          true
             :use-eval-cache      false
+            :scoring-method      :mae-max
             :mutations-whitelist ["+Sin" "-Sin" "+Cos" "-Cos"]
             :mutations-blacklist ["+Sin"]}
            (let [test-input '("-t" "-p1000" "-i" "200" "-w" "+Sin,-Sin,+Cos,-Cos" "-b" "+Sin" "-a" "-q")]

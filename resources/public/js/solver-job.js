@@ -196,6 +196,12 @@ function submitSolverForm(evt) {
     config.quietLogs = !(quietLogsEl && quietLogsEl.getAttribute('aria-checked') === 'true'); // Inverted: "Verbose Logging" toggle
     config.useEvalCache = evalCacheEl && evalCacheEl.getAttribute('aria-checked') === 'true';
 
+    // Add scoring method
+    const scoringMethodEl = document.getElementById('scoring-method');
+    if (scoringMethodEl) {
+        config.scoringMethod = scoringMethodEl.value;
+    }
+
     // Add mutations blacklist if any mutations are excluded
     const blacklist = getMutationsBlacklist();
     if (blacklist.length > 0) {
@@ -297,9 +303,15 @@ function setupSSEConnection(jobId) {
                     </button>
                 </div>
             </div>
-            <div class="mt-2 text-sm">
-                <span class="text-gray-400">Score:</span>
-                <span class="text-white">${data['best-score'].toFixed(6)}</span>
+            <div class="mt-2 text-sm flex space-x-4">
+                <div>
+                    <span class="text-gray-400">Score:</span>
+                    <span class="text-white">${data['best-score'].toFixed(6)}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Scoring:</span>
+                    <span class="text-white">${getScoringMethodDisplay(document.getElementById('scoring-method')?.value)}</span>
+                </div>
             </div>
         `;
 
@@ -351,7 +363,7 @@ function setupSSEConnection(jobId) {
                     <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                <div class="grid grid-cols-3 gap-4 text-sm mb-4">
                     <div>
                         <span class="text-gray-400">Score:</span>
                         <span class="text-white ml-2">${data['best-solution'].score.toFixed(6)}</span>
@@ -359,6 +371,10 @@ function setupSSEConnection(jobId) {
                     <div>
                         <span class="text-gray-400">Complexity:</span>
                         <span class="text-white ml-2">${data['best-solution'].leafCount} nodes</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Scoring:</span>
+                        <span class="text-white ml-2">${getScoringMethodDisplay(document.getElementById('scoring-method')?.value)}</span>
                     </div>
                 </div>
 

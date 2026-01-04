@@ -123,7 +123,99 @@
                   [0.5]
                   [1.0]
                   10)
-                 -1.5)))))))
+                 -1.5))))))
+
+  (testing "log-cosh scoring method"
+    (with-redefs-fn {#'ops/length-deduction (fn [score leafs] 0)}
+      (fn []
+        (let [x (F/Dummy "x")
+              ys-arr (double-array [1.0 2.0 3.0])
+              ;; Perfect predictions - log-cosh of 0 residuals = 0
+              perfect-score (#'ops/compute-score-from-actuals-and-expecteds
+                              (ops-common/->phenotype x x nil)
+                              [1.0 2.0 3.0]
+                              [1.0 2.0 3.0]
+                              5
+                              ys-arr
+                              :log-cosh)]
+          ;; Perfect fit should give score of 0 (or very close)
+          (is (< (abs perfect-score) 0.0001)))
+        (let [x (F/Dummy "x")
+              ys-arr (double-array [1.0 2.0 3.0])
+              ;; Predictions off by 1 each
+              imperfect-score (#'ops/compute-score-from-actuals-and-expecteds
+                                (ops-common/->phenotype x x nil)
+                                [2.0 3.0 4.0]
+                                [1.0 2.0 3.0]
+                                5
+                                ys-arr
+                                :log-cosh)]
+          ;; Score should be negative (log-cosh(1) ≈ 0.433)
+          (is (< imperfect-score 0))
+          (is (> imperfect-score -1.0))))))
+
+  (testing "r-squared scoring method"
+    (with-redefs-fn {#'ops/length-deduction (fn [score leafs] 0)}
+      (fn []
+        (let [x (F/Dummy "x")
+              ys-arr (double-array [1.0 2.0 3.0])
+              ;; Perfect predictions - (R² - 1) = 0
+              perfect-score (#'ops/compute-score-from-actuals-and-expecteds
+                              (ops-common/->phenotype x x nil)
+                              [1.0 2.0 3.0]
+                              [1.0 2.0 3.0]
+                              5
+                              ys-arr
+                              :r-squared)]
+          (is (= perfect-score 0.0)))
+        (let [x (F/Dummy "x")
+              ys-arr (double-array [1.0 2.0 3.0])
+              ;; Predictions = mean (2.0) - R² = 0, so (R² - 1) = -1
+              mean-score (#'ops/compute-score-from-actuals-and-expecteds
+                           (ops-common/->phenotype x x nil)
+                           [2.0 2.0 2.0]
+                           [1.0 2.0 3.0]
+                           5
+                           ys-arr
+                           :r-squared)]
+          (is (< (abs (- mean-score -1.0)) 0.0001)))
+        (let [x (F/Dummy "x")
+              ys-arr (double-array [1.0 2.0 3.0])
+              ;; Predictions worse than mean - R² < 0, so (R² - 1) < -1
+              bad-score (#'ops/compute-score-from-actuals-and-expecteds
+                          (ops-common/->phenotype x x nil)
+                          [10.0 10.0 10.0]
+                          [1.0 2.0 3.0]
+                          5
+                          ys-arr
+                          :r-squared)]
+          (is (< bad-score -1.0))))))
+
+  (testing "scoring method via dynamic var"
+    (with-redefs-fn {#'ops/length-deduction (fn [score leafs] 0)}
+      (fn []
+        (let [x (F/Dummy "x")
+              ys-arr (double-array [1.0 2.0 3.0])
+              ;; Default MAE score
+              mae-score (#'ops/compute-score-from-actuals-and-expecteds
+                          (ops-common/->phenotype x x nil)
+                          [1.0 2.0 3.0]
+                          [1.0 2.0 3.0]
+                          5
+                          ys-arr
+                          :mae-max)
+              ;; R² score via binding
+              r2-score (binding [ops/*scoring-method* :r-squared]
+                         (#'ops/compute-score-from-actuals-and-expecteds
+                           (ops-common/->phenotype x x nil)
+                           [1.0 2.0 3.0]
+                           [1.0 2.0 3.0]
+                           5
+                           ys-arr
+                           ops/*scoring-method*))]
+          ;; Perfect fit: MAE gives 0, R² gives 0 (both use 0 as perfect score)
+          (is (= mae-score 0.0))
+          (is (= r2-score 0.0)))))))
 
 
 (deftest mutation-fn-test

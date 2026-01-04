@@ -101,7 +101,8 @@
                         ^long random-seed
                         ^boolean adaptive-mode
                         ^boolean quiet-logs
-                        ^boolean use-eval-cache]
+                        ^boolean use-eval-cache
+                        ^String scoring-method]
 
   IFormulaConfig
 
@@ -119,6 +120,8 @@
 
   (isUseEvalCache [_] use-eval-cache)
 
+  (getScoringMethod [_] scoring-method)
+
   Object
 
   (toString [_]
@@ -128,7 +131,8 @@
          ", randomSeed=" random-seed
          ", adaptiveMode=" adaptive-mode
          ", quietLogs=" quiet-logs
-         ", useEvalCache=" use-eval-cache "}")))
+         ", useEvalCache=" use-eval-cache
+         ", scoringMethod=" scoring-method "}")))
 
 
 (defn config
@@ -141,24 +145,27 @@
      :random-seed     - Random seed for reproducibility (default: -1, meaning no seed)
      :adaptive-mode   - Enable adaptive mutation rates (default: false)
      :quiet-logs      - Suppress detailed iteration logs (default: false)
-     :use-eval-cache  - Enable evaluation caching (default: false)"
+     :use-eval-cache  - Enable evaluation caching (default: false)
+     :scoring-method  - Scoring method: \"mae-max\", \"log-cosh\", or \"r-squared\" (default: \"mae-max\")"
   ([]
    (config {}))
-  ([{:keys [iterations population-size max-leafs random-seed adaptive-mode quiet-logs use-eval-cache]
+  ([{:keys [iterations population-size max-leafs random-seed adaptive-mode quiet-logs use-eval-cache scoring-method]
      :or   {iterations      20
             population-size 100
             max-leafs       40
             random-seed     -1
             adaptive-mode   false
             quiet-logs      false
-            use-eval-cache  false}}]
+            use-eval-cache  false
+            scoring-method  "mae-max"}}]
    (FormulaConfig. (int iterations)
                    (int population-size)
                    (int max-leafs)
                    (long random-seed)
                    (boolean adaptive-mode)
                    (boolean quiet-logs)
-                   (boolean use-eval-cache))))
+                   (boolean use-eval-cache)
+                   (str scoring-method))))
 
 
 (defn config->map
@@ -170,4 +177,5 @@
    :random-seed     (.getRandomSeed cfg)
    :adaptive-mode   (.isAdaptiveMode cfg)
    :quiet-logs      (.isQuietLogs cfg)
-   :use-eval-cache  (.isUseEvalCache cfg)})
+   :use-eval-cache  (.isUseEvalCache cfg)
+   :scoring-method  (.getScoringMethod cfg)})

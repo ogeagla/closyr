@@ -37,9 +37,17 @@
   false)
 
 
+(def ^:dynamic *scoring-method*
+  "Scoring method to use for fitness evaluation. All methods return 0 for perfect fit.
+   - :mae-max (default) - Negative of (2*MAE + max_residual). Traditional approach.
+   - :log-cosh - Log-cosh loss. Smooth like MSE for small errors, robust like MAE for large.
+   - :r-squared - (R² - 1), so perfect fit = 0, worse fits are negative."
+  :mae-max)
+
+
 ;; Cache of expression string -> score. Reset between runs.
 (defonce eval-cache*
-  (atom {}))
+         (atom {}))
 
 
 (defn clear-eval-cache!
@@ -52,8 +60,8 @@
   "Return stats about the evaluation cache."
   []
   (let [cache @eval-cache*]
-    {:size (count cache)
-     :hits (:hits (meta cache) 0)
+    {:size   (count cache)
+     :hits   (:hits (meta cache) 0)
      :misses (:misses (meta cache) 0)}))
 
 
@@ -150,34 +158,149 @@
   (* (abs score) (min 0.1 (* 0.0000001 leafs leafs))))
 
 
+;; =============================================================================
+;; Alternative Scoring Methods
+;; =============================================================================
+
+(defn- log-cosh
+  "Compute log(cosh(x)), numerically stable for large x.
+   For large |x|, log(cosh(x)) ≈ |x| - log(2)"
+  ^double [^double x]
+  (let [abs-x (Math/abs x)]
+    (if (> abs-x 20.0)
+      ;; For large values, use approximation to avoid overflow
+      (- abs-x 0.6931471805599453)                          ; log(2)
+      (Math/log (Math/cosh x)))))
+
+
+(defn- compute-log-cosh-score
+  "Compute score using log-cosh loss. Smooth like MSE for small errors,
+   robust like MAE for large errors. No hyperparameter tuning needed.
+   Returns [log-cosh-sum max-residual n] or nil if invalid."
+  ^doubles [^doubles ys-arr f-of-xs]
+  (when (and f-of-xs (seq f-of-xs))
+    (let [n (count f-of-xs)
+          max-r (double max-resid)]
+      (loop [i (int 0), sum (double 0.0), mx (double 0.0)]
+        (if (< i n)
+          (let [expected (aget ys-arr i)
+                actual (double (nth f-of-xs i))
+                resid (if (or (Double/isNaN actual) (Double/isInfinite actual))
+                        max-r
+                        (- expected actual))
+                resid-clamped (Math/min max-r (Math/abs resid))
+                lc (log-cosh resid)]
+            (recur (unchecked-inc-int i)
+                   (+ sum lc)
+                   (Math/max mx resid-clamped)))
+          (double-array [sum mx (double n)]))))))
+
+
+(defn- compute-r-squared-score
+  "Compute R² (coefficient of determination) score.
+   R² = 1 - (SS_res / SS_tot) where:
+   - SS_res = sum of squared residuals
+   - SS_tot = total sum of squares (variance from mean)
+   Returns R² value (ideally 1.0, can be negative for poor fits)."
+  ^double [^doubles ys-arr f-of-xs]
+  (when (and f-of-xs (seq f-of-xs))
+    (let [n (count f-of-xs)
+          max-r (double max-resid)
+          ;; First pass: compute mean of ys and sum of squared residuals
+          y-sum (loop [i (int 0), s (double 0.0)]
+                  (if (< i n)
+                    (recur (unchecked-inc-int i) (+ s (aget ys-arr i)))
+                    s))
+          y-mean (/ y-sum n)
+          ;; Compute SS_res and SS_tot in one pass
+          [ss-res ss-tot]
+          (loop [i (int 0), ss-res (double 0.0), ss-tot (double 0.0)]
+            (if (< i n)
+              (let [expected (aget ys-arr i)
+                    actual (double (nth f-of-xs i))
+                    resid (if (or (Double/isNaN actual) (Double/isInfinite actual))
+                            max-r
+                            (- expected actual))
+                    resid-sq (* resid resid)
+                    tot-diff (- expected y-mean)
+                    tot-sq (* tot-diff tot-diff)]
+                (recur (unchecked-inc-int i)
+                       (+ ss-res resid-sq)
+                       (+ ss-tot tot-sq)))
+              [ss-res ss-tot]))]
+      (if (< ss-tot 1e-10)
+        ;; If total variance is ~0, all ys are the same
+        ;; Return 1.0 if predictions are also constant and close, else 0
+        (if (< ss-res 1e-10) 1.0 0.0)
+        (- 1.0 (/ ss-res ss-tot))))))
+
+
 (defn compute-score-from-actuals-and-expecteds
   "Compute overall score for fn given some actual and expected ys.
-   Uses fast primitive array computation when ys-arr is provided."
+   Uses fast primitive array computation when ys-arr is provided.
+   All scoring methods return 0 for perfect fit, negative for worse fits.
+
+   Scoring methods:
+   - :mae-max (default) - Negative of (2*MAE + max_residual). MAE = Mean Absolute Error.
+   - :log-cosh - Log-cosh loss. Smooth like MSE for small errors, robust like MAE for large.
+   - :r-squared - (R² - 1), so perfect fit = 0, worse fits are negative."
   {:malli/schema [:function
                   [:=> [:cat #'specs/GAPhenotype #'specs/NumberVector #'specs/NumberVector number?] number?]
-                  [:=> [:cat #'specs/GAPhenotype #'specs/NumberVector #'specs/NumberVector number? [:maybe some?]] number?]]}
+                  [:=> [:cat #'specs/GAPhenotype #'specs/NumberVector #'specs/NumberVector number? [:maybe some?]] number?]
+                  [:=> [:cat #'specs/GAPhenotype #'specs/NumberVector #'specs/NumberVector number? [:maybe some?] keyword?] number?]]}
   ([pheno f-of-xs input-ys-vec leafs]
-   ;; Legacy path - convert to array
-   (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs nil))
+   (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs nil :mae-max))
   ([pheno f-of-xs input-ys-vec leafs ^doubles input-ys-arr]
+   (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs input-ys-arr :mae-max))
+  ([pheno f-of-xs input-ys-vec leafs ^doubles input-ys-arr scoring-method]
    (try
-     (let [[resid-sum max-resid-val n]
-           (if input-ys-arr
-             ;; Fast path with primitive array
-             (let [^doubles result (compute-residuals-fast input-ys-arr f-of-xs)]
-               (when result
-                 [(aget result 0) (aget result 1) (aget result 2)]))
-             ;; Fallback to original implementation
-             (let [abs-resids (map compute-residual input-ys-vec f-of-xs)]
-               [(sum abs-resids) (reduce max abs-resids) (count abs-resids)]))]
-       (if resid-sum
-         (let [score            (* -1.0 (+ (* 2.0 (/ resid-sum n))
-                                           max-resid-val))
-               length-deduction (length-deduction score leafs)
-               overall-score    (- score length-deduction)]
-           (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-deduction]))
-           overall-score)
-         (tally-min-score min-score)))
+     (case scoring-method
+       ;; R² scoring - returns (R² - 1), so perfect fit = 0, worse fits are negative
+       :r-squared
+       (if input-ys-arr
+         (let [r2 (compute-r-squared-score input-ys-arr f-of-xs)]
+           (if r2
+             (let [score (- r2 1.0)  ;; Shift so perfect fit = 0
+                   length-ded (length-deduction (abs score) leafs)]
+               (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-ded]))
+               (- score length-ded))
+             (tally-min-score min-score)))
+         (tally-min-score min-score))
+
+       ;; Log-cosh scoring
+       :log-cosh
+       (if input-ys-arr
+         (let [^doubles result (compute-log-cosh-score input-ys-arr f-of-xs)]
+           (if result
+             (let [lc-sum (aget result 0)
+                   n (aget result 2)
+                   ;; Negative mean log-cosh (higher/less negative = better)
+                   score (* -1.0 (/ lc-sum n))
+                   length-ded (length-deduction score leafs)
+                   overall-score (- score length-ded)]
+               (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-ded]))
+               overall-score)
+             (tally-min-score min-score)))
+         (tally-min-score min-score))
+
+       ;; Default: MAE + max residual (original method)
+       (let [[resid-sum max-resid-val n]
+             (if input-ys-arr
+               ;; Fast path with primitive array
+               (let [^doubles result (compute-residuals-fast input-ys-arr f-of-xs)]
+                 (when result
+                   [(aget result 0) (aget result 1) (aget result 2)]))
+               ;; Fallback to original implementation
+               (let [abs-resids (map compute-residual input-ys-vec f-of-xs)]
+                 [(sum abs-resids) (reduce max abs-resids) (count abs-resids)]))]
+         (if resid-sum
+           (let [score (* -1.0 (+ (* 2.0 (/ resid-sum n))
+                                  max-resid-val))
+                 length-ded (length-deduction score leafs)
+                 overall-score (- score length-ded)]
+             (swap! sim-stats* update-in [:scoring :len-deductions] #(into (or % []) [length-ded]))
+             overall-score)
+           (tally-min-score min-score))))
      (catch Exception e
        (log/error "Err in computing score from residuals: "
                   (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
@@ -188,7 +311,7 @@
   "Core scoring logic without caching."
   [{:keys [input-xs-list input-xs-count input-ys-vec input-ys-arr]
     :as   run-args}
-   {:keys [max-leafs]}
+   {:keys [max-leafs scoring-method]}
    pheno
    expr-str]
   ;; Skip Hold() expressions - they can't be numerically evaluated
@@ -199,14 +322,21 @@
         (tally-min-score min-score)
         (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
           (if f-of-xs
-            (compute-score-from-actuals-and-expecteds pheno f-of-xs input-ys-vec leafs input-ys-arr)
+            (compute-score-from-actuals-and-expecteds
+              pheno f-of-xs input-ys-vec leafs input-ys-arr (or scoring-method *scoring-method*))
             (tally-min-score min-score)))))))
 
 
 (defn score-fn
   "Symbolic regression scoring.
    Uses primitive array for fast residual computation when input-ys-arr is available.
-   When *use-eval-cache* is true, caches results by expression string."
+   When *use-eval-cache* is true, caches results by expression string.
+   All scoring methods return 0 for perfect fit, negative for worse fits.
+
+   Supports configurable scoring methods via :scoring-method in run-config:
+   - :mae-max (default) - Negative of (2*MAE + max_residual)
+   - :log-cosh - Log-cosh loss, robust to outliers
+   - :r-squared - (R² - 1), perfect fit = 0"
   {:malli/schema [:=> [:cat #'specs/ScoreFnArgs [:map {:closed false} [:max-leafs number?]] #'specs/GAPhenotype] number?]}
   [{:keys [input-xs-list input-xs-count input-ys-vec input-ys-arr]
     :as   run-args}
@@ -252,7 +382,7 @@
    p-winner
    p-discard]
   (try
-    (let [start   (Date.)
+    (let [start (Date.)
           {:keys [new-pheno iters mods]} (ops-modify/apply-modifications
                                            max-leafs (ops-modify/sample-mutation-count) initial-muts p-winner p-discard)
           diff-ms (ops-common/start-date->diff-ms start)]
@@ -382,21 +512,21 @@
     :as   run-args}
    {:keys [use-gui? max-leafs progress-callback] :as run-config}]
   (when (or (= 1 iters-to-go) (zero? (mod iters-to-go *log-steps*)))
-    (let [bests      (sort-population ga-result)
+    (let [bests (sort-population ga-result)
           ;; Update adaptive state with current population scores
           sorted-scores (mapv :score bests)
-          _          (adaptive/update-adaptive-state! sorted-scores)
-          timer      @test-timer*
-          took-s     (if timer
-                       (/ (ops-common/start-date->diff-ms timer) 1000.0)
-                       0.0)
-          pop-size   (count (:pop ga-result))
-          best-v     (first bests)
-          n-bests    (count bests)
+          _ (adaptive/update-adaptive-state! sorted-scores)
+          timer @test-timer*
+          took-s (if timer
+                   (/ (ops-common/start-date->diff-ms timer) 1000.0)
+                   0.0)
+          pop-size (count (:pop ga-result))
+          best-v (first bests)
+          n-bests (count bests)
           best-p99-v (when (pos? n-bests) (nth bests (min (dec n-bests) (int (* 0.01 n-bests)))))
           best-p95-v (when (pos? n-bests) (nth bests (min (dec n-bests) (int (* 0.05 n-bests)))))
           best-p90-v (when (pos? n-bests) (nth bests (min (dec n-bests) (int (* 0.1 n-bests)))))
-          evaled     (ops-eval/eval-vec-pheno best-v run-args)
+          evaled (ops-eval/eval-vec-pheno best-v run-args)
           {evaled-extended :ys xs-extended :xs} (ops-eval/eval-vec-pheno-oversample
                                                   best-v run-args extended-domain-args)
           current-iteration (inc (- iters iters-to-go))]

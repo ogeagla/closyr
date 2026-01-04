@@ -4,8 +4,19 @@
 
 let jobHistory = [];
 
+// Get display name for scoring method
+function getScoringMethodDisplay(method) {
+    const displays = {
+        'mae-max': 'MAE + Max',
+        'log-cosh': 'Log-Cosh',
+        'r-squared': 'R²'
+    };
+    return displays[method] || method || 'MAE + Max';
+}
+
 // Save job to history
 function saveToHistory(jobData, status = 'completed', scoreHistory = []) {
+    const scoringMethodEl = document.getElementById('scoring-method');
     const job = {
         id: currentJobId,
         timestamp: new Date().toLocaleString(),
@@ -20,7 +31,8 @@ function saveToHistory(jobData, status = 'completed', scoreHistory = []) {
             iterations: parseInt(document.getElementById('iterations').value) || 100,
             population: parseInt(document.getElementById('population').value) || 100,
             maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
-            seed: document.getElementById('seed').value || null
+            seed: document.getElementById('seed').value || null,
+            scoringMethod: scoringMethodEl ? scoringMethodEl.value : 'mae-max'
         },
         allSolutions: jobData['all-solutions'],
         scoreHistory: scoreHistory
@@ -33,6 +45,7 @@ function saveToHistory(jobData, status = 'completed', scoreHistory = []) {
 function saveStoppedToHistory(progressData, scoreHistory = []) {
     if (!progressData) return;
 
+    const scoringMethodEl = document.getElementById('scoring-method');
     const job = {
         id: currentJobId,
         timestamp: new Date().toLocaleString(),
@@ -49,7 +62,8 @@ function saveStoppedToHistory(progressData, scoreHistory = []) {
             iterations: parseInt(document.getElementById('iterations').value) || 100,
             population: parseInt(document.getElementById('population').value) || 100,
             maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
-            seed: document.getElementById('seed').value || null
+            seed: document.getElementById('seed').value || null,
+            scoringMethod: scoringMethodEl ? scoringMethodEl.value : 'mae-max'
         },
         allSolutions: null,
         scoreHistory: scoreHistory
@@ -126,6 +140,10 @@ function renderJobHistory() {
                         <div>
                             <span class="text-gray-400">Population:</span>
                             <span class="text-white ml-1">${job.config.population}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">Scoring:</span>
+                            <span class="text-white ml-1">${getScoringMethodDisplay(job.config.scoringMethod)}</span>
                         </div>
                         ${job.config.seed ? `<div>
                             <span class="text-gray-400">Seed:</span>
@@ -205,6 +223,12 @@ function loadFromHistory(index) {
     document.getElementById('population').value = job.config.population;
     document.getElementById('max-leafs').value = job.config.maxLeafs;
     document.getElementById('seed').value = job.config.seed || '';
+
+    // Restore scoring method if available
+    const scoringMethodEl = document.getElementById('scoring-method');
+    if (scoringMethodEl && job.config.scoringMethod) {
+        scoringMethodEl.value = job.config.scoringMethod;
+    }
 
     initDataEditorChart();
 

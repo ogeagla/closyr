@@ -23,6 +23,7 @@ public class FormulaConfigBuilder {
     private boolean adaptiveMode = false;
     private boolean quietLogs = false;
     private boolean useEvalCache = false;
+    private String scoringMethod = "mae-max";
 
     private FormulaConfigBuilder() {
     }
@@ -111,11 +112,21 @@ public class FormulaConfigBuilder {
     }
 
     /**
+     * Set the scoring method for fitness evaluation.
+     * Valid values: "mae-max" (default), "log-cosh", "r-squared".
+     * All methods return 0 for perfect fit, negative for worse fits.
+     */
+    public FormulaConfigBuilder scoringMethod(String scoringMethod) {
+        this.scoringMethod = scoringMethod;
+        return this;
+    }
+
+    /**
      * Build the configuration.
      */
     public IFormulaConfig build() {
         return new SimpleFormulaConfig(iterations, populationSize, maxLeafs, randomSeed,
-                mutationsWhitelist, mutationsBlacklist, adaptiveMode, quietLogs, useEvalCache);
+                mutationsWhitelist, mutationsBlacklist, adaptiveMode, quietLogs, useEvalCache, scoringMethod);
     }
 
     /**
@@ -131,10 +142,12 @@ public class FormulaConfigBuilder {
         private final boolean adaptiveMode;
         private final boolean quietLogs;
         private final boolean useEvalCache;
+        private final String scoringMethod;
 
         SimpleFormulaConfig(int iterations, int populationSize, int maxLeafs, long randomSeed,
                            String[] mutationsWhitelist, String[] mutationsBlacklist,
-                           boolean adaptiveMode, boolean quietLogs, boolean useEvalCache) {
+                           boolean adaptiveMode, boolean quietLogs, boolean useEvalCache,
+                           String scoringMethod) {
             this.iterations = iterations;
             this.populationSize = populationSize;
             this.maxLeafs = maxLeafs;
@@ -144,6 +157,7 @@ public class FormulaConfigBuilder {
             this.adaptiveMode = adaptiveMode;
             this.quietLogs = quietLogs;
             this.useEvalCache = useEvalCache;
+            this.scoringMethod = scoringMethod;
         }
 
         @Override
@@ -192,6 +206,11 @@ public class FormulaConfigBuilder {
         }
 
         @Override
+        public String getScoringMethod() {
+            return scoringMethod;
+        }
+
+        @Override
         public String toString() {
             return "FormulaConfig{iterations=" + iterations +
                     ", populationSize=" + populationSize +
@@ -199,7 +218,8 @@ public class FormulaConfigBuilder {
                     ", randomSeed=" + randomSeed +
                     ", adaptiveMode=" + adaptiveMode +
                     ", quietLogs=" + quietLogs +
-                    ", useEvalCache=" + useEvalCache + "}";
+                    ", useEvalCache=" + useEvalCache +
+                    ", scoringMethod=" + scoringMethod + "}";
         }
     }
 }

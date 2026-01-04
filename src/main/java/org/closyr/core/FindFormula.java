@@ -142,6 +142,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         private boolean adaptiveMode = false;
         private boolean quietLogs = false;
         private boolean useEvalCache = false;
+        private String scoringMethod = "mae-max";
 
         public Config() {}
 
@@ -199,6 +200,16 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
             return this;
         }
 
+        /**
+         * Set the scoring method for fitness evaluation.
+         * Valid values: "mae-max" (default), "log-cosh", "r-squared".
+         * All methods return 0 for perfect fit, negative for worse fits.
+         */
+        public Config scoringMethod(String scoringMethod) {
+            this.scoringMethod = scoringMethod;
+            return this;
+        }
+
         public int getIterations() { return iterations; }
         public int getPopulationSize() { return populationSize; }
         public int getMaxLeafs() { return maxLeafs; }
@@ -208,6 +219,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
         public boolean isAdaptiveMode() { return adaptiveMode; }
         public boolean isQuietLogs() { return quietLogs; }
         public boolean isUseEvalCache() { return useEvalCache; }
+        public String getScoringMethod() { return scoringMethod; }
 
         /** Convert to IFormulaConfig for the new API */
         IFormulaConfig toFormulaConfig() {
@@ -221,6 +233,7 @@ public class FindFormula extends AbstractFunctionOptionEvaluator {
                     .adaptiveMode(adaptiveMode)
                     .quietLogs(quietLogs)
                     .useEvalCache(useEvalCache)
+                    .scoringMethod(scoringMethod)
                     .build();
         }
     }

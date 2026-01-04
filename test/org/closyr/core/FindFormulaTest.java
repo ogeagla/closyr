@@ -220,6 +220,51 @@ class FindFormulaTest {
     }
 
     @Test
+    void testConfigBuilderWithScoringMethod() {
+        FindFormula.Config config = new FindFormula.Config()
+                .iterations(10)
+                .populationSize(50)
+                .scoringMethod("log-cosh");
+
+        assertEquals("log-cosh", config.getScoringMethod());
+
+        // Verify it works with the solver
+        double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
+        double[] ys = {1.0, 4.0, 9.0, 16.0, 25.0};
+
+        FindFormula.Result result = FindFormula.findFormula(xs, ys, config);
+        assertNotNull(result);
+        assertNotNull(result.getFormulaString());
+
+        System.out.println("Result with log-cosh scoring: " + result);
+    }
+
+    @Test
+    void testConfigBuilderScoringMethodDefaultsMaeMax() {
+        FindFormula.Config config = new FindFormula.Config();
+        assertEquals("mae-max", config.getScoringMethod());
+    }
+
+    @Test
+    void testScoringMethodRSquared() {
+        double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
+        double[] ys = {2.0, 4.0, 6.0, 8.0, 10.0};
+
+        FindFormula.Config config = new FindFormula.Config()
+                .iterations(5)
+                .populationSize(30)
+                .scoringMethod("r-squared");
+
+        FindFormula.Result result = FindFormula.findFormula(xs, ys, config);
+        assertNotNull(result);
+        assertNotNull(result.getFormulaString());
+        // R-squared scores should be <= 0 (0 is perfect, negative is worse)
+        assertTrue(result.getScore() <= 0.0001, "R-squared score should be <= 0");
+
+        System.out.println("Result with r-squared scoring: " + result);
+    }
+
+    @Test
     void testRandomSeedProducesDeterministicResults() {
         double[] xs = {1.0, 2.0, 3.0, 4.0, 5.0};
         double[] ys = {2.0, 4.0, 6.0, 8.0, 10.0};

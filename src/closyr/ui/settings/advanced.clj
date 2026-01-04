@@ -7,12 +7,15 @@
       BorderLayout
       FlowLayout)
     (java.awt.event
-      ActionListener)
+      ActionListener
+      ItemListener
+      ItemEvent)
     (javax.swing
       BoxLayout
       ButtonGroup
       JButton
       JCheckBox
+      JComboBox
       JDialog
       JFrame
       JLabel
@@ -23,21 +26,30 @@
 (set! *warn-on-reflection* true)
 
 
+(def ^:private scoring-method-options
+  "Available scoring methods with display names"
+  [["MAE + Max (default)" :mae-max]
+   ["Log-Cosh (robust)" :log-cosh]
+   ["R² (variance)" :r-squared]])
+
+
 (defn show-advanced-settings-dialog!
   "Show a dialog with advanced settings for log interval, adaptive mode, and quiet logging"
   [^JFrame parent-frame ^JLabel current-value-label experiment-settings*]
   (let [^JDialog dialog (doto (JDialog. parent-frame "Advanced Settings" true)
-                          (.setSize 400 350)
+                          (.setSize 400 420)
                           (.setLocationRelativeTo parent-frame))
 
         current-log-steps (:log-steps @experiment-settings*)
         current-adaptive (:adaptive-mode @experiment-settings*)
         current-quiet (:quiet-logs @experiment-settings*)
         current-eval-cache (:use-eval-cache @experiment-settings*)
+        current-scoring (:scoring-method @experiment-settings* :mae-max)
         selected-value (atom current-log-steps)
         selected-adaptive (atom current-adaptive)
         selected-quiet (atom current-quiet)
         selected-eval-cache (atom current-eval-cache)
+        selected-scoring (atom current-scoring)
 
         btn-group (ButtonGroup.)
         options [["Auto" nil] ["1" 1] ["5" 5] ["10" 10] ["25" 25]]
@@ -85,6 +97,30 @@
                 (actionPerformed [_ _]
                   (reset! selected-eval-cache (.isSelected eval-cache-cb))))))
 
+        ;; Scoring method dropdown
+        ^"[Ljava.lang.Object;" scoring-labels (into-array Object (mapv first scoring-method-options))
+        ^JComboBox scoring-combo (JComboBox. scoring-labels)
+        current-scoring-idx (or (first (keep-indexed
+                                         (fn [i [_ v]] (when (= v current-scoring) i))
+                                         scoring-method-options))
+                                0)
+        _ (doto scoring-combo
+            (.setSelectedIndex current-scoring-idx)
+            (.setToolTipText "Scoring method for fitness evaluation")
+            (.addItemListener
+              (reify ItemListener
+                (itemStateChanged [_ e]
+                  (when (= (.getStateChange e) ItemEvent/SELECTED)
+                    (let [idx (.getSelectedIndex scoring-combo)
+                          [_ method] (nth scoring-method-options idx)]
+                      (reset! selected-scoring method)))))))
+
+        ;; Scoring panel
+        ^JPanel scoring-panel (JPanel. (FlowLayout. FlowLayout/LEFT))
+        _ (doto scoring-panel
+            (.add (JLabel. "Scoring: "))
+            (.add scoring-combo))
+
         ;; Checkboxes panel
         ^JPanel checkbox-panel (JPanel.)
         _ (doto checkbox-panel
@@ -101,7 +137,8 @@
                                        :log-steps @selected-value
                                        :adaptive-mode @selected-adaptive
                                        :quiet-logs @selected-quiet
-                                       :use-eval-cache @selected-eval-cache)
+                                       :use-eval-cache @selected-eval-cache
+                                       :scoring-method @selected-scoring)
                                 (.setText current-value-label (if @selected-value
                                                                 (str @selected-value)
                                                                 "Auto"))
@@ -109,6 +146,7 @@
                                 (log/info "Adaptive mode:" @selected-adaptive)
                                 (log/info "Quiet logging:" @selected-quiet)
                                 (log/info "Eval cache:" @selected-eval-cache)
+                                (log/info "Scoring method:" @selected-scoring)
                                 (.dispose dialog)))))
 
         ^JButton cancel-btn (doto (JButton. "Cancel")
@@ -129,7 +167,10 @@
             (.add radio-panel)
             (.add (JLabel. " "))
             (.add (JLabel. "Mutation Settings:"))
-            (.add checkbox-panel))
+            (.add checkbox-panel)
+            (.add (JLabel. " "))
+            (.add (JLabel. "Scoring:"))
+            (.add scoring-panel))
 
         ^JPanel main-panel (doto (JPanel. (BorderLayout.))
                              (.add center-panel BorderLayout/CENTER)

@@ -121,6 +121,7 @@
                   adaptive-mode (get config :adaptiveMode false)
                   quiet-logs (get config :quietLogs true)
                   use-eval-cache (get config :useEvalCache false)
+                  scoring-method (keyword (get config :scoringMethod "mae-max"))
 
                   ;; Progress callback that sends SSE events and checks for stop/pause
                   progress-callback (fn [progress-data]
@@ -149,12 +150,13 @@
                               :adaptive-mode     adaptive-mode
                               :quiet-logs        quiet-logs
                               :use-eval-cache    use-eval-cache
+                              :scoring-method    scoring-method
                               :progress-callback progress-callback
                               :input-xs-exprs    (ops-common/doubles->exprs xs-vec)
                               :input-ys-exprs    (ops-common/doubles->exprs ys-vec)}
 
                   _ (do (log/info "Starting job" job-id "- iterations:" iterations "population:" population-size
-                                  "points:" (count xs-vec) "adaptive:" adaptive-mode "quiet-logs:" quiet-logs)
+                                  "points:" (count xs-vec) "adaptive:" adaptive-mode "quiet-logs:" quiet-logs "scoring-method:" scoring-method)
                         (swap! jobs* assoc-in [job-id :status] :running))
                   result (symreg/run-find-formula run-config)
 

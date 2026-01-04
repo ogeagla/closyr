@@ -115,6 +115,12 @@
     :default false
     :id :use-eval-cache]
 
+   [nil "--scoring METHOD" "Scoring method: mae-max (default), log-cosh, or r-squared"
+    :default :mae-max
+    :parse-fn keyword
+    :validate [#{:mae-max :log-cosh :r-squared} "Scoring method must be: mae-max, log-cosh, or r-squared"]
+    :id :scoring-method]
+
    [nil "--web [PORT]" "Start HTTP web server instead of GUI (default port: 3000)"
     :default nil
     :parse-fn #(if (str/blank? %) 3000 (Integer/parseInt %))
