@@ -2,6 +2,8 @@
  * Job control (start, stop, pause, SSE)
  */
 
+// TODO: show the in-progress best function complexity (leaf count)
+
 // Current job state
 let currentJobId = null;
 let currentEventSource = null;
@@ -310,7 +312,7 @@ function setupSSEConnection(jobId) {
                 </div>
                 <div>
                     <span class="text-gray-400">Scoring:</span>
-                    <span class="text-white">${getScoringMethodDisplay(document.getElementById('scoring-method')?.value)}</span>
+                    <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
                 </div>
             </div>
         `;

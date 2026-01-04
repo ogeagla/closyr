@@ -510,7 +510,7 @@
    {:keys [input-xs-list input-xs-count input-ys-vec
            sim-stop-start-chan sim->gui-chan extended-domain-args]
     :as   run-args}
-   {:keys [use-gui? max-leafs progress-callback] :as run-config}]
+   {:keys [use-gui? max-leafs progress-callback scoring-method] :as run-config}]
   (when (or (= 1 iters-to-go) (zero? (mod iters-to-go *log-steps*)))
     (let [bests (sort-population ga-result)
           ;; Update adaptive state with current population scores
@@ -574,7 +574,8 @@
                               :best-score       (or (:score best-v) min-score)
                               :percentiles      {:p99 (or (:score best-p99-v) min-score)
                                                  :p95 (or (:score best-p95-v) min-score)
-                                                 :p90 (or (:score best-p90-v) min-score)}})
+                                                 :p90 (or (:score best-p90-v) min-score)}
+                              :scoring-method   scoring-method})
           (catch Exception e
             ;; Re-throw stop exceptions so the solver actually stops
             (if (= :stopped (:type (ex-data e)))
