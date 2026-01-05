@@ -2,8 +2,6 @@
  * Job control (start, stop, pause, SSE)
  */
 
-// TODO: show the in-progress best function complexity (leaf count)
-
 // Current job state
 let currentJobId = null;
 let currentEventSource = null;
