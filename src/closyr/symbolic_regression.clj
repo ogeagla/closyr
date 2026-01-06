@@ -714,7 +714,7 @@
   (adaptive/reset-adaptive-state!)
   (ops/clear-eval-cache!)
   (binding [ga/*deterministic-mode* (some? random-seed)
-            ga/*adaptive-mode* (if (some? adaptive-mode) adaptive-mode false)
+            ga/*adaptive-mode* (if (and (some? adaptive-mode) (not (some? random-seed))) adaptive-mode false)
             ops/*use-eval-cache* (boolean use-eval-cache)
             ops/*scoring-method* (or scoring-method :mae-max)]
     ;; Set the random seed if provided
