@@ -139,20 +139,26 @@
        (= (.head expr) F/Hold)))
 
 (defn ->phenotype
-  "Create a GA phenotype from an expr and symbol and other args"
-  [^ISymbol variable ^IAST expr ^ExprEvaluator util]
+  "Create a GA phenotype from an expr and symbol and other args.
+   IMPORTANT: Always creates a fresh ExprEvaluator for thread safety.
+   Symja's ExprEvaluator has internal mutable state (ArrayDeque stacks) that is not thread-safe.
+   When using pmap for parallel mutation/scoring, shared evaluators cause ArrayDeque corruption."
+  [^ISymbol variable ^IAST expr ^ExprEvaluator _util]
   (try
-    (let [^ExprEvaluator util (or util (new-util))
-          ^IExpr result (.eval util (valid-expr-or-default variable expr))]
+    ;; Always create fresh evaluator for thread safety - never reuse passed-in util
+    (let [^ExprEvaluator fresh-util (new-util)
+          ^IExpr result (.eval fresh-util (valid-expr-or-default variable expr))]
       ;; Reject expressions wrapped in Hold() as they can't be numerically evaluated
       (when-not (hold-expr? result)
         {:sym  variable
-         :util util
+         :util fresh-util
          :id   (prng/random-uuid)
          :expr result}))
     (catch Exception e
-      ;; These are expected during evolution - log at debug level without stack trace
-      (log/debug "Eval error for expr: " (subs (str expr) 0 (min 60 (count (str expr)))) "..."))))
+      ;; These are expected during evolution - not logged by default as they're noisy
+      nil
+      (log/debug "Eval error for expr: " (subs (str expr) 0 (min 60 (count (str expr)))) "..." (.getMessage e))
+      )))
 
 
 (defn- probability-inversely-proportional-to-leaf-size

@@ -98,7 +98,7 @@
             eval-p
             arg0))))
     (catch Exception e
-      (log/debug "Error in evaling function on const xs vector: "
+      (log/warn "Error in evaling function on const xs vector: "
                  (str eval-p) " : " (.getMessage e))
       ;; Return infinity instead of throwing - let scoring handle bad phenotypes
       Double/POSITIVE_INFINITY)))
@@ -120,7 +120,7 @@
             (partial result-args->constant-input eval-p new-expr))
           (range input-xs-count))))
     (catch Exception e
-      (log/debug "Error in eval-vec-pheno:" (.getMessage e))
+      (log/warn "Error in eval-vec-pheno:" (.getMessage e))
       ;; Return vector of infinities so scoring gives this phenotype a bad score
       (vec (repeat input-xs-count Double/POSITIVE_INFINITY)))))
 
