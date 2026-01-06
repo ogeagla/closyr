@@ -98,7 +98,7 @@
             eval-p
             arg0))))
     (catch Exception e
-      (log/warn "Error in evaling function on const xs vector: "
+      (log/debug "Error in evaling function on const xs vector: "
                  (str eval-p) " : " (.getMessage e))
       ;; Return infinity instead of throwing - let scoring handle bad phenotypes
       Double/POSITIVE_INFINITY)))

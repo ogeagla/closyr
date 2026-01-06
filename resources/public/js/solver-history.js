@@ -263,19 +263,35 @@ async function keepGoingFromHistory(index) {
     const sourceJobId = job.id;
 
     // Build config from current form values
+
+    // Add adaptive mode, quiet logs, and eval cache settings
+    const adaptiveModeEl = document.getElementById('adaptive-mode');
+    const quietLogsEl = document.getElementById('quiet-logs');
+    const evalCacheEl = document.getElementById('eval-cache');
+
     const config = {
         iterations: parseInt(document.getElementById('iterations').value) || job.config.iterations,
         population: parseInt(document.getElementById('population').value) || job.config.population,
         maxLeafs: parseInt(document.getElementById('max-leafs').value) || job.config.maxLeafs,
         scoringMethod: document.getElementById('scoring-method')?.value || job.config.scoringMethod,
-        freshPercent: 0.2  // 20% fresh, 80% seeded
+        adaptiveMode: adaptiveModeEl && adaptiveModeEl.getAttribute('aria-checked') === 'true',
+        useEvalCache: evalCacheEl && evalCacheEl.getAttribute('aria-checked') === 'true',
+        quietLogs: !(quietLogsEl && quietLogsEl.getAttribute('aria-checked') === 'true'),
     };
+
+    // Add mutations blacklist if any mutations are excluded
+    const blacklist = getMutationsBlacklist();
+    if (blacklist.length > 0) {
+        config.mutationsBlacklist = blacklist;
+    }
 
     // Add seed if specified
     const seedInput = document.getElementById('seed').value;
     if (seedInput) {
         config.seed = parseInt(seedInput);
     }
+
+    console.log('Continuing job: ', sourceJobId, config);
 
     try {
         const response = await fetch(`/api/jobs/${sourceJobId}/continue`, {

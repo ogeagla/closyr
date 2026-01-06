@@ -180,7 +180,8 @@
                               :input-ys-exprs    (ops-common/doubles->exprs ys-vec)}
 
                   _ (do (log/info "Starting job" job-id "- iterations:" iterations "population:" population-size
-                                  "points:" (count xs-vec) "adaptive:" adaptive-mode "quiet-logs:" quiet-logs "scoring-method:" scoring-method)
+                                  "points:" (count xs-vec) "adaptive:" adaptive-mode "quiet-logs:" quiet-logs
+                                  "scoring-method:" scoring-method "random-seed:" random-seed "use-eval-cache:" use-eval-cache)
                         (swap! jobs* assoc-in [job-id :status] :running))
                   result (symreg/run-find-formula run-config)
 

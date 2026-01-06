@@ -210,6 +210,8 @@ function submitSolverForm(evt) {
 
     showRunningState();
 
+    console.log('Submitting job: ', config);
+
     fetch('/api/solve', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},

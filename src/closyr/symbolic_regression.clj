@@ -719,9 +719,15 @@
             ops/*scoring-method* (or scoring-method :mae-max)]
     ;; Set the random seed if provided
     (when random-seed
-      (log/info "run-find-formula: Deterministic mode enabled with seed:" random-seed
+      (log/info "---- run-find-formula: Deterministic mode enabled with seed:" random-seed
                 "- CPU parallelism disabled for reproducibility")
       (prng/set-random-seed! random-seed))
+
+    (log/warn "---- ---- "
+              " ga/*deterministic-mode*: " ga/*deterministic-mode*
+              " ga/*adaptive-mode*: " ga/*adaptive-mode*
+              " ops/*use-eval-cache*: " ops/*use-eval-cache*
+              " ops/*scoring-method*: " ops/*scoring-method*)
 
     (when ga/*deterministic-mode*
       (log/warn "---- Running Deterministic Mode ----"))
