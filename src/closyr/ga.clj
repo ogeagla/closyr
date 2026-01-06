@@ -54,14 +54,26 @@
     (rand-nth new-phen-modifier-sampler)))
 
 
+(def ^:private min-score
+  "Minimum score for phenotypes that fail to evaluate"
+  -100000000)
+
+
 (defn- with-score
+  "Score a phenotype, catching any exceptions and returning min-score on failure."
   [the-score-fn p]
   (if (:score p)
     p
-    (assoc p :score (the-score-fn p))))
+    (try
+      (assoc p :score (the-score-fn p))
+      (catch Exception e
+        (log/warn "Scoring failed for phenotype, using min-score:" (.getMessage e))
+        (assoc p :score min-score)))))
 
 
 (defn- compete
+  "Compete two phenotypes and evolve the winner.
+   Catches any exceptions during mutation/crossover to prevent crashes."
   [{:keys [pop score-fn mutation-fn crossover-fn]
     :as   config}
    [{^double e1-score :score :as e1} {^double e2-score :score :as e2}]]
@@ -69,13 +81,18 @@
   (if (nil? e2)
     [e1-score [e1]]
 
-    (let [new-e-fn (if (should-use-mutation?)
-                     mutation-fn
-                     crossover-fn)
-          next-e   (if (>= e1-score e2-score)
-                     (with-score score-fn (new-e-fn e1 e2))
-                     e2)]
-      [(+ e1-score e2-score) [e1 next-e]])))
+    (try
+      (let [new-e-fn (if (should-use-mutation?)
+                       mutation-fn
+                       crossover-fn)
+            next-e   (if (>= e1-score e2-score)
+                       (with-score score-fn (new-e-fn e1 e2))
+                       e2)]
+        [(+ e1-score e2-score) [e1 next-e]])
+      (catch Exception e
+        (log/warn "Competition failed, keeping both parents:" (.getMessage e))
+        ;; On failure, just keep both parents unchanged
+        [(+ e1-score e2-score) [e1 e2]]))))
 
 
 (defn- pop->chunks

@@ -358,7 +358,7 @@
         ;; Uncached path
         (score-fn-uncached run-args run-config pheno expr-str)))
     (catch Exception e
-      (log/debug "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
+      (log/warn "Err in score fn: " (.getMessage e) ", fn: " (str (:expr pheno)) ", from: " (:expr pheno))
       (tally-min-score min-score))))
 
 

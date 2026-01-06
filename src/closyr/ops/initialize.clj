@@ -4,6 +4,7 @@
     [closyr.util.log :as log]
     [closyr.util.spec :as specs])
   (:import
+    (java.util.function Function)
     (org.matheclipse.core.expression
       AST
       F)
@@ -690,6 +691,110 @@
       (throw (IllegalArgumentException.
                "No mutations remaining after filtering. Check your whitelist/blacklist."))
       filtered)))
+
+
+;;; ============================================================================
+;;; Formula Parsing for Seeding
+;;; ============================================================================
+
+
+(defn- make-tree-replacer
+  "Create a Java Function that recursively replaces any symbol named 'x' with target-sym.
+   This is needed because the Symja parser creates its own Symbol instances that are
+   NOT equal to F/x or (F/Dummy \"x\") even though they have the same name."
+  [^ISymbol target-sym]
+  (ops-common/as-function
+    (fn tree-replace [^IExpr ie]
+      (cond
+        ;; Replace any symbol named "x" with our target symbol
+        (and (.isSymbol ie) (= "x" (str ie)))
+        target-sym
+
+        ;; Recursively process IAST nodes
+        (instance? IAST ie)
+        (.map ^IAST ie (make-tree-replacer target-sym))
+
+        ;; Return everything else unchanged
+        :else ie))))
+
+
+(defn- replace-x-symbols
+  "Replace all symbols named 'x' in the expression with sym-x.
+   Uses recursive tree walk to handle nested expressions."
+  ^IExpr [^IExpr expr]
+  (let [^Function replacer (make-tree-replacer ops-common/sym-x)]
+    (.replaceAll expr replacer)))
+
+
+(defn- valid-parsed-expr?
+  "Check if a parsed expression is valid for use in evolution.
+   Rejects expressions containing problematic patterns that cause crashes."
+  [^IExpr expr]
+  (let [expr-str (str expr)]
+    (and expr
+         (not (.isNIL expr))
+         ;; Reject expressions that won't evaluate properly
+         (not (.contains expr-str "Hold["))
+         (not (.contains expr-str "Hold("))
+         (not (.contains expr-str "Function["))
+         (not (.contains expr-str "Function("))
+         (not (.contains expr-str "{x}"))
+         (not (.contains expr-str "<<"))
+         ;; Reject expressions that are just symbols or overly simple
+         (not (.isBuiltInSymbol expr)))))
+
+
+(defn parse-formula->phenotype
+  "Parse a formula string into a phenotype suitable for GA evolution.
+
+   Returns nil if parsing fails or produces an invalid expression.
+   Replaces parser's 'x' symbol with ops-common/sym-x for correct evaluation.
+
+   Example: (parse-formula->phenotype \"Sin(x) + x^2\")
+   => {:sym sym-x :expr <IAST> :util <ExprEvaluator> :id <uuid>}"
+  [^String formula-str]
+  (try
+    (let [util (ops-common/new-util)
+          ;; Parse the string to an expression
+          ^IExpr parsed (.eval util formula-str)]
+      (when (valid-parsed-expr? parsed)
+        ;; Replace parser's x symbols with our sym-x
+        (let [^IExpr fixed-expr (replace-x-symbols parsed)
+              ;; Evaluate to simplify/normalize
+              ^IExpr evaled (.eval util fixed-expr)]
+          (when (valid-parsed-expr? evaled)
+            ;; Create phenotype with our sym-x
+            (ops-common/->phenotype ops-common/sym-x evaled util)))))
+    (catch Exception e
+      (log/error "Error parsing formula:" formula-str "-" (.getMessage e))
+      nil)))
+
+
+(defn seeded-phenotypes
+  "Create initial phenotypes by parsing formula strings.
+
+   Parameters:
+   - formulas: vector of formula strings to seed from
+   - fresh-percent: percentage of population to be fresh (default 0.2 = 20%)
+   - total-count: total population size
+
+   Returns a vector of phenotypes with (1 - fresh-percent) seeded from formulas
+   and fresh-percent from initial-phenotypes."
+  [formulas fresh-percent total-count]
+  (let [seed-count (int (* total-count (- 1.0 fresh-percent)))
+        fresh-count (- total-count seed-count)
+        ;; Parse formulas, filtering out failures
+        parsed (vec (keep parse-formula->phenotype formulas))
+        _ (log/info "Parsed" (count parsed) "of" (count formulas) "seed formulas successfully")
+        ;; If not enough parsed, repeat them to fill seed-count
+        seeded (if (empty? parsed)
+                 []
+                 (take seed-count (cycle parsed)))
+        ;; Add fresh phenotypes only if fresh-count > 0 (malli rejects 0)
+        fresh (if (pos? fresh-count)
+                (initial-phenotypes fresh-count)
+                [])]
+    (into (vec seeded) fresh)))
 
 
 (specs/instrument-all!)

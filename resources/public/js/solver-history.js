@@ -112,7 +112,10 @@ function renderJobHistory() {
                             Score: ${job.score.toFixed(6)} · ${job.xs.length} points${iterationInfo} · ${job.timestamp}
                         </div>
                     </div>
-                    <button onclick="event.stopPropagation(); loadFromHistory(${index})" class="ml-2 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" title="Load this data">
+                    <button onclick="event.stopPropagation(); keepGoingFromHistory(${index})" class="ml-2 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded" title="Continue evolution from these results">
+                        Keep Going
+                    </button>
+                    <button onclick="event.stopPropagation(); loadFromHistory(${index})" class="ml-1 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" title="Load this data">
                         Load
                     </button>
                     <button onclick="event.stopPropagation(); removeFromHistory(${index})" class="ml-1 p-1 text-gray-500 hover:text-red-400 transition-colors" title="Remove from history">
@@ -236,4 +239,72 @@ function loadFromHistory(index) {
     document.getElementById('points-container').classList.add('hidden');
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Keep Going - continue evolution from a history item's results
+async function keepGoingFromHistory(index) {
+    const job = jobHistory[index];
+    if (!job) return;
+
+    // Get formulas from the job
+    let seedFormulas = [];
+    if (job.allSolutions && job.allSolutions.length > 0) {
+        seedFormulas = job.allSolutions.map(s => s.formula);
+    } else if (job.formula) {
+        seedFormulas = [job.formula];
+    }
+
+    if (seedFormulas.length === 0) {
+        alert('No formulas available to seed from this job');
+        return;
+    }
+
+    // Use the job's original job ID to call continue endpoint
+    const sourceJobId = job.id;
+
+    // Build config from current form values
+    const config = {
+        iterations: parseInt(document.getElementById('iterations').value) || job.config.iterations,
+        population: parseInt(document.getElementById('population').value) || job.config.population,
+        maxLeafs: parseInt(document.getElementById('max-leafs').value) || job.config.maxLeafs,
+        scoringMethod: document.getElementById('scoring-method')?.value || job.config.scoringMethod,
+        freshPercent: 0.2  // 20% fresh, 80% seeded
+    };
+
+    // Add seed if specified
+    const seedInput = document.getElementById('seed').value;
+    if (seedInput) {
+        config.seed = parseInt(seedInput);
+    }
+
+    try {
+        const response = await fetch(`/api/jobs/${sourceJobId}/continue`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                xs: job.xs,
+                ys: job.ys,
+                config: config
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to continue job');
+        }
+
+        const result = await response.json();
+        currentJobId = result.jobId;
+
+        // Show running state and connect to SSE
+        showRunningState();
+        setupSSEConnection(currentJobId);
+
+        // Scroll to top to see progress
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (error) {
+        console.error('Failed to start Keep Going job:', error);
+        alert('Failed to continue: ' + error.message);
+    }
 }

@@ -24,6 +24,7 @@
     ["/jobs/:id/stop" {:post api/stop-job}]
     ["/jobs/:id/pause" {:post api/pause-job}]
     ["/jobs/:id/resume" {:post api/resume-job}]
+    ["/jobs/:id/continue" {:post api/continue-job}]
     ["/jobs/:id/events" {:get api/events}]
     ["/datasets" {:get api/datasets}]
     ["/mutations" {:get api/mutations}]

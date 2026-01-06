@@ -102,7 +102,20 @@
 
 (defn- run-solver-job!
   "Run the solver in a background thread and update job state.
-   Returns the future so it can be cancelled."
+   Returns the future so it can be cancelled.
+
+   Config options:
+   - :iterations - number of iterations (default 10)
+   - :population - population size (default 20)
+   - :maxLeafs - max leaf count (default 40)
+   - :seed - random seed for reproducibility
+   - :mutationsBlacklist - mutations to exclude
+   - :adaptiveMode - use adaptive mutation rates
+   - :quietLogs - reduce logging verbosity
+   - :useEvalCache - cache evaluation results
+   - :scoringMethod - scoring method (mae-max, log-cosh, r-squared)
+   - :seedFormulas - vector of formula strings to seed population
+   - :freshPercent - percentage of fresh phenotypes (default 0.2)"
   [job-id {:keys [xs ys config sse-channel]}]
   (let [job-future
         (future
@@ -122,6 +135,8 @@
                   quiet-logs (get config :quietLogs true)
                   use-eval-cache (get config :useEvalCache false)
                   scoring-method (keyword (get config :scoringMethod "mae-max"))
+                  seed-formulas (get config :seedFormulas)
+                  fresh-percent (get config :freshPercent 0.2)
 
                   ;; Progress callback that sends SSE events and checks for stop/pause
                   progress-callback (fn [progress-data]
@@ -140,7 +155,16 @@
                   initial-muts (if (seq mutations-blacklist)
                                  (ops-init/filter-mutations {:blacklist mutations-blacklist})
                                  (ops-init/initial-mutations))
-                  run-config {:initial-phenos    (ops-init/initial-phenotypes population-size)
+
+                  ;; Create initial phenotypes - either seeded from formulas or fresh
+                  initial-phenos (if (seq seed-formulas)
+                                   (do
+                                     (log/info "Seeding population from" (count seed-formulas) "formulas,"
+                                               "fresh percent:" fresh-percent)
+                                     (ops-init/seeded-phenotypes seed-formulas fresh-percent population-size))
+                                   (ops-init/initial-phenotypes population-size))
+
+                  run-config {:initial-phenos    initial-phenos
                               :initial-muts      initial-muts
                               :iters             iterations
                               :use-gui?          false
@@ -348,6 +372,120 @@
       {:status  404
        :headers {"Content-Type" "application/json"}
        :body    (json/encode {:error "Job not found"})})))
+
+
+(defn- valid-seed-formula?
+  "Check if a formula string is valid for seeding.
+   Rejects formulas that look corrupted or contain problematic patterns."
+  [formula]
+  (and (string? formula)
+       (not (clojure.string/blank? formula))
+       ;; Reject Symja internal wrapper patterns
+       (not (.contains ^String formula "Hold("))
+       (not (.contains ^String formula "Function("))
+       (not (.contains ^String formula "{x}"))
+       ;; Reject truncated string markers
+       (not (.contains ^String formula "<<"))
+       ;; Reject list patterns that shouldn't be in formulas
+       (not (.contains ^String formula "List("))
+       ;; Reject excessively long formulas (likely corrupted)
+       (< (count formula) 500)))
+
+
+(defn continue-job
+  "POST /api/jobs/:id/continue - Continue evolution using results from a completed/stopped job.
+
+   Body: {:xs [...], :ys [...], :config {...}}
+   - xs/ys: new data points (optional, will use original job's data if not provided)
+   - config: new configuration (optional, merges with original job's config)
+     - :freshPercent - percentage of fresh phenotypes (default 0.2 = 20% fresh, 80% seeded)
+
+   Uses formulas from the original job's results to seed the new population."
+  [{:keys [path-params body-params]}]
+  (let [source-job-id (:id path-params)
+        source-job (get @jobs* source-job-id)]
+    (if source-job
+      (if (#{:completed :stopped} (:status source-job))
+        (try
+          (let [;; Get formulas from source job
+                result (:result source-job)
+                all-solutions (or (:all-solutions result) [])
+                progress (:progress source-job)
+                ;; For stopped jobs, best-formula may be in progress
+                raw-formulas (cond
+                               ;; Completed job: use all-solutions
+                               (seq all-solutions)
+                               (mapv :formula all-solutions)
+                               ;; Stopped job: use best formula from progress
+                               (:best-formula progress)
+                               [(:best-formula progress)]
+                               :else
+                               [])
+                ;; Filter out invalid/corrupted formulas
+                seed-formulas (filterv valid-seed-formula? raw-formulas)
+                rejected-count (- (count raw-formulas) (count seed-formulas))
+                _ (when (pos? rejected-count)
+                    (log/info "Filtered out" rejected-count "invalid formulas from" (count raw-formulas) "total"))
+
+                _ (when (empty? seed-formulas)
+                    (if (seq raw-formulas)
+                      (do
+                        (log/error "All formulas were rejected as invalid:" raw-formulas)
+                        (throw (ex-info "All formulas were invalid for seeding" {:raw-formulas raw-formulas})))
+                      (throw (ex-info "No formulas available to seed from" {}))))
+
+                ;; Get config from body or use source job's config (stored in result)
+                body-config (or (:config body-params) {})
+                fresh-percent (get body-config :freshPercent 0.2)
+
+                ;; Merge seedFormulas into config
+                config (assoc body-config :seedFormulas seed-formulas
+                                          :freshPercent fresh-percent)
+
+                ;; Get xs/ys - use from body if provided, otherwise... we need to store them
+                ;; For now, require xs/ys to be provided
+                xs (or (:xs body-params)
+                       (throw (ex-info "xs are required for continue" {})))
+                ys (or (:ys body-params)
+                       (throw (ex-info "ys are required for continue" {})))
+
+                ;; Create new job
+                new-job-id (generate-job-id)
+                sse-channel (sse/create-event-channel)]
+
+            ;; Initialize new job state
+            (swap! jobs* assoc new-job-id {:status      :pending
+                                           :progress    nil
+                                           :result      nil
+                                           :sse-channel sse-channel
+                                           :source-job  source-job-id})
+
+            ;; Start solver in background with seeded formulas
+            (run-solver-job! new-job-id {:xs          xs
+                                         :ys          ys
+                                         :config      config
+                                         :sse-channel sse-channel})
+
+            (log/info "Created continue job" new-job-id "from source" source-job-id
+                      "with" (count seed-formulas) "seed formulas, fresh percent:" fresh-percent)
+
+            {:status  202
+             :headers {"Content-Type" "application/json"}
+             :body    (json/encode {:jobId       new-job-id
+                                    :sourceJobId source-job-id
+                                    :seedCount   (count seed-formulas)
+                                    :eventsUrl   (str "/api/jobs/" new-job-id "/events")})})
+          (catch Exception e
+            {:status  400
+             :headers {"Content-Type" "application/json"}
+             :body    (json/encode {:error (.getMessage e)})}))
+        {:status  400
+         :headers {"Content-Type" "application/json"}
+         :body    (json/encode {:error (str "Job must be completed or stopped to continue, current status: "
+                                            (name (:status source-job)))})})
+      {:status  404
+       :headers {"Content-Type" "application/json"}
+       :body    (json/encode {:error "Source job not found"})})))
 
 
 (defn events

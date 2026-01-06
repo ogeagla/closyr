@@ -333,11 +333,12 @@ function setupSSEConnection(jobId) {
 
     eventSource.addEventListener('complete', function(e) {
         eventSource.close();
-        resetUI();
         const data = JSON.parse(e.data);
 
-        // Save with score history
+        // Save with score history BEFORE resetUI() clears currentJobId
         saveToHistory(data, 'completed', [...currentScoreHistory]);
+
+        resetUI();
 
         const datasetName = getSelectedDatasetName();
         const datasetBadge = datasetName
@@ -411,29 +412,32 @@ function setupSSEConnection(jobId) {
 
     eventSource.addEventListener('error', function(e) {
         eventSource.close();
-        resetUI();
+        let errorMessage = 'Unknown error';
         if (e.data) {
             const data = JSON.parse(e.data);
-            resultsDiv.innerHTML = `
-                <div class="text-red-400">
-                    <div class="font-semibold mb-2">Error</div>
-                    <div>${data.error}</div>
-                </div>
-            `;
+            errorMessage = data.error;
         }
+        resetUI();
+        resultsDiv.innerHTML = `
+            <div class="text-red-400">
+                <div class="font-semibold mb-2">Error</div>
+                <div>${errorMessage}</div>
+            </div>
+        `;
     });
 
     eventSource.addEventListener('stopped', function(e) {
         eventSource.close();
-        resetUI();
 
-        // Parse data and save to history if we have progress data
+        // Parse data and save to history BEFORE resetUI() clears currentJobId
         if (e.data) {
             const data = JSON.parse(e.data);
             if (data['last-progress']) {
                 saveStoppedToHistory(data['last-progress'], [...currentScoreHistory]);
             }
         }
+
+        resetUI();
 
         resultsDiv.innerHTML = `
             <div class="text-yellow-400">

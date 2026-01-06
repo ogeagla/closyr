@@ -122,23 +122,27 @@
                    :input-xs-count 1})))
             [##Inf])))
 
-    (testing "with failing conversion throws exception"
-      (is (thrown? Exception
+    (testing "with failing conversion returns infinity"
+      ;; Exceptions during conversion are caught and return infinity
+      (is (=
             (with-redefs-fn {#'ops-common/expr->double (fn [_] (throw (Exception. "Test exception")))}
               (fn []
                 (ops-eval/eval-vec-pheno
                   (ops-common/->phenotype x (F/Subtract F/C1 F/C1D2) nil)
                   {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5]))
-                   :input-xs-count 1}))))))
+                   :input-xs-count 1})))
+            [##Inf])))
 
-    (testing "with failing conversion throws exception 2"
-      (is (thrown? Exception
+    (testing "with failing constant input conversion returns infinity"
+      ;; Exceptions in result-args->constant-input are caught and return infinity
+      (is (=
             (with-redefs-fn {#'ops-eval/result-args->constant-input (fn [_ _ _] (throw (Exception. "Test exception")))}
               (fn []
                 (ops-eval/eval-vec-pheno
                   (ops-common/->phenotype x (F/Subtract x F/C1D2) nil)
                   {:input-xs-list  (ops-common/exprs->exprs-list (ops-common/doubles->exprs [0.5 1.0]))
-                   :input-xs-count 1}))))))
+                   :input-xs-count 1})))
+            [##Inf])))
 
     (testing "with failing conversion handles error"
       (is (=
