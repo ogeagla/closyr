@@ -729,7 +729,7 @@
     (when ga/*adaptive-mode*
       (log/warn "---- Running Adaptive Mode ----"))
 
-    (when ga/*use-eval-cache*
+    (when ops/*use-eval-cache*
       (log/warn "---- Running With Eval Cache ----"))
 
     (when ops/*scoring-method*
