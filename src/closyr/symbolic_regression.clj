@@ -729,21 +729,21 @@
               " ops/*use-eval-cache*: " ops/*use-eval-cache*
               " ops/*scoring-method*: " ops/*scoring-method*)
 
-    (when ga/*deterministic-mode*
-      (log/warn "---- Running Deterministic Mode ----"))
-
-    (when ga/*adaptive-mode*
-      (log/warn "---- Running Adaptive Mode ----"))
-
-    (when ops/*use-eval-cache*
-      (log/warn "---- Running With Eval Cache ----"))
-
-    (when ops/*scoring-method*
-      (log/warn "---- Running With Scoring Method:" ops/*scoring-method* "----"))
+    ;(when ga/*deterministic-mode*
+    ;  (log/warn "---- Running Deterministic Mode ----"))
+    ;
+    ;(when ga/*adaptive-mode*
+    ;  (log/warn "---- Running Adaptive Mode ----"))
+    ;
+    ;(when ops/*use-eval-cache*
+    ;  (log/warn "---- Running With Eval Cache ----"))
+    ;
+    ;(when ops/*scoring-method*
+    ;  (log/warn "---- Running With Scoring Method:" ops/*scoring-method* "----"))
 
     (if use-gui?
       (log/info "-- Running from GUI --")
-      (log/info "-- Running from CLI."
+      (log/info "-- Running from CLI/Web."
                 "iters:" iters
                 "pop:" (count initial-phenos)
                 "muts:" (count initial-muts) "--"))
