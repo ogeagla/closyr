@@ -485,20 +485,6 @@ Available scoring methods:
 - `log-cosh`: Log-cosh loss. Smooth like MSE for small errors, robust like MAE for large errors.
 - `r-squared`: R² coefficient of determination minus 1. Perfect fit = 0, worse predictions are more negative.
 
-## Roadmap
-
-- [x] CLI options accept a CSV file (GUI already supports this)
-- [x] Web frontend with HTTP API and SSE for real-time updates
-- [ ] More tests
-- [ ] Use something like ProGuard to shrink the JAR for releases
-  - https://www.guardsquare.com/manual/configuration/examples
-  - https://stackoverflow.com/questions/12281365/obfuscating-clojure-uberjars-with-proguard
-  - https://github.com/eiffelqiu/obfuscate-clojure-project-demo/tree/master
-- [ ] Improve web frontend styling and features (the Swing GUI still has more features like the sketchpad)
-- [ ] Can this be a follow-up to this issue, asking for a symbolic regression tool on the JVM? https://github.com/axkr/symja_android_library/issues/850
-- [ ] When I created this and my other symbolic regression tools, I didn't know about the formal field of symbolic regression.  I've since found some great libraries that I should review and apply the lessons to this project: https://github.com/MilesCranmer/PySR
-
-
 ## Architecture
 
 ```
@@ -588,6 +574,21 @@ Data Flow:
   4. Best expressions shown in real-time on charts
   5. Final best-fit function returned as Symja-compatible expression
 ```
+
+## Roadmap
+
+- [x] CLI options accept a CSV file (GUI already supports this)
+- [x] Web frontend with HTTP API and SSE for real-time updates
+- [ ] Use something like ProGuard to shrink the JAR for releases
+    - https://www.guardsquare.com/manual/configuration/examples
+    - https://stackoverflow.com/questions/12281365/obfuscating-clojure-uberjars-with-proguard
+    - https://github.com/eiffelqiu/obfuscate-clojure-project-demo/tree/master
+- [ ] Can this be a follow-up to this issue, asking for a symbolic regression tool on the JVM? https://github.com/axkr/symja_android_library/issues/850
+- [ ] When I created this and my other symbolic regression tools, I didn't know about the formal field of symbolic regression.  I've since found some great libraries that I should review and apply the lessons to this project: https://github.com/MilesCranmer/PySR
+
+### Small TODOs
+
+- [ ] CLI accepts JSON file option for input data / config, and prints results in JSON
 
 ## Credits
 
