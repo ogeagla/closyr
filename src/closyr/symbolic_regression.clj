@@ -723,8 +723,17 @@
                 "- CPU parallelism disabled for reproducibility")
       (prng/set-random-seed! random-seed))
 
+    (when ga/*deterministic-mode*
+      (log/warn "---- Running Deterministic Mode ----"))
+
     (when ga/*adaptive-mode*
-      (log/warn "-- Running Adaptive Mode --"))
+      (log/warn "---- Running Adaptive Mode ----"))
+
+    (when ga/*use-eval-cache*
+      (log/warn "---- Running With Eval Cache ----"))
+
+    (when ops/*scoring-method*
+      (log/warn "---- Running With Scoring Method:" ops/*scoring-method* "----"))
 
     (if use-gui?
       (log/info "-- Running from GUI --")
