@@ -499,6 +499,7 @@
                    "x^4*Cos(1/2-x)^4"))))))))
 
 
+;; initial fn that's getting modified is: x + cos(x)/sqrt(x) + x*sin(x-0.5) - 1
 (def all-mods-applied-on-fn-expected
   [[:modify-fn
     "Derivative"
@@ -795,7 +796,7 @@
                    #'prng/rand                         (fn [] 0.0)}
     (fn []
       (let [x                      (F/Dummy "x")
-            ;; x + cos(x) + x*sin(x-0.5) - 1
+            ;; x + cos(x)/sqrt(x) + x*sin(x-0.5) - 1
             test-expr              (.minus
                                      (.plus x (.plus
                                                 (.divide (F/Cos x) (F/Sqrt x))
