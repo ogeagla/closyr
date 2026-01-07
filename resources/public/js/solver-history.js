@@ -148,10 +148,10 @@ function renderJobHistory() {
                             <span class="text-gray-400">Population:</span>
                             <span class="text-white ml-1">${job.config.population}</span>
                         </div>
-                        <div>
+                        <!-- <div>
                             <span class="text-gray-400">Scoring:</span>
                             <span class="text-white ml-1">${getScoringMethodDisplay(job.config.scoringMethod)}</span>
-                        </div>
+                        </div> -->
                         ${job.config.seed ? `<div>
                             <span class="text-gray-400">Seed:</span>
                             <span class="text-white ml-1">${job.config.seed}</span>
