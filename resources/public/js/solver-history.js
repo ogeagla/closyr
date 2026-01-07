@@ -159,6 +159,29 @@ function renderJobItem(node, depth = 0) {
         ? `<span class="px-1.5 py-0.5 text-xs bg-gray-600 text-gray-300 rounded ml-2">L${depth}</span>`
         : '';
 
+    // Compare score with parent job (lower score = better)
+    let improvementBadge = '';
+    if (job.parentId) {
+        const parentJob = jobHistory.find(j => j.id === job.parentId);
+        if (parentJob && parentJob.score !== undefined && job.score !== undefined) {
+            const diff = job.score - parentJob.score; // positive = improved
+            const pctChange = parentJob.score !== 0 ? (diff / Math.abs(parentJob.score)) * 100 : 0;
+            if (diff > 0) {
+                // Improved (lower score is better)
+                const arrow = '↑';
+                const displayPct = Math.abs(pctChange).toFixed(1);
+                improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-green-700 text-green-200 rounded ml-2" title="Score improved by ${displayPct}% vs parent">${arrow}${displayPct}%</span>`;
+            } else if (diff < 0) {
+                // Worsened
+                const arrow = '↓';
+                const displayPct = Math.abs(pctChange).toFixed(1);
+                improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-red-700 text-red-200 rounded ml-2" title="Score worsened by ${displayPct}% vs parent">${arrow}${displayPct}%</span>`;
+            } else {
+                improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-300 rounded ml-2" title="Same score as parent">=</span>`;
+            }
+        }
+    }
+
     // Render the job
     let html = `
     <div class="bg-gray-800 rounded-lg overflow-hidden ${depth > 0 ? 'border-l-2 border-purple-500/30' : ''}" style="margin-left: ${indent}px;">
@@ -170,7 +193,10 @@ function renderJobItem(node, depth = 0) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                         <span class="text-green-400 text-sm font-mono truncate">${job.formula}</span>
+                    </div>
+                    <div class="mt-1 ml-4 flex items-center">
                         ${depthBadge}
+                        ${improvementBadge}
                         ${statusBadge}
                         ${scoringBadge}
                         ${datasetBadge}
