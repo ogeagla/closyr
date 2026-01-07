@@ -115,12 +115,15 @@ function buildJobTree() {
         }
     });
 
-    // Sort children by timestamp (newest first within each group)
+    // Sort by index (lower index = more recent due to unshift)
+    const sortByNewest = (a, b) => a.index - b.index;
+
+    // Sort roots by newest first
+    roots.sort(sortByNewest);
+
+    // Sort children recursively by newest first
     const sortChildren = (node) => {
-        node.children.sort((a, b) => {
-            // Jobs are already in reverse chronological order in jobHistory
-            return a.index - b.index;
-        });
+        node.children.sort(sortByNewest);
         node.children.forEach(sortChildren);
     };
     roots.forEach(sortChildren);
