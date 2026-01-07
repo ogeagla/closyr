@@ -209,6 +209,23 @@ function renderJobItem(node, depth = 0) {
                         <span class="text-white ml-1">${job.config.seed}</span>
                     </div>` : ''}
                 </div>
+                <!-- Formula with copy button -->
+                <div>
+                    <div class="text-gray-400 text-xs mb-1">Formula:</div>
+                    <div class="group relative formula-display text-green-400 text-sm bg-gray-900 p-2 rounded">
+                        <span id="history-formula-${index}">${job.formula}</span>
+                        <button onclick="event.stopPropagation(); copyFormula('history-formula-${index}')" class="absolute right-1 top-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <!-- LaTeX formula (renderLatex adds its own copy button) -->
+                <div>
+                    <div class="text-gray-400 text-xs mb-1">LaTeX:</div>
+                    <div id="history-latex-${index}" class="bg-gray-900 p-2 rounded overflow-x-auto text-sm"></div>
+                </div>
                 <div>
                     <div class="text-gray-400 text-xs mb-1">Input Data (${job.xs.length} points):</div>
                     <div class="text-xs font-mono bg-gray-900 p-2 rounded max-h-16 overflow-auto">
@@ -280,12 +297,19 @@ function toggleHistoryCharts(index) {
         chartsContainer.classList.remove('hidden');
         chartsChevron.classList.add('rotate-90');
         // Render charts after showing container
-        setTimeout(() => {
-            renderHistoryChart(index);
-            if (job && job.scoreHistory && job.scoreHistory.length > 0) {
-                renderScoreChart(`history-score-chart-${index}`, job.scoreHistory, `history-score-${index}`);
-            }
-        }, 50);
+        // Use requestAnimationFrame to ensure browser has completed layout
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                renderHistoryChart(index);
+                // Force resize to ensure proper rendering
+                if (historyCharts[index]) {
+                    historyCharts[index].resize();
+                }
+                if (job && job.scoreHistory && job.scoreHistory.length > 0) {
+                    renderScoreChart(`history-score-chart-${index}`, job.scoreHistory, `history-score-${index}`);
+                }
+            });
+        });
     } else {
         chartsContainer.classList.add('hidden');
         chartsChevron.classList.remove('rotate-90');
@@ -303,14 +327,25 @@ function toggleHistoryItem(index) {
     const details = document.getElementById(`history-details-${index}`);
     const chevron = document.getElementById(`chevron-${index}`);
     const isHidden = details.classList.contains('hidden');
+    const job = jobHistory[index];
 
     if (isHidden) {
         details.classList.remove('hidden');
         chevron.classList.add('rotate-90');
+        // Render LaTeX formula when expanded
+        if (job && job.formula) {
+            renderLatex(`history-latex-${index}`, job.formula);
+        }
     } else {
         details.classList.add('hidden');
         chevron.classList.remove('rotate-90');
-        // Dispose charts if the charts section was open
+        // Also collapse charts section and dispose charts
+        const chartsContainer = document.getElementById(`history-charts-${index}`);
+        const chartsChevron = document.getElementById(`charts-chevron-${index}`);
+        if (chartsContainer) {
+            chartsContainer.classList.add('hidden');
+            if (chartsChevron) chartsChevron.classList.remove('rotate-90');
+        }
         if (historyCharts[index]) {
             historyCharts[index].dispose();
             delete historyCharts[index];
