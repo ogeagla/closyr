@@ -90,6 +90,9 @@ function renderJobHistory() {
         const datasetBadge = job.datasetName
             ? `<span class="px-1.5 py-0.5 text-xs bg-blue-600 text-white rounded ml-2">${job.datasetName}</span>`
             : '';
+        const scoringBadge = job.config.scoringMethod
+            ? `<span class="px-1.5 py-0.5 text-xs bg-blue-900 text-white rounded ml-2">${getScoringMethodDisplay(job.config.scoringMethod)}</span>`
+            : '';
         const iterationInfo = job.status === 'stopped' && job.iteration
             ? ` · Stopped at ${job.iteration}/${job.totalIterations}`
             : '';
@@ -106,6 +109,7 @@ function renderJobHistory() {
                             </svg>
                             <span class="text-green-400 text-sm font-mono truncate">${job.formula}</span>
                             ${statusBadge}
+                            ${scoringBadge}
                             ${datasetBadge}
                         </div>
                         <div class="text-xs text-gray-500 mt-1 ml-6">
