@@ -163,7 +163,7 @@ function renderJobItem(node, depth = 0) {
     let improvementBadge = '';
     if (job.parentId) {
         const parentJob = jobHistory.find(j => j.id === job.parentId);
-        if (parentJob && parentJob.score !== undefined && job.score !== undefined) {
+        if (parentJob && parentJob.score !== undefined && job.score !== undefined && job.config.scoringMethod === parentJob.config.scoringMethod) {
             const diff = job.score - parentJob.score; // positive = improved
             const pctChange = parentJob.score !== 0 ? (diff / Math.abs(parentJob.score)) * 100 : 0;
             if (diff > 0) {
