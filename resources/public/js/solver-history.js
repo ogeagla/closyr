@@ -131,7 +131,8 @@ function buildJobTree() {
 // Render a single job item
 function renderJobItem(node, depth = 0) {
     const { job, index, children } = node;
-    const indent = depth * 24; // Pixels of indentation per level
+    const maxIndentLevels = 3;
+    const indent = Math.min(depth, maxIndentLevels) * 24; // Cap indentation at 4 levels
 
     const statusBadge = job.status === 'stopped'
         ? '<span class="px-1.5 py-0.5 text-xs bg-yellow-600 text-white rounded ml-2">Stopped</span>'
@@ -150,6 +151,10 @@ function renderJobItem(node, depth = 0) {
     const childBadge = children.length > 0
         ? `<span class="px-1.5 py-0.5 text-xs bg-purple-600 text-white rounded ml-2">${children.length} run${children.length > 1 ? 's' : ''}</span>`
         : '';
+    // Show depth indicator for nested jobs
+    const depthBadge = depth > 0
+        ? `<span class="px-1.5 py-0.5 text-xs bg-gray-600 text-gray-300 rounded ml-2">L${depth}</span>`
+        : '';
 
     // Render the job
     let html = `
@@ -162,6 +167,7 @@ function renderJobItem(node, depth = 0) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                         <span class="text-green-400 text-sm font-mono truncate">${job.formula}</span>
+                        ${depthBadge}
                         ${statusBadge}
                         ${scoringBadge}
                         ${datasetBadge}
