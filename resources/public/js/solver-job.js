@@ -435,7 +435,7 @@ function setupSSEConnection(jobId) {
         if (e.data) {
             const data = JSON.parse(e.data);
             if (data['last-progress']) {
-                saveStoppedToHistory(data['last-progress'], [...currentScoreHistory]);
+                saveStoppedToHistory(data['last-progress'], [...currentScoreHistory], data['source-job']);
             }
         }
 

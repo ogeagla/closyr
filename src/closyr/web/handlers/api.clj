@@ -202,16 +202,18 @@
                                  (take 10)
                                  vec)
 
+                  source-job (get-in @jobs* [job-id :source-job])
                   final-result {:iterations-done (:iters-done result)
                                 :best-solution   (first solutions)
                                 :scoring-method  scoring-method
-                                :all-solutions   solutions}]
+                                :all-solutions   solutions
+                                :source-job      source-job}]
 
-              ;; Update job with final result and log completion
+              ;; Update job with final result and log completion (preserve source-job)
               (log/info "Job" job-id "completed. Best formula:" (:formula (first solutions))
                         "Score:" (:score (first solutions)))
-              (swap! jobs* assoc job-id {:status :completed
-                                         :result final-result})
+              (swap! jobs* update job-id merge {:status :completed
+                                                :result final-result})
 
               ;; Send completion event via SSE
               (when sse-channel
@@ -224,14 +226,16 @@
                                  (interrupted-exception? e)
                                  (job-stopped? job-id))]
                 (if stopped?
-                  (let [progress (:progress (get @jobs* job-id))]
+                  (let [job-state (get @jobs* job-id)
+                        progress (:progress job-state)
+                        source-job (:source-job job-state)]
                     (log/info "Solver job stopped by user:" job-id)
                     (swap! jobs* update job-id merge {:status :stopped})
                     (when (and sse-channel (:send! sse-channel))
                       (try
-                        ((:send! sse-channel) "stopped" (merge {:message "Job stopped by user"}
-                                                               (when progress
-                                                                 {:last-progress progress})))
+                        ((:send! sse-channel) "stopped" (cond-> {:message "Job stopped by user"}
+                                                          progress (assoc :last-progress progress)
+                                                          source-job (assoc :source-job source-job)))
                         ((:close! sse-channel))
                         (catch Exception _ nil))))
                   (do
