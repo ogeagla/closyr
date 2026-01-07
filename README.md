@@ -250,6 +250,10 @@ Available scoring methods:
 - Use `log-cosh` when your data may have outliers but you still want smooth gradients for small errors
 - Use `r-squared` when you want to measure how well the expression explains variance in the data
 
+## Q + A
+
+- `How do I run multiple jobs concurrently?` : Open a new tab with the webapp, or run another GUI, or open another terminal.  The app does not inherently support concurrent jobs, from UI perspective.
+
 ## Example Screenshots
 
 On successful application start, you can start and run a search.  You might see something like this when done:
@@ -586,7 +590,7 @@ Data Flow:
 - [ ] Can this be a follow-up to this issue, asking for a symbolic regression tool on the JVM? https://github.com/axkr/symja_android_library/issues/850
 - [ ] When I created this and my other symbolic regression tools, I didn't know about the formal field of symbolic regression.  I've since found some great libraries that I should review and apply the lessons to this project: https://github.com/MilesCranmer/PySR
 
-### Small TODOs
+### Other TODOs
 
 - [ ] CLI accepts JSON file option for input data / config, and prints results in JSON
 
