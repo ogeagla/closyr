@@ -16,6 +16,7 @@ function initDataEditorChart() {
 
     if (!dataEditorChart) {
         dataEditorChart = echarts.init(container, 'dark');
+        dataEditorChart.setOption({ animation: false });
         // Update drag handle positions after chart finishes rendering (e.g., after axis rescale)
         dataEditorChart.on('finished', function() {
             if (editorData.length > 0) {

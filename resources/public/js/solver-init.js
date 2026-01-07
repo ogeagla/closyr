@@ -3,7 +3,7 @@
  */
 
 // Debounced editor update
-const debouncedUpdateEditor = debounce(initDataEditorChart, 300);
+const debouncedUpdateEditor = debounce(initDataEditorChart, 30);
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
