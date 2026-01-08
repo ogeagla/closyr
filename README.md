@@ -592,6 +592,9 @@ Data Flow:
 
 ### Other TODOs
 
+- [ ] Webapp / Job History: a way to delete item + children of item
+- [ ] Webapp / Job History: a better visual indicator for job score and where it ranks among job tree
+- [ ] Webapp / Job History: add job to new tree (no parents) when input data is different and did "Keep Going". A tree should be 1 dataset.
 - [ ] CLI accepts JSON file option for input data / config, and prints results in JSON
 
 ## Credits
