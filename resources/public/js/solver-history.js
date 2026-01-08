@@ -203,9 +203,19 @@ function renderJobItem(node, depth = 0) {
         }
     }
 
+    // Border colors for different nesting levels
+    const depthBorderColors = [
+        '',                      // depth 0: no border
+        'border-purple-500/30',  // depth 1: purple
+        'border-blue-500/30',    // depth 2: blue
+        'border-teal-500/30',    // depth 3: teal
+        'border-amber-500/30',   // depth 4+: amber
+    ];
+    const borderColor = depth > 0 ? depthBorderColors[Math.min(depth, depthBorderColors.length - 1)] : '';
+
     // Render the job
     let html = `
-    <div class="bg-gray-800 rounded-lg overflow-hidden ${depth > 0 ? 'border-l-2 border-purple-500/30' : ''}" style="margin-left: ${indent}px;">
+    <div class="bg-gray-800 rounded-lg overflow-hidden ${depth > 0 ? `border-l-2 ${borderColor}` : ''}" style="margin-left: ${indent}px;">
         <div class="p-4 cursor-pointer hover:bg-gray-750" onclick="toggleHistoryItem(${index})">
             <div class="flex items-center justify-between">
                 <div class="flex-1 min-w-0">
