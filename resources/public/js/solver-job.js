@@ -379,8 +379,11 @@ function setupSSEConnection(jobId) {
         eventSource.close();
         const data = JSON.parse(e.data);
 
+        // Capture elapsed time before resetUI() clears it
+        const elapsedMs = jobStartTime ? Date.now() - jobStartTime : null;
+
         // Save with score history BEFORE resetUI() clears currentJobId
-        saveToHistory(data, 'completed', [...currentScoreHistory]);
+        saveToHistory(data, 'completed', [...currentScoreHistory], elapsedMs);
 
         resetUI();
 
@@ -473,11 +476,14 @@ function setupSSEConnection(jobId) {
     eventSource.addEventListener('stopped', function(e) {
         eventSource.close();
 
+        // Capture elapsed time before resetUI() clears it
+        const elapsedMs = jobStartTime ? Date.now() - jobStartTime : null;
+
         // Parse data and save to history BEFORE resetUI() clears currentJobId
         if (e.data) {
             const data = JSON.parse(e.data);
             if (data['last-progress']) {
-                saveStoppedToHistory(data['last-progress'], [...currentScoreHistory], data['source-job']);
+                saveStoppedToHistory(data['last-progress'], [...currentScoreHistory], data['source-job'], elapsedMs);
             }
         }
 

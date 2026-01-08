@@ -14,8 +14,26 @@ function getScoringMethodDisplay(method) {
     return displays[method] || method || 'MAE + Max';
 }
 
+// Format milliseconds into human-readable duration
+function formatDuration(ms) {
+    if (!ms || ms < 0) return null;
+
+    const seconds = Math.floor(ms / 1000);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${secs}s`;
+    } else {
+        return `${secs}s`;
+    }
+}
+
 // Save job to history
-function saveToHistory(jobData, status = 'completed', scoreHistory = []) {
+function saveToHistory(jobData, status = 'completed', scoreHistory = [], elapsedMs = null) {
     const scoringMethodEl = document.getElementById('scoring-method');
     const job = {
         id: currentJobId,
@@ -36,14 +54,15 @@ function saveToHistory(jobData, status = 'completed', scoreHistory = []) {
             scoringMethod: scoringMethodEl ? scoringMethodEl.value : 'mae-max'
         },
         allSolutions: jobData['all-solutions'],
-        scoreHistory: scoreHistory
+        scoreHistory: scoreHistory,
+        elapsedMs: elapsedMs
     };
     jobHistory.unshift(job);
     renderJobHistory();
 }
 
 // Save stopped job to history (from progress data)
-function saveStoppedToHistory(progressData, scoreHistory = [], parentId = null) {
+function saveStoppedToHistory(progressData, scoreHistory = [], parentId = null, elapsedMs = null) {
     if (!progressData) return;
 
     const scoringMethodEl = document.getElementById('scoring-method');
@@ -68,7 +87,8 @@ function saveStoppedToHistory(progressData, scoreHistory = [], parentId = null) 
             scoringMethod: progressData['scoring-method']
         },
         allSolutions: null,
-        scoreHistory: scoreHistory
+        scoreHistory: scoreHistory,
+        elapsedMs: elapsedMs
     };
     jobHistory.unshift(job);
     renderJobHistory();
@@ -149,6 +169,7 @@ function renderJobItem(node, depth = 0) {
     const iterationInfo = job.status === 'stopped' && job.iteration
         ? ` · Stopped at ${job.iteration}/${job.totalIterations}`
         : '';
+    const durationInfo = job.elapsedMs ? ` · ${formatDuration(job.elapsedMs)}` : '';
     const complexityInfo = job.leafCount ? `${job.leafCount} nodes` : 'N/A';
     const sparkline = generateSparkline(job.scoreHistory);
     const childBadge = children.length > 0
@@ -203,7 +224,7 @@ function renderJobItem(node, depth = 0) {
                         ${childBadge}
                     </div>
                     <div class="text-xs text-gray-500 mt-1 ml-6 flex items-center">
-                        <span>Score: ${job.score.toFixed(6)} · ${job.xs.length} points${iterationInfo} · ${job.timestamp}</span>
+                        <span>Score: ${job.score.toFixed(6)} · ${job.xs.length} points${durationInfo}${iterationInfo} · ${job.timestamp}</span>
                         ${sparkline}
                     </div>
                 </div>
