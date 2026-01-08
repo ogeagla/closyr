@@ -592,6 +592,7 @@ Data Flow:
 
 ### Other TODOs
 
+- [ ] Webapp / Jobs: a way to run job concurrently, and each running job gets its own Results area, which becomes tabbed to switch between running jobs.  This requires a new option/button like "Keep Going With Job Config" but more succinct, which reuses the job config from the job you clicked on, instead of config from the UI user inputs.  Each tab should have shortcuts to pause/stop the job.
 - [ ] Webapp / Job History: a way to delete item + children of item
 - [ ] Webapp / Job History: a better visual indicator for job score and where it ranks among job tree
 - [ ] Webapp / Job History: add job to new tree (no parents) when input data is different and did "Keep Going". A tree should be 1 dataset.
