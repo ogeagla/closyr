@@ -14,6 +14,26 @@ let inputYs = [];
 // Score history for current job (iteration -> score)
 let currentScoreHistory = [];
 
+// Job timing for ETA calculation
+let jobStartTime = null;
+
+// Format seconds into human-readable time string
+function formatETA(seconds) {
+    if (seconds < 0 || !isFinite(seconds)) return '--';
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${secs}s`;
+    } else {
+        return `${secs}s`;
+    }
+}
+
 // Toggle pause/resume
 async function togglePause() {
     if (!currentJobId) return;
@@ -103,6 +123,7 @@ function resetUI() {
     stopBtn.classList.add('hidden');
     currentJobId = null;
     isPaused = false;
+    jobStartTime = null;
 
     if (currentEventSource) {
         currentEventSource.close();
@@ -278,6 +299,23 @@ function setupSSEConnection(jobId) {
         const data = JSON.parse(e.data);
         const percent = Math.round((data.iteration / data['total-iterations']) * 100);
 
+        // Set start time on first progress event
+        if (!jobStartTime) {
+            jobStartTime = Date.now();
+        }
+
+        // Calculate elapsed time and ETA
+        const elapsedMs = Date.now() - jobStartTime;
+        const elapsedDisplay = formatETA(elapsedMs / 1000);
+        const iterationsCompleted = data.iteration;
+        const iterationsRemaining = data['total-iterations'] - iterationsCompleted;
+        let etaDisplay = '--';
+        if (iterationsCompleted > 0) {
+            const msPerIteration = elapsedMs / iterationsCompleted;
+            const remainingMs = msPerIteration * iterationsRemaining;
+            etaDisplay = formatETA(remainingMs / 1000);
+        }
+
         // Track score history
         currentScoreHistory.push({
             iteration: data.iteration,
@@ -288,7 +326,11 @@ function setupSSEConnection(jobId) {
             <div class="mb-2">
                 <div class="flex justify-between text-sm mb-1">
                     <span>Progress</span>
-                    <span>${data.iteration} / ${data['total-iterations']}</span>
+                    <span class="flex items-center space-x-3">
+                        <span class="text-gray-400">Elapsed: <span class="text-white">${elapsedDisplay}</span></span>
+                        <span class="text-gray-400">ETA: <span class="text-white">${etaDisplay}</span></span>
+                        <span>${data.iteration} / ${data['total-iterations']}</span>
+                    </span>
                 </div>
                 <div class="w-full bg-gray-700 rounded-full h-2">
                     <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
