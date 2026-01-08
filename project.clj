@@ -18,7 +18,7 @@
                  [io.github.vincenzopalazzo/material-ui-swing "1.1.4"]
                  [io.github.material-ui-swing/DarkStackOverflowTheme "0.0.1-rc3"]
 
-                 [ch.qos.logback/logback-classic "1.5.23"]
+                 [ch.qos.logback/logback-classic "1.5.24"]
                  [org.slf4j/jcl-over-slf4j "2.0.17"]
 
                  [org.slf4j/slf4j-api "2.0.17"]
@@ -75,10 +75,10 @@
   :profiles {:uberjar {:aot      :all
                        :manifest {"Multi-Release" true}
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
-             :test {:dependencies [[org.junit.jupiter/junit-jupiter-api "6.0.1"]
-                                   [org.junit.jupiter/junit-jupiter-engine "6.0.1"]
-                                   [org.junit.platform/junit-platform-launcher "6.0.1"]
-                                   [org.junit.platform/junit-platform-console-standalone "6.0.1"]]}}
+             :test {:dependencies [[org.junit.jupiter/junit-jupiter-api "6.0.2"]
+                                   [org.junit.jupiter/junit-jupiter-engine "6.0.2"]
+                                   [org.junit.platform/junit-platform-launcher "6.0.2"]
+                                   [org.junit.platform/junit-platform-console-standalone "6.0.2"]]}}
 
   :cloverage {:ns-exclude-regex [#"closyr\.ops\.common"
                                   #"closyr\.ops\.eval"
