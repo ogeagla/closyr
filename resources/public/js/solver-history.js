@@ -209,7 +209,10 @@ function renderJobItem(node, depth = 0) {
         'border-purple-500/30',  // depth 1: purple
         'border-blue-500/30',    // depth 2: blue
         'border-teal-500/30',    // depth 3: teal
-        'border-amber-500/30',   // depth 4+: amber
+        'border-yellow-500/30',  // depth 4: yellow
+        'border-amber-500/30',   // depth 5: amber
+        'border-orange-500/30',  // depth 6: orange
+        'border-red-500/30',     // depth 7+: red
     ];
     const borderColor = depth > 0 ? depthBorderColors[Math.min(depth, depthBorderColors.length - 1)] : '';
 
