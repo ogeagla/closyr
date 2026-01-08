@@ -180,7 +180,7 @@ function renderJobItem(node, depth = 0) {
         ? `<span class="px-1.5 py-0.5 text-xs bg-gray-600 text-gray-300 rounded ml-2">L${depth}</span>`
         : '';
 
-    // Compare score with parent job (lower score = better)
+    // Compare score with parent job (higher score = better)
     let improvementBadge = '';
     if (job.parentId) {
         const parentJob = jobHistory.find(j => j.id === job.parentId);
