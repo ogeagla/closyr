@@ -596,6 +596,7 @@ Data Flow:
 - [ ] Webapp / Job History: a better visual indicator for job score and where it ranks among job tree
 - [ ] Webapp / Job History: add job to new tree (no parents) when input data is different and did "Keep Going". A tree should be 1 dataset.
 - [ ] Webapp / Job History: add a way to collapse any part of the history tree, with an expand / collapse icon is to the left of the job item.
+- [ ] Webapp / Job Results: copy to clipboard hover btn scrolls with formulas instead of staying in the corner, when formulas a long and have h-scroll.
 - [ ] CLI accepts JSON file option for input data / config, and prints results in JSON
 
 ## Credits
