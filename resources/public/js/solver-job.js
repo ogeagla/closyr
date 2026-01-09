@@ -740,7 +740,7 @@ function submitSolverForm(evt) {
 
     const datasetName = getSelectedDatasetName();
 
-    console.log('Submitting job: ', config);
+    console.debug('Submitting job: ', config);
 
     startNewJob(xs, ys, config, datasetName);
 }
