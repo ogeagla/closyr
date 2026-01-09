@@ -32,10 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Stop running/paused jobs when page is closed or reloaded
-    window.addEventListener('beforeunload', function() {
-        if (currentJobId) {
-            navigator.sendBeacon('/api/jobs/' + currentJobId + '/stop', '');
-        }
-    });
+    // Note: beforeunload handler for stopping all jobs is in solver-job.js
+    // where it has access to activeJobs state
 });

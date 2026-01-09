@@ -998,3 +998,11 @@ function updatePauseButton() {
         }
     }
 }
+
+// Stop all running jobs when page is closed or reloaded
+window.addEventListener('beforeunload', function() {
+    // Use sendBeacon to ensure requests are sent even during page unload
+    for (const jobId of activeJobs.keys()) {
+        navigator.sendBeacon('/api/jobs/' + jobId + '/stop', '');
+    }
+});

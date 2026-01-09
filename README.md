@@ -598,7 +598,7 @@ Data Flow:
 
 #### Webapp
 
-- [ ] Update webapp frontend "beforeunload" handler to stop all running jobs.
+- [x] Update webapp frontend "beforeunload" handler to stop all running jobs.
 - [x] Webapp / Eval cache bug: concurrent jobs using different scoring methods, when both using eval cache, share a cache and that is bad because different scoring methods result in different scores.
 - [ ] Webapp / Jobs/Results/Job History: an editable text label initially populated using the text label we use in the job tabs. to be used by user to label the job with their own comments.
 - [x] Webapp job config: Mutations should have some toggle-able groups in addition to selecting individuals. I want to group trig functions, exp+log, poly, analytic (derivatives, etc.), and any other obvious groups. first show the mutation groups but have a way for user to still select individual mutations.
