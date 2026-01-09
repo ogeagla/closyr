@@ -250,7 +250,14 @@ function renderJobItem(node, depth = 0) {
                 <button onclick="event.stopPropagation(); loadFromHistory(${index})" class="ml-1 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded flex-shrink-0" title="Load this data">
                     Load
                 </button>
-                <button onclick="event.stopPropagation(); removeFromHistory(${index})" class="ml-1 p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0" title="Remove from history">
+                ${children.length > 0 ? `
+                <button onclick="event.stopPropagation(); removeWithChildrenFromHistory(${index})" class="ml-1 p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0" title="Remove with all ${children.length} child run${children.length > 1 ? 's' : ''}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+                ` : ''}
+                <button onclick="event.stopPropagation(); removeFromHistory(${index})" class="ml-1 p-1 text-gray-500 hover:text-red-400 transition-colors flex-shrink-0" title="Remove this item only">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -437,6 +444,48 @@ function removeFromHistory(index) {
     // Remove from array
     jobHistory.splice(index, 1);
     // Re-render (this will update all indices)
+    renderJobHistory();
+}
+
+// Get all descendant job IDs for a given job
+function getDescendantJobIds(jobId) {
+    const descendants = [];
+    const findChildren = (parentId) => {
+        jobHistory.forEach(job => {
+            if (job.parentId === parentId) {
+                descendants.push(job.id);
+                findChildren(job.id); // Recursively find children of children
+            }
+        });
+    };
+    findChildren(jobId);
+    return descendants;
+}
+
+// Remove job and all its descendants from history
+function removeWithChildrenFromHistory(index) {
+    const job = jobHistory[index];
+    if (!job) return;
+
+    // Get all descendant IDs
+    const descendantIds = getDescendantJobIds(job.id);
+    const idsToRemove = new Set([job.id, ...descendantIds]);
+
+    // Dispose charts for all items being removed
+    jobHistory.forEach((j, idx) => {
+        if (idsToRemove.has(j.id)) {
+            if (historyCharts[idx]) {
+                historyCharts[idx].dispose();
+                delete historyCharts[idx];
+            }
+            disposeScoreChart(`history-score-${idx}`);
+        }
+    });
+
+    // Filter out all jobs to remove
+    jobHistory = jobHistory.filter(j => !idsToRemove.has(j.id));
+
+    // Re-render
     renderJobHistory();
 }
 
