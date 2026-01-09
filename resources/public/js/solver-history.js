@@ -3,6 +3,7 @@
  */
 
 let jobHistory = [];
+let collapsedTrees = new Set(); // Track which job IDs have their children collapsed
 
 // Get display name for scoring method
 function getScoringMethodDisplay(method) {
@@ -216,11 +217,25 @@ function renderJobItem(node, depth = 0) {
     ];
     const borderColor = depth > 0 ? depthBorderColors[Math.min(depth, depthBorderColors.length - 1)] : '';
 
+    // Check if this tree is collapsed
+    const isTreeCollapsed = collapsedTrees.has(job.id);
+    const hasChildren = children.length > 0;
+
+    // Tree expand/collapse icon (only shown if has children)
+    const treeToggleIcon = hasChildren ? `
+        <button onclick="toggleTreeCollapse('${job.id}', event)" class="p-1 -ml-1 mr-1 text-gray-400 hover:text-white transition-colors flex-shrink-0" title="${isTreeCollapsed ? 'Expand children' : 'Collapse children'}">
+            <svg class="w-4 h-4 transform transition-transform ${isTreeCollapsed ? '' : 'rotate-90'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    ` : `<span class="w-6 flex-shrink-0"></span>`; // Spacer for alignment when no children
+
     // Render the job
     let html = `
     <div class="bg-gray-800 rounded-lg overflow-hidden ${depth > 0 ? `border-l-2 ${borderColor}` : ''}" style="margin-left: ${indent}px;">
         <div class="p-4 cursor-pointer hover:bg-gray-750" onclick="toggleHistoryItem(${index})">
             <div class="flex items-center justify-between">
+                ${treeToggleIcon}
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center space-x-2">
                         <svg id="chevron-${index}" class="w-4 h-4 text-gray-400 transform transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,10 +352,12 @@ function renderJobItem(node, depth = 0) {
         </div>
     </div>`;
 
-    // Render children
-    children.forEach(child => {
-        html += renderJobItem(child, depth + 1);
-    });
+    // Render children (if not collapsed)
+    if (!isTreeCollapsed) {
+        children.forEach(child => {
+            html += renderJobItem(child, depth + 1);
+        });
+    }
 
     return html;
 }
@@ -482,10 +499,24 @@ function removeWithChildrenFromHistory(index) {
         }
     });
 
+    // Also remove from collapsed set
+    idsToRemove.forEach(id => collapsedTrees.delete(id));
+
     // Filter out all jobs to remove
     jobHistory = jobHistory.filter(j => !idsToRemove.has(j.id));
 
     // Re-render
+    renderJobHistory();
+}
+
+// Toggle tree collapse state for a job
+function toggleTreeCollapse(jobId, event) {
+    event.stopPropagation();
+    if (collapsedTrees.has(jobId)) {
+        collapsedTrees.delete(jobId);
+    } else {
+        collapsedTrees.add(jobId);
+    }
     renderJobHistory();
 }
 
