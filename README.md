@@ -592,6 +592,7 @@ Data Flow:
 
 ### Other TODOs
 
+- [ ] Webapp / Jobs, Results, Job history: show scores for all scoring methods but making sure to make it clear which is the job scoring method. it's useful to see the functions' different scores regardless of which scoring method was used. 
 - [x] Webapp / Jobs: a way to run jobs concurrently, and each running job gets its own Results area, which becomes tabbed to switch between running jobs.  This requires a new option/button like "Keep Going With Job Config" but more succinct (for each job history item), which reuses the job config/data from the job you clicked on, instead of config/data from the UI user inputs.  Each tab should have shortcuts to pause/stop the job. The existing pause / stop buttons should apply to the currently selected job in the tabs.
 - [x] Webapp / Job History: a way to delete item + children of item
 - [ ] Webapp / Job History: a better visual indicator for job score and where it ranks among job tree
