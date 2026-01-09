@@ -598,9 +598,10 @@ Data Flow:
 
 #### Webapp
 
+- [ ] Update webapp frontend "beforeunload" handler to stop all running jobs.
 - [x] Webapp / Eval cache bug: concurrent jobs using different scoring methods, when both using eval cache, share a cache and that is bad because different scoring methods result in different scores.
 - [ ] Webapp / Jobs/Results/Job History: an editable text label initially populated using the text label we use in the job tabs. to be used by user to label the job with their own comments.
-- [ ] Webapp job config: Mutations should have some toggle-able groups in addition to selecting individuals. I want to group trig functions, exp+log, poly, analytic (derivatives, etc.), and any other obvious groups. first show the mutation groups but have a way for user to still select individual mutations.
+- [x] Webapp job config: Mutations should have some toggle-able groups in addition to selecting individuals. I want to group trig functions, exp+log, poly, analytic (derivatives, etc.), and any other obvious groups. first show the mutation groups but have a way for user to still select individual mutations.
 - [ ] Webapp / Jobs, Results, Job history: show scores for all scoring methods for job results / job history but making sure to make it clear which is the job's scoring method used to find the formula. it's useful to see the functions' different scores regardless of which scoring method was used in find-formula. 
 - [ ] Webapp / Job History: a better visual indicator for job score and where it ranks among job tree
 - [x] Webapp / Jobs: a way to run jobs concurrently, and each running job gets its own Results area, which becomes tabbed to switch between running jobs.  This requires a new option/button like "Keep Going With Job Config" but more succinct (for each job history item), which reuses the job config/data from the job you clicked on, instead of config/data from the UI user inputs.  Each tab should have shortcuts to pause/stop the job. The existing pause / stop buttons should apply to the currently selected job in the tabs.

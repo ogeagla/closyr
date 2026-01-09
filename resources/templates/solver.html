@@ -201,12 +201,8 @@
                         </svg>
                     </button>
                     <div id="mutations-panel" class="hidden mt-3">
-                        <div class="flex space-x-2 mb-2">
-                            <button type="button" onclick="selectAllMutations()" class="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded">Select All</button>
-                            <button type="button" onclick="selectNoMutations()" class="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded">Select None</button>
-                        </div>
-                        <div id="mutations-list" class="max-h-48 overflow-y-auto bg-gray-900 rounded-md p-2 grid grid-cols-3 gap-1 text-xs">
-                            <!-- Populated by JavaScript -->
+                        <div id="mutations-panel-content">
+                            <!-- Populated by JavaScript with groups and individual mutations -->
                         </div>
                     </div>
                 </div>
