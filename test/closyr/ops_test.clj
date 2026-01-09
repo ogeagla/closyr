@@ -366,8 +366,37 @@
             score1 (ops/score-fn run-args run-config pheno)
             score2 (ops/score-fn run-args run-config pheno)]
         (is (= score1 score2))
-        (is (= {"-1/2+x^2" -3.0000147}
+        ;; Cache key is [expr-str scoring-method] to prevent cross-contamination
+        (is (= {["-1/2+x^2" :mae-max] -3.0000147}
                @ops/eval-cache*)))))
+
+  (testing "different scoring methods have separate cache entries"
+    (ops/clear-eval-cache!)
+    (binding [ops/*use-eval-cache* true]
+      ;; Use data where x^2 is NOT a perfect fit so different scoring methods produce different scores
+      (let [run-args {:input-ys-vec   [0.0 2.0 5.0]  ; Not a perfect fit for x^2
+                      :input-ys-arr   (double-array [0.0 2.0 5.0])
+                      :input-xs-list  (ops-common/exprs->exprs-list
+                                        (ops-common/doubles->exprs [0.0 1.0 2.0]))
+                      :input-xs-count 3}
+            run-config-mae {:max-leafs ops/default-max-leafs :scoring-method :mae-max}
+            run-config-r2 {:max-leafs ops/default-max-leafs :scoring-method :r-squared}
+            x (F/Dummy "x")
+            pheno (ops-common/->phenotype x (F/Times x x) nil)  ; x^2 gives [0, 1, 4], not [0, 2, 5]
+            ;; Score with MAE method
+            score-mae (ops/score-fn run-args run-config-mae pheno)
+            ;; Score with R-squared method - should NOT hit cache
+            score-r2 (ops/score-fn run-args run-config-r2 pheno)]
+        ;; Different scoring methods should produce different scores for imperfect fit
+        (is (not= score-mae score-r2))
+        ;; Cache should have 2 entries (one per scoring method)
+        (is (= 2 (:size (ops/eval-cache-stats))))
+        (is (= 2 (:misses (ops/eval-cache-stats))))
+        (is (= 0 (:hits (ops/eval-cache-stats))))
+        ;; Now call again with same methods - should hit cache
+        (ops/score-fn run-args run-config-mae pheno)
+        (ops/score-fn run-args run-config-r2 pheno)
+        (is (= 2 (:hits (ops/eval-cache-stats)))))))
 
   (testing "clear-eval-cache! resets cache"
     (ops/clear-eval-cache!)

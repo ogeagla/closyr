@@ -343,16 +343,20 @@
    {:keys [max-leafs] :as run-config}
    pheno]
   (try
-    (let [expr-str (str (:expr pheno))]
+    (let [expr-str (str (:expr pheno))
+          ;; Include scoring method in cache key to prevent cross-contamination
+          ;; between concurrent jobs using different scoring methods
+          effective-scoring-method (or (:scoring-method run-config) *scoring-method*)
+          cache-key [expr-str effective-scoring-method]]
       (if *use-eval-cache*
         ;; Cached path
-        (if-let [cached-score (get @eval-cache* expr-str)]
+        (if-let [cached-score (get @eval-cache* cache-key)]
           (do
             (swap! eval-cache* vary-meta update :hits (fnil inc 0))
             cached-score)
           (let [score (score-fn-uncached run-args run-config pheno expr-str)]
             (swap! eval-cache* (fn [c]
-                                 (-> (assoc c expr-str score)
+                                 (-> (assoc c cache-key score)
                                      (vary-meta update :misses (fnil inc 0)))))
             score))
         ;; Uncached path
