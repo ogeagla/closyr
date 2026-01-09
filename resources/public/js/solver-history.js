@@ -15,6 +15,42 @@ function getScoringMethodDisplay(method) {
     return displays[method] || method || 'MAE + Max';
 }
 
+// Format all scores for history details view
+function formatHistoryScores(job) {
+    const scores = job.scores;
+    const primaryMethod = job.scoringMethod || job.config?.scoringMethod || 'mae-max';
+
+    if (!scores) {
+        // Fallback for old history items without multi-score data
+        return `<div class="text-xs">
+            <span class="text-gray-400">Score:</span>
+            <span class="text-white ml-1">${job.score.toFixed(6)}</span>
+            <span class="text-gray-500 ml-2">(${getScoringMethodDisplay(primaryMethod)})</span>
+        </div>`;
+    }
+
+    const methods = [
+        { key: 'mae-max', name: 'MAE + Max' },
+        { key: 'log-cosh', name: 'Log-Cosh' },
+        { key: 'r-squared', name: 'R²' }
+    ];
+
+    return `<div class="mb-2">
+        <div class="text-gray-400 text-xs mb-1">Scores (optimized for ${getScoringMethodDisplay(primaryMethod)}):</div>
+        <div class="grid grid-cols-3 gap-2 text-xs">
+            ${methods.map(m => {
+                const isPrimary = m.key === primaryMethod;
+                const score = scores[m.key];
+                const scoreStr = (score !== undefined && score !== null) ? score.toFixed(6) : '--';
+                return `<div class="p-2 rounded ${isPrimary ? 'bg-blue-900/50 border border-blue-700' : 'bg-gray-800'}">
+                    <div class="text-gray-400">${m.name}${isPrimary ? ' *' : ''}</div>
+                    <div class="${isPrimary ? 'text-blue-300 font-medium' : 'text-gray-300'}">${scoreStr}</div>
+                </div>`;
+            }).join('')}
+        </div>
+    </div>`;
+}
+
 // Format milliseconds into human-readable duration
 function formatDuration(ms) {
     if (!ms || ms < 0) return null;
@@ -281,11 +317,8 @@ function renderJobItem(node, depth = 0) {
         </div>
         <div id="history-details-${index}" class="hidden border-t border-gray-700">
             <div class="p-4 space-y-3">
+                ${formatHistoryScores(job)}
                 <div class="grid grid-cols-2 gap-4 text-xs">
-                    <div>
-                        <span class="text-gray-400">Score:</span>
-                        <span class="text-white ml-1">${job.score.toFixed(6)}</span>
-                    </div>
                     <div>
                         <span class="text-gray-400">Complexity:</span>
                         <span class="text-white ml-1">${complexityInfo}</span>

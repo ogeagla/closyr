@@ -30,6 +30,94 @@ function formatETA(seconds) {
     }
 }
 
+// Format all scores for a solution, highlighting the primary scoring method
+function formatAllScores(solution, primaryMethod) {
+    const scores = solution.scores;
+    if (!scores) {
+        // Fallback for solutions without multi-score data
+        return `<div class="text-sm mb-4">
+            <span class="text-gray-400">Score:</span>
+            <span class="text-white ml-2">${solution.score.toFixed(6)}</span>
+        </div>`;
+    }
+
+    const methods = [
+        { key: 'mae-max', name: 'MAE + Max' },
+        { key: 'log-cosh', name: 'Log-Cosh' },
+        { key: 'r-squared', name: 'R²' }
+    ];
+
+    return `<div class="grid grid-cols-3 gap-2 text-sm mb-4">
+        ${methods.map(m => {
+            const isPrimary = m.key === primaryMethod;
+            const score = scores[m.key];
+            const scoreStr = (score !== undefined && score !== null) ? score.toFixed(6) : '--';
+            return `<div class="p-2 rounded ${isPrimary ? 'bg-blue-900/50 border border-blue-700' : 'bg-gray-800'}">
+                <div class="text-gray-400 text-xs">${m.name}${isPrimary ? ' *' : ''}</div>
+                <div class="${isPrimary ? 'text-blue-300 font-medium' : 'text-gray-300'}">${scoreStr}</div>
+            </div>`;
+        }).join('')}
+    </div>
+    <div class="text-xs text-gray-500 mb-4">* Scoring method used for optimization</div>`;
+}
+
+// Format scores in a compact single-line format for other solutions
+function formatCompactScores(solution, primaryMethod) {
+    const scores = solution.scores;
+    if (!scores) {
+        return `<div class="text-gray-400 text-xs mt-1">Score: ${solution.score.toFixed(6)}</div>`;
+    }
+
+    const methods = [
+        { key: 'mae-max', name: 'MAE' },
+        { key: 'log-cosh', name: 'LC' },
+        { key: 'r-squared', name: 'R²' }
+    ];
+
+    return `<div class="text-xs mt-1 flex flex-wrap gap-x-3 gap-y-1">
+        ${methods.map(m => {
+            const isPrimary = m.key === primaryMethod;
+            const score = scores[m.key];
+            const scoreStr = (score !== undefined && score !== null) ? score.toFixed(4) : '--';
+            return `<span class="${isPrimary ? 'text-blue-300' : 'text-gray-400'}">
+                ${m.name}: ${scoreStr}${isPrimary ? '*' : ''}
+            </span>`;
+        }).join('')}
+    </div>`;
+}
+
+// Format scores for progress display (during job run)
+function formatProgressScores(data) {
+    const scores = data['best-scores'];
+    const primaryMethod = data['scoring-method'] || 'mae-max';
+
+    if (!scores) {
+        // Fallback for progress without multi-score data
+        return `<div class="text-sm">
+            <span class="text-gray-400">Score:</span>
+            <span class="text-white ml-1">${data['best-score'].toFixed(6)}</span>
+        </div>`;
+    }
+
+    const methods = [
+        { key: 'mae-max', name: 'MAE + Max' },
+        { key: 'log-cosh', name: 'Log-Cosh' },
+        { key: 'r-squared', name: 'R²' }
+    ];
+
+    return `<div class="grid grid-cols-3 gap-2 text-sm">
+        ${methods.map(m => {
+            const isPrimary = m.key === primaryMethod;
+            const score = scores[m.key];
+            const scoreStr = (score !== undefined && score !== null) ? score.toFixed(6) : '--';
+            return `<div class="p-2 rounded ${isPrimary ? 'bg-blue-900/50 border border-blue-700' : 'bg-gray-800'}">
+                <div class="text-gray-400 text-xs">${m.name}${isPrimary ? ' *' : ''}</div>
+                <div class="${isPrimary ? 'text-blue-300 font-medium' : 'text-gray-300'}">${scoreStr}</div>
+            </div>`;
+        }).join('')}
+    </div>`;
+}
+
 // ============================================================================
 // Tab Management
 // ============================================================================
@@ -453,20 +541,17 @@ function renderProgressContent(jobId, job) {
                     </button>
                 </div>
             </div>
-            <div class="mt-2 text-sm flex space-x-4">
-                <div>
-                    <span class="text-gray-400">Score:</span>
-                    <span class="text-white">${data['best-score'].toFixed(6)}</span>
-                </div>
+            <div class="mt-2 text-sm flex space-x-4 mb-2">
                 <div>
                     <span class="text-gray-400">Complexity:</span>
                     <span class="text-white">${data['best-formula-leaf-count']} nodes</span>
                 </div>
                 <div>
-                    <span class="text-gray-400">Scoring:</span>
+                    <span class="text-gray-400">Optimizing:</span>
                     <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
                 </div>
             </div>
+            ${formatProgressScores(data)}
         </div>
         <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
         <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
@@ -536,20 +621,17 @@ function showCompletedJobResults(job) {
                 <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
             </div>
 
-            <div class="grid grid-cols-3 gap-4 text-sm mb-4">
-                <div>
-                    <span class="text-gray-400">Score:</span>
-                    <span class="text-white ml-2">${data['best-solution'].score.toFixed(6)}</span>
-                </div>
+            <div class="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div>
                     <span class="text-gray-400">Complexity:</span>
                     <span class="text-white ml-2">${data['best-solution'].leafCount} nodes</span>
                 </div>
                 <div>
-                    <span class="text-gray-400">Scoring:</span>
+                    <span class="text-gray-400">Optimized for:</span>
                     <span class="text-white ml-2">${getScoringMethodDisplay(data['scoring-method'])}</span>
                 </div>
             </div>
+            ${formatAllScores(data['best-solution'], data['scoring-method'])}
 
             <div id="fit-chart" style="width: 100%; height: 300px;"></div>
 
@@ -559,7 +641,7 @@ function showCompletedJobResults(job) {
                     ${data['all-solutions'].slice(1, 6).map((sol, i) => `
                         <div class="bg-gray-700 rounded p-2 text-sm">
                             <div class="text-gray-200 font-mono">${sol.formula}</div>
-                            <div class="text-gray-400 text-xs mt-1">Score: ${sol.score.toFixed(6)}</div>
+                            ${formatCompactScores(sol, data['scoring-method'])}
                         </div>
                     `).join('')}
                 </div>
@@ -940,6 +1022,8 @@ function saveToHistoryMultiJob(jobId, jobData, status, scoreHistory, elapsedMs, 
         datasetName: datasetName,
         formula: jobData['best-solution'].formula,
         score: jobData['best-solution'].score,
+        scores: jobData['best-solution'].scores || null,  // All scoring method scores
+        scoringMethod: jobData['scoring-method'] || 'mae-max',
         leafCount: jobData['best-solution'].leafCount,
         xs: [...xs],
         ys: [...ys],

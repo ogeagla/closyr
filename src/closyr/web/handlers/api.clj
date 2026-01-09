@@ -44,12 +44,20 @@
 
 
 (defn- phenotype->solution
-  "Convert a phenotype to a solution map for JSON serialization."
-  [{:keys [^IExpr expr score] :as pheno}]
-  (when (and expr score)
-    {:formula   (str expr)
-     :score     score
-     :leafCount (.leafCount expr)}))
+  "Convert a phenotype to a solution map for JSON serialization.
+   If run-args and run-config are provided, computes scores for all scoring methods."
+  ([{:keys [^IExpr expr score] :as pheno}]
+   (when (and expr score)
+     {:formula   (str expr)
+      :score     score
+      :leafCount (.leafCount expr)}))
+  ([{:keys [^IExpr expr score] :as pheno} run-args run-config]
+   (when (and expr score)
+     (let [all-scores (ops/compute-all-method-scores run-args run-config pheno)]
+       {:formula   (str expr)
+        :score     score
+        :leafCount (.leafCount expr)
+        :scores    all-scores}))))
 
 
 (defn- job-stopped?
@@ -185,12 +193,21 @@
                         (swap! jobs* assoc-in [job-id :status] :running))
                   result (symreg/run-find-formula run-config)
 
+                  ;; Create run-args for computing all scores on final solutions
+                  score-run-args {:input-xs-list  (ops-common/exprs->exprs-list
+                                                    (ops-common/doubles->exprs xs-vec))
+                                  :input-xs-count (count xs-vec)
+                                  :input-ys-vec   ys-vec
+                                  :input-ys-arr   (double-array ys-vec)}
+                  score-run-config {:max-leafs max-leafs}
+
                   ;; Extract unique solutions from final population (deduplicated by formula)
+                  ;; Compute all scoring method scores for each solution
                   solutions (->> (get-in result [:final-population :pop])
                                  (filter (fn [p] (and (:score p) (:expr p))))
                                  (sort-by :score)
                                  reverse
-                                 (mapv phenotype->solution)
+                                 (mapv #(phenotype->solution % score-run-args score-run-config))
                                  (filterv some?)
                                  ;; Deduplicate by formula, keeping first (best score)
                                  (reduce (fn [[seen results] sol]

@@ -366,6 +366,34 @@
       (tally-min-score min-score))))
 
 
+(defn compute-all-method-scores
+  "Compute scores for all three scoring methods for a phenotype.
+   Returns a map of {:mae-max score, :log-cosh score, :r-squared score}.
+   Useful for displaying alternative scores in job results."
+  [{:keys [input-xs-list input-xs-count input-ys-vec input-ys-arr] :as run-args}
+   {:keys [max-leafs] :as run-config}
+   pheno]
+  (try
+    (let [expr-str (str (:expr pheno))]
+      (if (str/starts-with? expr-str "Hold(")
+        {:mae-max min-score :log-cosh min-score :r-squared min-score}
+        (let [leafs (.leafCount ^IExpr (:expr pheno))]
+          (if (> leafs (or max-leafs default-max-leafs))
+            {:mae-max min-score :log-cosh min-score :r-squared min-score}
+            (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
+              (if f-of-xs
+                {:mae-max   (compute-score-from-actuals-and-expecteds
+                              pheno f-of-xs input-ys-vec leafs input-ys-arr :mae-max)
+                 :log-cosh  (compute-score-from-actuals-and-expecteds
+                              pheno f-of-xs input-ys-vec leafs input-ys-arr :log-cosh)
+                 :r-squared (compute-score-from-actuals-and-expecteds
+                              pheno f-of-xs input-ys-vec leafs input-ys-arr :r-squared)}
+                {:mae-max min-score :log-cosh min-score :r-squared min-score}))))))
+    (catch Exception e
+      (log/warn "Err computing all scores: " (.getMessage e) ", fn: " (str (:expr pheno)))
+      {:mae-max min-score :log-cosh min-score :r-squared min-score})))
+
+
 (def ^:dynamic *long-running-mutation-thresh-ms*
   "If a mutation takes longer than this in ms, log info about it"
   5000)
@@ -572,15 +600,17 @@
       ;; Call progress callback if provided (for HTTP API/SSE)
       (when (and progress-callback best-v)
         (try
-          (progress-callback {:iteration               current-iteration
-                              :total-iterations        iters
-                              :best-formula            (str (:expr best-v))
-                              :best-formula-leaf-count (.leafCount ^IExpr (:expr best-v))
-                              :best-score              (or (:score best-v) min-score)
-                              :percentiles             {:p99 (or (:score best-p99-v) min-score)
-                                                        :p95 (or (:score best-p95-v) min-score)
-                                                        :p90 (or (:score best-p90-v) min-score)}
-                              :scoring-method          scoring-method})
+          (let [all-scores (compute-all-method-scores run-args run-config best-v)]
+            (progress-callback {:iteration               current-iteration
+                                :total-iterations        iters
+                                :best-formula            (str (:expr best-v))
+                                :best-formula-leaf-count (.leafCount ^IExpr (:expr best-v))
+                                :best-score              (or (:score best-v) min-score)
+                                :best-scores             all-scores
+                                :percentiles             {:p99 (or (:score best-p99-v) min-score)
+                                                          :p95 (or (:score best-p95-v) min-score)
+                                                          :p90 (or (:score best-p90-v) min-score)}
+                                :scoring-method          scoring-method}))
           (catch Exception e
             ;; Re-throw stop exceptions so the solver actually stops
             (if (= :stopped (:type (ex-data e)))
