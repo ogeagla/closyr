@@ -306,9 +306,9 @@ function renderJobItem(node, depth = 0) {
                 <!-- Formula with copy button -->
                 <div>
                     <div class="text-gray-400 text-xs mb-1">Formula:</div>
-                    <div class="group relative formula-display text-green-400 text-sm bg-gray-900 p-2 rounded">
-                        <span id="history-formula-${index}">${job.formula}</span>
-                        <button onclick="event.stopPropagation(); copyFormula('history-formula-${index}')" class="absolute right-1 top-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
+                    <div class="group flex items-center gap-2 text-green-400 text-sm bg-gray-900 p-2 rounded">
+                        <div class="flex-1 min-w-0 overflow-x-auto font-mono whitespace-nowrap" id="history-formula-${index}">${job.formula}</div>
+                        <button onclick="event.stopPropagation(); copyFormula('history-formula-${index}')" class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white bg-gray-700 rounded" title="Copy to clipboard">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>

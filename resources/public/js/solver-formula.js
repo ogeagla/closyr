@@ -113,20 +113,23 @@ function renderLatex(elementId, formula) {
         // Store raw LaTeX source for copying
         element.dataset.latex = latex;
 
-        // Create wrapper with copy button
+        // Create flex wrapper with scrollable latex and fixed copy button
         element.innerHTML = '';
-        element.classList.add('group', 'relative');
+        element.classList.add('group', 'flex', 'items-start', 'gap-2');
+        element.classList.remove('overflow-x-auto'); // Remove from parent, add to child
 
+        // Scrollable latex container
         const latexContainer = document.createElement('div');
+        latexContainer.className = 'flex-1 min-w-0 overflow-x-auto';
         katex.render(wrappedLatex, latexContainer, {
             throwOnError: false,
             displayMode: true
         });
         element.appendChild(latexContainer);
 
-        // Add copy button
+        // Fixed copy button (outside scrollable area)
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'latex-copy-btn absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white';
+        copyBtn.className = 'latex-copy-btn flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white bg-gray-800 rounded';
         copyBtn.title = 'Copy LaTeX source';
         copyBtn.onclick = () => copyLatex(elementId);
         copyBtn.innerHTML = `

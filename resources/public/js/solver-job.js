@@ -444,9 +444,9 @@ function renderProgressContent(jobId, job) {
             </div>
             <div class="mt-4">
                 <div class="text-gray-300 text-sm mb-1">Current Best Formula:</div>
-                <div class="group relative formula-display text-green-400 text-sm">
-                    <span id="current-formula">${data['best-formula']}</span>
-                    <button onclick="copyFormula('current-formula')" class="absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
+                <div class="group flex items-center gap-2 text-green-400 text-sm">
+                    <div class="flex-1 min-w-0 overflow-x-auto font-mono whitespace-nowrap pb-1" id="current-formula">${data['best-formula']}</div>
+                    <button onclick="copyFormula('current-formula')" class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white bg-gray-800 rounded" title="Copy to clipboard">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
@@ -525,9 +525,9 @@ function showCompletedJobResults(job) {
 
             <div class="mb-4">
                 <div class="text-gray-300 text-sm mb-2">Best Formula Found:</div>
-                <div class="group relative formula-display text-green-400 text-sm">
-                    <span id="best-formula">${data['best-solution'].formula}</span>
-                    <button onclick="copyFormula('best-formula')" class="absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
+                <div class="group flex items-center gap-2 text-green-400 text-sm">
+                    <div class="flex-1 min-w-0 overflow-x-auto font-mono whitespace-nowrap pb-1" id="best-formula">${data['best-solution'].formula}</div>
+                    <button onclick="copyFormula('best-formula')" class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white bg-gray-800 rounded" title="Copy to clipboard">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
