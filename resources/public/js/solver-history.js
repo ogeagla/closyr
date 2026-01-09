@@ -588,7 +588,7 @@ async function rerunFromHistory(index) {
         config.seed = job.config.seed;
     }
 
-    console.log('Rerunning job with job config: ', sourceJobId, config);
+    console.debug('Rerunning job with job config: ', sourceJobId, config);
 
     try {
         // Use startNewJob which handles tab creation
@@ -651,7 +651,7 @@ async function keepGoingFromHistory(index) {
         config.seed = parseInt(seedInput);
     }
 
-    console.log('Continuing job with new config: ', sourceJobId, config);
+    console.debug('Continuing job with new config: ', sourceJobId, config);
 
     try {
         // Use startNewJob which handles tab creation
