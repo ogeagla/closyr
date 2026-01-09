@@ -20,6 +20,7 @@ function convertFormula(formula) {
         .replace(/Tanh\(/g, 'tanh(')
         .replace(/Sec\(/g, 'sec(')
         .replace(/Csc\(/g, 'csc(')
+        .replace(/Cot\(/g, 'cot(')
         .replace(/Sin\(/g, 'sin(')
         .replace(/Cos\(/g, 'cos(')
         .replace(/Tan\(/g, 'tan(')
