@@ -482,8 +482,18 @@ function renderProgressContent(jobId, job) {
     renderLatex('formula-latex', data['best-formula']);
 }
 
+// Store last completed job for display
+let lastCompletedJob = null;
+
 function showDefaultResults() {
     const resultsDiv = document.getElementById('results');
+
+    // If we have a last completed job, show its results instead of default message
+    if (lastCompletedJob) {
+        showCompletedJobResults(lastCompletedJob);
+        return;
+    }
+
     resultsDiv.innerHTML = `
         <p>Enter your data and click "Find Formula" to start the solver.</p>
         <p class="mt-4 text-sm">
@@ -491,6 +501,80 @@ function showDefaultResults() {
             the best fit for your data.
         </p>
     `;
+}
+
+function showCompletedJobResults(job) {
+    const resultsDiv = document.getElementById('results');
+    const { data, scoreHistory, inputXs, inputYs, datasetName } = job;
+
+    const datasetBadge = datasetName
+        ? `<span class="px-2 py-1 text-xs bg-blue-600 text-white rounded ml-2">${datasetName}</span>`
+        : '';
+
+    disposeFitChart();
+
+    resultsDiv.innerHTML = `
+        <div class="mb-4">
+            <div class="flex items-center space-x-2 text-green-400 mb-4">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="font-semibold">Completed!</span>
+                ${datasetBadge}
+            </div>
+
+            <div class="mb-4">
+                <div class="text-gray-300 text-sm mb-2">Best Formula Found:</div>
+                <div class="group relative formula-display text-green-400 text-sm">
+                    <span id="best-formula">${data['best-solution'].formula}</span>
+                    <button onclick="copyFormula('best-formula')" class="absolute right-0 top-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white" title="Copy to clipboard">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 text-sm mb-4">
+                <div>
+                    <span class="text-gray-400">Score:</span>
+                    <span class="text-white ml-2">${data['best-solution'].score.toFixed(6)}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Complexity:</span>
+                    <span class="text-white ml-2">${data['best-solution'].leafCount} nodes</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Scoring:</span>
+                    <span class="text-white ml-2">${getScoringMethodDisplay(data['scoring-method'])}</span>
+                </div>
+            </div>
+
+            <div id="fit-chart" style="width: 100%; height: 300px;"></div>
+
+            <div class="mt-4">
+                <div class="text-gray-300 text-sm mb-2">Other Solutions:</div>
+                <div class="space-y-2 max-h-48 overflow-y-auto">
+                    ${data['all-solutions'].slice(1, 6).map((sol, i) => `
+                        <div class="bg-gray-700 rounded p-2 text-sm">
+                            <div class="text-gray-200 font-mono">${sol.formula}</div>
+                            <div class="text-gray-400 text-xs mt-1">Score: ${sol.score.toFixed(6)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
+                <div id="completed-score-chart" style="width: 100%; height: 80px;"></div>
+            </div>
+        </div>
+    `;
+
+    renderScoreChart('completed-score-chart', scoreHistory);
+    renderFitChart(data['best-solution'].formula, true, inputXs, inputYs);
+    renderLatex('formula-latex', data['best-solution'].formula);
 }
 
 // ============================================================================
@@ -756,6 +840,15 @@ function setupSSEConnection(jobId) {
 
         // Save to history
         saveToHistoryMultiJob(jobId, data, 'completed', [...job.scoreHistory], elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName);
+
+        // Store completed job for display in Results
+        lastCompletedJob = {
+            data: data,
+            scoreHistory: [...job.scoreHistory],
+            inputXs: job.inputXs,
+            inputYs: job.inputYs,
+            datasetName: job.datasetName
+        };
 
         // Close tab (auto-close on complete)
         closeJobTab(jobId);
