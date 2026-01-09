@@ -241,8 +241,11 @@ function renderJobItem(node, depth = 0) {
                         ${sparkline}
                     </div>
                 </div>
-                <button onclick="event.stopPropagation(); keepGoingFromHistory(${index})" class="ml-2 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded flex-shrink-0" title="Continue evolution from these results">
-                    Keep Going
+                <button onclick="event.stopPropagation(); rerunFromHistory(${index})" class="ml-2 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded flex-shrink-0" title="Continue evolution using job's original config">
+                    Rerun
+                </button>
+                <button onclick="event.stopPropagation(); keepGoingFromHistory(${index})" class="ml-1 px-2 py-1 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded flex-shrink-0" title="Continue evolution using current form config">
+                    New Config
                 </button>
                 <button onclick="event.stopPropagation(); loadFromHistory(${index})" class="ml-1 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded flex-shrink-0" title="Load this data">
                     Load
@@ -463,7 +466,64 @@ function loadFromHistory(index) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Keep Going - continue evolution from a history item's results
+// Rerun - continue evolution using job's original config and data
+async function rerunFromHistory(index) {
+    const job = jobHistory[index];
+    if (!job) return;
+
+    // Get formulas from the job
+    let seedFormulas = [];
+    if (job.allSolutions && job.allSolutions.length > 0) {
+        seedFormulas = job.allSolutions.map(s => s.formula);
+    } else if (job.formula) {
+        seedFormulas = [job.formula];
+    }
+
+    if (seedFormulas.length === 0) {
+        alert('No formulas available to seed from this job');
+        return;
+    }
+
+    // Use the job's original job ID to call continue endpoint
+    const sourceJobId = job.id;
+
+    // Use job's stored config (not UI form values)
+    const config = {
+        iterations: job.config.iterations,
+        population: job.config.population,
+        maxLeafs: job.config.maxLeafs,
+        scoringMethod: job.config.scoringMethod,
+        adaptiveMode: job.config.adaptiveMode || false,
+        useEvalCache: job.config.useEvalCache || false,
+        quietLogs: job.config.quietLogs !== false, // Default to true
+    };
+
+    // Include mutations blacklist if it was stored
+    if (job.config.mutationsBlacklist && job.config.mutationsBlacklist.length > 0) {
+        config.mutationsBlacklist = job.config.mutationsBlacklist;
+    }
+
+    // Include seed if it was stored
+    if (job.config.seed) {
+        config.seed = job.config.seed;
+    }
+
+    console.log('Rerunning job with job config: ', sourceJobId, config);
+
+    try {
+        // Use startNewJob which handles tab creation
+        startNewJob(job.xs, job.ys, config, job.datasetName, sourceJobId);
+
+        // Scroll to top to see progress
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (error) {
+        console.error('Failed to start Rerun job:', error);
+        alert('Failed to rerun: ' + error.message);
+    }
+}
+
+// Run From New Config - continue evolution using UI form config but job's formulas/data
 async function keepGoingFromHistory(index) {
     const job = jobHistory[index];
     if (!job) return;
@@ -484,9 +544,7 @@ async function keepGoingFromHistory(index) {
     // Use the job's original job ID to call continue endpoint
     const sourceJobId = job.id;
 
-    // Build config from current form values
-
-    // Add adaptive mode, quiet logs, and eval cache settings
+    // Build config from current form values (not job's stored config)
     const adaptiveModeEl = document.getElementById('adaptive-mode');
     const quietLogsEl = document.getElementById('quiet-logs');
     const evalCacheEl = document.getElementById('eval-cache');
@@ -513,36 +571,17 @@ async function keepGoingFromHistory(index) {
         config.seed = parseInt(seedInput);
     }
 
-    console.log('Continuing job: ', sourceJobId, config);
+    console.log('Continuing job with new config: ', sourceJobId, config);
 
     try {
-        const response = await fetch(`/api/jobs/${sourceJobId}/continue`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                xs: job.xs,
-                ys: job.ys,
-                config: config
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to continue job');
-        }
-
-        const result = await response.json();
-        currentJobId = result.jobId;
-
-        // Show running state and connect to SSE
-        showRunningState();
-        setupSSEConnection(currentJobId);
+        // Use startNewJob which handles tab creation
+        startNewJob(job.xs, job.ys, config, job.datasetName, sourceJobId);
 
         // Scroll to top to see progress
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (error) {
-        console.error('Failed to start Keep Going job:', error);
+        console.error('Failed to start Run From New Config job:', error);
         alert('Failed to continue: ' + error.message);
     }
 }

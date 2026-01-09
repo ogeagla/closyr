@@ -121,7 +121,8 @@ function syncEditorToTextarea() {
 }
 
 // Initialize or update the fit chart
-function renderFitChart(formula, animate = true) {
+// Optional customXs/customYs parameters for multi-job support
+function renderFitChart(formula, animate = true, customXs = null, customYs = null) {
     const chartContainer = document.getElementById('fit-chart');
     if (!chartContainer) return;
 
@@ -129,7 +130,11 @@ function renderFitChart(formula, animate = true) {
         fitChart = echarts.init(chartContainer, 'dark');
     }
 
-    const dataPoints = inputXs.map((x, i) => ({ x: x, y: inputYs[i] }));
+    // Use custom xs/ys if provided, otherwise fall back to global inputXs/inputYs
+    const xs = customXs || inputXs;
+    const ys = customYs || inputYs;
+
+    const dataPoints = xs.map((x, i) => ({ x: x, y: ys[i] }));
     dataPoints.sort((a, b) => a.x - b.x);
     const sortedXs = dataPoints.map(p => p.x);
     const sortedYs = dataPoints.map(p => p.y);
