@@ -88,6 +88,19 @@
                                   #"closyr\.ui\."
                                   #"closyr\.util\.spec"]}
 
+  :native-image {:name "closyr"
+                 :graal-bin "/home/octavian/graalvm/graalvm-jdk-25.0.1+8.1/bin"
+                 :opts ["--report-unsupported-elements-at-runtime"
+                        "--initialize-at-build-time"
+                        "--initialize-at-build-time=ch.qos.logback"
+
+                        "--trace-object-instantiation=java.util.Random"
+                        "--trace-object-instantiation=java.io.FileDescriptor"
+                        ;"--initialize-at-run-time=closyr.util.prng"
+                        ;"--initialize-at-run-time=closyr.util.log"
+
+                        "--no-server"]}
+
   :plugins [[lein-cloverage "1.2.4"]
             [lein-vanity "0.2.0"]
             [lein-nomis-ns-graph "0.14.6"]
@@ -97,4 +110,5 @@
             [lein-bikeshed "0.5.2"]
             [venantius/yagni "0.1.7"]
             [lein-check-namespace-decls "1.0.4"]
-            [docstring-checker "1.1.0"]])
+            [docstring-checker "1.1.0"]
+            [io.taylorwood/lein-native-image "0.3.1"]])

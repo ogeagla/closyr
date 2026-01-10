@@ -14,21 +14,30 @@
 (set! *warn-on-reflection* true)
 
 ;; from https://github.com/trystan/random-seed
-(def ^:private ^Random rng (new Random))
+(def ^:private rng* (atom nil))
+
+(defn- get-random []
+  (let [^Random rng @rng*]
+    rng))
+
+(defn init []
+  (when-not @rng*
+    (reset! rng* (new Random))))
 
 
 (defn set-random-seed!
   "Sets the seed of the global random number generator."
   [seed]
-  (.setSeed rng seed))
+  (init)
+  (.setSeed ^Random (get-random) seed))
 
 
 (defn rand
   "Returns a random floating point number between 0 (inclusive) and
   n (default 1) (exclusive). Works like clojure.core/rand except it
   uses the seed specified in set-random-seed!."
-  ([] (.nextFloat rng))
-  ([n] (* n (rand))))
+  ([] (init) (.nextFloat ^Random (get-random)))
+  ([n] (init) (* n (rand))))
 
 
 (defn rand-int
@@ -36,6 +45,7 @@
   Works like clojure.core/rand except it uses the seed specified in
   set-random-seed!."
   [n]
+  (init)
   (int (rand n)))
 
 
@@ -45,6 +55,7 @@
   collection. Works like clojure.core/rand except it uses the seed
   specified in set-random-seed!."
   [coll]
+  (init)
   (nth coll (rand-int (count coll))))
 
 
@@ -52,8 +63,9 @@
   "Return a random permutation of coll. Works like clojure.core/shuffle
   except it uses the seed specified in set-random-seed!."
   [^Collection coll]
+  (init)
   (let [al (ArrayList. coll)]
-    (Collections/shuffle al rng)
+    (Collections/shuffle al ^Random (get-random))
     (RT/vector (.toArray al))))
 
 
@@ -61,8 +73,9 @@
   "Shuffle a collection in-place and return as ArrayList for efficient iteration.
   Avoids vector conversion overhead when the result will be iterated sequentially."
   ^ArrayList [^Collection coll]
+  (init)
   (let [^ArrayList al (if (instance? ArrayList coll) coll (ArrayList. coll))]
-    (Collections/shuffle al rng)
+    (Collections/shuffle al ^Random (get-random))
     al))
 
 
@@ -70,8 +83,9 @@
   "Generate a random UUID using the seeded PRNG.
   This produces deterministic UUIDs when the seed is set."
   []
+  (init)
   (let [bytes (byte-array 16)]
-    (.nextBytes rng bytes)
+    (.nextBytes ^Random (get-random) bytes)
     ;; Set version to 4 (random) and variant to IETF
     ;; Use unchecked-byte to handle values > 127
     (aset bytes 6 (unchecked-byte (bit-or (bit-and (aget bytes 6) 0x0f) 0x40)))
