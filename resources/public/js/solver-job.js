@@ -1030,8 +1030,8 @@ function setupSSEConnection(jobId) {
         // Capture elapsed time
         const elapsedMs = job.startTime ? Date.now() - job.startTime : null;
 
-        // Save to history
-        saveToHistoryMultiJob(jobId, data, 'completed', [...job.scoreHistory], elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
+        // Save to history (use job.sourceJobId which we stored when starting)
+        saveToHistoryMultiJob(jobId, data, 'completed', [...job.scoreHistory], job.sourceJobId, elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
 
         // Store completed job for display in Results
         lastCompletedJob = {
@@ -1079,11 +1079,11 @@ function setupSSEConnection(jobId) {
         // Capture elapsed time
         const elapsedMs = job.startTime ? Date.now() - job.startTime : null;
 
-        // Parse data and save to history
+        // Parse data and save to history (use job.sourceJobId which we stored when starting)
         if (e.data) {
             const data = JSON.parse(e.data);
             if (data['last-progress']) {
-                saveStoppedToHistoryMultiJob(jobId, data['last-progress'], [...job.scoreHistory], data['source-job'], elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
+                saveStoppedToHistoryMultiJob(jobId, data['last-progress'], [...job.scoreHistory], job.sourceJobId, elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
             }
         }
 
@@ -1111,10 +1111,10 @@ function updateStartButtonState() {
 // History Integration (multi-job versions)
 // ============================================================================
 
-function saveToHistoryMultiJob(jobId, jobData, status, scoreHistory, elapsedMs, xs, ys, config, datasetName, label) {
+function saveToHistoryMultiJob(jobId, jobData, status, scoreHistory, sourceJobId, elapsedMs, xs, ys, config, datasetName, label) {
     const job = {
         id: jobId,
-        parentId: jobData['source-job'] || null,
+        parentId: sourceJobId || null,
         timestamp: new Date().toLocaleString(),
         status: status,
         datasetName: datasetName,
@@ -1147,7 +1147,9 @@ function saveStoppedToHistoryMultiJob(jobId, progressData, scoreHistory, parentI
         label: label,
         formula: progressData['best-formula'],
         score: progressData['best-score'],
-        leafCount: null,
+        scores: progressData['best-scores'] || null,  // All scoring method scores
+        scoringMethod: progressData['scoring-method'] || config.scoringMethod || 'mae-max',
+        leafCount: progressData['best-formula-leaf-count'] || null,
         iteration: progressData['iteration'],
         totalIterations: progressData['total-iterations'],
         xs: [...xs],
