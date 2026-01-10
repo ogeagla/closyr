@@ -88,6 +88,50 @@ function formatCompactScores(solution, primaryMethod) {
     </div>`;
 }
 
+// Format starting score comparison for jobs with a parent
+function formatStartingScoreComparison(job, data) {
+    const currentMethod = data['scoring-method'] || 'mae-max';
+    const currentScores = data['best-scores'];
+
+    // Get the current score for the current job's scoring method
+    const currentScore = currentScores && currentScores[currentMethod] !== undefined
+        ? currentScores[currentMethod]
+        : data['best-score'];
+
+    // Get the starting score for the same method from the parent job
+    let startScore = null;
+    if (job.startingScores && job.startingScores[currentMethod] !== undefined) {
+        startScore = job.startingScores[currentMethod];
+    } else if (job.startingScore !== null && job.startingScore !== undefined) {
+        // Fallback to primary score if method-specific score not available
+        startScore = job.startingScore;
+    }
+
+    if (startScore === null || startScore === undefined) return '';
+
+    const diff = startScore - currentScore;
+    const pctChange = startScore !== 0 ? (diff / Math.abs(startScore)) * 100 : 0;
+
+    let changeIndicator = '';
+    if (diff < 0) {
+        // Score increased (improved - higher is better)
+        changeIndicator = `<span class="text-green-400 ml-2">(improved ${Math.abs(pctChange).toFixed(1)}%)</span>`;
+    } else if (diff > 0) {
+        changeIndicator = `<span class="text-red-400 ml-2">(worsened ${Math.abs(pctChange).toFixed(1)}%)</span>`;
+    }
+
+    const methodDisplay = getScoringMethodDisplay(currentMethod);
+
+    return `<div class="text-sm mb-2 p-2 bg-gray-800 rounded">
+        <span class="text-gray-400">Starting ${methodDisplay}:</span>
+        <span class="text-yellow-300 ml-1">${startScore.toFixed(6)}</span>
+        <span class="text-gray-500 mx-2">→</span>
+        <span class="text-gray-400">Current:</span>
+        <span class="text-white ml-1">${currentScore.toFixed(6)}</span>
+        ${changeIndicator}
+    </div>`;
+}
+
 // Format scores for progress display (during job run) - with sparklines
 function formatProgressScores(data, scoreHistory) {
     const scores = data['best-scores'];
@@ -607,6 +651,7 @@ function renderProgressContent(jobId, job) {
                         <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
                     </div>
                 </div>
+                ${job.startingScore !== null ? formatStartingScoreComparison(job, data) : ''}
                 ${formatProgressScores(data, job.scoreHistory)}
             </div>
         `;
@@ -891,6 +936,17 @@ function startNewJob(xs, ys, config, datasetName, sourceJobId = null) {
             // Create job entry with sequence number
             jobCounter++;
 
+            // Find parent job's starting score if continuing from a previous job
+            let startingScore = null;
+            let startingScores = null;
+            if (sourceJobId) {
+                const parentJob = jobHistory.find(j => j.id === sourceJobId);
+                if (parentJob) {
+                    startingScore = parentJob.score;
+                    startingScores = parentJob.scores;
+                }
+            }
+
             const jobEntry = {
                 eventSource: null,
                 isPaused: false,
@@ -903,7 +959,10 @@ function startNewJob(xs, ys, config, datasetName, sourceJobId = null) {
                 progress: null,
                 status: 'running',
                 config: config,
-                label: null  // Will be set below after we can call getJobDisplayName
+                label: null,  // Will be set below after we can call getJobDisplayName
+                sourceJobId: sourceJobId || null,
+                startingScore: startingScore,
+                startingScores: startingScores
             };
 
             // Set default label using the display name

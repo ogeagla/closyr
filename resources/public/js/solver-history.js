@@ -63,6 +63,34 @@ function escapeHistoryHtml(text) {
     return div.innerHTML;
 }
 
+// Format compact scores for collapsed history view (no sparklines)
+function formatCompactHistoryScores(job) {
+    const scores = job.scores;
+    const primaryMethod = job.scoringMethod || job.config?.scoringMethod || 'mae-max';
+
+    if (!scores) {
+        // Fallback for old history items without multi-score data
+        return `<span class="text-white">${job.score.toFixed(6)}</span>`;
+    }
+
+    const methods = [
+        { key: 'mae-max', name: 'MAE' },
+        { key: 'log-cosh', name: 'LC' },
+        { key: 'r-squared', name: 'R²' }
+    ];
+
+    return methods.map(m => {
+        const isPrimary = m.key === primaryMethod;
+        const score = scores[m.key];
+        const scoreStr = (score !== undefined && score !== null) ? score.toFixed(4) : '--';
+        if (isPrimary) {
+            return `<span class="text-blue-300 font-medium">${m.name}: ${scoreStr}*</span>`;
+        } else {
+            return `<span class="text-gray-400">${m.name}: ${scoreStr}</span>`;
+        }
+    }).join('<span class="text-gray-600 mx-1">·</span>');
+}
+
 // Format all scores for history details view - with sparklines
 function formatHistoryScores(job) {
     const scores = job.scores;
@@ -341,8 +369,12 @@ function renderJobItem(node, depth = 0) {
                         ${datasetBadge}
                         ${childBadge}
                     </div>
-                    <div class="text-xs text-gray-500 mt-1 ml-6 flex items-center">
-                        <span>Score: ${job.score.toFixed(6)} · ${job.xs.length} points${durationInfo}${iterationInfo} · ${job.timestamp}</span>
+                    <div class="text-xs text-gray-500 mt-1 ml-6 flex items-center flex-wrap gap-1">
+                        <span class="flex items-center">${formatCompactHistoryScores(job)}</span>
+                        <span class="text-gray-600">·</span>
+                        <span>${job.xs.length} pts${durationInfo}${iterationInfo}</span>
+                        <span class="text-gray-600">·</span>
+                        <span>${job.timestamp}</span>
                         ${sparkline}
                     </div>
                 </div>
