@@ -30,8 +30,8 @@ function formatETA(seconds) {
     }
 }
 
-// Format all scores for a solution, highlighting the primary scoring method
-function formatAllScores(solution, primaryMethod) {
+// Format all scores for a solution, highlighting the primary scoring method - with sparklines
+function formatAllScores(solution, primaryMethod, scoreHistory) {
     const scores = solution.scores;
     if (!scores) {
         // Fallback for solutions without multi-score data
@@ -52,9 +52,11 @@ function formatAllScores(solution, primaryMethod) {
             const isPrimary = m.key === primaryMethod;
             const score = scores[m.key];
             const scoreStr = (score !== undefined && score !== null) ? score.toFixed(6) : '--';
+            const sparkline = generateMethodSparkline(scoreHistory, m.key);
             return `<div class="p-2 rounded ${isPrimary ? 'bg-blue-900/50 border border-blue-700' : 'bg-gray-800'}">
                 <div class="text-gray-400 text-xs">${m.name}${isPrimary ? ' *' : ''}</div>
                 <div class="${isPrimary ? 'text-blue-300 font-medium' : 'text-gray-300'}">${scoreStr}</div>
+                ${sparkline}
             </div>`;
         }).join('')}
     </div>
@@ -86,8 +88,8 @@ function formatCompactScores(solution, primaryMethod) {
     </div>`;
 }
 
-// Format scores for progress display (during job run)
-function formatProgressScores(data) {
+// Format scores for progress display (during job run) - with sparklines
+function formatProgressScores(data, scoreHistory) {
     const scores = data['best-scores'];
     const primaryMethod = data['scoring-method'] || 'mae-max';
 
@@ -110,9 +112,11 @@ function formatProgressScores(data) {
             const isPrimary = m.key === primaryMethod;
             const score = scores[m.key];
             const scoreStr = (score !== undefined && score !== null) ? score.toFixed(6) : '--';
+            const sparkline = generateMethodSparkline(scoreHistory, m.key);
             return `<div class="p-2 rounded ${isPrimary ? 'bg-blue-900/50 border border-blue-700' : 'bg-gray-800'}">
                 <div class="text-gray-400 text-xs">${m.name}${isPrimary ? ' *' : ''}</div>
                 <div class="${isPrimary ? 'text-blue-300 font-medium' : 'text-gray-300'}">${scoreStr}</div>
+                ${sparkline}
             </div>`;
         }).join('')}
     </div>`;
@@ -475,10 +479,6 @@ function renderJobContent(jobId) {
             </div>
             <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm hidden overflow-x-auto"></div>
             <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
-            <div class="mt-4">
-                <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
-                <div id="score-chart" style="width: 100%; height: 80px;"></div>
-            </div>
         `;
     }
 }
@@ -551,18 +551,13 @@ function renderProgressContent(jobId, job) {
                     <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
                 </div>
             </div>
-            ${formatProgressScores(data)}
+            ${formatProgressScores(data, job.scoreHistory)}
         </div>
         <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
         <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
-        <div class="mt-4">
-            <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
-            <div id="score-chart" style="width: 100%; height: 80px;"></div>
-        </div>
     `;
 
     // Render charts and latex
-    renderScoreChart('score-chart', job.scoreHistory);
     renderFitChart(data['best-formula'], false, job.inputXs, job.inputYs);
     renderLatex('formula-latex', data['best-formula']);
 }
@@ -631,7 +626,7 @@ function showCompletedJobResults(job) {
                     <span class="text-white ml-2">${getScoringMethodDisplay(data['scoring-method'])}</span>
                 </div>
             </div>
-            ${formatAllScores(data['best-solution'], data['scoring-method'])}
+            ${formatAllScores(data['best-solution'], data['scoring-method'], scoreHistory)}
 
             <div id="fit-chart" style="width: 100%; height: 300px;"></div>
 
@@ -646,15 +641,9 @@ function showCompletedJobResults(job) {
                     `).join('')}
                 </div>
             </div>
-
-            <div class="mt-4">
-                <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
-                <div id="completed-score-chart" style="width: 100%; height: 80px;"></div>
-            </div>
         </div>
     `;
 
-    renderScoreChart('completed-score-chart', scoreHistory);
     renderFitChart(data['best-solution'].formula, true, inputXs, inputYs);
     renderLatex('formula-latex', data['best-solution'].formula);
 }
@@ -902,9 +891,15 @@ function setupSSEConnection(jobId) {
 
         // Update job state
         job.progress = data;
+
+        // Store all scoring method values per iteration for sparklines
+        const scores = data['best-scores'] || {};
         job.scoreHistory.push({
             iteration: data.iteration,
-            score: data['best-score']
+            score: data['best-score'],
+            'mae-max': scores['mae-max'],
+            'log-cosh': scores['log-cosh'],
+            'r-squared': scores['r-squared']
         });
 
         // If this is the selected job, update UI

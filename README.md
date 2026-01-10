@@ -598,7 +598,7 @@ Data Flow:
 
 #### Webapp
 
-- [ ] Webapp: Change the score progression chart (in Results in progress, complete and in Job History) to sparklines near each scoring method value for each scoring method. 
+- [x] Webapp: Change the score progression chart (in Results in progress, complete and in Job History) to sparklines near each scoring method value for each scoring method. 
 - [x] Update webapp frontend "beforeunload" handler to stop all running jobs.
 - [x] Webapp / Eval cache bug: concurrent jobs using different scoring methods, when both using eval cache, share a cache and that is bad because different scoring methods result in different scores.
 - [ ] Webapp / Jobs/Results/Job History: an editable text label initially populated using the text label we use in the job tabs. to be used by user to label the job with their own comments.

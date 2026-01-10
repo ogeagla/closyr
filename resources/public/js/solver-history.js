@@ -15,10 +15,11 @@ function getScoringMethodDisplay(method) {
     return displays[method] || method || 'MAE + Max';
 }
 
-// Format all scores for history details view
+// Format all scores for history details view - with sparklines
 function formatHistoryScores(job) {
     const scores = job.scores;
     const primaryMethod = job.scoringMethod || job.config?.scoringMethod || 'mae-max';
+    const scoreHistory = job.scoreHistory;
 
     if (!scores) {
         // Fallback for old history items without multi-score data
@@ -42,9 +43,11 @@ function formatHistoryScores(job) {
                 const isPrimary = m.key === primaryMethod;
                 const score = scores[m.key];
                 const scoreStr = (score !== undefined && score !== null) ? score.toFixed(6) : '--';
+                const sparkline = generateMethodSparkline(scoreHistory, m.key);
                 return `<div class="p-2 rounded ${isPrimary ? 'bg-blue-900/50 border border-blue-700' : 'bg-gray-800'}">
                     <div class="text-gray-400">${m.name}${isPrimary ? ' *' : ''}</div>
                     <div class="${isPrimary ? 'text-blue-300 font-medium' : 'text-gray-300'}">${scoreStr}</div>
+                    ${sparkline}
                 </div>`;
             }).join('')}
         </div>
@@ -360,25 +363,16 @@ function renderJobItem(node, depth = 0) {
                         <div><span class="text-gray-500">Y:</span> <span class="text-white">${job.ys.map(y => y.toFixed(4)).join(', ')}</span></div>
                     </div>
                 </div>
-                <!-- Collapsible charts section -->
+                <!-- Collapsible fit chart section -->
                 <div class="border border-gray-700 rounded-lg overflow-hidden">
                     <div class="bg-gray-750 p-2 cursor-pointer flex items-center justify-between" onclick="event.stopPropagation(); toggleHistoryCharts(${index})">
-                        <span class="text-gray-400 text-xs font-medium">Charts & Visualizations</span>
+                        <span class="text-gray-400 text-xs font-medium">Formula Fit Chart</span>
                         <svg id="charts-chevron-${index}" class="w-4 h-4 text-gray-400 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                     </div>
-                    <div id="history-charts-${index}" class="hidden p-3 space-y-3 bg-gray-900">
-                        ${job.scoreHistory && job.scoreHistory.length > 0 ? `
-                        <div>
-                            <div class="text-gray-400 text-xs mb-1">Score Progression:</div>
-                            <div id="history-score-chart-${index}" class="bg-gray-800 rounded" style="width: 100%; height: 80px;"></div>
-                        </div>
-                        ` : ''}
-                        <div>
-                            <div class="text-gray-400 text-xs mb-1">Best Formula Fit:</div>
-                            <div id="history-chart-${index}" class="bg-gray-800 rounded" style="width: 100%; height: 200px;"></div>
-                        </div>
+                    <div id="history-charts-${index}" class="hidden p-3 bg-gray-900">
+                        <div id="history-chart-${index}" class="bg-gray-800 rounded" style="width: 100%; height: 200px;"></div>
                     </div>
                 </div>
             </div>
@@ -416,7 +410,6 @@ function renderJobHistory() {
 function toggleHistoryCharts(index) {
     const chartsContainer = document.getElementById(`history-charts-${index}`);
     const chartsChevron = document.getElementById(`charts-chevron-${index}`);
-    const job = jobHistory[index];
 
     if (!chartsContainer) return;
 
@@ -425,7 +418,7 @@ function toggleHistoryCharts(index) {
     if (isHidden) {
         chartsContainer.classList.remove('hidden');
         chartsChevron.classList.add('rotate-90');
-        // Render charts after showing container
+        // Render fit chart after showing container
         // Use requestAnimationFrame to ensure browser has completed layout
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -434,20 +427,16 @@ function toggleHistoryCharts(index) {
                 if (historyCharts[index]) {
                     historyCharts[index].resize();
                 }
-                if (job && job.scoreHistory && job.scoreHistory.length > 0) {
-                    renderScoreChart(`history-score-chart-${index}`, job.scoreHistory, `history-score-${index}`);
-                }
             });
         });
     } else {
         chartsContainer.classList.add('hidden');
         chartsChevron.classList.remove('rotate-90');
-        // Dispose charts
+        // Dispose chart
         if (historyCharts[index]) {
             historyCharts[index].dispose();
             delete historyCharts[index];
         }
-        disposeScoreChart(`history-score-${index}`);
     }
 }
 
@@ -468,7 +457,7 @@ function toggleHistoryItem(index) {
     } else {
         details.classList.add('hidden');
         chevron.classList.remove('rotate-90');
-        // Also collapse charts section and dispose charts
+        // Also collapse charts section and dispose chart
         const chartsContainer = document.getElementById(`history-charts-${index}`);
         const chartsChevron = document.getElementById(`charts-chevron-${index}`);
         if (chartsContainer) {
@@ -479,18 +468,16 @@ function toggleHistoryItem(index) {
             historyCharts[index].dispose();
             delete historyCharts[index];
         }
-        disposeScoreChart(`history-score-${index}`);
     }
 }
 
 // Remove job from history
 function removeFromHistory(index) {
-    // Dispose charts if they exist
+    // Dispose chart if it exists
     if (historyCharts[index]) {
         historyCharts[index].dispose();
         delete historyCharts[index];
     }
-    disposeScoreChart(`history-score-${index}`);
     // Remove from array
     jobHistory.splice(index, 1);
     // Re-render (this will update all indices)
@@ -528,7 +515,6 @@ function removeWithChildrenFromHistory(index) {
                 historyCharts[idx].dispose();
                 delete historyCharts[idx];
             }
-            disposeScoreChart(`history-score-${idx}`);
         }
     });
 

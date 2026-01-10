@@ -416,3 +416,29 @@ function disposeScoreChart(key) {
         delete scoreCharts[key];
     }
 }
+
+// Generate inline SVG sparkline for a specific scoring method from score history
+function generateMethodSparkline(scoreHistory, methodKey, width = 80, height = 20) {
+    if (!scoreHistory || scoreHistory.length < 2) return '';
+
+    // Extract scores for this method
+    const scores = scoreHistory
+        .map(h => h[methodKey])
+        .filter(s => s !== undefined && s !== null && isFinite(s));
+
+    if (scores.length < 2) return '';
+
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
+    const range = maxScore - minScore || 1;
+
+    const points = scores.map((score, i) => {
+        const x = (i / (scores.length - 1)) * width;
+        const y = height - ((score - minScore) / range) * (height - 2) - 1;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    return `<svg width="${width}" height="${height}" class="block mt-1">
+        <polyline fill="none" stroke="#f59e0b" stroke-width="1.5" points="${points}"/>
+    </svg>`;
+}
