@@ -601,7 +601,7 @@ Data Flow:
 - [x] Webapp: Change the score progression chart (in Results in progress, complete and in Job History) to sparklines near each scoring method value for each scoring method. 
 - [x] Update webapp frontend "beforeunload" handler to stop all running jobs.
 - [x] Webapp / Eval cache bug: concurrent jobs using different scoring methods, when both using eval cache, share a cache and that is bad because different scoring methods result in different scores.
-- [ ] Webapp / Jobs/Results/Job History: an editable text label initially populated using the text label we use in the job tabs. to be used by user to label the job with their own comments.
+- [x] Webapp / Jobs/Results/Job History: we need an editable text label initially populated using the text label we use in the job tabs. to be used by user to label the job with their own comments. Editable at any time.
 - [x] Webapp job config: Mutations should have some toggle-able groups in addition to selecting individuals. I want to group trig functions, exp+log, poly, analytic (derivatives, etc.), and any other obvious groups. first show the mutation groups but have a way for user to still select individual mutations.
 - [x] Webapp / Jobs, Results, Job history: show scores for all scoring methods for job results / job history but making sure to make it clear which is the job's scoring method used to find the formula. it's useful to see the functions' different scores regardless of which scoring method was used in find-formula. 
 - [ ] Webapp / Job History: a better visual indicator for job score and where it ranks among job tree

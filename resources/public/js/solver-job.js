@@ -137,17 +137,57 @@ function getOrderedJobIds() {
 
 // Generate short display name for a job
 function getJobDisplayName(job, short = false) {
+    // Strip formula portion from dataset name (e.g., "Feynman Diffraction (sin²(5x/2)...)" -> "Feynman Diffraction")
+    const cleanDatasetName = job.datasetName ? job.datasetName.split(' (')[0] : null;
+
     if (short) {
         // Very short version for tabs: just number or abbreviated dataset
-        if (job.datasetName) {
+        if (cleanDatasetName) {
             // Take first 6 chars of dataset name
-            const abbrev = job.datasetName.length > 6 ? job.datasetName.slice(0, 6) : job.datasetName;
+            const abbrev = cleanDatasetName.length > 6 ? cleanDatasetName.slice(0, 6) : cleanDatasetName;
             return `${abbrev}#${job.sequenceNum}`;
         }
         return `#${job.sequenceNum}`;
     }
-    const shortName = job.datasetName || 'Job';
-    return `${shortName} #${job.sequenceNum}`;
+    // Full label format: "Job #N" or "Job #N - DatasetName"
+    if (cleanDatasetName) {
+        return `Job #${job.sequenceNum} - ${cleanDatasetName}`;
+    }
+    return `Job #${job.sequenceNum}`;
+}
+
+// Update job label for an active job
+function updateJobLabel(jobId, newLabel) {
+    const job = activeJobs.get(jobId);
+    if (job) {
+        job.label = newLabel.trim() || getJobDisplayName(job);
+        renderTabs();  // Update tab display
+    }
+}
+
+// Create editable label HTML for a job
+function createEditableLabelHtml(jobId, label, inputId) {
+    return `
+        <div class="flex items-center gap-2 mb-3">
+            <span class="text-gray-400 text-sm">Label:</span>
+            <input type="text"
+                   id="${inputId}"
+                   value="${escapeHtml(label)}"
+                   class="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white focus:border-blue-500 focus:outline-none"
+                   placeholder="Enter a label for this job..."
+                   onkeyup="updateJobLabel('${jobId}', this.value)"
+                   onchange="updateJobLabel('${jobId}', this.value)"
+            />
+        </div>
+    `;
+}
+
+// Escape HTML special characters
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Render all tabs (called when jobs change)
@@ -487,8 +527,6 @@ function renderProgressContent(jobId, job) {
     const resultsDiv = document.getElementById('results');
     const data = job.progress;
 
-    // Dispose existing chart before re-rendering HTML (prevents stale reference)
-    disposeFitChart();
     const percent = Math.round((data.iteration / data['total-iterations']) * 100);
 
     // Calculate elapsed time and ETA
@@ -507,55 +545,72 @@ function renderProgressContent(jobId, job) {
         ? `<span class="px-2 py-1 text-xs bg-blue-600 text-white rounded">${job.datasetName}</span>`
         : '';
 
-    resultsDiv.innerHTML = `
-        <div class="flex items-center space-x-3 mb-4">
-            <svg class="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span class="text-blue-400">Solver running...</span>
-            ${datasetBadge}
-        </div>
-        <div id="progress-info" class="text-sm text-gray-400">
-            <div class="mb-2">
-                <div class="flex justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span class="flex items-center space-x-3">
-                        <span class="text-gray-400">Elapsed: <span class="text-white">${elapsedDisplay}</span></span>
-                        <span class="text-gray-400">ETA: <span class="text-white">${etaDisplay}</span></span>
-                        <span>${data.iteration} / ${data['total-iterations']}</span>
-                    </span>
-                </div>
-                <div class="w-full bg-gray-700 rounded-full h-2">
-                    <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
-                </div>
+    // Check if we need to do a full render or just update dynamic parts
+    const existingDynamic = document.getElementById('progress-dynamic-content');
+
+    if (!existingDynamic) {
+        // First render - create full structure with static label section
+        disposeFitChart();
+
+        resultsDiv.innerHTML = `
+            <div class="flex items-center space-x-3 mb-4">
+                <svg class="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-blue-400">Solver running...</span>
+                ${datasetBadge}
             </div>
-            <div class="mt-4">
-                <div class="text-gray-300 text-sm mb-1">Current Best Formula:</div>
-                <div class="group flex items-center gap-2 text-green-400 text-sm">
-                    <div class="flex-1 min-w-0 overflow-x-auto font-mono whitespace-nowrap pb-1" id="current-formula">${data['best-formula']}</div>
-                    <button onclick="copyFormula('current-formula')" class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white bg-gray-800 rounded" title="Copy to clipboard">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                    </button>
+            <div id="job-label-section">${createEditableLabelHtml(jobId, job.label, 'job-label-input')}</div>
+            <div id="progress-dynamic-content"></div>
+            <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
+            <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
+        `;
+    }
+
+    // Update only the dynamic content (progress bar, formula, scores)
+    const dynamicContent = document.getElementById('progress-dynamic-content');
+    if (dynamicContent) {
+        dynamicContent.innerHTML = `
+            <div id="progress-info" class="text-sm text-gray-400">
+                <div class="mb-2">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>Progress</span>
+                        <span class="flex items-center space-x-3">
+                            <span class="text-gray-400">Elapsed: <span class="text-white">${elapsedDisplay}</span></span>
+                            <span class="text-gray-400">ETA: <span class="text-white">${etaDisplay}</span></span>
+                            <span>${data.iteration} / ${data['total-iterations']}</span>
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                    </div>
                 </div>
+                <div class="mt-4">
+                    <div class="text-gray-300 text-sm mb-1">Current Best Formula:</div>
+                    <div class="group flex items-center gap-2 text-green-400 text-sm">
+                        <div class="flex-1 min-w-0 overflow-x-auto font-mono whitespace-nowrap pb-1" id="current-formula">${data['best-formula']}</div>
+                        <button onclick="copyFormula('current-formula')" class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white bg-gray-800 rounded" title="Copy to clipboard">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-2 text-sm flex space-x-4 mb-2">
+                    <div>
+                        <span class="text-gray-400">Complexity:</span>
+                        <span class="text-white">${data['best-formula-leaf-count']} nodes</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Optimizing:</span>
+                        <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
+                    </div>
+                </div>
+                ${formatProgressScores(data, job.scoreHistory)}
             </div>
-            <div class="mt-2 text-sm flex space-x-4 mb-2">
-                <div>
-                    <span class="text-gray-400">Complexity:</span>
-                    <span class="text-white">${data['best-formula-leaf-count']} nodes</span>
-                </div>
-                <div>
-                    <span class="text-gray-400">Optimizing:</span>
-                    <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
-                </div>
-            </div>
-            ${formatProgressScores(data, job.scoreHistory)}
-        </div>
-        <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
-        <div id="fit-chart" class="mt-4" style="width: 100%; height: 300px;"></div>
-    `;
+        `;
+    }
 
     // Render charts and latex
     renderFitChart(data['best-formula'], false, job.inputXs, job.inputYs);
@@ -585,10 +640,14 @@ function showDefaultResults() {
 
 function showCompletedJobResults(job) {
     const resultsDiv = document.getElementById('results');
-    const { data, scoreHistory, inputXs, inputYs, datasetName } = job;
+    const { data, scoreHistory, inputXs, inputYs, datasetName, label } = job;
 
     const datasetBadge = datasetName
         ? `<span class="px-2 py-1 text-xs bg-blue-600 text-white rounded ml-2">${datasetName}</span>`
+        : '';
+
+    const labelDisplay = label
+        ? `<div class="text-gray-300 text-sm mb-3"><span class="text-gray-500">Label:</span> ${escapeHtml(label)}</div>`
         : '';
 
     disposeFitChart();
@@ -602,6 +661,7 @@ function showCompletedJobResults(job) {
                 <span class="font-semibold">Completed!</span>
                 ${datasetBadge}
             </div>
+            ${labelDisplay}
 
             <div class="mb-4">
                 <div class="text-gray-300 text-sm mb-2">Best Formula Found:</div>
@@ -831,7 +891,7 @@ function startNewJob(xs, ys, config, datasetName, sourceJobId = null) {
             // Create job entry with sequence number
             jobCounter++;
 
-            activeJobs.set(data.jobId, {
+            const jobEntry = {
                 eventSource: null,
                 isPaused: false,
                 datasetName: datasetName,
@@ -842,8 +902,14 @@ function startNewJob(xs, ys, config, datasetName, sourceJobId = null) {
                 inputYs: ys,
                 progress: null,
                 status: 'running',
-                config: config
-            });
+                config: config,
+                label: null  // Will be set below after we can call getJobDisplayName
+            };
+
+            // Set default label using the display name
+            jobEntry.label = getJobDisplayName(jobEntry);
+
+            activeJobs.set(data.jobId, jobEntry);
 
             // Create tab and setup SSE
             createJobTab(data.jobId);
@@ -916,7 +982,7 @@ function setupSSEConnection(jobId) {
         const elapsedMs = job.startTime ? Date.now() - job.startTime : null;
 
         // Save to history
-        saveToHistoryMultiJob(jobId, data, 'completed', [...job.scoreHistory], elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName);
+        saveToHistoryMultiJob(jobId, data, 'completed', [...job.scoreHistory], elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
 
         // Store completed job for display in Results
         lastCompletedJob = {
@@ -924,7 +990,8 @@ function setupSSEConnection(jobId) {
             scoreHistory: [...job.scoreHistory],
             inputXs: job.inputXs,
             inputYs: job.inputYs,
-            datasetName: job.datasetName
+            datasetName: job.datasetName,
+            label: job.label
         };
 
         // Close tab (auto-close on complete)
@@ -967,7 +1034,7 @@ function setupSSEConnection(jobId) {
         if (e.data) {
             const data = JSON.parse(e.data);
             if (data['last-progress']) {
-                saveStoppedToHistoryMultiJob(jobId, data['last-progress'], [...job.scoreHistory], data['source-job'], elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName);
+                saveStoppedToHistoryMultiJob(jobId, data['last-progress'], [...job.scoreHistory], data['source-job'], elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
             }
         }
 
@@ -1008,13 +1075,14 @@ function updateStartButtonState() {
 // History Integration (multi-job versions)
 // ============================================================================
 
-function saveToHistoryMultiJob(jobId, jobData, status, scoreHistory, elapsedMs, xs, ys, config, datasetName) {
+function saveToHistoryMultiJob(jobId, jobData, status, scoreHistory, elapsedMs, xs, ys, config, datasetName, label) {
     const job = {
         id: jobId,
         parentId: jobData['source-job'] || null,
         timestamp: new Date().toLocaleString(),
         status: status,
         datasetName: datasetName,
+        label: label,
         formula: jobData['best-solution'].formula,
         score: jobData['best-solution'].score,
         scores: jobData['best-solution'].scores || null,  // All scoring method scores
@@ -1031,7 +1099,7 @@ function saveToHistoryMultiJob(jobId, jobData, status, scoreHistory, elapsedMs, 
     renderJobHistory();
 }
 
-function saveStoppedToHistoryMultiJob(jobId, progressData, scoreHistory, parentId, elapsedMs, xs, ys, config, datasetName) {
+function saveStoppedToHistoryMultiJob(jobId, progressData, scoreHistory, parentId, elapsedMs, xs, ys, config, datasetName, label) {
     if (!progressData) return;
 
     const job = {
@@ -1040,6 +1108,7 @@ function saveStoppedToHistoryMultiJob(jobId, progressData, scoreHistory, parentI
         timestamp: new Date().toLocaleString(),
         status: 'stopped',
         datasetName: datasetName,
+        label: label,
         formula: progressData['best-formula'],
         score: progressData['best-score'],
         leafCount: null,

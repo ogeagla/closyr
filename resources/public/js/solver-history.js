@@ -15,6 +15,54 @@ function getScoringMethodDisplay(method) {
     return displays[method] || method || 'MAE + Max';
 }
 
+// Update job label in history and refresh badge (called on every keystroke)
+function updateHistoryJobLabel(index, newLabel) {
+    const job = jobHistory[index];
+    if (job) {
+        job.label = newLabel.trim() || null;
+
+        // Update just the badge element directly
+        const badgeEl = document.getElementById(`history-label-badge-${index}`);
+        if (badgeEl) {
+            if (job.label) {
+                badgeEl.innerHTML = escapeHistoryHtml(job.label);
+                badgeEl.title = job.label;
+                badgeEl.classList.remove('hidden');
+            } else {
+                badgeEl.innerHTML = '';
+                badgeEl.classList.add('hidden');
+            }
+        }
+    }
+}
+
+// Create editable label HTML for history job
+function createHistoryEditableLabelHtml(index, label) {
+    const escapedLabel = label ? escapeHistoryHtml(label) : '';
+    return `
+        <div class="flex items-center gap-2 mb-3">
+            <span class="text-gray-400 text-xs">Label:</span>
+            <input type="text"
+                   id="history-label-${index}"
+                   value="${escapedLabel}"
+                   class="flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:border-blue-500 focus:outline-none"
+                   placeholder="Add a label..."
+                   onkeyup="updateHistoryJobLabel(${index}, this.value)"
+                   onchange="updateHistoryJobLabel(${index}, this.value)"
+                   onclick="event.stopPropagation();"
+            />
+        </div>
+    `;
+}
+
+// Escape HTML for history (local version)
+function escapeHistoryHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Format all scores for history details view - with sparklines
 function formatHistoryScores(job) {
     const scores = job.scores;
@@ -215,6 +263,8 @@ function renderJobItem(node, depth = 0) {
     const childBadge = children.length > 0
         ? `<span class="px-1.5 py-0.5 text-xs bg-purple-600 text-white rounded ml-2">${children.length} run${children.length > 1 ? 's' : ''}</span>`
         : '';
+    // Show label if set (with ID for direct updates)
+    const labelBadge = `<span id="history-label-badge-${index}" class="px-1.5 py-0.5 text-xs bg-teal-700 text-teal-100 rounded ml-2 max-w-32 truncate ${job.label ? '' : 'hidden'}" title="${job.label ? escapeHistoryHtml(job.label) : ''}">${job.label ? escapeHistoryHtml(job.label) : ''}</span>`;
     // Show depth indicator for nested jobs
     const depthBadge = depth > 0
         ? `<span class="px-1.5 py-0.5 text-xs bg-gray-600 text-gray-300 rounded ml-2">L${depth}</span>`
@@ -282,7 +332,8 @@ function renderJobItem(node, depth = 0) {
                         </svg>
                         <span class="text-green-400 text-sm font-mono truncate">${job.formula}</span>
                     </div>
-                    <div class="mt-1 ml-4 flex items-center">
+                    <div class="mt-1 ml-4 flex items-center flex-wrap">
+                        ${labelBadge}
                         ${depthBadge}
                         ${improvementBadge}
                         ${statusBadge}
@@ -320,6 +371,7 @@ function renderJobItem(node, depth = 0) {
         </div>
         <div id="history-details-${index}" class="hidden border-t border-gray-700">
             <div class="p-4 space-y-3">
+                ${createHistoryEditableLabelHtml(index, job.label)}
                 ${formatHistoryScores(job)}
                 <div class="grid grid-cols-2 gap-4 text-xs">
                     <div>
