@@ -255,7 +255,7 @@ function createTabElement(jobId, job) {
         }
     };
 
-    const displayName = getJobDisplayName(job, true); // Use short name
+    const displayName = job.label || getJobDisplayName(job, true);
     const pauseHidden = job.isPaused ? 'hidden' : '';
     const resumeHidden = job.isPaused ? '' : 'hidden';
 
@@ -265,7 +265,7 @@ function createTabElement(jobId, job) {
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span class="tab-name truncate">${displayName}</span>
+            <span class="tab-name truncate">${escapeHtml(displayName)}</span>
         </span>
         <span class="flex items-center space-x-0.5 flex-shrink-0">
             <button class="tab-control p-0.5 rounded hover:bg-gray-600 text-yellow-400 hover:text-yellow-300" onclick="togglePauseForJob('${jobId}')" title="Pause/Resume">
@@ -336,7 +336,7 @@ function toggleTabOverflowMenu(event) {
     menu.innerHTML = overflowJobIds.map(jobId => {
         const job = activeJobs.get(jobId);
         if (!job) return '';
-        const displayName = getJobDisplayName(job);
+        const displayName = job.label || getJobDisplayName(job);
         const pauseHidden = job.isPaused ? 'hidden' : '';
         const resumeHidden = job.isPaused ? '' : 'hidden';
         return `
@@ -346,7 +346,7 @@ function toggleTabOverflowMenu(event) {
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span class="text-sm text-gray-300">${displayName}</span>
+                    <span class="text-sm text-gray-300">${escapeHtml(displayName)}</span>
                 </div>
                 <span class="flex items-center space-x-1 ml-2" onclick="event.stopPropagation();">
                     <button class="tab-control p-0.5 rounded hover:bg-gray-600 text-yellow-400 hover:text-yellow-300" onclick="togglePauseForJob('${jobId}')" title="Pause/Resume">
@@ -713,17 +713,17 @@ function showCompletedJobResults(job) {
 // ============================================================================
 
 function showJobControls() {
-    const pauseBtn = document.getElementById('pause-btn');
-    const stopBtn = document.getElementById('stop-btn');
-    pauseBtn.classList.remove('hidden');
-    stopBtn.classList.remove('hidden');
+    const jobControls = document.getElementById('job-controls');
+    if (jobControls) {
+        jobControls.classList.remove('hidden');
+    }
 }
 
 function hideJobControls() {
-    const pauseBtn = document.getElementById('pause-btn');
-    const stopBtn = document.getElementById('stop-btn');
-    pauseBtn.classList.add('hidden');
-    stopBtn.classList.add('hidden');
+    const jobControls = document.getElementById('job-controls');
+    if (jobControls) {
+        jobControls.classList.add('hidden');
+    }
 }
 
 function updatePauseButtonForJob(isPaused) {
@@ -915,16 +915,6 @@ function startNewJob(xs, ys, config, datasetName, sourceJobId = null) {
             createJobTab(data.jobId);
             setupSSEConnection(data.jobId);
             showJobControls();
-
-            // Disable start button while any job is running
-            document.getElementById('start-btn').disabled = true;
-            document.getElementById('start-btn-text').innerHTML = `
-                <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Running...
-            `;
         } else if (data.error) {
             document.getElementById('results').innerHTML = `
                 <div class="text-red-400">
@@ -1051,22 +1041,9 @@ function setupSSEConnection(jobId) {
 function updateStartButtonState() {
     const hasRunningJobs = activeJobs.size > 0;
 
-    const startBtn = document.getElementById('start-btn');
-    const startBtnText = document.getElementById('start-btn-text');
-
     if (hasRunningJobs) {
-        startBtn.disabled = true;
-        startBtnText.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Running...
-        `;
         showJobControls();
     } else {
-        startBtn.disabled = false;
-        startBtnText.textContent = 'Find Formula';
         hideJobControls();
     }
 }

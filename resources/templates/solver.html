@@ -213,23 +213,28 @@
                             class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         <span id="start-btn-text">Find Formula</span>
                     </button>
-                    <button type="button" id="pause-btn"
-                            class="px-6 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors hidden"
-                            onclick="togglePause()">
-                        <span id="pause-btn-text">Pause</span>
-                    </button>
-                    <button type="button" id="stop-btn"
-                            class="px-6 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors hidden"
-                            onclick="stopJob()">
-                        Stop
-                    </button>
                 </div>
             </form>
         </div>
 
         <!-- Results Panel -->
         <div class="bg-gray-800 rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-white mb-4">Results</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-white">Results</h2>
+                <!-- Job Control Buttons (shown when job is running) -->
+                <div id="job-controls" class="flex space-x-2 hidden">
+                    <button type="button" id="pause-btn"
+                            class="px-4 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                            onclick="togglePause()">
+                        <span id="pause-btn-text">Pause</span>
+                    </button>
+                    <button type="button" id="stop-btn"
+                            class="px-4 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                            onclick="stopJob()">
+                        Stop
+                    </button>
+                </div>
+            </div>
 
             <!-- Tab Bar (hidden when no active jobs) -->
             <div id="job-tabs" class="hidden mb-4 border-b border-gray-700">
