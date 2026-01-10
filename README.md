@@ -598,6 +598,7 @@ Data Flow:
 
 #### Webapp
 
+- [ ] Webapp: Running jobs: Move the pause / stop buttons under Configuration section to Results section. Keep the Configuration Find Formula button so we can kick off concurrent jobs from that section.
 - [x] Webapp: Change the score progression chart (in Results in progress, complete and in Job History) to sparklines near each scoring method value for each scoring method. 
 - [x] Update webapp frontend "beforeunload" handler to stop all running jobs.
 - [x] Webapp / Eval cache bug: concurrent jobs using different scoring methods, when both using eval cache, share a cache and that is bad because different scoring methods result in different scores.
