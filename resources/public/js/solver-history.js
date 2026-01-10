@@ -569,11 +569,24 @@ function toggleHistoryItem(index) {
 
 // Remove job from history
 function removeFromHistory(index) {
+    const job = jobHistory[index];
+    if (!job) return;
+
     // Dispose chart if it exists
     if (historyCharts[index]) {
         historyCharts[index].dispose();
         delete historyCharts[index];
     }
+
+    // Re-parent direct children to the deleted job's parent (preserves tree structure)
+    const deletedJobId = job.id;
+    const deletedJobParentId = job.parentId;
+    jobHistory.forEach(j => {
+        if (j.parentId === deletedJobId) {
+            j.parentId = deletedJobParentId;
+        }
+    });
+
     // Remove from array
     jobHistory.splice(index, 1);
     // Re-render (this will update all indices)

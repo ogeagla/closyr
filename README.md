@@ -598,6 +598,7 @@ Data Flow:
 
 #### Webapp
 
+- [x] Webapp / Job History: removing a single job item should move children to level of tree where deleted item was, preserving the children trees structure. 
 - [ ] [Should we do this?] Webapp: Job History: option to move subtree to base level.
 - [x] Webapp: Running jobs: Move the pause / stop buttons under Configuration section to Results section. Keep the Configuration Find Formula button so we can kick off concurrent jobs from that section.
 - [x] Webapp: Change the score progression chart (in Results in progress, complete and in Job History) to sparklines near each scoring method value for each scoring method. 
