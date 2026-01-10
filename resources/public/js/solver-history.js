@@ -347,10 +347,10 @@ function renderJobItem(node, depth = 0) {
                     </div>
                 </div>
                 <button onclick="event.stopPropagation(); rerunFromHistory(${index})" class="ml-2 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded flex-shrink-0" title="Continue evolution using job's original config">
-                    Rerun
+                    Continue
                 </button>
                 <button onclick="event.stopPropagation(); keepGoingFromHistory(${index})" class="ml-1 px-2 py-1 text-xs bg-purple-600 hover:bg-purple-700 text-white rounded flex-shrink-0" title="Continue evolution using current form config">
-                    New Config
+                    Continue With New Config
                 </button>
                 <button onclick="event.stopPropagation(); loadFromHistory(${index})" class="ml-1 px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded flex-shrink-0" title="Load this data">
                     Load

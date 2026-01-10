@@ -266,6 +266,18 @@ function renderHistoryChart(index) {
     const sortedXs = dataPoints.map(p => p.x);
     const sortedYs = dataPoints.map(p => p.y);
 
+    // Calculate y-axis bounds from objective data with padding
+    const dataYMin = Math.min(...sortedYs);
+    const dataYMax = Math.max(...sortedYs);
+    const yRange = dataYMax - dataYMin;
+    const yPadding = Math.max(yRange * 0.5, Math.abs(dataYMax) * 0.1, Math.abs(dataYMin) * 0.1, 1);
+    const yAxisMin = Math.floor(dataYMin - yPadding);
+    const yAxisMax = Math.ceil(dataYMax + yPadding);
+
+    // Clipping bounds with small margin so line visibly exits the chart
+    const clipMax = yAxisMax + yPadding * 0.1;
+    const clipMin = yAxisMin - yPadding * 0.1;
+
     const mathJsFormula = convertFormula(job.formula);
     let curveXs = [], curveYs = [];
     try {
@@ -279,7 +291,16 @@ function renderHistoryChart(index) {
             curveXs.push(x);
             try {
                 const y = compiled.evaluate({ x });
-                curveYs.push(isFinite(y) ? y : null);
+                // Clip curve values to axis bounds
+                if (!isFinite(y)) {
+                    curveYs.push(null);
+                } else if (y > clipMax) {
+                    curveYs.push(clipMax);
+                } else if (y < clipMin) {
+                    curveYs.push(clipMin);
+                } else {
+                    curveYs.push(y);
+                }
             } catch (e) { curveYs.push(null); }
         }
     } catch (e) { console.error('Chart error:', e); }
@@ -289,7 +310,7 @@ function renderHistoryChart(index) {
         backgroundColor: 'transparent',
         grid: { left: '10%', right: '5%', top: '10%', bottom: '15%' },
         xAxis: { type: 'value', axisLine: { lineStyle: { color: '#4b5563' } }, axisLabel: { color: '#9ca3af', fontSize: 10 }, splitLine: { lineStyle: { color: '#374151' } } },
-        yAxis: { type: 'value', axisLine: { lineStyle: { color: '#4b5563' } }, axisLabel: { color: '#9ca3af', fontSize: 10 }, splitLine: { lineStyle: { color: '#374151' } } },
+        yAxis: { type: 'value', min: yAxisMin, max: yAxisMax, axisLine: { lineStyle: { color: '#4b5563' } }, axisLabel: { color: '#9ca3af', fontSize: 10 }, splitLine: { lineStyle: { color: '#374151' } } },
         series: [
             { type: 'scatter', symbolSize: 6, data: sortedXs.map((x, i) => [x, sortedYs[i]]), itemStyle: { color: '#3b82f6' } },
             { type: 'line', smooth: true, showSymbol: false, data: curveXs.map((x, i) => [x, curveYs[i]]), lineStyle: { color: '#22c55e', width: 2 } }
