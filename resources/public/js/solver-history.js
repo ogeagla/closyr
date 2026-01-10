@@ -298,25 +298,37 @@ function renderJobItem(node, depth = 0) {
         ? `<span class="px-1.5 py-0.5 text-xs bg-gray-600 text-gray-300 rounded ml-2">L${depth}</span>`
         : '';
 
-    // Compare score with parent job (higher score = better)
+    // Compare score with parent job using child's scoring method (higher score = better)
     let improvementBadge = '';
     if (job.parentId) {
         const parentJob = jobHistory.find(j => j.id === job.parentId);
-        if (parentJob && parentJob.score !== undefined && job.score !== undefined && job.config.scoringMethod === parentJob.config.scoringMethod) {
-            const diff = job.score - parentJob.score; // positive = improved
-            const pctChange = parentJob.score !== 0 ? (diff / Math.abs(parentJob.score)) * 100 : 0;
-            if (diff > 0) {
-                // Improved (lower score is better)
-                const arrow = '↑';
-                const displayPct = Math.abs(pctChange).toFixed(1);
-                improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-green-700 text-green-200 rounded ml-2" title="Score improved by ${displayPct}% vs parent">${arrow}${displayPct}%</span>`;
-            } else if (diff < 0) {
-                // Worsened
-                const arrow = '↓';
-                const displayPct = Math.abs(pctChange).toFixed(1);
-                improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-red-700 text-red-200 rounded ml-2" title="Score worsened by ${displayPct}% vs parent">${arrow}${displayPct}%</span>`;
-            } else {
-                improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-300 rounded ml-2" title="Same score as parent">=</span>`;
+        if (parentJob) {
+            const childMethod = job.scoringMethod || job.config?.scoringMethod || 'mae-max';
+
+            // Get child's score for its method
+            const childScore = job.scores && job.scores[childMethod] !== undefined
+                ? job.scores[childMethod]
+                : job.score;
+
+            // Get parent's score for the same method
+            const parentScore = parentJob.scores && parentJob.scores[childMethod] !== undefined
+                ? parentJob.scores[childMethod]
+                : (childMethod === (parentJob.scoringMethod || parentJob.config?.scoringMethod) ? parentJob.score : null);
+
+            if (childScore !== undefined && parentScore !== null && parentScore !== undefined) {
+                const diff = childScore - parentScore; // positive = improved (higher is better)
+                const pctChange = parentScore !== 0 ? (diff / Math.abs(parentScore)) * 100 : 0;
+                if (diff > 0) {
+                    const arrow = '↑';
+                    const displayPct = Math.abs(pctChange).toFixed(1);
+                    improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-green-700 text-green-200 rounded ml-2" title="${getScoringMethodDisplay(childMethod)} improved by ${displayPct}% vs parent">${arrow}${displayPct}%</span>`;
+                } else if (diff < 0) {
+                    const arrow = '↓';
+                    const displayPct = Math.abs(pctChange).toFixed(1);
+                    improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-red-700 text-red-200 rounded ml-2" title="${getScoringMethodDisplay(childMethod)} worsened by ${displayPct}% vs parent">${arrow}${displayPct}%</span>`;
+                } else {
+                    improvementBadge = `<span class="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-300 rounded ml-2" title="Same ${getScoringMethodDisplay(childMethod)} score as parent">=</span>`;
+                }
             }
         }
     }
