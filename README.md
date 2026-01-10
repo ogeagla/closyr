@@ -598,6 +598,7 @@ Data Flow:
 
 #### Webapp
 
+- [ ] [Should we do this?] Webapp: Job History: option to move subtree to base level.
 - [ ] Webapp: Running jobs: Move the pause / stop buttons under Configuration section to Results section. Keep the Configuration Find Formula button so we can kick off concurrent jobs from that section.
 - [x] Webapp: Change the score progression chart (in Results in progress, complete and in Job History) to sparklines near each scoring method value for each scoring method. 
 - [x] Update webapp frontend "beforeunload" handler to stop all running jobs.
