@@ -57,7 +57,9 @@ function regeneratePreset() {
     const presetId = select.value;
     if (!presetId) return;
 
-    const option = select.options[select.selectedIndex];
+    // Find option by value (more reliable than selectedIndex)
+    const option = select.querySelector(`option[value="${presetId}"]`) || select.options[select.selectedIndex];
+    if (!option) return;
     const formula = option.dataset.formula;
 
     if (formula && formulaGenerators[formula]) {
@@ -84,7 +86,12 @@ function loadPreset(presetId) {
     }
 
     const select = document.getElementById('preset-select');
-    const option = select.options[select.selectedIndex];
+    // Find option by value (more reliable than selectedIndex when called programmatically)
+    const option = select.querySelector(`option[value="${presetId}"]`) || select.options[select.selectedIndex];
+    if (!option) {
+        selectedDatasetName = null;
+        return;
+    }
     const formula = option.dataset.formula;
 
     // Store the dataset name

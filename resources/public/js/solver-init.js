@@ -10,8 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load default preset (Feynman Diffraction)
     const presetSelect = document.getElementById('preset-select');
     if (presetSelect) {
-        presetSelect.value = 'feynman-diffraction';
-        loadPreset('feynman-diffraction');
+        // Find and select the option by value
+        const defaultPresetId = 'feynman-diffraction';
+        for (let i = 0; i < presetSelect.options.length; i++) {
+            if (presetSelect.options[i].value === defaultPresetId) {
+                presetSelect.selectedIndex = i;
+                break;
+            }
+        }
+        loadPreset(defaultPresetId);
     } else {
         // Fallback: just initialize the chart with whatever data is in the textareas
         initDataEditorChart();

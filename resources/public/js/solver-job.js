@@ -876,6 +876,9 @@ async function handleCsvUpload(input) {
 function submitSolverForm(evt) {
     evt.preventDefault();
 
+    // Get dataset name BEFORE syncing (sync clears the name)
+    const datasetName = getSelectedDatasetName();
+
     // Ensure any chart edits are synced to textareas before reading
     if (typeof syncEditorToTextarea === 'function' && typeof editorData !== 'undefined' && editorData.length > 0) {
         syncEditorToTextarea();
@@ -918,8 +921,6 @@ function submitSolverForm(evt) {
     if (blacklist.length > 0) {
         config.mutationsBlacklist = blacklist;
     }
-
-    const datasetName = getSelectedDatasetName();
 
     console.debug('Submitting job: ', config);
 

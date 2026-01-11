@@ -235,7 +235,7 @@ function refreshEditorChart() {
             series: [{ data: editorData.map(d => [d.x, d.y]) }]
         }, false);
     } catch (e) {
-        console.debug('refreshEditorChart error:', e);
+        console.warn('refreshEditorChart error:', e);
     }
 }
 
