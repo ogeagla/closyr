@@ -876,6 +876,11 @@ async function handleCsvUpload(input) {
 function submitSolverForm(evt) {
     evt.preventDefault();
 
+    // Ensure any chart edits are synced to textareas before reading
+    if (typeof syncEditorToTextarea === 'function' && typeof editorData !== 'undefined' && editorData.length > 0) {
+        syncEditorToTextarea();
+    }
+
     const xs = document.getElementById('xs').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
     const ys = document.getElementById('ys').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
 

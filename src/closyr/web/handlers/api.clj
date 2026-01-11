@@ -555,41 +555,13 @@
   "GET /api/datasets - List available built-in datasets.
    Datasets with :formula, :xMin, :xMax can be regenerated with different point counts."
   [_]
-  (let [dataset-list [{:id      "quadratic"
-                       :name    "Quadratic (x^2)"
-                       :formula "quadratic"
-                       :xMin    1
-                       :xMax    10
-                       :xs      [1 2 3 4 5]
-                       :ys      [1 4 9 16 25]}
-                      {:id      "cubic"
-                       :name    "Cubic (x^3)"
-                       :formula "cubic"
-                       :xMin    1
-                       :xMax    5
-                       :xs      [1 2 3 4 5]
-                       :ys      [1 8 27 64 125]}
-                      {:id      "linear"
-                       :name    "Linear (2x+1)"
-                       :formula "linear"
-                       :xMin    0
-                       :xMax    10
-                       :xs      [1 2 3 4 5]
-                       :ys      [3 5 7 9 11]}
-                      {:id      "sine"
-                       :name    "Sine"
-                       :formula "sine"
-                       :xMin    0
-                       :xMax    (* 2 Math/PI)
-                       :xs      [0 0.5 1 1.5 2 2.5 3]
-                       :ys      (mapv #(Math/sin %) [0 0.5 1 1.5 2 2.5 3])}
-                      {:id      "exponential"
-                       :name    "Exponential (e^x)"
-                       :formula "exponential"
-                       :xMin    0
-                       :xMax    3
-                       :xs      [0 0.5 1 1.5 2]
-                       :ys      (mapv #(Math/exp %) [0 0.5 1 1.5 2])}
+  (let [dataset-list [ {:id      "h-line"
+                        :name    "HLine (y=0)"
+                        :formula "h-line"
+                        :xMin    0
+                        :xMax    10
+                        :xs      [1 2 3 4 5]
+                        :ys      [0 0 0 0 0]}
                       {:id      "nguyen4"
                        :name    "Nguyen-4 (x^6+x^5+x^4+x^3+x^2+x)"
                        :formula "nguyen4"

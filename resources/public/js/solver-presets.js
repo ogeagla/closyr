@@ -17,11 +17,7 @@ function clearDatasetName() {
 
 // Formula generators for each dataset type
 const formulaGenerators = {
-    'quadratic': x => x * x,
-    'cubic': x => x * x * x,
-    'linear': x => 2 * x + 1,
-    'sine': x => Math.sin(x),
-    'exponential': x => Math.exp(x),
+    'h-line': x => 0,
     'nguyen4': x => Math.pow(x, 6) + Math.pow(x, 5) + Math.pow(x, 4) + Math.pow(x, 3) + Math.pow(x, 2) + x,
     'nguyen5': x => Math.sin(x * x) * Math.cos(x) - 1,
     'feynman-lorentz': x => 1 / Math.sqrt(1 - x * x),

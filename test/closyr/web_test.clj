@@ -132,11 +132,12 @@
     (let [response (api/datasets {})
           body (parse-json-body response)
           ids (set (map :id (:datasets body)))]
-      (is (contains? ids "quadratic"))
-      (is (contains? ids "cubic"))
-      (is (contains? ids "linear"))
-      (is (contains? ids "sine"))
-      (is (contains? ids "exponential")))))
+      (is (contains? ids "h-line"))
+      (is (contains? ids "nguyen4"))
+      (is (contains? ids "nguyen5"))
+      (is (contains? ids "feynman-lorentz"))
+      (is (contains? ids "feynman-wave"))
+      (is (contains? ids "primes-100")))))
 
 
 ;; ============================================================================

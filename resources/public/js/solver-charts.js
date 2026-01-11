@@ -68,16 +68,14 @@ function initDataEditorChart() {
     const container = document.getElementById('data-editor-chart');
     if (!container) return;
 
-    if (!dataEditorChart) {
-        dataEditorChart = echarts.init(container, 'dark');
-        dataEditorChart.setOption({ animation: false });
-        // Update drag handle positions after chart finishes rendering (e.g., after axis rescale)
-        dataEditorChart.on('finished', function() {
-            if (editorData.length > 0) {
-                updateDragHandlerPositions();
-            }
-        });
+    // Dispose existing chart to ensure clean state
+    if (dataEditorChart) {
+        dataEditorChart.dispose();
+        dataEditorChart = null;
     }
+
+    dataEditorChart = echarts.init(container, 'dark');
+    dataEditorChart.setOption({ animation: false });
 
     const xs = document.getElementById('xs').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
     const ys = document.getElementById('ys').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
@@ -91,9 +89,20 @@ function initDataEditorChart() {
     updateDataEditorChart();
 }
 
+// Calculate symbol size based on number of points
+function getEditorSymbolSize(numPoints) {
+    if (numPoints <= 10) return 12;
+    if (numPoints <= 25) return 10;
+    if (numPoints <= 50) return 8;
+    if (numPoints <= 100) return 6;
+    return 4;
+}
+
 // Update the data editor chart display
 function updateDataEditorChart() {
     if (!dataEditorChart || editorData.length === 0) return;
+
+    const symbolSize = getEditorSymbolSize(editorData.length);
 
     const option = {
         backgroundColor: 'transparent',
@@ -112,7 +121,7 @@ function updateDataEditorChart() {
         },
         series: [{
             type: 'scatter',
-            symbolSize: 12,
+            symbolSize: symbolSize,
             data: editorData.map(d => [d.x, d.y]),
             itemStyle: { color: '#3b82f6' },
             cursor: 'ns-resize'
@@ -230,34 +239,11 @@ function refreshEditorChart() {
     }
 }
 
-// Track current graphic element count for cleanup
-let currentGraphicCount = 0;
-
 // Store brush handler references so we can remove them specifically
 let brushMousedownHandler = null;
 let brushMousemoveHandler = null;
 let brushMouseupHandler = null;
 let brushGlobaloutHandler = null;
-
-// Clear all graphic elements from the chart
-function clearGraphicElements() {
-    if (!dataEditorChart || currentGraphicCount === 0) return;
-
-    // Remove elements by setting them to invisible and non-interactive
-    const clearElements = [];
-    for (let i = 0; i < currentGraphicCount; i++) {
-        clearElements.push({
-            id: `drag-point-${i}`,
-            invisible: true,
-            silent: true,
-            shape: { r: 0 },
-            draggable: false
-        });
-    }
-    if (clearElements.length > 0) {
-        dataEditorChart.setOption({ graphic: clearElements }, false);
-    }
-}
 
 // Remove only our custom brush handlers (not all handlers)
 function removeBrushHandlers() {
@@ -296,37 +282,58 @@ function setupDragHandlers() {
             container.style.cursor = 'default';
         }
 
-        // Point mode: individual draggable points
-        const graphicElements = editorData.map((d, idx) => ({
-            type: 'circle',
-            id: `drag-point-${idx}`,
-            invisible: false,
-            silent: false,
-            position: dataEditorChart.convertToPixel('grid', [d.x, d.y]),
-            shape: { r: 12 },
-            style: { fill: 'rgba(59, 130, 246, 0.3)' },
-            cursor: 'ns-resize',
-            draggable: 'vertical',
-            z: 100,
-            ondrag: function() {
-                const pos = this.position;
-                const dataPos = dataEditorChart.convertFromPixel('grid', pos);
-                editorData[idx].y = dataPos[1];
-                dataEditorChart.setOption({
-                    series: [{ data: editorData.map(d => [d.x, d.y]) }]
-                });
-            },
-            ondragend: function() {
+        // Point mode: handle dragging via zrender events (more reliable than graphic draggable)
+        const zr = dataEditorChart.getZr();
+        let draggingIdx = -1;
+        let lastY = null;
+
+        brushMousedownHandler = function(e) {
+            const nearestIdx = findNearestPointIndex(e.offsetX);
+            if (nearestIdx < 0) return;
+
+            // Check if click is close enough to a point (within ~20 pixels)
+            const pointPixel = dataEditorChart.convertToPixel('grid', [editorData[nearestIdx].x, editorData[nearestIdx].y]);
+            const dist = Math.sqrt(Math.pow(e.offsetX - pointPixel[0], 2) + Math.pow(e.offsetY - pointPixel[1], 2));
+            if (dist > 20) return;
+
+            draggingIdx = nearestIdx;
+            lastY = e.offsetY;
+        };
+
+        brushMousemoveHandler = function(e) {
+            if (draggingIdx < 0) return;
+
+            // Convert pixel Y to data Y
+            const dataPos = dataEditorChart.convertFromPixel('grid', [0, e.offsetY]);
+            editorData[draggingIdx].y = dataPos[1];
+            lastY = e.offsetY;
+
+            // Update chart
+            dataEditorChart.setOption({
+                series: [{ data: editorData.map(d => [d.x, d.y]) }]
+            });
+        };
+
+        brushMouseupHandler = function(e) {
+            if (draggingIdx >= 0) {
+                draggingIdx = -1;
                 syncEditorToTextarea();
-                updateDragHandlerPositions();
             }
-        }));
-        currentGraphicCount = graphicElements.length;
-        dataEditorChart.setOption({ graphic: graphicElements }, false);
+        };
+
+        brushGlobaloutHandler = function(e) {
+            if (draggingIdx >= 0) {
+                draggingIdx = -1;
+                syncEditorToTextarea();
+            }
+        };
+
+        zr.on('mousedown', brushMousedownHandler);
+        zr.on('mousemove', brushMousemoveHandler);
+        zr.on('mouseup', brushMouseupHandler);
+        zr.on('globalout', brushGlobaloutHandler);
     } else {
-        // Brush modes: use mouse events on the chart area
-        // Hide graphic elements (make them invisible and non-draggable)
-        clearGraphicElements();
+        // Brush modes: use zrender mouse events on the chart area
 
         // Set cursor for brush modes
         if (container) {
@@ -424,23 +431,10 @@ function setupDragHandlers() {
     }
 }
 
-// Update drag handler positions without recreating them (after axis rescale)
+// Update drag handler positions - no longer needed since we use zrender events
+// Kept for compatibility but does nothing now
 function updateDragHandlerPositions() {
-    if (!dataEditorChart || editorData.length === 0) return;
-    // Only update positions in point mode (brush modes don't use graphic elements)
-    if (currentBrushMode !== 'point') return;
-
-    try {
-        const graphicUpdates = editorData.map((d, idx) => ({
-            id: `drag-point-${idx}`,
-            position: dataEditorChart.convertToPixel('grid', [d.x, d.y])
-        }));
-
-        dataEditorChart.setOption({ graphic: graphicUpdates }, false);
-    } catch (e) {
-        // Ignore errors during position updates
-        console.debug('updateDragHandlerPositions error:', e);
-    }
+    // No-op: we no longer use graphic elements for point dragging
 }
 
 // Sync editor data to Y values textarea
