@@ -970,8 +970,9 @@ function submitSolverForm(evt) {
     const datasetName = getSelectedDatasetName();
 
     // Ensure any chart edits are synced to textareas before reading
+    // Pass true to skip clearing dataset name (we already captured it above)
     if (typeof syncEditorToTextarea === 'function' && typeof editorData !== 'undefined' && editorData.length > 0) {
-        syncEditorToTextarea();
+        syncEditorToTextarea(true);
     }
 
     const xs = document.getElementById('xs').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));

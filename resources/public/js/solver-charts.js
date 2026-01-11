@@ -438,11 +438,14 @@ function updateDragHandlerPositions() {
 }
 
 // Sync editor data to Y values textarea
-function syncEditorToTextarea() {
+// skipClearDatasetName: set to true when syncing for form submission (data wasn't manually edited)
+function syncEditorToTextarea(skipClearDatasetName = false) {
     const ys = editorData.map(d => d.y.toFixed(6));
     document.getElementById('ys').value = ys.join(', ');
-    // Clear dataset name since user manually edited via drag
-    clearDatasetName();
+    // Clear dataset name only if user manually edited via drag (not during form submission sync)
+    if (!skipClearDatasetName) {
+        clearDatasetName();
+    }
 }
 
 // Initialize or update the fit chart
