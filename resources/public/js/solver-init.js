@@ -7,8 +7,15 @@ const debouncedUpdateEditor = debounce(initDataEditorChart, 30);
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the data editor chart
-    initDataEditorChart();
+    // Load default preset (Feynman Diffraction)
+    const presetSelect = document.getElementById('preset-select');
+    if (presetSelect) {
+        presetSelect.value = 'feynman-diffraction';
+        loadPreset('feynman-diffraction');
+    } else {
+        // Fallback: just initialize the chart with whatever data is in the textareas
+        initDataEditorChart();
+    }
 
     // Listen for changes to X and Y textareas
     document.getElementById('xs').addEventListener('input', debouncedUpdateEditor);
