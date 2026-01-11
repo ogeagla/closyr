@@ -45,7 +45,8 @@
 
 (defn- phenotype->solution
   "Convert a phenotype to a solution map for JSON serialization.
-   If run-args and run-config are provided, computes scores for all scoring methods."
+   If run-args and run-config are provided, computes scores for all scoring methods
+   including raw scores (without length deduction) for fair cross-job comparison."
   ([{:keys [^IExpr expr score] :as pheno}]
    (when (and expr score)
      {:formula   (str expr)
@@ -53,11 +54,14 @@
       :leafCount (.leafCount expr)}))
   ([{:keys [^IExpr expr score] :as pheno} run-args run-config]
    (when (and expr score)
-     (let [all-scores (ops/compute-all-method-scores run-args run-config pheno)]
-       {:formula   (str expr)
-        :score     score
-        :leafCount (.leafCount expr)
-        :scores    all-scores}))))
+     (let [{:keys [scores raw-scores length-deductions]}
+           (ops/compute-all-method-scores-detailed run-args run-config pheno)]
+       {:formula          (str expr)
+        :score            score
+        :leafCount        (.leafCount expr)
+        :scores           scores
+        :rawScores        raw-scores
+        :lengthDeductions length-deductions}))))
 
 
 (defn- job-stopped?

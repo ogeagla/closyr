@@ -394,6 +394,44 @@
       (tally-min-score min-score))))
 
 
+(defn- compute-raw-score-for-method
+  "Compute raw score (without length deduction) for a single scoring method.
+   Returns the raw score or min-score if computation fails."
+  [f-of-xs input-ys-vec leafs ^doubles input-ys-arr scoring-method]
+  (try
+    (case scoring-method
+      :r-squared
+      (if input-ys-arr
+        (let [r2 (compute-r-squared-score input-ys-arr f-of-xs)]
+          (if r2
+            (- r2 1.0)  ;; Shift so perfect fit = 0
+            min-score))
+        min-score)
+
+      :log-cosh
+      (if input-ys-arr
+        (let [^doubles result (compute-log-cosh-score input-ys-arr f-of-xs)]
+          (if result
+            (let [lc-sum (aget result 0)
+                  n (aget result 2)]
+              (* -1.0 (/ lc-sum n)))
+            min-score))
+        min-score)
+
+      ;; Default: MAE + max residual
+      (if input-ys-arr
+        (let [^doubles result (compute-residuals-fast input-ys-arr f-of-xs)]
+          (if result
+            (let [resid-sum (aget result 0)
+                  max-resid-val (aget result 1)
+                  n (aget result 2)]
+              (* -1.0 (+ (* 2.0 (/ resid-sum n)) max-resid-val)))
+            min-score))
+        min-score))
+    (catch Exception _
+      min-score)))
+
+
 (defn compute-all-method-scores
   "Compute scores for all three scoring methods for a phenotype.
    Returns a map of {:mae-max score, :log-cosh score, :r-squared score}.
@@ -420,6 +458,56 @@
     (catch Exception e
       (log/warn "Err computing all scores: " (.getMessage e) ", fn: " (str (:expr pheno)))
       {:mae-max min-score :log-cosh min-score :r-squared min-score})))
+
+
+(defn compute-all-method-scores-detailed
+  "Compute scores for all three scoring methods for a phenotype, with raw scores and deductions.
+   Returns a map with:
+   - :scores - scores with length deduction applied (for GA optimization)
+   - :raw-scores - scores without length deduction (for fair comparison across jobs)
+   - :length-deductions - the deduction amounts per method
+   This allows comparing jobs with different simplicity bias settings."
+  [{:keys [input-xs-list input-xs-count input-ys-vec input-ys-arr] :as run-args}
+   {:keys [max-leafs] :as run-config}
+   pheno]
+  (try
+    (let [expr-str (str (:expr pheno))]
+      (if (str/starts-with? expr-str "Hold(")
+        {:scores            {:mae-max min-score :log-cosh min-score :r-squared min-score}
+         :raw-scores        {:mae-max min-score :log-cosh min-score :r-squared min-score}
+         :length-deductions {:mae-max 0.0 :log-cosh 0.0 :r-squared 0.0}}
+        (let [leafs (.leafCount ^IExpr (:expr pheno))]
+          (if (> leafs (or max-leafs default-max-leafs))
+            {:scores            {:mae-max min-score :log-cosh min-score :r-squared min-score}
+             :raw-scores        {:mae-max min-score :log-cosh min-score :r-squared min-score}
+             :length-deductions {:mae-max 0.0 :log-cosh 0.0 :r-squared 0.0}}
+            (let [f-of-xs (ops-eval/eval-vec-pheno pheno run-args)]
+              (if f-of-xs
+                (let [;; Compute raw scores (without deduction)
+                      raw-mae-max   (compute-raw-score-for-method f-of-xs input-ys-vec leafs input-ys-arr :mae-max)
+                      raw-log-cosh  (compute-raw-score-for-method f-of-xs input-ys-vec leafs input-ys-arr :log-cosh)
+                      raw-r-squared (compute-raw-score-for-method f-of-xs input-ys-vec leafs input-ys-arr :r-squared)
+                      ;; Compute length deductions
+                      ded-mae-max   (length-deduction raw-mae-max leafs)
+                      ded-log-cosh  (length-deduction raw-log-cosh leafs)
+                      ded-r-squared (length-deduction (abs raw-r-squared) leafs)]
+                  {:scores            {:mae-max   (- raw-mae-max ded-mae-max)
+                                       :log-cosh  (- raw-log-cosh ded-log-cosh)
+                                       :r-squared (- raw-r-squared ded-r-squared)}
+                   :raw-scores        {:mae-max   raw-mae-max
+                                       :log-cosh  raw-log-cosh
+                                       :r-squared raw-r-squared}
+                   :length-deductions {:mae-max   ded-mae-max
+                                       :log-cosh  ded-log-cosh
+                                       :r-squared ded-r-squared}})
+                {:scores            {:mae-max min-score :log-cosh min-score :r-squared min-score}
+                 :raw-scores        {:mae-max min-score :log-cosh min-score :r-squared min-score}
+                 :length-deductions {:mae-max 0.0 :log-cosh 0.0 :r-squared 0.0}}))))))
+    (catch Exception e
+      (log/warn "Err computing all scores detailed: " (.getMessage e) ", fn: " (str (:expr pheno)))
+      {:scores            {:mae-max min-score :log-cosh min-score :r-squared min-score}
+       :raw-scores        {:mae-max min-score :log-cosh min-score :r-squared min-score}
+       :length-deductions {:mae-max 0.0 :log-cosh 0.0 :r-squared 0.0}})))
 
 
 (def ^:dynamic *long-running-mutation-thresh-ms*
@@ -628,13 +716,16 @@
       ;; Call progress callback if provided (for HTTP API/SSE)
       (when (and progress-callback best-v)
         (try
-          (let [all-scores (compute-all-method-scores run-args run-config best-v)]
+          (let [{:keys [scores raw-scores length-deductions]}
+                (compute-all-method-scores-detailed run-args run-config best-v)]
             (progress-callback {:iteration               current-iteration
                                 :total-iterations        iters
                                 :best-formula            (str (:expr best-v))
                                 :best-formula-leaf-count (.leafCount ^IExpr (:expr best-v))
                                 :best-score              (or (:score best-v) min-score)
-                                :best-scores             all-scores
+                                :best-scores             scores
+                                :best-raw-scores         raw-scores
+                                :length-deductions       length-deductions
                                 :percentiles             {:p99 (or (:score best-p99-v) min-score)
                                                           :p95 (or (:score best-p95-v) min-score)
                                                           :p90 (or (:score best-p90-v) min-score)}

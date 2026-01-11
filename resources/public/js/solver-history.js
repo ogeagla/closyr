@@ -74,9 +74,18 @@ function escapeHistoryHtml(text) {
     return div.innerHTML;
 }
 
+// Format length deduction display for history
+function formatHistoryLengthDeduction(deduction) {
+    if (!deduction || deduction === 0) return '';
+    return `<span class="text-yellow-500/70 ml-1">(−${deduction.toFixed(4)} bias)</span>`;
+}
+
 // Format compact scores for collapsed history view (no sparklines)
+// Shows raw scores (without length deduction) for fair comparison
 function formatCompactHistoryScores(job) {
     const scores = job.scores;
+    const rawScores = job.rawScores;
+    const lengthDeductions = job.lengthDeductions;
     const primaryMethod = job.scoringMethod || job.config?.scoringMethod || 'mae-max';
 
     if (!scores) {
@@ -90,9 +99,16 @@ function formatCompactHistoryScores(job) {
         { key: 'r-squared', name: 'R²' }
     ];
 
-    return methods.map(m => {
+    // Use raw scores for display if available
+    const displayScores = rawScores || scores;
+
+    // Check if there's any non-zero deduction for the primary method
+    const primaryDeduction = lengthDeductions ? lengthDeductions[primaryMethod] : 0;
+    const hasDeduction = primaryDeduction && primaryDeduction > 0;
+
+    const scoresHtml = methods.map(m => {
         const isPrimary = m.key === primaryMethod;
-        const score = scores[m.key];
+        const score = displayScores[m.key];
         const scoreStr = (score !== undefined && score !== null) ? score.toFixed(4) : '--';
         if (isPrimary) {
             return `<span class="text-blue-300 font-medium">${m.name}: ${scoreStr}*</span>`;
@@ -100,11 +116,16 @@ function formatCompactHistoryScores(job) {
             return `<span class="text-gray-400">${m.name}: ${scoreStr}</span>`;
         }
     }).join('<span class="text-gray-600 mx-1">·</span>');
+
+    return scoresHtml + (hasDeduction ? formatHistoryLengthDeduction(primaryDeduction) : '');
 }
 
 // Format all scores for history details view - with sparklines
+// Shows raw scores (without length deduction) for fair comparison, with deduction shown separately
 function formatHistoryScores(job) {
     const scores = job.scores;
+    const rawScores = job.rawScores;
+    const lengthDeductions = job.lengthDeductions;
     const primaryMethod = job.scoringMethod || job.config?.scoringMethod || 'mae-max';
     const scoreHistory = job.scoreHistory;
 
@@ -123,17 +144,25 @@ function formatHistoryScores(job) {
         { key: 'r-squared', name: 'R²' }
     ];
 
+    // Use raw scores for display if available
+    const displayScores = rawScores || scores;
+
     return `<div class="mb-2">
         <div class="text-gray-400 text-xs mb-1">Scores (optimized for ${getScoringMethodDisplay(primaryMethod)}):</div>
         <div class="grid grid-cols-3 gap-2 text-xs">
             ${methods.map(m => {
                 const isPrimary = m.key === primaryMethod;
-                const score = scores[m.key];
+                const score = displayScores[m.key];
+                const deduction = lengthDeductions ? lengthDeductions[m.key] : 0;
                 const scoreStr = (score !== undefined && score !== null) ? score.toFixed(6) : '--';
                 const sparkline = generateMethodSparkline(scoreHistory, m.key);
+                const deductionHtml = (deduction && deduction > 0)
+                    ? `<div class="text-yellow-500/70 text-xs mt-1">−${deduction.toFixed(6)} bias</div>`
+                    : '';
                 return `<div class="p-2 rounded ${isPrimary ? 'bg-blue-900/50 border border-blue-700' : 'bg-gray-800'}">
                     <div class="text-gray-400">${m.name}${isPrimary ? ' *' : ''}</div>
                     <div class="${isPrimary ? 'text-blue-300 font-medium' : 'text-gray-300'}">${scoreStr}</div>
+                    ${deductionHtml}
                     ${sparkline}
                 </div>`;
             }).join('')}
@@ -171,6 +200,9 @@ function saveToHistory(jobData, status = 'completed', scoreHistory = [], elapsed
         datasetName: getSelectedDatasetName(),
         formula: jobData['best-solution'].formula,
         score: jobData['best-solution'].score,
+        scores: jobData['best-solution'].scores || null,  // All scoring method scores (with length deduction)
+        rawScores: jobData['best-solution'].rawScores || null,  // Raw scores without length deduction
+        lengthDeductions: jobData['best-solution'].lengthDeductions || null,  // Length deductions per method
         leafCount: jobData['best-solution'].leafCount,
         xs: [...inputXs],
         ys: [...inputYs],
@@ -204,7 +236,10 @@ function saveStoppedToHistory(progressData, scoreHistory = [], parentId = null, 
         datasetName: getSelectedDatasetName(),
         formula: progressData['best-formula'],
         score: progressData['best-score'],
-        leafCount: null, // Not available in progress data
+        scores: progressData['best-scores'] || null,  // All scoring method scores (with length deduction)
+        rawScores: progressData['best-raw-scores'] || null,  // Raw scores without length deduction
+        lengthDeductions: progressData['length-deductions'] || null,  // Length deductions per method
+        leafCount: progressData['best-formula-leaf-count'] || null,
         iteration: progressData['iteration'],
         totalIterations: progressData['total-iterations'],
         xs: [...inputXs],
@@ -317,20 +352,23 @@ function renderJobItem(node, depth = 0) {
         : '';
 
     // Compare score with parent job using child's scoring method (higher score = better)
+    // Uses raw scores (without length deduction) for fair comparison across different simplicity bias settings
     let improvementBadge = '';
     if (job.parentId) {
         const parentJob = jobHistory.find(j => j.id === job.parentId);
         if (parentJob) {
             const childMethod = job.scoringMethod || job.config?.scoringMethod || 'mae-max';
 
-            // Get child's score for its method
-            const childScore = job.scores && job.scores[childMethod] !== undefined
-                ? job.scores[childMethod]
+            // Get child's raw score for its method (prefer raw scores for fair comparison)
+            const childRawScores = job.rawScores || job.scores;
+            const childScore = childRawScores && childRawScores[childMethod] !== undefined
+                ? childRawScores[childMethod]
                 : job.score;
 
-            // Get parent's score for the same method
-            const parentScore = parentJob.scores && parentJob.scores[childMethod] !== undefined
-                ? parentJob.scores[childMethod]
+            // Get parent's raw score for the same method
+            const parentRawScores = parentJob.rawScores || parentJob.scores;
+            const parentScore = parentRawScores && parentRawScores[childMethod] !== undefined
+                ? parentRawScores[childMethod]
                 : (childMethod === (parentJob.scoringMethod || parentJob.config?.scoringMethod) ? parentJob.score : null);
 
             if (childScore !== undefined && parentScore !== null && parentScore !== undefined) {
