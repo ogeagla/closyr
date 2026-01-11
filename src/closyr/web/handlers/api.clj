@@ -206,21 +206,23 @@
 
                   ;; Extract unique solutions from final population (deduplicated by formula)
                   ;; Compute all scoring method scores for each solution
-                  solutions (->> (get-in result [:final-population :pop])
-                                 (filter (fn [p] (and (:score p) (:expr p))))
-                                 (sort-by :score)
-                                 reverse
-                                 (mapv #(phenotype->solution % score-run-args score-run-config))
-                                 (filterv some?)
-                                 ;; Deduplicate by formula, keeping first (best score)
-                                 (reduce (fn [[seen results] sol]
-                                           (if (seen (:formula sol))
-                                             [seen results]
-                                             [(conj seen (:formula sol)) (conj results sol)]))
-                                         [#{} []])
-                                 second
-                                 (take 10)
-                                 vec)
+                  ;; Bind simplicity-bias to ensure consistent score computation with evolution
+                  solutions (binding [ops/*simplicity-bias* simplicity-bias]
+                              (->> (get-in result [:final-population :pop])
+                                   (filter (fn [p] (and (:score p) (:expr p))))
+                                   (sort-by :score)
+                                   reverse
+                                   (mapv #(phenotype->solution % score-run-args score-run-config))
+                                   (filterv some?)
+                                   ;; Deduplicate by formula, keeping first (best score)
+                                   (reduce (fn [[seen results] sol]
+                                             (if (seen (:formula sol))
+                                               [seen results]
+                                               [(conj seen (:formula sol)) (conj results sol)]))
+                                           [#{} []])
+                                   second
+                                   (take 10)
+                                   vec))
 
                   source-job (get-in @jobs* [job-id :source-job])
                   final-result {:iterations-done (:iters-done result)
