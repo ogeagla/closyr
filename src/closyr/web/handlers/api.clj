@@ -143,6 +143,7 @@
                   quiet-logs (get config :quietLogs true)
                   use-eval-cache (get config :useEvalCache false)
                   scoring-method (keyword (get config :scoringMethod "mae-max"))
+                  simplicity-bias (keyword (get config :simplicityBias "tiebreaker"))
                   seed-formulas (get config :seedFormulas)
                   fresh-percent (get config :freshPercent 0.2)
 
@@ -183,13 +184,15 @@
                               :quiet-logs        quiet-logs
                               :use-eval-cache    use-eval-cache
                               :scoring-method    scoring-method
+                              :simplicity-bias   simplicity-bias
                               :progress-callback progress-callback
                               :input-xs-exprs    (ops-common/doubles->exprs xs-vec)
                               :input-ys-exprs    (ops-common/doubles->exprs ys-vec)}
 
                   _ (do (log/info "Starting job" job-id "- iterations:" iterations "population:" population-size
                                   "points:" (count xs-vec) "adaptive:" adaptive-mode "quiet-logs:" quiet-logs
-                                  "scoring-method:" scoring-method "random-seed:" random-seed "use-eval-cache:" use-eval-cache)
+                                  "scoring-method:" scoring-method "simplicity-bias:" simplicity-bias
+                                  "random-seed:" random-seed "use-eval-cache:" use-eval-cache)
                         (swap! jobs* assoc-in [job-id :status] :running))
                   result (symreg/run-find-formula run-config)
 

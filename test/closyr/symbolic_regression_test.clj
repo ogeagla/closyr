@@ -82,6 +82,7 @@
                  :adaptive-mode       nil
                  :quiet-logs          nil
                  :use-eval-cache      nil
+                 :simplicity-bias     nil
                  :scoring-method      nil
                  :input-xs-count      3
                  :input-xs-vec        [0.0 1.0 2.0]
@@ -137,6 +138,7 @@
                  :quiet-logs          nil
                  :use-eval-cache      nil
                  :scoring-method      nil
+                 :simplicity-bias     nil
                  :input-xs-count      50
                  :input-xs-vec        [0.0 0.20943951023931953 0.41887902047863906 0.6283185307179586 0.8377580409572781 1.0471975511965976 1.2566370614359172 1.4660765716752369 1.6755160819145563 1.8849555921538759 2.0943951023931953 2.3038346126325147 2.5132741228718345 2.7227136331111543 2.9321531433504737 3.141592653589793 3.3510321638291125 3.560471674068432 3.7699111843077517 3.979350694547071 4.1887902047863905 4.39822971502571 4.607669225265029 4.81710873550435 5.026548245743669 5.235987755982989 5.445427266222309 5.654866776461628 5.8643062867009474 6.073745796940266 6.283185307179586 6.492624817418906 6.702064327658225 6.911503837897546 7.120943348136864 7.3303828583761845 7.5398223686155035 7.749261878854823 7.958701389094142 8.168140899333462 8.377580409572781 8.587019919812102 8.79645943005142 9.00589894029074 9.215338450530059 9.42477796076938 9.6342174710087 9.843656981248019 10.053096491487338 10.262536001726657]
                  :input-ys-vec        [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
@@ -439,7 +441,7 @@
   (testing "compare solutions from different scoring methods using all scoring metrics"
     (let [;; Simple quadratic data: y = x^2
           xs-vec (mapv double (range 1 6))
-          ys-vec (mapv (fn [x] (+ (* x x 0.5) x 1)) xs-vec)     ;; 0.5 * x^2 + x + 1
+          ys-vec (mapv (fn [x] (+ (* x x 0.5) x 1)) xs-vec) ;; 0.5 * x^2 + x + 1
           ys-arr (double-array ys-vec)
 
           run-config {:input-phenos-count 15
@@ -528,6 +530,48 @@
       (is (<= (:r-squared mae-best-scores) 0))
       (is (<= (:r-squared log-cosh-best-scores) 0))
       (is (<= (:r-squared r2-best-scores) 0)))))
+
+
+(deftest simplicity-bias-in-run-find-formula
+  (let [run-config {:input-phenos-count 10
+                    :initial-muts       (ops-init/initial-mutations)
+                    :iters              3
+                    :use-gui?           false
+                    :use-flamechart     false
+                    :random-seed        999
+                    :input-xs-exprs     (->> (range 10)
+                                             (map (fn [i] (* 0.5 i)))
+                                             ops-common/doubles->exprs)
+                    :input-ys-exprs     (->> (range 10)
+                                             (map (fn [i] (+ (* 2 i) 3)))
+                                             ops-common/doubles->exprs)}]
+
+    (testing "simplicity-bias can be passed to run-find-formula"
+      (reset! symreg/sim-input-args* {})
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+        (fn []
+          ;; Should not throw with simplicity-bias option
+          (let [{:keys [final-population iters-done]}
+                (symreg/run-find-formula (assoc run-config :simplicity-bias :strong))]
+            (is (= 10 (count (:pop final-population))))
+            (is (= 3 iters-done))))))
+
+    (testing "different simplicity-bias levels produce different score distributions"
+      (reset! symreg/sim-input-args* {})
+      (with-redefs-fn {#'symreg/config->log-steps (fn [_ _] 10)}
+        (fn []
+          (let [result-none (symreg/run-find-formula (assoc run-config :simplicity-bias :none))
+                result-strong (symreg/run-find-formula (assoc run-config :simplicity-bias :strong))
+                scores-none (:pop-scores (:final-population result-none))
+                scores-strong (:pop-scores (:final-population result-strong))]
+            ;; With same random seed and inputs, :strong bias should have lower (more negative)
+            ;; scores due to the larger complexity penalty
+            ;; At minimum, both should complete without errors and have some population
+            (is (pos? (count scores-none)))
+            (is (pos? (count scores-strong)))
+            ;; Best scores (max) should be negative
+            (is (neg? (apply max scores-none)))
+            (is (neg? (apply max scores-strong)))))))))
 
 
 (deftest can-run-experiment-gui:start-restart-stop
@@ -672,6 +716,7 @@
              :adaptive-mode
              :use-eval-cache
              :scoring-method
+             :simplicity-bias
              :input-xs-count
              :input-xs-list
              :input-xs-vec

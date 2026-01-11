@@ -45,6 +45,25 @@
   :mae-max)
 
 
+(def ^:dynamic *simplicity-bias*
+  "Simplicity bias level for preferring smaller formulas. Applied as a score deduction
+   proportional to formula complexity (leaf count squared).
+   - :none - No bias, only raw score matters
+   - :tiebreaker (default) - Tiny deduction, just breaks ties for same scores
+   - :light - Light preference for simpler formulas
+   - :strong - Strong preference for simpler formulas"
+  :tiebreaker)
+
+
+(def ^:private simplicity-bias-multipliers
+  "Score multipliers for each simplicity bias level.
+   Higher values = stronger preference for simpler formulas."
+  {:none       0.0
+   :tiebreaker 0.0000001
+   :light      0.000005
+   :strong     0.00005})
+
+
 ;; Cache of expression string -> score. Reset between runs.
 (defonce eval-cache*
          (atom {}))
@@ -152,10 +171,17 @@
 
 
 (defn- length-deduction
-  "A tiny score deduction based on the number of leafs, proportional to score.  Intentionally tiny to just break ties
-  for otherwise same scores to break the tie and favor smaller functions."
+  "A score deduction based on the number of leafs, proportional to score.
+   The deduction magnitude is controlled by *simplicity-bias*.
+   - :none - returns 0 (no deduction)
+   - :tiebreaker - tiny deduction, just breaks ties
+   - :light - light preference for simpler formulas
+   - :strong - strong preference for simpler formulas"
   [score leafs]
-  (* (abs score) (min 0.1 (* 0.0000001 leafs leafs))))
+  (let [multiplier (get simplicity-bias-multipliers *simplicity-bias* 0.0000001)]
+    (if (zero? multiplier)
+      0.0
+      (* (abs score) (min 0.1 (* multiplier leafs leafs))))))
 
 
 ;; =============================================================================

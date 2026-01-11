@@ -412,3 +412,107 @@
         (is (= 1 (:size (ops/eval-cache-stats))))
         (ops/clear-eval-cache!)
         (is (= 0 (:size (ops/eval-cache-stats))))))))
+
+
+(deftest simplicity-bias-test
+  (testing "simplicity-bias :none returns zero deduction on perfect fit"
+    (binding [ops/*simplicity-bias* :none]
+      (let [x (F/Dummy "x")
+            ys-arr (double-array [1.0 2.0 3.0])
+            ;; Perfect fit with identity function
+            score (#'ops/compute-score-from-actuals-and-expecteds
+                    (ops-common/->phenotype x x nil)
+                    [1.0 2.0 3.0]
+                    [1.0 2.0 3.0]
+                    5
+                    ys-arr
+                    :mae-max)]
+        ;; With :none bias and perfect fit, score should be exactly 0
+        (is (= score 0.0)))))
+
+  (testing "simplicity-bias :tiebreaker applies tiny deduction on imperfect fit"
+    (binding [ops/*simplicity-bias* :tiebreaker]
+      (let [x (F/Dummy "x")
+            ;; Use a complex expression that does NOT perfectly fit the data
+            ;; x^2 + sin(x) evaluated at [1, 2, 3] gives roughly [1.84, 4.91, 9.14]
+            ;; We'll use ys = [2, 5, 10] for a slight mismatch
+            complex-expr (F/Plus (F/Times x x) (F/Sin x))
+            ys-arr (double-array [2.0 5.0 10.0])
+            score (#'ops/compute-score-from-actuals-and-expecteds
+                    (ops-common/->phenotype x complex-expr nil)
+                    [1.8414709848078965 4.909297426825682 9.141120008059867]  ; actual f(x) values
+                    [2.0 5.0 10.0]
+                    5
+                    ys-arr
+                    :mae-max)]
+        ;; Score should be negative (error + deduction)
+        (is (< score 0))
+        ;; The deduction component should be tiny relative to the error
+        (is (> score -5.0)))))
+
+  (testing "simplicity-bias levels have increasing deductions"
+    (let [x (F/Dummy "x")
+          ;; Use a complex expression with imperfect fit to get non-zero base score
+          ;; x^2 evaluated at [0, 1, 2] gives [0, 1, 4], we use ys = [0.5, 1.5, 4.5] for error
+          complex-expr (F/Times x x)
+          actuals [0.0 1.0 4.0]
+          expected [0.5 1.5 4.5]
+          ys-arr (double-array expected)
+          ;; Calculate scores with different bias levels
+          score-none (binding [ops/*simplicity-bias* :none]
+                       (#'ops/compute-score-from-actuals-and-expecteds
+                         (ops-common/->phenotype x complex-expr nil)
+                         actuals
+                         expected
+                         5
+                         ys-arr
+                         :mae-max))
+          score-tiebreaker (binding [ops/*simplicity-bias* :tiebreaker]
+                             (#'ops/compute-score-from-actuals-and-expecteds
+                               (ops-common/->phenotype x complex-expr nil)
+                               actuals
+                               expected
+                               5
+                               ys-arr
+                               :mae-max))
+          score-light (binding [ops/*simplicity-bias* :light]
+                        (#'ops/compute-score-from-actuals-and-expecteds
+                          (ops-common/->phenotype x complex-expr nil)
+                          actuals
+                          expected
+                          5
+                          ys-arr
+                          :mae-max))
+          score-strong (binding [ops/*simplicity-bias* :strong]
+                         (#'ops/compute-score-from-actuals-and-expecteds
+                           (ops-common/->phenotype x complex-expr nil)
+                           actuals
+                           expected
+                           5
+                           ys-arr
+                           :mae-max))]
+      ;; All scores should be negative (there's error)
+      (is (< score-none 0))
+      ;; Each level should have lower (more negative) score due to larger deduction
+      ;; The deduction is proportional to abs(score), so with non-zero error we'll see differences
+      (is (>= score-none score-tiebreaker))
+      (is (>= score-tiebreaker score-light))
+      (is (>= score-light score-strong))
+      ;; At least some differences should exist (strong should be noticeably lower)
+      (is (> score-none score-strong))))
+
+  (testing "simplicity-bias default is :tiebreaker"
+    (is (= ops/*simplicity-bias* :tiebreaker)))
+
+  (testing "simplicity-bias-multipliers has expected keys"
+    (is (contains? @#'ops/simplicity-bias-multipliers :none))
+    (is (contains? @#'ops/simplicity-bias-multipliers :tiebreaker))
+    (is (contains? @#'ops/simplicity-bias-multipliers :light))
+    (is (contains? @#'ops/simplicity-bias-multipliers :strong))
+    ;; :none should have 0 multiplier
+    (is (= 0.0 (:none @#'ops/simplicity-bias-multipliers)))
+    ;; Others should have increasing values
+    (is (< (:tiebreaker @#'ops/simplicity-bias-multipliers)
+           (:light @#'ops/simplicity-bias-multipliers)))
+    (is (< (:light @#'ops/simplicity-bias-multipliers)
+           (:strong @#'ops/simplicity-bias-multipliers)))))

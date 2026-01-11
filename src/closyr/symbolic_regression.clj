@@ -388,7 +388,8 @@
     adaptive-mode       :adaptive-mode
     quiet-logs          :quiet-logs
     use-eval-cache      :use-eval-cache
-    scoring-method      :scoring-method}]
+    scoring-method      :scoring-method
+    simplicity-bias     :simplicity-bias}]
 
   (when-not (and input-xs-exprs
                  input-xs-vec
@@ -414,7 +415,8 @@
    :adaptive-mode        adaptive-mode
    :quiet-logs           quiet-logs
    :use-eval-cache       use-eval-cache
-   :scoring-method       scoring-method})
+   :scoring-method       scoring-method
+   :simplicity-bias      simplicity-bias})
 
 
 (defn- wait-and-get-gui-args
@@ -708,15 +710,17 @@
 
   Options:
     :use-eval-cache - when true, cache evaluation results by expression string (default: false)
-    :scoring-method - scoring method (:mae-max, :log-cosh, or :r-squared)"
-  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed adaptive-mode use-eval-cache scoring-method] :as run-config}]
+    :scoring-method - scoring method (:mae-max, :log-cosh, or :r-squared)
+    :simplicity-bias - simplicity bias level (:none, :tiebreaker, :light, or :strong)"
+  [{:keys [iters initial-phenos initial-muts input-xs-exprs input-ys-exprs use-gui? use-flamechart random-seed adaptive-mode use-eval-cache scoring-method simplicity-bias] :as run-config}]
   ;; Reset adaptive state and eval cache for new run
   (adaptive/reset-adaptive-state!)
   (ops/clear-eval-cache!)
   (binding [ga/*deterministic-mode* (some? random-seed)
             ga/*adaptive-mode* (if (and (some? adaptive-mode) (not (some? random-seed))) adaptive-mode false)
             ops/*use-eval-cache* (boolean use-eval-cache)
-            ops/*scoring-method* (or scoring-method :mae-max)]
+            ops/*scoring-method* (or scoring-method :mae-max)
+            ops/*simplicity-bias* (or simplicity-bias :tiebreaker)]
     ;; Set the random seed if provided
     (when random-seed
       (log/info "---- run-find-formula: Deterministic mode enabled with seed:" random-seed
@@ -727,7 +731,8 @@
               " deterministic-mode: " ga/*deterministic-mode*
               " adaptive-mode: " ga/*adaptive-mode*
               " use-eval-cache: " ops/*use-eval-cache*
-              " scoring-method: " ops/*scoring-method*)
+              " scoring-method: " ops/*scoring-method*
+              " simplicity-bias: " ops/*simplicity-bias*)
 
     ;(when ga/*deterministic-mode*
     ;  (log/warn "---- Running Deterministic Mode ----"))

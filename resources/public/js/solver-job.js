@@ -1006,6 +1006,12 @@ function submitSolverForm(evt) {
         config.scoringMethod = scoringMethodEl.value;
     }
 
+    // Add simplicity bias
+    const simplicityBiasEl = document.getElementById('simplicity-bias');
+    if (simplicityBiasEl) {
+        config.simplicityBias = simplicityBiasEl.value;
+    }
+
     // Add mutations blacklist if any mutations are excluded
     const blacklist = getMutationsBlacklist();
     if (blacklist.length > 0) {

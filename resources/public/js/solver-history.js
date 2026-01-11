@@ -15,6 +15,17 @@ function getScoringMethodDisplay(method) {
     return displays[method] || method || 'MAE + Max';
 }
 
+// Get display name for simplicity bias
+function getSimplicityBiasDisplay(bias) {
+    const displays = {
+        'none': 'None',
+        'tiebreaker': 'Tiebreaker',
+        'light': 'Light',
+        'strong': 'Strong'
+    };
+    return displays[bias] || bias || 'Tiebreaker';
+}
+
 // Update job label in history and refresh badge (called on every keystroke)
 function updateHistoryJobLabel(index, newLabel) {
     const job = jobHistory[index];
@@ -151,6 +162,7 @@ function formatDuration(ms) {
 // Save job to history
 function saveToHistory(jobData, status = 'completed', scoreHistory = [], elapsedMs = null) {
     const scoringMethodEl = document.getElementById('scoring-method');
+    const simplicityBiasEl = document.getElementById('simplicity-bias');
     const job = {
         id: currentJobId,
         parentId: jobData['source-job'] || null, // Track parent job for hierarchy
@@ -167,7 +179,8 @@ function saveToHistory(jobData, status = 'completed', scoreHistory = [], elapsed
             population: parseInt(document.getElementById('population').value) || 100,
             maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
             seed: document.getElementById('seed').value || null,
-            scoringMethod: scoringMethodEl ? scoringMethodEl.value : 'mae-max'
+            scoringMethod: scoringMethodEl ? scoringMethodEl.value : 'mae-max',
+            simplicityBias: simplicityBiasEl ? simplicityBiasEl.value : 'tiebreaker'
         },
         allSolutions: jobData['all-solutions'],
         scoreHistory: scoreHistory,
@@ -182,6 +195,7 @@ function saveStoppedToHistory(progressData, scoreHistory = [], parentId = null, 
     if (!progressData) return;
 
     const scoringMethodEl = document.getElementById('scoring-method');
+    const simplicityBiasEl = document.getElementById('simplicity-bias');
     const job = {
         id: currentJobId,
         parentId: parentId, // Track parent job for hierarchy
@@ -200,7 +214,8 @@ function saveStoppedToHistory(progressData, scoreHistory = [], parentId = null, 
             population: parseInt(document.getElementById('population').value) || 100,
             maxLeafs: parseInt(document.getElementById('max-leafs').value) || 40,
             seed: document.getElementById('seed').value || null,
-            scoringMethod: progressData['scoring-method']
+            scoringMethod: progressData['scoring-method'],
+            simplicityBias: simplicityBiasEl ? simplicityBiasEl.value : 'tiebreaker'
         },
         allSolutions: null,
         scoreHistory: scoreHistory,
@@ -281,6 +296,9 @@ function renderJobItem(node, depth = 0) {
         : '';
     const scoringBadge = job.config.scoringMethod
         ? `<span class="px-1.5 py-0.5 text-xs bg-blue-900 text-white rounded ml-2">${getScoringMethodDisplay(job.config.scoringMethod)}</span>`
+        : '';
+    const simplicityBadge = job.config.simplicityBias && job.config.simplicityBias !== 'tiebreaker'
+        ? `<span class="px-1.5 py-0.5 text-xs bg-indigo-800 text-white rounded ml-2">Simplicity: ${getSimplicityBiasDisplay(job.config.simplicityBias)}</span>`
         : '';
     const iterationInfo = job.status === 'stopped' && job.iteration
         ? ` · Stopped at ${job.iteration}/${job.totalIterations}`
@@ -378,6 +396,7 @@ function renderJobItem(node, depth = 0) {
                         ${improvementBadge}
                         ${statusBadge}
                         ${scoringBadge}
+                        ${simplicityBadge}
                         ${datasetBadge}
                         ${childBadge}
                     </div>
@@ -666,6 +685,12 @@ function loadFromHistory(index) {
         scoringMethodEl.value = job.config.scoringMethod;
     }
 
+    // Restore simplicity bias if available
+    const simplicityBiasEl = document.getElementById('simplicity-bias');
+    if (simplicityBiasEl && job.config.simplicityBias) {
+        simplicityBiasEl.value = job.config.simplicityBias;
+    }
+
     initDataEditorChart();
 
     document.getElementById('preset-select').value = '';
@@ -701,6 +726,7 @@ async function rerunFromHistory(index) {
         population: job.config.population,
         maxLeafs: job.config.maxLeafs,
         scoringMethod: job.config.scoringMethod,
+        simplicityBias: job.config.simplicityBias || 'tiebreaker',
         adaptiveMode: job.config.adaptiveMode || false,
         useEvalCache: job.config.useEvalCache || false,
         quietLogs: job.config.quietLogs !== false, // Default to true
@@ -762,6 +788,7 @@ async function keepGoingFromHistory(index) {
         population: parseInt(document.getElementById('population').value) || job.config.population,
         maxLeafs: parseInt(document.getElementById('max-leafs').value) || job.config.maxLeafs,
         scoringMethod: document.getElementById('scoring-method')?.value || job.config.scoringMethod,
+        simplicityBias: document.getElementById('simplicity-bias')?.value || job.config.simplicityBias || 'tiebreaker',
         adaptiveMode: adaptiveModeEl && adaptiveModeEl.getAttribute('aria-checked') === 'true',
         useEvalCache: evalCacheEl && evalCacheEl.getAttribute('aria-checked') === 'true',
         quietLogs: !(quietLogsEl && quietLogsEl.getAttribute('aria-checked') === 'true'),

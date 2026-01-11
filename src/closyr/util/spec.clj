@@ -152,6 +152,10 @@
   [:enum :mae-max :log-cosh :r-squared])
 
 
+(def ^:private SimplicityBias
+  [:enum :none :tiebreaker :light :strong])
+
+
 (def ^:private GAPhenotype
   [:map
    {:closed true}
@@ -205,7 +209,8 @@
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
    [:use-eval-cache {:optional true} [:maybe :boolean]]
-   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -240,7 +245,8 @@
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
    [:use-eval-cache {:optional true} [:maybe :boolean]]
-   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private SolverEvalArgs
@@ -292,7 +298,8 @@
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
    [:use-eval-cache {:optional true} [:maybe :boolean]]
-   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private SolverInputArgs
@@ -317,7 +324,8 @@
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
    [:use-eval-cache {:optional true} [:maybe :boolean]]
-   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private SolverGUIMessage
@@ -335,7 +343,8 @@
    [:adaptive-mode {:optional true} [:maybe :boolean]]
    [:quiet-logs {:optional true} [:maybe :boolean]]
    [:use-eval-cache {:optional true} [:maybe :boolean]]
-   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private CLIArgs
@@ -355,7 +364,8 @@
    [:adaptive-mode {:optional true} [:maybe boolean?]]
    [:quiet-logs {:optional true} [:maybe boolean?]]
    [:use-eval-cache {:optional true} [:maybe boolean?]]
-   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]])
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private ModificationsResult
