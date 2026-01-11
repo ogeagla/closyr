@@ -70,8 +70,40 @@
                 <!-- Interactive Data Editor -->
                 <div class="mb-3">
                     <label class="block text-sm font-medium text-gray-300 mb-1">
-                        Edit Data Points <span class="text-gray-500">(drag points to adjust Y values)</span>
+                        Edit Data Points <span id="brush-hint" class="text-gray-500">(drag points to adjust Y values)</span>
                     </label>
+                    <!-- Brush Mode Selector -->
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex bg-gray-700 rounded-md p-0.5" role="group">
+                            <button type="button" id="brush-point" onclick="setBrushMode('point')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium bg-blue-600 text-white"
+                                    title="Point mode: drag individual points">
+                                Point
+                            </button>
+                            <button type="button" id="brush-smooth" onclick="setBrushMode('smooth')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium text-gray-300 hover:text-white"
+                                    title="Smooth brush: smooths nearby points">
+                                Smooth
+                            </button>
+                            <button type="button" id="brush-bump" onclick="setBrushMode('bump')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium text-gray-300 hover:text-white"
+                                    title="Bump brush: raise/lower nearby points">
+                                Bump
+                            </button>
+                            <button type="button" id="brush-flatten" onclick="setBrushMode('flatten')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium text-gray-300 hover:text-white"
+                                    title="Flatten brush: flatten nearby points to average">
+                                Flatten
+                            </button>
+                        </div>
+                        <div id="brush-size-container" class="hidden flex items-center gap-2 ml-2">
+                            <label class="text-xs text-gray-400">Size:</label>
+                            <input type="range" id="brush-size" min="1" max="10" value="3"
+                                   class="w-16 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                                   oninput="updateBrushSize(this.value)">
+                            <span id="brush-size-value" class="text-xs text-gray-400 w-4">3</span>
+                        </div>
+                    </div>
                     <div id="data-editor-chart" class="bg-gray-900 rounded-md" style="width: 100%; height: 140px;"></div>
                 </div>
 

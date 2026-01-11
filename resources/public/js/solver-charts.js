@@ -9,6 +9,60 @@ let editorData = [];
 let historyCharts = {};
 let scoreCharts = {};
 
+// Brush state
+let currentBrushMode = 'point';
+let brushSize = 3;
+let brushDragging = false;
+let brushStartY = null;
+
+// Set brush mode and update UI
+function setBrushMode(mode) {
+    currentBrushMode = mode;
+
+    // Update button styles
+    document.querySelectorAll('.brush-mode-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('text-gray-300');
+    });
+    const activeBtn = document.getElementById(`brush-${mode}`);
+    if (activeBtn) {
+        activeBtn.classList.remove('text-gray-300');
+        activeBtn.classList.add('bg-blue-600', 'text-white');
+    }
+
+    // Show/hide brush size control
+    const sizeContainer = document.getElementById('brush-size-container');
+    if (sizeContainer) {
+        sizeContainer.classList.toggle('hidden', mode === 'point');
+    }
+
+    // Update hint text
+    const hint = document.getElementById('brush-hint');
+    if (hint) {
+        const hints = {
+            'point': '(drag points to adjust Y values)',
+            'smooth': '(click and drag to smooth nearby points)',
+            'bump': '(drag up/down to raise/lower nearby points)',
+            'flatten': '(click and drag to flatten nearby points)'
+        };
+        hint.textContent = hints[mode] || '';
+    }
+
+    // Reinitialize handlers for the new mode
+    if (dataEditorChart && editorData.length > 0) {
+        setupDragHandlers();
+    }
+}
+
+// Update brush size
+function updateBrushSize(value) {
+    brushSize = parseInt(value);
+    const sizeValue = document.getElementById('brush-size-value');
+    if (sizeValue) {
+        sizeValue.textContent = value;
+    }
+}
+
 // Initialize the data editor chart
 function initDataEditorChart() {
     const container = document.getElementById('data-editor-chart');
@@ -69,47 +123,324 @@ function updateDataEditorChart() {
     setupDragHandlers();
 }
 
+// Get indices of points within brush radius of a given index
+function getPointsInBrushRadius(centerIdx) {
+    const indices = [];
+    for (let i = Math.max(0, centerIdx - brushSize); i <= Math.min(editorData.length - 1, centerIdx + brushSize); i++) {
+        indices.push(i);
+    }
+    return indices;
+}
+
+// Calculate Gaussian weight for distance from center
+function gaussianWeight(distance, sigma) {
+    return Math.exp(-(distance * distance) / (2 * sigma * sigma));
+}
+
+// Apply smooth brush: weighted average with neighbors
+function applySmooth(centerIdx) {
+    const indices = getPointsInBrushRadius(centerIdx);
+    if (indices.length < 2) return;
+
+    const sigma = brushSize / 2;
+
+    // Calculate smoothed values for affected points
+    indices.forEach(idx => {
+        let weightedSum = 0;
+        let weightSum = 0;
+
+        indices.forEach(neighborIdx => {
+            const distance = Math.abs(neighborIdx - idx);
+            const weight = gaussianWeight(distance, sigma);
+            weightedSum += editorData[neighborIdx].y * weight;
+            weightSum += weight;
+        });
+
+        // Blend original with smoothed (strength based on proximity to brush center)
+        const centerDistance = Math.abs(idx - centerIdx);
+        const blendFactor = gaussianWeight(centerDistance, sigma) * 0.5;
+        const smoothedY = weightedSum / weightSum;
+        editorData[idx].y = editorData[idx].y * (1 - blendFactor) + smoothedY * blendFactor;
+    });
+}
+
+// Apply bump brush: raise or lower points based on delta Y
+function applyBump(centerIdx, deltaY) {
+    const indices = getPointsInBrushRadius(centerIdx);
+    const sigma = brushSize / 2;
+
+    indices.forEach(idx => {
+        const distance = Math.abs(idx - centerIdx);
+        const weight = gaussianWeight(distance, sigma);
+        editorData[idx].y += deltaY * weight * 0.3; // Scale factor for smoother control
+    });
+}
+
+// Apply flatten brush: move points toward their local average
+function applyFlatten(centerIdx) {
+    const indices = getPointsInBrushRadius(centerIdx);
+    if (indices.length < 2) return;
+
+    // Calculate local average
+    const avg = indices.reduce((sum, idx) => sum + editorData[idx].y, 0) / indices.length;
+    const sigma = brushSize / 2;
+
+    // Move points toward average
+    indices.forEach(idx => {
+        const distance = Math.abs(idx - centerIdx);
+        const weight = gaussianWeight(distance, sigma) * 0.3; // Blend factor
+        editorData[idx].y = editorData[idx].y * (1 - weight) + avg * weight;
+    });
+}
+
+// Find nearest data point index to a pixel position
+function findNearestPointIndex(pixelX) {
+    if (!dataEditorChart || editorData.length === 0) return -1;
+
+    let nearestIdx = 0;
+    let nearestDist = Infinity;
+
+    try {
+        editorData.forEach((d, idx) => {
+            const pointPixel = dataEditorChart.convertToPixel('grid', [d.x, d.y]);
+            if (pointPixel) {
+                const dist = Math.abs(pointPixel[0] - pixelX);
+                if (dist < nearestDist) {
+                    nearestDist = dist;
+                    nearestIdx = idx;
+                }
+            }
+        });
+    } catch (e) {
+        return -1;
+    }
+
+    return nearestIdx;
+}
+
+// Refresh the chart display
+function refreshEditorChart() {
+    if (!dataEditorChart) return;
+    try {
+        dataEditorChart.setOption({
+            series: [{ data: editorData.map(d => [d.x, d.y]) }]
+        }, false);
+    } catch (e) {
+        console.debug('refreshEditorChart error:', e);
+    }
+}
+
+// Track current graphic element count for cleanup
+let currentGraphicCount = 0;
+
+// Store brush handler references so we can remove them specifically
+let brushMousedownHandler = null;
+let brushMousemoveHandler = null;
+let brushMouseupHandler = null;
+let brushGlobaloutHandler = null;
+
+// Clear all graphic elements from the chart
+function clearGraphicElements() {
+    if (!dataEditorChart || currentGraphicCount === 0) return;
+
+    // Remove elements by setting them to invisible and non-interactive
+    const clearElements = [];
+    for (let i = 0; i < currentGraphicCount; i++) {
+        clearElements.push({
+            id: `drag-point-${i}`,
+            invisible: true,
+            silent: true,
+            shape: { r: 0 },
+            draggable: false
+        });
+    }
+    if (clearElements.length > 0) {
+        dataEditorChart.setOption({ graphic: clearElements }, false);
+    }
+}
+
+// Remove only our custom brush handlers (not all handlers)
+function removeBrushHandlers() {
+    if (!dataEditorChart) return;
+    const zr = dataEditorChart.getZr();
+    if (brushMousedownHandler) {
+        zr.off('mousedown', brushMousedownHandler);
+        brushMousedownHandler = null;
+    }
+    if (brushMousemoveHandler) {
+        zr.off('mousemove', brushMousemoveHandler);
+        brushMousemoveHandler = null;
+    }
+    if (brushMouseupHandler) {
+        zr.off('mouseup', brushMouseupHandler);
+        brushMouseupHandler = null;
+    }
+    if (brushGlobaloutHandler) {
+        zr.off('globalout', brushGlobaloutHandler);
+        brushGlobaloutHandler = null;
+    }
+}
+
 // Set up drag handlers for points
 function setupDragHandlers() {
     if (!dataEditorChart || editorData.length === 0) return;
 
-    const graphicElements = editorData.map((d, idx) => ({
-        type: 'circle',
-        id: `drag-point-${idx}`,
-        position: dataEditorChart.convertToPixel('grid', [d.x, d.y]),
-        shape: { r: 10 },
-        style: { fill: 'transparent' },
-        cursor: 'ns-resize',
-        draggable: 'vertical',
-        z: 100,
-        ondrag: function(e) {
-            const pos = [this.x, this.y];
-            const dataPos = dataEditorChart.convertFromPixel('grid', pos);
-            editorData[idx].y = dataPos[1];
-            dataEditorChart.setOption({
-                series: [{ data: editorData.map(d => [d.x, d.y]) }]
-            });
-        },
-        ondragend: function() {
-            syncEditorToTextarea();
-            // Re-sync graphic positions after axis may have rescaled
-            updateDragHandlerPositions();
-        }
-    }));
+    // Remove only our custom brush handlers (preserve ECharts internal handlers)
+    removeBrushHandlers();
 
-    dataEditorChart.setOption({ graphic: graphicElements });
+    const container = document.getElementById('data-editor-chart');
+
+    if (currentBrushMode === 'point') {
+        // Reset cursor for point mode
+        if (container) {
+            container.style.cursor = 'default';
+        }
+
+        // Point mode: individual draggable points
+        const graphicElements = editorData.map((d, idx) => ({
+            type: 'circle',
+            id: `drag-point-${idx}`,
+            invisible: false,
+            silent: false,
+            position: dataEditorChart.convertToPixel('grid', [d.x, d.y]),
+            shape: { r: 12 },
+            style: { fill: 'rgba(59, 130, 246, 0.3)' },
+            cursor: 'ns-resize',
+            draggable: 'vertical',
+            z: 100,
+            ondrag: function() {
+                const pos = this.position;
+                const dataPos = dataEditorChart.convertFromPixel('grid', pos);
+                editorData[idx].y = dataPos[1];
+                dataEditorChart.setOption({
+                    series: [{ data: editorData.map(d => [d.x, d.y]) }]
+                });
+            },
+            ondragend: function() {
+                syncEditorToTextarea();
+                updateDragHandlerPositions();
+            }
+        }));
+        currentGraphicCount = graphicElements.length;
+        dataEditorChart.setOption({ graphic: graphicElements }, false);
+    } else {
+        // Brush modes: use mouse events on the chart area
+        // Hide graphic elements (make them invisible and non-draggable)
+        clearGraphicElements();
+
+        // Set cursor for brush modes
+        if (container) {
+            container.style.cursor = currentBrushMode === 'bump' ? 'ns-resize' : 'crosshair';
+        }
+
+        const zr = dataEditorChart.getZr();
+        let lastY = null;
+        let lastIdx = null;
+
+        // Define handlers as named functions so we can remove them specifically
+        brushMousedownHandler = function(e) {
+            // Check if click is within the grid area
+            try {
+                const gridModel = dataEditorChart.getModel().getComponent('grid');
+                if (gridModel && gridModel.coordinateSystem) {
+                    const gridRect = gridModel.coordinateSystem.getRect();
+                    if (e.offsetX < gridRect.x || e.offsetX > gridRect.x + gridRect.width ||
+                        e.offsetY < gridRect.y || e.offsetY > gridRect.y + gridRect.height) {
+                        return;
+                    }
+                }
+            } catch (err) {
+                // If we can't get the grid rect, proceed anyway
+            }
+
+            brushDragging = true;
+            brushStartY = e.offsetY;
+            lastY = e.offsetY;
+
+            const nearestIdx = findNearestPointIndex(e.offsetX);
+            lastIdx = nearestIdx;
+
+            if (nearestIdx >= 0) {
+                if (currentBrushMode === 'smooth') {
+                    applySmooth(nearestIdx);
+                    refreshEditorChart();
+                } else if (currentBrushMode === 'flatten') {
+                    applyFlatten(nearestIdx);
+                    refreshEditorChart();
+                }
+            }
+        };
+
+        brushMousemoveHandler = function(e) {
+            if (!brushDragging) return;
+
+            const nearestIdx = findNearestPointIndex(e.offsetX);
+            if (nearestIdx < 0) return;
+
+            if (currentBrushMode === 'bump') {
+                if (Math.abs(e.offsetY - lastY) > 1) {
+                    // Convert pixel delta to data delta (invert because screen Y is opposite to data Y)
+                    const dataCenter = dataEditorChart.convertFromPixel('grid', [0, lastY]);
+                    const dataNew = dataEditorChart.convertFromPixel('grid', [0, e.offsetY]);
+                    const dataDelta = dataNew[1] - dataCenter[1];
+                    applyBump(nearestIdx, dataDelta);
+                    lastY = e.offsetY;
+                    refreshEditorChart();
+                }
+            } else if (currentBrushMode === 'smooth') {
+                if (nearestIdx !== lastIdx) {
+                    applySmooth(nearestIdx);
+                    lastIdx = nearestIdx;
+                    refreshEditorChart();
+                }
+            } else if (currentBrushMode === 'flatten') {
+                if (nearestIdx !== lastIdx) {
+                    applyFlatten(nearestIdx);
+                    lastIdx = nearestIdx;
+                    refreshEditorChart();
+                }
+            }
+        };
+
+        brushMouseupHandler = function(e) {
+            if (brushDragging) {
+                brushDragging = false;
+                syncEditorToTextarea();
+            }
+        };
+
+        brushGlobaloutHandler = function(e) {
+            if (brushDragging) {
+                brushDragging = false;
+                syncEditorToTextarea();
+            }
+        };
+
+        // Register the handlers
+        zr.on('mousedown', brushMousedownHandler);
+        zr.on('mousemove', brushMousemoveHandler);
+        zr.on('mouseup', brushMouseupHandler);
+        zr.on('globalout', brushGlobaloutHandler);
+    }
 }
 
 // Update drag handler positions without recreating them (after axis rescale)
 function updateDragHandlerPositions() {
     if (!dataEditorChart || editorData.length === 0) return;
+    // Only update positions in point mode (brush modes don't use graphic elements)
+    if (currentBrushMode !== 'point') return;
 
-    const graphicUpdates = editorData.map((d, idx) => ({
-        id: `drag-point-${idx}`,
-        position: dataEditorChart.convertToPixel('grid', [d.x, d.y])
-    }));
+    try {
+        const graphicUpdates = editorData.map((d, idx) => ({
+            id: `drag-point-${idx}`,
+            position: dataEditorChart.convertToPixel('grid', [d.x, d.y])
+        }));
 
-    dataEditorChart.setOption({ graphic: graphicUpdates });
+        dataEditorChart.setOption({ graphic: graphicUpdates }, false);
+    } catch (e) {
+        // Ignore errors during position updates
+        console.debug('updateDragHandlerPositions error:', e);
+    }
 }
 
 // Sync editor data to Y values textarea

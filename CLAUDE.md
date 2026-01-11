@@ -76,4 +76,5 @@ Robust error handling at multiple levels prevents crashes during evolution:
 ## Build/Test Commands
 - `lein test` - Run all tests
 - `lein test :only ns/test-name` - Run specific test
-- `lein run` - Start the web server
+- `lein run --web 3000` - Start the web server
+- `lein run` - Start the java GUI
