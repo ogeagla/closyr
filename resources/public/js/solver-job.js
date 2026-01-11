@@ -668,9 +668,13 @@ let lastCompletedJob = null;
 function showDefaultResults() {
     const resultsDiv = document.getElementById('results');
 
-    // If we have a last completed job, show its results instead of default message
+    // If we have a last completed/stopped job, show its results instead of default message
     if (lastCompletedJob) {
-        showCompletedJobResults(lastCompletedJob);
+        if (lastCompletedJob.status === 'stopped') {
+            showStoppedJobResults(lastCompletedJob);
+        } else {
+            showCompletedJobResults(lastCompletedJob);
+        }
         return;
     }
 
@@ -751,6 +755,92 @@ function showCompletedJobResults(job) {
 
     renderFitChart(data['best-solution'].formula, true, inputXs, inputYs);
     renderLatex('formula-latex', data['best-solution'].formula);
+}
+
+function showStoppedJobResults(job) {
+    const resultsDiv = document.getElementById('results');
+    const { progressData, scoreHistory, inputXs, inputYs, config, datasetName, label } = job;
+
+    const datasetBadge = datasetName
+        ? `<span class="px-2 py-1 text-xs bg-blue-600 text-white rounded ml-2">${datasetName}</span>`
+        : '';
+
+    const labelDisplay = label
+        ? `<div class="text-gray-300 text-sm mb-3"><span class="text-gray-500">Label:</span> ${escapeHtml(label)}</div>`
+        : '';
+
+    const scoringMethod = progressData['scoring-method'] || config?.scoringMethod || 'mae-max';
+    const formula = progressData['best-formula'] || 'N/A';
+    const leafCount = progressData['best-formula-leaf-count'] || 'N/A';
+    const iteration = progressData['iteration'] || 0;
+    const totalIterations = progressData['total-iterations'] || 0;
+
+    disposeFitChart();
+
+    // Build scores display from progressData['best-scores']
+    let scoresHtml = '';
+    const bestScores = progressData['best-scores'];
+    if (bestScores) {
+        // best-scores already has the right format: {'mae-max': ..., 'log-cosh': ..., 'r-squared': ...}
+        const bestSolution = {
+            scores: bestScores,
+            score: progressData['best-score']
+        };
+        scoresHtml = formatAllScores(bestSolution, scoringMethod, scoreHistory);
+    } else if (progressData['best-score'] !== undefined) {
+        scoresHtml = `
+            <div class="mb-4">
+                <span class="text-gray-400">Score (${getScoringMethodDisplay(scoringMethod)}):</span>
+                <span class="text-white ml-2">${formatScore(progressData['best-score'])}</span>
+            </div>
+        `;
+    }
+
+    resultsDiv.innerHTML = `
+        <div class="mb-4">
+            <div class="flex items-center space-x-2 text-yellow-400 mb-4">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <span class="font-semibold">Stopped</span>
+                <span class="text-gray-400 text-sm">(iteration ${iteration}/${totalIterations})</span>
+                ${datasetBadge}
+            </div>
+            ${labelDisplay}
+
+            <div class="mb-4">
+                <div class="text-gray-300 text-sm mb-2">Best Formula Found:</div>
+                <div class="group flex items-center gap-2 text-yellow-400 text-sm">
+                    <div class="flex-1 min-w-0 overflow-x-auto font-mono whitespace-nowrap pb-1" id="best-formula">${formula}</div>
+                    <button onclick="copyFormula('best-formula')" class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white bg-gray-800 rounded" title="Copy to clipboard">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="formula-latex" class="mt-2 p-2 bg-gray-900 rounded-md text-sm overflow-x-auto"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                <div>
+                    <span class="text-gray-400">Complexity:</span>
+                    <span class="text-white ml-2">${leafCount} nodes</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Optimized for:</span>
+                    <span class="text-white ml-2">${getScoringMethodDisplay(scoringMethod)}</span>
+                </div>
+            </div>
+            ${scoresHtml}
+
+            <div id="fit-chart" style="width: 100%; height: 300px;"></div>
+        </div>
+    `;
+
+    if (formula && formula !== 'N/A') {
+        renderFitChart(formula, true, inputXs, inputYs);
+        renderLatex('formula-latex', formula);
+    }
 }
 
 // ============================================================================
@@ -1041,6 +1131,7 @@ function setupSSEConnection(jobId) {
 
         // Store completed job for display in Results
         lastCompletedJob = {
+            status: 'completed',
             data: data,
             scoreHistory: [...job.scoreHistory],
             inputXs: job.inputXs,
@@ -1089,7 +1180,20 @@ function setupSSEConnection(jobId) {
         if (e.data) {
             const data = JSON.parse(e.data);
             if (data['last-progress']) {
-                saveStoppedToHistoryMultiJob(jobId, data['last-progress'], [...job.scoreHistory], job.sourceJobId, elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
+                const progressData = data['last-progress'];
+                saveStoppedToHistoryMultiJob(jobId, progressData, [...job.scoreHistory], job.sourceJobId, elapsedMs, job.inputXs, job.inputYs, job.config, job.datasetName, job.label);
+
+                // Store stopped job for display in Results
+                lastCompletedJob = {
+                    status: 'stopped',
+                    progressData: progressData,
+                    scoreHistory: [...job.scoreHistory],
+                    inputXs: job.inputXs,
+                    inputYs: job.inputYs,
+                    config: job.config,
+                    datasetName: job.datasetName,
+                    label: job.label
+                };
             }
         }
 

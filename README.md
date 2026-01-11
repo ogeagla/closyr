@@ -598,7 +598,7 @@ Data Flow:
 
 #### Webapp
 
-- [ ] Bug: Webapp / Job Results when job is stopped: it seems to show prior job's scoring method, scores and other results. it needs to show the data for the done/stopped job.
+- [x] Bug: Webapp / Job Results when job is stopped: it seems to show prior job's scoring method, scores and other results if another job before it completed. it needs to show the data for the done/stopped job.
 - [ ] Clojure GA / Webapp UI: configurable length-deduction. right now we use a small length deduction for phenotypes just to break ties for same score -> smaller pheno has slightly better score.  I want to be able to change to a couple different other levels, where the length deduction is more significant. 2 other levels (maybe a 3-tick slider?) which has options like "Tiebreaker" (default), "Slight", "More". but with maybe better language. add this option to relevant job UI elements in the webapp.
 - [ ] Webapp improvement [after testing above bugfix]: If the backend process is stopped in the middle of a job, right now we just clear the job from the Results section. can we actually just stop the job and then we can still see it + in the history? 
 - [x] Webapp / Job History: stopped jobs should show up in the correct place in the job tree
