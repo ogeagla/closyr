@@ -55,13 +55,14 @@
   :tiebreaker)
 
 
-(def ^:private simplicity-bias-multipliers
-  "Score multipliers for each simplicity bias level.
-   Higher values = stronger preference for simpler formulas."
-  {:none       0.0
-   :tiebreaker 0.0000001
-   :light      0.000005
-   :strong     0.00005})
+(def ^:private simplicity-bias-config
+  "Configuration for each simplicity bias level.
+   :multiplier - Base multiplier for complexity penalty (higher = stronger preference for simpler formulas)
+   :cap - Maximum fraction of score that can be deducted (e.g., 0.1 = max 10% deduction)"
+  {:none       {:multiplier 0.0       :cap 0.0}
+   :tiebreaker {:multiplier 0.0000001 :cap 0.1}
+   :light      {:multiplier 0.000005  :cap 0.15}
+   :strong     {:multiplier 0.00005   :cap 0.25}})
 
 
 ;; Cache of expression string -> score. Reset between runs.
@@ -178,10 +179,11 @@
    - :light - light preference for simpler formulas
    - :strong - strong preference for simpler formulas"
   [score leafs]
-  (let [multiplier (get simplicity-bias-multipliers *simplicity-bias* 0.0000001)]
+  (let [{:keys [multiplier cap]} (get simplicity-bias-config *simplicity-bias*
+                                      {:multiplier 0.0000001 :cap 0.1})]
     (if (zero? multiplier)
       0.0
-      (* (abs score) (min 0.1 (* multiplier leafs leafs))))))
+      (* (abs score) (min cap (* multiplier leafs leafs))))))
 
 
 ;; =============================================================================

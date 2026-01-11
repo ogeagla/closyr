@@ -504,15 +504,26 @@
   (testing "simplicity-bias default is :tiebreaker"
     (is (= ops/*simplicity-bias* :tiebreaker)))
 
-  (testing "simplicity-bias-multipliers has expected keys"
-    (is (contains? @#'ops/simplicity-bias-multipliers :none))
-    (is (contains? @#'ops/simplicity-bias-multipliers :tiebreaker))
-    (is (contains? @#'ops/simplicity-bias-multipliers :light))
-    (is (contains? @#'ops/simplicity-bias-multipliers :strong))
-    ;; :none should have 0 multiplier
-    (is (= 0.0 (:none @#'ops/simplicity-bias-multipliers)))
-    ;; Others should have increasing values
-    (is (< (:tiebreaker @#'ops/simplicity-bias-multipliers)
-           (:light @#'ops/simplicity-bias-multipliers)))
-    (is (< (:light @#'ops/simplicity-bias-multipliers)
-           (:strong @#'ops/simplicity-bias-multipliers)))))
+  (testing "simplicity-bias-config has expected keys and structure"
+    (let [config @#'ops/simplicity-bias-config]
+      (is (contains? config :none))
+      (is (contains? config :tiebreaker))
+      (is (contains? config :light))
+      (is (contains? config :strong))
+      ;; Each level should have :multiplier and :cap
+      (doseq [level [:none :tiebreaker :light :strong]]
+        (is (contains? (get config level) :multiplier))
+        (is (contains? (get config level) :cap)))
+      ;; :none should have 0 multiplier and 0 cap
+      (is (= 0.0 (:multiplier (:none config))))
+      (is (= 0.0 (:cap (:none config))))
+      ;; Multipliers should have increasing values
+      (is (< (:multiplier (:tiebreaker config))
+             (:multiplier (:light config))))
+      (is (< (:multiplier (:light config))
+             (:multiplier (:strong config))))
+      ;; Caps should have increasing values
+      (is (< (:cap (:tiebreaker config))
+             (:cap (:light config))))
+      (is (< (:cap (:light config))
+             (:cap (:strong config)))))))
