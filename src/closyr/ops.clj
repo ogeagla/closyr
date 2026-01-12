@@ -62,7 +62,7 @@
   {:none       {:multiplier 0.0       :cap 0.0}
    :tiebreaker {:multiplier 0.0000001 :cap 0.1}
    :light      {:multiplier 0.00001   :cap 0.25}
-   :strong     {:multiplier 0.0005    :cap 0.5}})
+   :strong     {:multiplier 0.0001    :cap 2.5}})
 
 
 ;; Cache of expression string -> score. Reset between runs.
