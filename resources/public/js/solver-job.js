@@ -821,12 +821,15 @@ function showStoppedJobResults(job) {
     disposeFitChart();
 
     // Build scores display from progressData['best-scores']
+    // Include raw scores and length deductions for proper display
     let scoresHtml = '';
     const bestScores = progressData['best-scores'];
     if (bestScores) {
         // best-scores already has the right format: {'mae-max': ..., 'log-cosh': ..., 'r-squared': ...}
         const bestSolution = {
             scores: bestScores,
+            rawScores: progressData['best-raw-scores'],
+            lengthDeductions: progressData['length-deductions'],
             score: progressData['best-score']
         };
         scoresHtml = formatAllScores(bestSolution, scoringMethod, scoreHistory);
