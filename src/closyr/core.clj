@@ -185,7 +185,7 @@ ________/\\\\\\\\\__/\\\___________________/\\\\\__________/\\\\\\\\\\\____/\\\_
     (if-let [port (:web-port opts)]
       ;; Web server mode
       (do
-        (log/info "Starting web server on port" port)
+        (log/info "CLI starting web server on port" port)
         (web-server/start! {:port port})
         ;; Keep the main thread alive
         @(promise))
