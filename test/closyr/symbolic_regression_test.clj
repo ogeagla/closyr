@@ -498,22 +498,22 @@
                           :r-squared (score-pheno-with-method r2-best :r-squared)}]
 
       ;; Log results for inspection
-      (println "\n=== Cross-Method Scoring Comparison ===")
-      (println "MAE-trained best formula:" (str (:expr mae-best)))
-      (println "  scored as MAE:" (:mae-max mae-best-scores)
-               "log-cosh:" (:log-cosh mae-best-scores)
-               "R²:" (:r-squared mae-best-scores))
-
-      (println "Log-cosh-trained best formula:" (str (:expr log-cosh-best)))
-      (println "  scored as MAE:" (:mae-max log-cosh-best-scores)
-               "log-cosh:" (:log-cosh log-cosh-best-scores)
-               "R²:" (:r-squared log-cosh-best-scores))
-
-      (println "R²-trained best formula:" (str (:expr r2-best)))
-      (println "  scored as MAE:" (:mae-max r2-best-scores)
-               "log-cosh:" (:log-cosh r2-best-scores)
-               "R²:" (:r-squared r2-best-scores))
-      (println "========================================\n")
+      ;(println "\n=== Cross-Method Scoring Comparison ===")
+      ;(println "MAE-trained best formula:" (str (:expr mae-best)))
+      ;(println "  scored as MAE:" (:mae-max mae-best-scores)
+      ;         "log-cosh:" (:log-cosh mae-best-scores)
+      ;         "R²:" (:r-squared mae-best-scores))
+      ;
+      ;(println "Log-cosh-trained best formula:" (str (:expr log-cosh-best)))
+      ;(println "  scored as MAE:" (:mae-max log-cosh-best-scores)
+      ;         "log-cosh:" (:log-cosh log-cosh-best-scores)
+      ;         "R²:" (:r-squared log-cosh-best-scores))
+      ;
+      ;(println "R²-trained best formula:" (str (:expr r2-best)))
+      ;(println "  scored as MAE:" (:mae-max r2-best-scores)
+      ;         "log-cosh:" (:log-cosh r2-best-scores)
+      ;         "R²:" (:r-squared r2-best-scores))
+      ;(println "========================================\n")
 
       ;; Basic assertions - all scores should be numeric and negative (closer to 0 = better)
       (is (number? (:mae-max mae-best-scores)))

@@ -298,9 +298,9 @@
                          "x/2+Sin(x)"]
           initial-pop (seeded-phenotypes seed-formulas 0.2 20)
 
-          _ (log/error "Created initial pop of" (count initial-pop) "phenotypes")
+          _ (log/debug "Created initial pop of" (count initial-pop) "phenotypes")
           _ (doseq [p (take 3 initial-pop)]
-              (log/error "  Initial phenotype:" (str (:expr p)) "sym:" (:sym p)))
+              (log/debug "  Initial phenotype:" (str (:expr p)) "sym:" (:sym p)))
 
           score-fn (partial ops/score-fn run-args run-config)
           mutation-fn (partial ops/mutation-fn run-config mutations)
@@ -317,7 +317,7 @@
             (doseq [p (:pop evolved)]
               (let [expr-str (str (:expr p))]
                 (when (.contains expr-str "Function(")
-                  (log/error "CORRUPTION DETECTED at iteration" (- 20 i) ":" expr-str))
+                  (log/debug "CORRUPTION DETECTED at iteration" (- 20 i) ":" expr-str))
                 (is (not (.contains expr-str "Function("))
                     (str "Expression corrupted with Function(: " expr-str))
                 (is (not (.contains expr-str "Hold("))
@@ -354,9 +354,9 @@
                          "1/(1+x^2)"]
           initial-pop (seeded-phenotypes seed-formulas 0.0 10)]
 
-      (log/error "Testing complex formulas:")
+      (log/debug "Testing complex formulas:")
       (doseq [p initial-pop]
-        (log/error "  Parsed:" (str (:expr p))))
+        (log/debug "  Parsed:" (str (:expr p))))
 
       ;; Just verify they all parsed correctly
       (is (= 10 (count initial-pop)) "All formulas should parse")
@@ -377,7 +377,7 @@
                 (let [expr-str (str (:expr p))]
                   (when (or (.contains expr-str "Function(")
                             (.contains expr-str "Hold("))
-                    (log/error "CORRUPTION at iter" (- 10 i) ":" expr-str))
+                    (log/debug "CORRUPTION at iter" (- 10 i) ":" expr-str))
                   (is (not (.contains expr-str "Function(")) expr-str)
                   (is (not (.contains expr-str "Hold(")) expr-str)))
               (recur evolved (dec i))))))))
@@ -410,7 +410,7 @@
                          "Sin(x)+x^2/100"]
           initial-pop (seeded-phenotypes seed-formulas 0.2 100)
 
-          _ (log/error "Intensive test: pop=" (count initial-pop))
+          _ (log/debug "Intensive test: pop=" (count initial-pop))
 
           score-fn (partial ops/score-fn run-args run-config)
           mutation-fn (partial ops/mutation-fn run-config mutations)
@@ -430,7 +430,7 @@
               (let [expr-str (str (:expr p))]
                 (when (or (.contains expr-str "Function(")
                           (.contains expr-str "Hold("))
-                  (log/error "CORRUPTION at iter" (- 50 i) "in pop:" expr-str)
+                  (log/debug "CORRUPTION at iter" (- 50 i) "in pop:" expr-str)
                   (throw (ex-info "Corruption detected!" {:expr expr-str :iter (- 50 i)})))
                 (is (not (.contains expr-str "Function(")) expr-str)
                 (is (not (.contains expr-str "Hold(")) expr-str)))
@@ -449,7 +449,7 @@
       (doseq [f formulas]
         (let [p (parse-formula->phenotype f)
               expr-str (str (:expr p))]
-          (log/error "Parsed formula" f "=> expr:" expr-str)
+          (log/debug "Parsed formula" f "=> expr:" expr-str)
           (is (not (.contains expr-str "Function("))
               (str "Formula " f " should not have Function( in expr: " expr-str))
           (is (not (.contains expr-str "Hold("))
@@ -464,12 +464,12 @@
                     :input-xs-count (count xs)}
           p (parse-formula->phenotype "Sin(x)")]
 
-      (log/error "Before eval, expr:" (str (:expr p)))
+      (log/debug "Before eval, expr:" (str (:expr p)))
 
       ;; Evaluate the phenotype
       (let [result (closyr.ops.eval/eval-vec-pheno p run-args)]
-        (log/error "After eval, result:" result)
-        (log/error "After eval, expr:" (str (:expr p))))
+        (log/debug "After eval, result:" result)
+        (log/debug "After eval, expr:" (str (:expr p))))
 
       ;; The phenotype's expr should not be mutated by evaluation
       (is (not (.contains (str (:expr p)) "Function("))
@@ -491,12 +491,12 @@
           run-config {:max-leafs 40}
           p (parse-formula->phenotype "Sin(x)")]
 
-      (log/error "Before score, expr:" (str (:expr p)))
+      (log/debug "Before score, expr:" (str (:expr p)))
 
       ;; Score the phenotype
       (let [score (ops/score-fn run-args run-config p)]
-        (log/error "Score:" score)
-        (log/error "After score, expr:" (str (:expr p))))
+        (log/debug "Score:" score)
+        (log/debug "After score, expr:" (str (:expr p))))
 
       ;; The phenotype's expr should not be mutated by scoring
       (is (not (.contains (str (:expr p)) "Function("))
@@ -525,7 +525,7 @@
         (let [result (try
                        (parse-formula->phenotype formula)
                        (catch Exception e
-                         (log/error "Exception parsing corrupted formula:" formula "-" (.getMessage e))
+                         (log/debug "Exception parsing corrupted formula:" formula "-" (.getMessage e))
                          :exception))]
           ;; Parsing corrupted formulas might return nil or a phenotype,
           ;; but should NOT throw exceptions

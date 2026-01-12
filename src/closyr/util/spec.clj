@@ -32,8 +32,8 @@
   [n s o]
   (when (and *check-schema* (not (m/validate s o)))
     (let [explained (me/humanize (m/explain s o))]
-      (log/error "Error in input schema: " n)
-      (pp/pprint [n explained])
+      (log/error "Error in input schema: " n explained)
+      ;(pp/pprint [n explained])
       (throw (Exception. (str "Error, input failed schema: " [n explained])))))
   true)
 
