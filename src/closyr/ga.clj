@@ -60,12 +60,18 @@
 
 
 (defn- with-score
-  "Score a phenotype, catching any exceptions and returning min-score on failure."
+  "Score a phenotype, catching any exceptions and returning min-score on failure.
+   Re-throws InterruptedException to allow job cancellation."
   [the-score-fn p]
   (if (:score p)
     p
     (try
+      ;; Check for interruption before expensive scoring
+      (when (Thread/interrupted)
+        (throw (InterruptedException. "Scoring interrupted")))
       (assoc p :score (the-score-fn p))
+      (catch InterruptedException e
+        (throw e))  ; Re-throw to propagate interruption
       (catch Exception e
         (log/warn "Scoring failed for phenotype, using min-score:" (.getMessage e))
         (assoc p :score min-score)))))
@@ -145,25 +151,42 @@
       [all-scores all-pop])))
 
 
+(defn- check-interrupted!
+  "Check if current thread has been interrupted and throw if so.
+   This allows jobs to be stopped more quickly during evolution."
+  []
+  (when (Thread/interrupted)
+    (throw (InterruptedException. "Evolution interrupted"))))
+
+
 (defn evolve
   "Evolve a population using random competition.
-  Optimized to reduce intermediate allocations using transducers and in-place operations."
+  Optimized to reduce intermediate allocations using transducers and in-place operations.
+  Checks for thread interruption to allow jobs to be stopped cleanly."
   [{:keys [pop score-fn mutation-fn crossover-fn]
     :as   config}]
   (try
+    ;; Check for interruption before starting expensive work
+    (check-interrupted!)
     (let [;; Score population (parallel if not deterministic)
           scored-pop  (if *deterministic-mode*
                         (mapv (partial with-score score-fn) pop)
                         (into [] (pmap (partial with-score score-fn) pop)))
+          ;; Check again after scoring
+          _ (check-interrupted!)
           ;; Shuffle in-place, returning ArrayList for efficient indexed access
           shuffled    (shuffle-arraylist! scored-pop)
           ;; Process in chunks
           chunk-size  (pop->chunks pop)
           [pop-scores new-pop] (process-chunks-parallel config shuffled chunk-size)]
-
+      ;; Final check before returning
+      (check-interrupted!)
       (assoc config
         :pop new-pop
         :pop-scores pop-scores))
+    (catch InterruptedException e
+      (log/info "Evolution interrupted by user")
+      (throw e))
     (catch Exception e
       (log/error "Err in evolve: " e)
       (throw e))))

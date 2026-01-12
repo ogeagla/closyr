@@ -58,10 +58,18 @@
     (.setQuietMode true)))
 
 
+(def ^:dynamic *eval-timeout-seconds*
+  "Timeout in seconds for expression evaluation. 0 means no timeout.
+   Default is 10 seconds to prevent infinite hangs."
+  10)
+
+
 (defn ^ExprEvaluator new-util
-  "Create a new expr evaluator"
+  "Create a new expr evaluator with timeout to prevent infinite hangs.
+   The timeout prevents Symja from getting stuck on complex expressions
+   that would otherwise block threads indefinitely."
   []
-  (ExprEvaluator. (new-eval-engine) true 0))
+  (ExprEvaluator. (new-eval-engine) true (int *eval-timeout-seconds*)))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->exprs-list

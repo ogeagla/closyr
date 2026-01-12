@@ -17,6 +17,8 @@
   (:import
     (java.io StringReader)
     (java.util Date)
+    (java.util.concurrent Future)
+    (org.matheclipse.core.eval.exception TimeoutException)
     (org.matheclipse.core.interfaces IExpr)))
 
 
@@ -103,13 +105,26 @@
 
 
 (defn- interrupted-exception?
-  "Check if an exception or any of its causes is an InterruptedException."
+  "Check if an exception or any of its causes is an InterruptedException or TimeoutException."
   [^Throwable e]
   (loop [ex e]
     (cond
       (nil? ex) false
       (instance? InterruptedException ex) true
+      (instance? org.matheclipse.core.eval.exception.TimeoutException ex) true
       :else (recur (.getCause ex)))))
+
+
+(defn- cancel-future-with-interrupt!
+  "Cancel a future and interrupt its thread if running.
+   Unlike future-cancel which uses .cancel(false), this uses .cancel(true)
+   to actually interrupt the running thread."
+  [^Future f]
+  (when f
+    (try
+      (.cancel f true)  ; true = interrupt if running
+      (catch Exception e
+        (log/warn "Error cancelling future:" (.getMessage e))))))
 
 
 (defn- run-solver-job!
@@ -351,9 +366,9 @@
                                                        {:last-progress progress})))
               ((:close! sse-channel))
               (catch Exception _ nil)))
-          ;; Also try to cancel the future
+          ;; Cancel the future with interrupt to actually stop the thread
           (when-let [f (:future job)]
-            (future-cancel f))
+            (cancel-future-with-interrupt! f))
           {:status  200
            :headers {"Content-Type" "application/json"}
            :body    (json/encode {:message "Stop requested" :jobId job-id})})
