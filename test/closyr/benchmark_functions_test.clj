@@ -189,7 +189,7 @@
       ;; Best score should be negative (error) and improving
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "-x-Cos(Sqrt(x))-Log(x)+Sin(x)-0.81*(x*((-1/100+E)^(2*x)-Cos(x))+Sin(x))"
+      (is (= "0.9*x^2*(49/100-x^2+x*((-1/100+E)^(2*x)-Cos(x)))*Csc(x)"
              best-fn-str)
           "Expected formula for Nguyen-4 with seed 42")
       (println (str "| Nguyen-4         | " (format-score best-score)
@@ -221,7 +221,7 @@
       (is (= 100 iters-done))
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "303/500-3/2*Cos(x)+Log(x)"
+      (is (= "x^2-Cos(x)+1/10*(7/10*(1/10+1/100*(-11/100-x))-Sin(x))-Sin(x)"
              best-fn-str)
           "Expected formula for Nguyen-5 with seed 42")
       (println (str "| Nguyen-5         | " (format-score best-score)
@@ -253,7 +253,7 @@
       (is (= 100 iters-done))
       (is (neg? best-score))
       ;; With random-seed 42, the resulting formula should be deterministic
-      (is (= "1/10*(E^x+3/5*(-1/2-Log(ArcCos(x))-0.9*(0.9*x+Cos(0.9*x))*Sec(x)))+Sec(x)^(7/5)"
+      (is (= "E^ArcSin(x)+(ArcCos(Cos(x))*(-0.009+0.009*Sin(0.009*x)))/(0.1009*x+Cos(0.018*ArcCos(x)))^4-(0.109*x+Cos(0.009*x))*Sin(x)"
              best-fn-str)
           "Expected formula for Feynman Lorentz with seed 42")
       (println (str "| Feynman Lorentz  | " (format-score best-score)

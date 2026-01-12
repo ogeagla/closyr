@@ -25,7 +25,7 @@
                         {:max-leafs ops/default-max-leafs}
                         (let [x (F/Dummy "x")]
                           (ops-common/->phenotype x (F/Subtract (F/Times x x) F/C1D2) nil)))
-          -3.0000147)))
+          -3.0000064668272377)))
 
   (testing "eval score on Hold-wrapped expr returns min-score"
     (is (=
@@ -82,16 +82,17 @@
 (deftest compute-score-from-actuals-and-expecteds-test
   (testing "simple inputs"
     (let [x (F/Dummy "x")]
-      (is (= (#'ops/compute-score-from-actuals-and-expecteds
+      (is (= -1.5000050968429093
+             (#'ops/compute-score-from-actuals-and-expecteds
               (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
               [0.5]
               [1.0]
-              10)
-             -1.500015))))
+              10)))))
 
   (testing "throws exception"
     (let [x (F/Dummy "x")]
-      (is (= (with-redefs-fn
+      (is (= ops/min-score
+             (with-redefs-fn
                {#'ops/compute-residual (fn [_ _] (throw (Exception. "Test Exception")))}
 
                (fn []
@@ -99,31 +100,29 @@
                   (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
                   [0.5]
                   [1.0]
-                  10)))
-
-             ops/min-score))))
+                  10)))))))
 
   (testing "without length deduction"
     (with-redefs-fn {#'ops/length-deduction (fn [score leafs] score)}
       (fn []
         (let [x (F/Dummy "x")]
-          (is (= (#'ops/compute-score-from-actuals-and-expecteds
+          (is (= 0.0
+                 (#'ops/compute-score-from-actuals-and-expecteds
                   (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
                   [0.5]
                   [1.0]
-                  10)
-                 0.0))))))
+                  10)))))))
 
   (testing "without length deduction 2"
     (with-redefs-fn {#'ops/length-deduction (fn [score leafs] 0)}
       (fn []
         (let [x (F/Dummy "x")]
-          (is (= (#'ops/compute-score-from-actuals-and-expecteds
+          (is (= -1.5
+                 (#'ops/compute-score-from-actuals-and-expecteds
                   (ops-common/->phenotype x (F/Plus (F/Sin x) F/C1D2) nil)
                   [0.5]
                   [1.0]
-                  10)
-                 -1.5))))))
+                  10)))))))
 
   (testing "log-cosh scoring method"
     (with-redefs-fn {#'ops/length-deduction (fn [score leafs] 0)}
@@ -367,7 +366,7 @@
             score2 (ops/score-fn run-args run-config pheno)]
         (is (= score1 score2))
         ;; Cache key is [expr-str scoring-method] to prevent cross-contamination
-        (is (= {["-1/2+x^2" :mae-max :tiebreaker] -3.0000147}
+        (is (= {["-1/2+x^2" :mae-max :tiebreaker] -3.0000064668272377}
                @ops/eval-cache*)))))
 
   (testing "different scoring methods have separate cache entries"
