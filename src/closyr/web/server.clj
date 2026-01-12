@@ -3,7 +3,8 @@
   (:require
     [closyr.util.log :as log]
     [closyr.web.routes :as routes]
-    [ring.adapter.jetty :as jetty]))
+    [ring.adapter.jetty :as jetty])
+  (:import (org.eclipse.jetty.server Server)))
 
 
 (set! *warn-on-reflection* true)
@@ -20,7 +21,7 @@
   ([{:keys [port] :or {port 3000}}]
    (when @server*
      (log/warn "Server already running, stopping first...")
-     (.stop ^org.eclipse.jetty.server.Server @server*))
+     (.stop ^Server @server*))
    (log/info "Starting web server on port" port)
    (let [server (jetty/run-jetty #'routes/app
                                  {:port  port
@@ -33,7 +34,7 @@
 (defn stop!
   "Stop the running HTTP server."
   []
-  (when-let [^org.eclipse.jetty.server.Server server @server*]
+  (when-let [^Server server @server*]
     (log/info "Stopping web server...")
     (.stop server)
     (reset! server* nil)

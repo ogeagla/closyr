@@ -17,6 +17,8 @@
 
     <logger name="closyr" level="INFO"/>
 
+    <logger name="org.eclipse.jetty" level="OFF" />
+
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
