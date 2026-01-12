@@ -61,8 +61,8 @@
    :cap - Maximum fraction of score that can be deducted (e.g., 0.1 = max 10% deduction)"
   {:none       {:multiplier 0.0       :cap 0.0}
    :tiebreaker {:multiplier 0.0000001 :cap 0.1}
-   :light      {:multiplier 0.000005  :cap 0.15}
-   :strong     {:multiplier 0.00075   :cap 5.0}})
+   :light      {:multiplier 0.00001   :cap 0.5}
+   :strong     {:multiplier 0.0005    :cap 5.0}})
 
 
 ;; Cache of expression string -> score. Reset between runs.
