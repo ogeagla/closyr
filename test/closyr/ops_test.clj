@@ -367,7 +367,7 @@
             score2 (ops/score-fn run-args run-config pheno)]
         (is (= score1 score2))
         ;; Cache key is [expr-str scoring-method] to prevent cross-contamination
-        (is (= {["-1/2+x^2" :mae-max] -3.0000147}
+        (is (= {["-1/2+x^2" :mae-max :tiebreaker] -3.0000147}
                @ops/eval-cache*)))))
 
   (testing "different scoring methods have separate cache entries"
