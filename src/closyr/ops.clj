@@ -61,8 +61,8 @@
    :cap - Maximum fraction of score that can be deducted (e.g., 0.1 = max 10% deduction)"
   {:none       {:multiplier 0.0       :cap 0.0}
    :tiebreaker {:multiplier 0.0000001 :cap 0.1}
-   :light      {:multiplier 0.000001  :cap 0.25}
-   :strong     {:multiplier 0.00005   :cap 2.5}})
+   :light      {:multiplier 0.00001   :cap 0.2}
+   :strong     {:multiplier 0.001     :cap 2.0}})
 
 
 ;; Cache of expression string -> score. Reset between runs.
@@ -183,7 +183,7 @@
                                       {:multiplier 0.0000001 :cap 0.1})]
     (if (zero? multiplier)
       0.0
-      (* (abs score) (min cap (* multiplier leafs leafs))))))
+      (* (abs score) (min cap (* multiplier leafs #_leafs (+ 1.0 (Math/log (+ leafs 1)))))))))
 
 
 ;; =============================================================================
