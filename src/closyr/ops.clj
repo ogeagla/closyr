@@ -375,7 +375,8 @@
           ;; Include scoring method in cache key to prevent cross-contamination
           ;; between concurrent jobs using different scoring methods
           effective-scoring-method (or (:scoring-method run-config) *scoring-method*)
-          cache-key [expr-str effective-scoring-method]]
+          effective-simplicity-bias (or (:simplicity-bias run-config) *simplicity-bias*)
+          cache-key [expr-str effective-scoring-method effective-simplicity-bias]]
       (if *use-eval-cache*
         ;; Cached path
         (if-let [cached-score (get @eval-cache* cache-key)]
