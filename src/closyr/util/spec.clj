@@ -32,8 +32,8 @@
   [n s o]
   (when (and *check-schema* (not (m/validate s o)))
     (let [explained (me/humanize (m/explain s o))]
-      (log/error "Error in input schema: " n)
-      (pp/pprint [n explained])
+      (log/error "Error in input schema: " n explained)
+      ;(pp/pprint [n explained])
       (throw (Exception. (str "Error, input failed schema: " [n explained])))))
   true)
 
@@ -144,6 +144,17 @@
 (def ^:private PopulationCount
   [:int {:min 1 :max 100000}])
 
+(def ^:private RandomSeed
+  [:int {:min Integer/MIN_VALUE :max Integer/MAX_VALUE}])
+
+
+(def ^:private ScoringMethod
+  [:enum :mae-max :log-cosh :r-squared])
+
+
+(def ^:private SimplicityBias
+  [:enum :none :tiebreaker :light :strong])
+
 
 (def ^:private GAPhenotype
   [:map
@@ -189,10 +200,17 @@
    [:use-gui? :boolean]
    [:max-leafs #'MaxLeafs]
    [:input-phenos-count {:optional true} #'PopulationCount]
-   [:log-steps pos-int?]
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
+   [:log-steps {:optional true} [:maybe pos-int?]]
    [:use-flamechart [:maybe :boolean]]
    [:input-xs-exprs [:vector #'SymbolicExpr]]
-   [:input-ys-exprs [:vector #'SymbolicExpr]]])
+   [:input-ys-exprs [:vector #'SymbolicExpr]]
+   [:progress-callback {:optional true} [:maybe fn?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private ExtendedDomainArgs
@@ -215,10 +233,20 @@
    [:input-xs-count #'PointsCount]
    [:input-xs-vec #'NumberVector]
    [:input-ys-vec #'NumberVector]
+   [:input-ys-arr {:optional true} some?]
    [:input-iters #'Iterations]
    [:initial-phenos [:maybe #'GAPopulationPhenotypes]]
    [:input-phenos-count [:maybe #'PopulationCount]]
-   [:max-leafs [:maybe #'MaxLeafs]]])
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
+   [:max-leafs [:maybe #'MaxLeafs]]
+   [:progress-callback {:optional true} [:maybe fn?]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private SolverEvalArgs
@@ -232,6 +260,7 @@
   [:map
    {:closed false}
    [:input-ys-vec #'NumberVector]
+   [:input-ys-arr {:optional true} some?]
    [:input-xs-list #'PrimitiveArrayOfIExpr]
    [:input-xs-count #'PointsCount]])
 
@@ -262,7 +291,15 @@
    [:input-ys-vec #'NumberVector]
    [:input-iters #'Iterations]
    [:input-phenos-count #'PopulationCount]
-   [:max-leafs [:maybe #'MaxLeafs]]])
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
+   [:max-leafs [:maybe #'MaxLeafs]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private SolverInputArgs
@@ -279,7 +316,16 @@
    [:input-iters {:optional true} #'Iterations]
    [:iters {:optional true} #'Iterations]
    [:input-phenos-count {:optional true} #'PopulationCount]
-   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:progress-callback {:optional true} [:maybe fn?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private SolverGUIMessage
@@ -290,7 +336,15 @@
    [:input-data-y #'NumberVector]
    [:input-iters #'Iterations]
    [:input-phenos-count #'PopulationCount]
-   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]])
+   [:random-seed {:optional true} [:maybe #'RandomSeed]]
+   [:max-leafs {:optional true} [:maybe #'MaxLeafs]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:log-steps {:optional true} [:maybe pos-int?]]
+   [:adaptive-mode {:optional true} [:maybe :boolean]]
+   [:quiet-logs {:optional true} [:maybe :boolean]]
+   [:use-eval-cache {:optional true} [:maybe :boolean]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private CLIArgs
@@ -303,7 +357,15 @@
    [:xs {:optional true} [:maybe #'NumberVector]]
    [:ys {:optional true} [:maybe #'NumberVector]]
    [:use-flamechart {:optional true} boolean?]
-   [:max-leafs {:optional true} #'MaxLeafs]])
+   [:max-leafs {:optional true} #'MaxLeafs]
+   [:seed {:optional true} [:maybe #'RandomSeed]]
+   [:mutations-whitelist {:optional true} [:maybe [:vector string?]]]
+   [:mutations-blacklist {:optional true} [:maybe [:vector string?]]]
+   [:adaptive-mode {:optional true} [:maybe boolean?]]
+   [:quiet-logs {:optional true} [:maybe boolean?]]
+   [:use-eval-cache {:optional true} [:maybe boolean?]]
+   [:scoring-method {:optional true} [:maybe #'ScoringMethod]]
+   [:simplicity-bias {:optional true} [:maybe #'SimplicityBias]]])
 
 
 (def ^:private ModificationsResult

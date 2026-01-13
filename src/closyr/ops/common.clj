@@ -3,12 +3,11 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [closyr.util.log :as log]
-    [closyr.util.prng :refer :all]
+    [closyr.util.prng :as prng :refer [rand rand-int rand-nth shuffle]]
     [closyr.util.spec :as specs])
   (:import
     (java.util
-      Date
-      UUID)
+      Date)
     (java.util.function
       Function)
     (org.matheclipse.core.eval
@@ -59,10 +58,18 @@
     (.setQuietMode true)))
 
 
+(def ^:dynamic *eval-timeout-seconds*
+  "Timeout in seconds for expression evaluation. 0 means no timeout.
+   Default is 10 seconds to prevent infinite hangs."
+  10)
+
+
 (defn ^ExprEvaluator new-util
-  "Create a new expr evaluator"
+  "Create a new expr evaluator with timeout to prevent infinite hangs.
+   The timeout prevents Symja from getting stuck on complex expressions
+   that would otherwise block threads indefinitely."
   []
-  (ExprEvaluator. (new-eval-engine) true 0))
+  (ExprEvaluator. (new-eval-engine) true (int *eval-timeout-seconds*)))
 
 
 (defn ^"[Lorg.matheclipse.core.interfaces.IExpr;" exprs->exprs-list
@@ -132,18 +139,34 @@
     expr))
 
 
+(defn- hold-expr?
+  "Check if an expression is wrapped in Hold() which prevents numeric evaluation"
+  [^IExpr expr]
+  (and expr
+       (.isAST expr)
+       (= (.head expr) F/Hold)))
+
 (defn ->phenotype
-  "Create a GA phenotype from an expr and symbol and other args"
-  [^ISymbol variable ^IAST expr ^ExprEvaluator util]
+  "Create a GA phenotype from an expr and symbol and other args.
+   IMPORTANT: Always creates a fresh ExprEvaluator for thread safety.
+   Symja's ExprEvaluator has internal mutable state (ArrayDeque stacks) that is not thread-safe.
+   When using pmap for parallel mutation/scoring, shared evaluators cause ArrayDeque corruption."
+  [^ISymbol variable ^IAST expr ^ExprEvaluator _util]
   (try
-    (let [^ExprEvaluator util (or util (new-util))]
-      {:sym  variable
-       :util util
-       :id   (UUID/randomUUID)
-       :expr (.eval util (valid-expr-or-default variable expr))})
+    ;; Always create fresh evaluator for thread safety - never reuse passed-in util
+    (let [^ExprEvaluator fresh-util (new-util)
+          ^IExpr result (.eval fresh-util (valid-expr-or-default variable expr))]
+      ;; Reject expressions wrapped in Hold() as they can't be numerically evaluated
+      (when-not (hold-expr? result)
+        {:sym  variable
+         :util fresh-util
+         :id   (prng/random-uuid)
+         :expr result}))
     (catch Exception e
-      (log/error "Err creating pheno from expr/x: "
-                 (str expr) " / " (str variable) " : " (or (.getMessage e) e)))))
+      ;; These are expected during evolution - not logged by default as they're noisy
+      nil
+      (log/debug "Eval error for expr: " (subs (str expr) 0 (min 60 (count (str expr)))) "..." (.getMessage e))
+      )))
 
 
 (defn- probability-inversely-proportional-to-leaf-size

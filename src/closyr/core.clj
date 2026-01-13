@@ -5,7 +5,9 @@
     [clojure.tools.cli :as cli]
     [closyr.symbolic-regression :as symreg]
     [closyr.util.csv :as input-csv]
-    [closyr.util.log :as log])
+    [closyr.util.log :as log]
+    [closyr.util.prng :as prng]
+    [closyr.web.server :as web-server])
   (:import
     (java.io
       File)))
@@ -31,6 +33,15 @@
       ns)
     (catch Exception e
       (log/error "Can't parse numbers str: " numbers-str " : " (.getMessage e)))))
+
+
+(defn- str->string-vec
+  "Parse comma-separated strings into a vector"
+  [s]
+  (when (and s (not (str/blank? s)))
+    (->> (str/split s #"\,")
+         (mapv str/trim)
+         (filterv (complement str/blank?)))))
 
 
 (def ^:private cli-options
@@ -77,6 +88,44 @@
     :default false
     :id :use-flamechart]
 
+   ["-s" "--seed SEED" "Random seed for reproducible results"
+    :default nil
+    :parse-fn #(Long/parseLong %)
+    :id :seed]
+
+   ["-w" "--mutations-whitelist WHITELIST" "Comma-separated list of mutation labels to use (whitelist)"
+    :default nil
+    :parse-fn str->string-vec
+    :id :mutations-whitelist]
+
+   ["-b" "--mutations-blacklist BLACKLIST" "Comma-separated list of mutation labels to exclude (blacklist)"
+    :default nil
+    :parse-fn str->string-vec
+    :id :mutations-blacklist]
+
+   ["-a" "--adaptive" "Enable adaptive mutation rates (adjusts based on population diversity)"
+    :default false
+    :id :adaptive-mode]
+
+   ["-q" "--quiet" "Quiet logging mode (suppress detailed iteration logs)"
+    :default false
+    :id :quiet-logs]
+
+   [nil "--cache" "Enable evaluation cache (cache scores by expression string)"
+    :default false
+    :id :use-eval-cache]
+
+   [nil "--scoring METHOD" "Scoring method: mae-max (default), log-cosh, or r-squared"
+    :default :mae-max
+    :parse-fn keyword
+    :validate [#{:mae-max :log-cosh :r-squared} "Scoring method must be: mae-max, log-cosh, or r-squared"]
+    :id :scoring-method]
+
+   [nil "--web [PORT]" "Start HTTP web server instead of GUI (default port: 3000)"
+    :default nil
+    :parse-fn #(if (str/blank? %) 3000 (Integer/parseInt %))
+    :id :web-port]
+
    #_["-v" nil "Verbosity level"
       :id :verbosity
       :default 0
@@ -110,7 +159,7 @@
                (and xs (nil? ys)) (log/error "Error: only XS provided, please provide YS. XS/YS: " xs ys)
                (and ys (nil? xs)) (log/error "Error: only YS provided, please provide XS. XS/YS: " xs ys)
                :else opts)]
-    (dissoc opts :infile)))
+    (dissoc opts :infile :web-port)))
 
 
 (def ^:private big-text
@@ -132,7 +181,16 @@ ________/\\\\\\\\\__/\\\___________________/\\\\\__________/\\\\\\\\\\\____/\\\_
   [& args]
   (log/info big-text)
 
-  (some->
-    (parse-main-opts args)
-    (validate-symreg-opts)
-    (symreg/run-app-from-cli-args)))
+  (let [opts (parse-main-opts args)]
+    (if-let [port (:web-port opts)]
+      ;; Web server mode
+      (do
+        (log/info "CLI starting web server on port" port)
+        (web-server/start! {:port port})
+        ;; Keep the main thread alive
+        @(promise))
+      ;; GUI or headless mode
+      (some->
+        opts
+        (validate-symreg-opts)
+        (symreg/run-app-from-cli-args)))))

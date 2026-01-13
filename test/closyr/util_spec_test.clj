@@ -26,6 +26,7 @@
                         {:max-leafs          20,
                          :input-iters        10000,
                          :input-phenos-count 50000,
+                         :random-seed        -1,
                          :new-state          :start,
                          :input-data-x
                          [0.0
@@ -188,7 +189,7 @@
         (is (=
               (reduce + 0 (map (fn [[k v]] (count v)) ss))
               ;; the number of total defns which have malli/schema metadata in entire src:
-              17))))))
+              14))))))
 
 
 #_(deftest decode-test

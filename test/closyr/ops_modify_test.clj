@@ -7,6 +7,7 @@
     [closyr.ops.modify :as ops-modify]
     [closyr.util.prng :as prng])
   (:import
+    (java.util UUID)
     (org.matheclipse.core.expression
       F)
     (org.matheclipse.core.interfaces
@@ -399,6 +400,44 @@
                       :expr (F/Plus x (F/Times x (F/Cos (F/Subtract x F/C1D2))))})
                    nil)))))))
 
+  ;; Test for fix: when ->phenotype returns nil in the "record new last op" branch,
+  ;; crossover should return nil (not an incomplete map like {:last-op "cros:plus"})
+  (with-redefs-fn {#'prng/rand-int         (fn [maxv] (dec maxv))
+                   #'prng/rand-nth         (fn [coll] (first coll))
+                   #'ops-common/->phenotype (fn [_ _ _] nil)}
+    (fn []
+      (with-redefs [ops-modify/crossover-sampler [:plus]]
+        (let [x (F/Dummy "x")]
+          (testing "Crossover returns nil when ->phenotype fails (new expr branch)"
+            (is (= (ops-modify/crossover
+                     100
+                     {:sym  x
+                      :expr (F/Cos x)}
+                     {:sym  x
+                      :expr (F/Sin x)})
+                   nil)))))))
+
+  ;; Test for fix: when ->phenotype returns nil in the "keep last op" branch (discount-mod? true),
+  ;; crossover should return the original phenotype p unchanged
+  (with-redefs-fn {#'prng/rand-int         (fn [maxv] (dec maxv))
+                   #'prng/rand-nth         (fn [coll] (first coll))
+                   #'ops-common/->phenotype (fn [_ _ _] nil)}
+    (fn []
+      (with-redefs [ops-modify/crossover-sampler [:plus]
+                    ;; Force discount-mod? to be true
+                    ops-modify/check-modification-result (fn [_ _ _] [false true])]
+        (let [x (F/Dummy "x")
+              test-uuid (UUID/randomUUID)
+              original-pheno {:sym x :expr (F/Cos x) :id test-uuid}]
+          (testing "Crossover returns original phenotype when ->phenotype fails (discount branch)"
+            (is (= (ops-modify/crossover
+                     100
+                     original-pheno
+                     {:sym  x
+                      :expr (F/Sin x)
+                      :id   (UUID/randomUUID)})
+                   original-pheno)))))))
+
   (with-redefs-fn {#'prng/rand-int (fn [maxv] (dec maxv))
                    #'prng/rand-nth (fn [coll] (last coll))}
     (fn []
@@ -460,6 +499,7 @@
                    "x^4*Cos(1/2-x)^4"))))))))
 
 
+;; initial fn that's getting modified is: x + cos(x)/sqrt(x) + x*sin(x-0.5) - 1
 (def all-mods-applied-on-fn-expected
   [[:modify-fn
     "Derivative"
@@ -598,10 +638,10 @@
     "-1-x+Cos(x)/Sqrt(-x)+x*Sin(1/2+x)"]
    [:modify-leafs
     "1.1*x"
-    "-1+1.1*x+(0.9534625892455922*Cos(1.1*x))/Sqrt(x)-1.1*x*Sin(1/2-1.1*x)"]
+    "-1+1.1*x+(0.953463*Cos(1.1*x))/Sqrt(x)-1.1*x*Sin(1/2-1.1*x)"]
    [:modify-leafs
     "0.9*x"
-    "-1+0.9*x+(1.0540925533894598*Cos(0.9*x))/Sqrt(x)-0.9*x*Sin(1/2-0.9*x)"]
+    "-1+0.9*x+(1.05409*Cos(0.9*x))/Sqrt(x)-0.9*x*Sin(1/2-0.9*x)"]
    [:modify-leafs
     "sin(x)"
     "-1+Cos(Sin(x))/Sqrt(Sin(x))+Sin(x)-Sin(x)*Sin(1/2-Sin(x))"]
@@ -739,16 +779,16 @@
     "1-x+Cos(x)/Sqrt(x)-x*Sin(1/2+x)"]
    [:modify-branches
     "b*1.1"
-    "1.1*(-1+x+(1.3310000000000004*Cos(x))/Sqrt(x)-1.2100000000000002*x*Sin(1.1*(1/2-1.1*x)))"]
+    "1.1*(-1+x+(1.331*Cos(x))/Sqrt(x)-1.21*x*Sin(1.1*(1/2-1.1*x)))"]
    [:modify-branches
     "b*0.9"
-    "0.9*(-1+x+(0.7290000000000001*Cos(x))/Sqrt(x)-0.81*x*Sin(0.9*(1/2-0.9*x)))"]
+    "0.9*(-1+x+(0.729*Cos(x))/Sqrt(x)-0.81*x*Sin(0.9*(1/2-0.9*x)))"]
    [:modify-branches
     "b+0.1"
-    "-0.7000000000000001+x+(0.1+1/Sqrt(x))*(0.1+Cos(x))-x*(0.1+Sin(0.7-x))"]
+    "-0.7+x+(0.1+1/Sqrt(x))*(0.1+Cos(x))-x*(0.1+Sin(0.7-x))"]
    [:modify-branches
     "b-0.1"
-    "-1.3000000000000003+x+(-0.1+1/Sqrt(x))*(-0.1+Cos(x))+x*(0.1-Sin(0.30000000000000004-x))"]])
+    "-1.3+x+(-0.1+1/Sqrt(x))*(-0.1+Cos(x))+x*(0.1-Sin(0.3-x))"]])
 
 
 (deftest mutations-test
@@ -756,7 +796,7 @@
                    #'prng/rand                         (fn [] 0.0)}
     (fn []
       (let [x                      (F/Dummy "x")
-            ;; x + cos(x) + x*sin(x-0.5) - 1
+            ;; x + cos(x)/sqrt(x) + x*sin(x-0.5) - 1
             test-expr              (.minus
                                      (.plus x (.plus
                                                 (.divide (F/Cos x) (F/Sqrt x))

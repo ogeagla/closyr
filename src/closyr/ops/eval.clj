@@ -38,28 +38,35 @@
 
 
 (defn ^IExpr eval-phenotype-on-expr-args
-  "Eval an expr at every point in the args"
+  "Eval an expr at every point in the args.
+   IMPORTANT: Always creates a fresh ExprEvaluator for thread safety.
+   Symja's ExprEvaluator has internal mutable state (stacks) that is not thread-safe.
+   When using pmap for parallel scoring, shared evaluators cause ArrayDeque corruption."
   {:malli/schema [:=> [:cat #'specs/GAPhenotype #'specs/PrimitiveArrayOfIExpr] [:maybe #'specs/SymbolicExpr]]}
-  [{^IAST expr :expr ^ISymbol x-sym :sym ^ExprEvaluator util :util p-id :id :as pheno}
+  [{^IAST expr :expr ^ISymbol x-sym :sym p-id :id :as pheno}
    ^"[Lorg.matheclipse.core.interfaces.IExpr;" expr-args]
   (try
-    (when-not util
-      (log/warn "*** Warning: No util provided to evaluation engine! ***"))
     (if (and expr
              expr-args
              (not (.isNIL expr)))
+      ;; Always create fresh evaluator for thread safety
       (let [^IAST ast  (F/ast expr-args (ops-common/expr->fn pheno))
-            ^IExpr res (.eval (or util (ops-common/new-util)) ast)]
+            ^ExprEvaluator fresh-util (ops-common/new-util)
+            ^IExpr res (.eval fresh-util ast)]
         res)
       (log/warn "Warning: eval needs both expr and args, and expr cannot be NIL"))
-    (catch Exception e (log/error "Warning: Error in eval: "
-                                  (str expr) " : " (or (.getMessage e) e)))))
+    (catch Exception e
+      ;; Expected during evolution - log at debug level
+      (log/warn "Eval error: " (subs (str expr) 0 (min 50 (count (str expr))))
+                 "..." (.getMessage e)))))
 
 
 (defn- parseable-eval-result?
-  [eval-p]
-  (not (or (nil? eval-p)
-           (= "Indeterminate" (str eval-p)))))
+  "Check if eval result is valid (not nil or Indeterminate).
+   Uses direct object comparison instead of expensive string conversion."
+  [^IExpr eval-p]
+  (and (some? eval-p)
+       (not (identical? eval-p F/Indeterminate))))
 
 
 (defn- ^IExpr get-arg
@@ -75,7 +82,7 @@
         (ops-common/expr->double res)
         Double/POSITIVE_INFINITY))
     (catch Exception e
-      (log/error "Error in evaling function on input values: "
+      (log/warn "Error in evaling function on input values: "
                  (str eval-p) " : " (or (.getMessage e) e))
       Double/POSITIVE_INFINITY)))
 
@@ -91,9 +98,10 @@
             eval-p
             arg0))))
     (catch Exception e
-      (log/error "Error in evaling function on const xs vector: "
+      (log/debug "Error in evaling function on const xs vector: "
                  (str eval-p) " : " (.getMessage e))
-      (throw e))))
+      ;; Return infinity instead of throwing - let scoring handle bad phenotypes
+      Double/POSITIVE_INFINITY)))
 
 
 (defn eval-vec-pheno
@@ -102,14 +110,19 @@
   [p
    {:keys [input-xs-list input-xs-count]
     :as   run-args}]
-  (let [^IExpr new-expr (:expr p)
-        ^IExpr eval-p   (eval-phenotype-on-expr-args p input-xs-list)]
-    (when (parseable-eval-result? eval-p)
-      (mapv
-        (if (= input-xs-count (dec (.size eval-p)))
-          (partial result-args->doubles eval-p)
-          (partial result-args->constant-input eval-p new-expr))
-        (range input-xs-count)))))
+  (try
+    (let [^IExpr new-expr (:expr p)
+          ^IExpr eval-p   (eval-phenotype-on-expr-args p input-xs-list)]
+      (when (parseable-eval-result? eval-p)
+        (mapv
+          (if (= input-xs-count (dec (.size eval-p)))
+            (partial result-args->doubles eval-p)
+            (partial result-args->constant-input eval-p new-expr))
+          (range input-xs-count))))
+    (catch Exception e
+      (log/warn "Error in eval-vec-pheno:" (.getMessage e))
+      ;; Return vector of infinities so scoring gives this phenotype a bad score
+      (vec (repeat input-xs-count Double/POSITIVE_INFINITY)))))
 
 
 (defn- clamp-oversampled-ys
@@ -128,18 +141,16 @@
     x-head-list :x-head-list
     x-tail      :x-tail
     x-tail-list :x-tail-list}]
-  (let [middle-section (eval-vec-pheno p run-args)
-        max-y          (reduce max middle-section)
-        min-y          (reduce min middle-section)]
-    (concat
-
-      (mapv #(clamp-oversampled-ys max-y min-y %)
-            (eval-vec-pheno p (assoc run-args :input-xs-list x-head-list :input-xs-count (count x-head))))
-
-      middle-section
-
-      (mapv #(clamp-oversampled-ys max-y min-y %)
-            (eval-vec-pheno p (assoc run-args :input-xs-list x-tail-list :input-xs-count (count x-tail)))))))
+  (let [middle-section (eval-vec-pheno p run-args)]
+    (when (seq middle-section)
+      (let [max-y (reduce max middle-section)
+            min-y (reduce min middle-section)]
+        (concat
+          (mapv #(clamp-oversampled-ys max-y min-y %)
+                (eval-vec-pheno p (assoc run-args :input-xs-list x-head-list :input-xs-count (count x-head))))
+          middle-section
+          (mapv #(clamp-oversampled-ys max-y min-y %)
+                (eval-vec-pheno p (assoc run-args :input-xs-list x-tail-list :input-xs-count (count x-tail)))))))))
 
 
 #_(defn eval-vec-pheno-oversample-from-orig-xs

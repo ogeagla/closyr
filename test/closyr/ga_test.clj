@@ -41,11 +41,11 @@
                         (let [new-pop (ga/evolve population)
                               s       (reduce + 0.0 (:pop-scores new-pop))]
                           (when (zero? (rem i 20))
-                            (println i " pop score: " s))
+                            #_(println i " pop score: " s))
                           (recur new-pop
                                  (if (zero? s)
                                    (do
-                                     (println "Perfect score!")
+                                     #_(println "Perfect score!")
                                      0)
                                    (dec i)))))))
              (count initial-pop)))

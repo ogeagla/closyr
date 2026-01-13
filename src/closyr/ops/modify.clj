@@ -3,9 +3,10 @@
   (:require
     [clojure.core.async :as async :refer [go go-loop timeout <!! >!! <! >! chan put! take! alts!! alt!! close!]]
     [clojure.string :as str]
+    [closyr.adaptive :as adaptive]
     [closyr.ops.common :as ops-common]
     [closyr.util.log :as log]
-    [closyr.util.prng :refer :all]
+    [closyr.util.prng :refer [rand rand-int rand-nth shuffle]]
     [closyr.util.spec :as specs])
   (:import
     (java.util.function
@@ -177,15 +178,17 @@
 
       (if discount-mod?
         ;; keep last op:
-        (merge p (ops-common/->phenotype x-sym e1 (:util p-discard)))
+        (if-let [refreshed (ops-common/->phenotype x-sym e1 (:util p-discard))]
+          (merge p refreshed)
+          p)
 
         ;; record new last op:
-        (-> x-sym
-            (ops-common/->phenotype new-expr (:util p-discard))
-            (with-recent-mod-metadata {:label (name crossover-flavor)
-                                       :op    :modify-crossover}))))
+        (some-> x-sym
+                (ops-common/->phenotype new-expr (:util p-discard))
+                (with-recent-mod-metadata {:label (name crossover-flavor)
+                                           :op    :modify-crossover}))))
     (catch Exception e
-      (log/error "Error in ops/crossover: " (.getMessage e))
+      (log/debug "Error in ops/crossover: " (.getMessage e))
       nil)))
 
 
@@ -231,7 +234,7 @@
                                           (catch Exception e
                                             (if (= "Infinite expression 1/0 encountered." (.getMessage e))
                                               (divided-by-zero)
-                                              (log/warn
+                                              (log/debug
                                                 "Warning, mutation failed: " (:label mod-to-apply)
                                                 " on: " (type expr-prior) " / " (str expr-prior)
                                                 " due to: " (or (.getMessage e) e)))
@@ -275,17 +278,26 @@
     (concat (repeat 3 13))
     (concat (repeat 2 14))
     (concat (repeat 1 15))
-    ;; (concat (repeat 5 16))
-    ;; (concat (repeat 4 17))
-    ;; (concat (repeat 3 18))
-    ;; (concat (repeat 2 19))
-    ;; (concat (repeat 1 20))
-    ;; (concat (repeat 3 21))
-    ;; (concat (repeat 2 22))
-    ;; (concat (repeat 1 23))
-    ;; (concat (repeat 1 24))
-    ;; (concat (repeat 1 25))
     vec))
+
+
+(def ^:private mutations-sampler-max
+  "Maximum value in mutations-sampler for clamping boosted values"
+  15)
+
+
+(defn sample-mutation-count
+  "Sample mutation count with optional adaptive boost.
+  When adaptive mode is enabled and we're stagnating, the boost multiplier
+  increases the sampled count to explore more aggressively."
+  ([]
+   (sample-mutation-count (adaptive/get-mutation-count-boost)))
+  ([boost]
+   (let [base-count (rand-nth mutations-sampler)]
+     (if (= boost 1.0)
+       base-count
+       (let [boosted (int (Math/ceil (* base-count boost)))]
+         (min mutations-sampler-max boosted))))))
 
 
 (specs/instrument-all!)

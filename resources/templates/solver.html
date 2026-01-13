@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto">
+    <h1 class="text-2xl font-bold text-white mb-6">Symbolic Regression Solver</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <!-- Input Form (1/3 width) -->
+        <div class="bg-gray-800 rounded-lg p-6 lg:col-span-2">
+            <h2 class="text-xl font-semibold text-white mb-4">Input Data</h2>
+
+            <form id="solver-form">
+                <!-- Dataset Presets -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Load Preset Dataset
+                    </label>
+                    <select id="preset-select"
+                            class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onchange="loadPreset(this.value)">
+                        <option value="">-- Select a preset --</option>
+                        {% for dataset in datasets %}
+                        <option value="{{dataset.id}}"
+                                data-xs="{{dataset.xs}}"
+                                data-ys="{{dataset.ys}}"
+                                data-formula="{{dataset.formula}}"
+                                data-min="{{dataset.xMin}}"
+                                data-max="{{dataset.xMax}}">
+                            {{dataset.name}}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Number of Points (for generatable datasets) -->
+                <div id="points-container" class="mb-4 hidden">
+                    <label for="num-points" class="block text-sm font-medium text-gray-300 mb-2">
+                        Number of Points <span class="text-gray-500">(for generated data)</span>
+                    </label>
+                    <div class="flex items-center space-x-3">
+                        <input type="range" id="num-points-slider" min="5" max="100" value="20"
+                               class="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                               oninput="updatePointsValue(this.value); regeneratePreset();">
+                        <input type="number" id="num-points" value="20" min="5" max="100"
+                               class="w-20 bg-gray-700 border border-gray-600 rounded-md px-2 py-1 text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               onchange="document.getElementById('num-points-slider').value = this.value; regeneratePreset();">
+                    </div>
+                </div>
+
+                <!-- X Values -->
+                <div class="mb-3">
+                    <label for="xs" class="block text-sm font-medium text-gray-300 mb-1">
+                        X Values <span class="text-gray-500">(comma-separated)</span>
+                    </label>
+                    <textarea id="xs" name="xs" rows="1" required
+                              class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="1, 2, 3, 4, 5">1, 2, 3, 4, 5</textarea>
+                </div>
+
+                <!-- Y Values -->
+                <div class="mb-3">
+                    <label for="ys" class="block text-sm font-medium text-gray-300 mb-1">
+                        Y Values <span class="text-gray-500">(comma-separated)</span>
+                    </label>
+                    <textarea id="ys" name="ys" rows="1" required
+                              class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="1, 4, 9, 16, 25">1, 4, 9, 16, 25</textarea>
+                </div>
+
+                <!-- Interactive Data Editor -->
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                        Edit Data Points <span id="brush-hint" class="text-gray-500">(drag points to adjust Y values)</span>
+                    </label>
+                    <!-- Brush Mode Selector -->
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex bg-gray-700 rounded-md p-0.5" role="group">
+                            <button type="button" id="brush-point" onclick="setBrushMode('point')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium bg-blue-600 text-white"
+                                    title="Point mode: drag individual points">
+                                Point
+                            </button>
+                            <button type="button" id="brush-smooth" onclick="setBrushMode('smooth')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium text-gray-300 hover:text-white"
+                                    title="Smooth brush: smooths nearby points">
+                                Smooth
+                            </button>
+                            <button type="button" id="brush-bump" onclick="setBrushMode('bump')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium text-gray-300 hover:text-white"
+                                    title="Bump brush: raise/lower nearby points">
+                                Bump
+                            </button>
+                            <button type="button" id="brush-flatten" onclick="setBrushMode('flatten')"
+                                    class="brush-mode-btn px-2 py-1 text-xs rounded font-medium text-gray-300 hover:text-white"
+                                    title="Flatten brush: flatten nearby points to average">
+                                Flatten
+                            </button>
+                        </div>
+                        <div id="brush-size-container" class="hidden flex items-center gap-2 ml-2">
+                            <label class="text-xs text-gray-400">Size:</label>
+                            <input type="range" id="brush-size" min="1" max="10" value="3"
+                                   class="w-16 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                                   oninput="updateBrushSize(this.value)">
+                            <span id="brush-size-value" class="text-xs text-gray-400 w-4">3</span>
+                        </div>
+                    </div>
+                    <div id="data-editor-chart" class="bg-gray-900 rounded-md" style="width: 100%; height: 140px;"></div>
+                </div>
+
+                <!-- CSV Upload -->
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                        Or Upload CSV File
+                    </label>
+                    <div class="flex items-center justify-center w-full">
+                        <label class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-700 text-gray-400 rounded-md border border-gray-600 border-dashed cursor-pointer hover:border-blue-500 hover:text-blue-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <span class="text-sm">Click to upload CSV</span>
+                            <input type="file" id="csv-file" accept=".csv" class="hidden" onchange="handleCsvUpload(this)">
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="border-gray-700 my-6">
+
+                <!-- Configuration -->
+                <h3 class="text-lg font-semibold text-white mb-4">Configuration</h3>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="iterations" class="block text-sm font-medium text-gray-300 mb-2">
+                            Iterations
+                        </label>
+                        <input type="number" id="iterations" name="config.iterations" value="200" min="1" max="20000"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="population" class="block text-sm font-medium text-gray-300 mb-2">
+                            Population Size
+                        </label>
+                        <input type="number" id="population" name="config.population" value="200" min="10" max="50000"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="max-leafs" class="block text-sm font-medium text-gray-300 mb-2">
+                            Max Expression Size
+                        </label>
+                        <input type="number" id="max-leafs" name="config.maxLeafs" value="20" min="2" max="200"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="seed" class="block text-sm font-medium text-gray-300 mb-2">
+                            Random Seed <span class="text-gray-500">(optional)</span>
+                        </label>
+                        <input type="number" id="seed" name="config.seed"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Leave empty for random">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="scoring-method" class="block text-sm font-medium text-gray-300 mb-2">
+                            Scoring Method
+                        </label>
+                        <select id="scoring-method" name="config.scoringMethod"
+                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="mae-max" selected>MAE + Max (default)</option>
+                            <option value="log-cosh">Log-Cosh (robust)</option>
+                            <option value="r-squared">R² (variance)</option>
+                        </select>
+                        <span class="text-xs text-gray-500 mt-1 block">
+                            Fitness scoring for evolution
+                        </span>
+                    </div>
+                    <div>
+                        <label for="simplicity-bias" class="block text-sm font-medium text-gray-300 mb-2">
+                            Simplicity Bias
+                        </label>
+                        <select id="simplicity-bias" name="config.simplicityBias"
+                                class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="none">None</option>
+                            <option value="tiebreaker" selected>Tiebreaker (default)</option>
+                            <option value="light">Light</option>
+                            <option value="strong">Strong</option>
+                        </select>
+                        <span class="text-xs text-gray-500 mt-1 block">
+                            Preference for simpler formulas
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <label for="adaptive-mode" class="text-sm font-medium text-gray-300">
+                            Adaptive Mutations
+                            <span class="block text-xs text-gray-500">Adjust mutation rates dynamically (only works without random seed)</span>
+                        </label>
+                        <button type="button" id="adaptive-mode" role="switch" aria-checked="false"
+                                onclick="toggleSwitch(this)"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gray-600">
+                            <span class="toggle-knob pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label for="quiet-logs" class="text-sm font-medium text-gray-300">
+                            Verbose Logging
+                            <span class="block text-xs text-gray-500">Show detailed server logs</span>
+                        </label>
+                        <button type="button" id="quiet-logs" role="switch" aria-checked="false"
+                                onclick="toggleSwitch(this)"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gray-600">
+                            <span class="toggle-knob pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label for="eval-cache" class="text-sm font-medium text-gray-300">
+                            Evaluation Cache
+                            <span class="block text-xs text-gray-500">Cache scores by expression</span>
+                        </label>
+                        <button type="button" id="eval-cache" role="switch" aria-checked="false"
+                                onclick="toggleSwitch(this)"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gray-600">
+                            <span class="toggle-knob pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mutations Selection (collapsible) -->
+                <div class="mb-6">
+                    <button type="button" id="mutations-toggle"
+                            class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-300 hover:text-white"
+                            onclick="toggleMutationsPanel()">
+                        <span>
+                            Mutations
+                            <span id="mutations-count" class="text-gray-500 ml-2">(loading...)</span>
+                        </span>
+                        <svg id="mutations-chevron" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="mutations-panel" class="hidden mt-3">
+                        <div id="mutations-panel-content">
+                            <!-- Populated by JavaScript with groups and individual mutations -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex space-x-3">
+                    <button type="submit" id="start-btn"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="start-btn-text">Find Formula</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Panel (2/3 width) -->
+        <div class="bg-gray-800 rounded-lg p-6 lg:col-span-3">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-white">Results</h2>
+                <!-- Job Control Buttons (shown when job is running) -->
+                <div id="job-controls" class="flex space-x-2 hidden">
+                    <button type="button" id="pause-btn"
+                            class="px-4 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                            onclick="togglePause()">
+                        <span id="pause-btn-text">Pause</span>
+                    </button>
+                    <button type="button" id="stop-btn"
+                            class="px-4 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors"
+                            onclick="stopJob()">
+                        Stop
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Bar (hidden when no active jobs) -->
+            <div id="job-tabs" class="hidden mb-4 border-b border-gray-700">
+                <div id="job-tabs-list" class="flex w-full pb-2 gap-1">
+                    <!-- Tabs inserted dynamically -->
+                </div>
+            </div>
+
+            <!-- Results Content -->
+            <div id="results" class="text-gray-400">
+                <p>Enter your data and click "Find Formula" to start the solver.</p>
+                <p class="mt-4 text-sm">
+                    The genetic algorithm will evolve mathematical expressions to find
+                    the best fit for your data.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job History Section -->
+    <div id="job-history-section" class="mt-8 hidden">
+        <h2 class="text-xl font-semibold text-white mb-4">Job History</h2>
+        <div id="job-history" class="space-y-4"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Solver JavaScript modules -->
+<script src="/js/solver-utils.js"></script>
+<script src="/js/solver-formula.js"></script>
+<script src="/js/solver-charts.js"></script>
+<script src="/js/solver-history.js"></script>
+<script src="/js/solver-presets.js"></script>
+<script src="/js/solver-mutations.js"></script>
+<script src="/js/solver-job.js"></script>
+<script src="/js/solver-init.js"></script>
+{% endblock %}

@@ -38,6 +38,11 @@
              (str (:expr (ops-common/->phenotype x (F/Sin x) nil))))
            "Sin(x)")))
 
+  (testing "with Hold-wrapped expr returns nil"
+    (is (= (let [x (F/Dummy "x")]
+             (ops-common/->phenotype x (F/Hold (F/Sin x)) nil))
+           nil)))
+
   (testing "with expr throwing exception"
     (is (=
           (let [x (F/Dummy "x")]
@@ -74,6 +79,7 @@
       (is (instance? IAST parsed))
       (is (= (str parsed)
              (str (F/Cos x))))))
+
   (testing "can parse simple fn str 2"
     (let [x      (F/Dummy "x")
           parsed (.parse (ops-common/new-eval-engine) "x+Cos(x^2)")]
@@ -95,7 +101,8 @@
                    {:expr    "1/5+x"
                     :simple? true}))
             (is (= @ops-common/do-not-simplify-fns*
-                   {"1/5+Sin(ArcSin(x))" 1}))))))))
+                   {"1/5+Sin(ArcSin(x))" 1}))
+            (reset! ops-common/do-not-simplify-fns* {})))))))
 
 
 (deftest simplify-with-ignore-presets
@@ -107,8 +114,8 @@
              {:expr    "x"
               :simple? true}))
       (is (= @ops-common/do-not-simplify-fns*
-             {"x" 2})))
-    (reset! ops-common/do-not-simplify-fns* {})))
+             {"x" 2}))
+      (reset! ops-common/do-not-simplify-fns* {}))))
 
 
 (deftest simplify-test
@@ -143,7 +150,8 @@
                                                        (F/Plus (F/Cos x))
                                                        (F/Plus (F/Sqrt x)))})
                        :expr str))
-             {:expr "1+Sqrt(x)+Cos(x)+Sin(x)+2*(Cos(ArcSin(x))+Tan(ArcSin(x)))"}))))
+             {:expr "1+Sqrt(x)+Cos(x)+Sin(x)+2*(Cos(ArcSin(x))+Tan(ArcSin(x)))"}))
+      (reset! ops-common/do-not-simplify-fns* {})))
 
   (testing "simplify sum"
     (let [x (F/Dummy "x")]
