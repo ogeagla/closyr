@@ -247,6 +247,7 @@
                   final-result {:iterations-done (:iters-done result)
                                 :best-solution   (first solutions)
                                 :scoring-method  scoring-method
+                                :simplicity-bias simplicity-bias
                                 :all-solutions   solutions
                                 :source-job      source-job}]
 

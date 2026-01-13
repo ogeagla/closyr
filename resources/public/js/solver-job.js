@@ -693,6 +693,10 @@ function renderProgressContent(jobId, job) {
                         <span class="text-gray-400">Optimizing:</span>
                         <span class="text-white">${getScoringMethodDisplay(data['scoring-method'])}</span>
                     </div>
+                    <div>
+                        <span class="text-gray-400">Simplicity Bias:</span>
+                        <span class="text-white">${getSimplicityBiasDisplay(data['simplicity-bias'])}</span>
+                    </div>
                 </div>
                 ${job.startingScore !== null ? formatStartingScoreComparison(job, data) : ''}
                 ${formatProgressScores(data, job.scoreHistory)}
@@ -777,6 +781,10 @@ function showCompletedJobResults(job) {
                     <span class="text-gray-400">Optimized for:</span>
                     <span class="text-white ml-2">${getScoringMethodDisplay(data['scoring-method'])}</span>
                 </div>
+                <div>
+                    <span class="text-gray-400">Simplicity bias:</span>
+                    <span class="text-white ml-2">${getSimplicityBiasDisplay(data['simplicity-bias'])}</span>
+                </div>
             </div>
             ${formatAllScores(data['best-solution'], data['scoring-method'], scoreHistory)}
 
@@ -813,6 +821,7 @@ function showStoppedJobResults(job) {
         : '';
 
     const scoringMethod = progressData['scoring-method'] || config?.scoringMethod || 'mae-max';
+    const simplicityBias = progressData['simplicity-bias'] || config?.scoringMethod || 'tiebreaker';
     const formula = progressData['best-formula'] || 'N/A';
     const leafCount = progressData['best-formula-leaf-count'] || 'N/A';
     const iteration = progressData['iteration'] || 0;
@@ -875,6 +884,10 @@ function showStoppedJobResults(job) {
                 <div>
                     <span class="text-gray-400">Optimized for:</span>
                     <span class="text-white ml-2">${getScoringMethodDisplay(scoringMethod)}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">Simplicity bias:</span>
+                    <span class="text-white ml-2">${getSimplicityBiasDisplay(simplicityBias)}</span>
                 </div>
             </div>
             ${scoresHtml}

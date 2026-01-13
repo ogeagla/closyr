@@ -39,28 +39,3 @@
         datasets (-> datasets-response :body (json/parse-string true) :datasets)]
     (render "solver.html" {:title    "Solver - Closyr"
                            :datasets datasets})))
-
-
-;; ============================================================================
-;; HTMX Partials
-;; ============================================================================
-
-(defn results-partial
-  "GET /partials/results/:id - Render results partial for a job."
-  [{:keys [path-params]}]
-  (let [job-id (:id path-params)
-        job (get @api/jobs* job-id)]
-    (if job
-      (render "partials/results.html" {:job-id job-id
-                                       :job    job})
-      {:status  404
-       :headers {"Content-Type" "text/html"}
-       :body    "<div class=\"text-red-500\">Job not found</div>"})))
-
-
-(defn job-started-partial
-  "Render the SSE-connected progress partial after job submission."
-  [job-id]
-  {:status  200
-   :headers {"Content-Type" "text/html; charset=utf-8"}
-   :body    (selmer/render-file "partials/progress.html" {:job-id job-id})})

@@ -28,11 +28,7 @@
     ["/jobs/:id/events" {:get api/events}]
     ["/datasets" {:get api/datasets}]
     ["/mutations" {:get api/mutations}]
-    ["/upload-csv" {:post api/upload-csv}]]
-
-   ;; HTMX partials
-   ["/partials"
-    ["/results/:id" {:get pages/results-partial}]]])
+    ["/upload-csv" {:post api/upload-csv}]]])
 
 
 (def app
